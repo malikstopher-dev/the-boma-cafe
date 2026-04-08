@@ -1,0 +1,211 @@
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 700px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slides {
+  position: absolute;
+  inset: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transform: scale(1.1);
+  transition: all 1s ease;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: scale(1);
+  animation: zoomIn 8s ease-out forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 15, 10, 0.5) 0%,
+    rgba(26, 15, 10, 0.3) 50%,
+    rgba(26, 15, 10, 0.6) 100%
+  );
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  color: var(--white);
+  max-width: 900px;
+  padding: 0 5%;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.content.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.subtitle {
+  font-size: 1rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  color: var(--warm);
+  font-weight: 500;
+}
+
+.title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  color: var(--white);
+}
+
+.accent {
+  color: var(--warm);
+  display: block;
+}
+
+.tagline {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-style: italic;
+  color: var(--cream);
+  margin-bottom: 2.5rem;
+}
+
+.cta {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nav {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 20;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  padding: 0;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.activeDot {
+  background: var(--warm);
+  width: 40px;
+  border-radius: 10px;
+}
+
+.scroll {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  z-index: 20;
+  animation: bounce 2s infinite;
+}
+
+.scroll span {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.scrollIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.scrollIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    min-height: 600px;
+  }
+
+  .cta {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .cta a {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .scroll {
+    display: none;
+  }
+
+  .nav {
+    bottom: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 0 4%;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .tagline {
+    font-size: 1rem;
+  }
+}
