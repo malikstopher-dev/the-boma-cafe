@@ -4,11 +4,39 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import Hero from '@/components/home/Hero';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import PopupModal from '@/components/ui/PopupModal';
 import { dataService } from '@/lib/data';
 import { siteSettingsService } from '@/lib/siteSettings';
+
+const heroSlides = [
+  {
+    image: '/hero/slide1.jpg',
+    subtitle: 'Welcome to',
+    title: 'The Boma Cafe',
+    tagline: 'Where the Rustic Meets the Soulful!',
+    cta: 'Book a Table',
+    ctaLink: '/contact'
+  },
+  {
+    image: '/hero/slide2.jpg',
+    subtitle: 'Escape the City',
+    title: 'Rustic',
+    titleAccent: 'Ambiance',
+    tagline: 'Savor your meal beneath a thatched roof',
+    cta: 'Discover More',
+    ctaLink: '/about'
+  },
+  {
+    image: '/hero/slide3.jpg',
+    subtitle: 'More Than Just a Cafe',
+    title: 'An',
+    titleAccent: 'Experience',
+    tagline: 'Where nature meets the warmth of home',
+    cta: 'View Events',
+    ctaLink: '/events'
+  }
+];
 
 export default function Home() {
   const [settings, setSettings] = useState<any>(null);
@@ -19,6 +47,7 @@ export default function Home() {
   const [promotions, setPromotions] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [siteSettings, setSiteSettings] = useState<any>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     dataService.initializeDefaults();
@@ -31,6 +60,11 @@ export default function Home() {
     setPromotions(dataService.getPromotions());
     setTestimonials(dataService.getTestimonials());
     setSiteSettings(siteSettingsService.getSiteSettings());
+    
+    const slideTimer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 6000);
+    return () => clearInterval(slideTimer);
   }, []);
 
   const featuredMenuItems = menuItems.filter((item: any) => item.isFeatured && !item.isOutOfStock).slice(0, 4);
@@ -54,35 +88,78 @@ export default function Home() {
       <PopupModal popup={popup} />
 
       <main>
-        {/* Hero */}
-        <section className="hero" style={{
-          height: '100vh',
-          minHeight: '700px',
-          background: `url(${homepage.heroBackgroundImage || '/hero/slide1.jpg'}) center/cover`
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, rgba(26,15,10,0.5) 0%, rgba(26,15,10,0.3) 50%, rgba(26,15,10,0.6) 100%)'
-          }} />
-          <div style={{
-            position: 'relative',
-            zIndex: 10,
-            textAlign: 'center',
-            color: 'var(--white)',
-            paddingTop: '30vh'
-          }}>
-            <p style={{ fontSize: '1rem', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '1rem', color: 'var(--warm)' }}>Welcome to</p>
-            <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', marginBottom: '1.5rem' }}>{homepage.heroTitle || 'The Boma Cafe'}</h1>
+        {/* Hero Slider */}
+        <section style={{ position: 'relative', height: '100vh', minHeight: '700px', overflow: 'hidden' }}>
+          {heroSlides.map((slide, index) => (
+            <div
+              key={index}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: index === currentSlide ? 1 : 0,
+                transition: 'opacity 1.2s ease',
+                transform: index === currentSlide ? 'scale(1)' : 'scale(1.1)',
+                transitionProperty: 'opacity, transform',
+                transitionDuration: '1.2s, 8s',
+                transitionTimingFunction: 'ease, ease',
+                transformOrigin: 'center',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundImage: `url(${slide.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+            </div>
+          ))}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(26,15,10,0.5) 0%, rgba(26,15,10,0.3) 50%, rgba(26,15,10,0.6) 100%)' }} />
+          
+          <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: 'var(--white)', paddingTop: '35vh' }}>
+            <p style={{ fontSize: '1rem', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '1rem', color: 'var(--warm)' }}>{heroSlides[currentSlide].subtitle}</p>
+            <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', marginBottom: '1.5rem' }}>
+              {heroSlides[currentSlide].title}
+              {heroSlides[currentSlide].titleAccent && <span style={{ color: 'var(--warm)', display: 'block' }}>{heroSlides[currentSlide].titleAccent}</span>}
+            </h1>
             <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', fontStyle: 'italic', color: 'var(--cream)', marginBottom: '2.5rem' }}>
-              {homepage.heroSubtitle || 'Where the Rustic Meets the Soulful!'}
+              {heroSlides[currentSlide].tagline}
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <Link href={homepage.ctaLink || '/contact'} className="btn btn-primary">
-                {homepage.ctaText || 'Book a Table'}
-              </Link>
+              <Link href={heroSlides[currentSlide].ctaLink} className="btn btn-primary">{heroSlides[currentSlide].cta}</Link>
               <Link href="/menu" className="btn btn-ghost">View Menu</Link>
             </div>
+          </div>
+
+          {/* Hero Dots */}
+          <div style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '12px', zIndex: 20 }}>
+            {heroSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                style={{
+                  width: index === currentSlide ? '35px' : '12px',
+                  height: '12px',
+                  borderRadius: index === currentSlide ? '10px' : '50%',
+                  background: index === currentSlide ? 'var(--warm)' : 'rgba(255,255,255,0.4)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.4s ease',
+                  transform: index === currentSlide ? 'scale(1.4)' : 'scale(1)',
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Scroll Indicator */}
+          <div style={{ position: 'absolute', bottom: '40px', right: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', color: 'var(--white)', zIndex: 20, animation: 'bounce 2s infinite' }}>
+            <span style={{ fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Scroll</span>
+            <i className="fas fa-chevron-down" />
           </div>
         </section>
 
