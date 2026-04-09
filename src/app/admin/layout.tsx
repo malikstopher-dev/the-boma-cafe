@@ -25,12 +25,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    const pathname = window?.location?.pathname || '';
+    // Skip auth check for login page
+    if (pathname === '/admin/login') {
+      return;
+    }
     if (!isLoading && !isAuthenticated) {
       router.push('/admin/login');
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading) {
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  
+  // Show loading on any page while checking auth (but not for login page)
+  if (isLoading && currentPath !== '/admin/login') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
@@ -41,11 +49,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  // Allow login page to render without auth
+  if (currentPath === '/admin/login') {
+    return <>{children}</>;
+  }
+
   if (!isAuthenticated) {
     return null;
   }
-
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f5f2' }}>
