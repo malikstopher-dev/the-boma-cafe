@@ -88,78 +88,40 @@ export default function Home() {
       <PopupModal popup={popup} />
 
       <main>
-        {/* Hero Slider */}
-        <section style={{ position: 'relative', height: '100vh', minHeight: '700px', overflow: 'hidden' }}>
+        {/* Hero Slider - Mobile Responsive */}
+        <section className="hero-section">
           {heroSlides.map((slide, index) => (
             <div
               key={index}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: index === currentSlide ? 1 : 0,
-                transition: 'opacity 1.2s ease',
-                transform: index === currentSlide ? 'scale(1)' : 'scale(1.1)',
-                transitionProperty: 'opacity, transform',
-                transitionDuration: '1.2s, 8s',
-                transitionTimingFunction: 'ease, ease',
-                transformOrigin: 'center',
-              }}
+              className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundImage: `url(${slide.image})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              />
+              <div className="hero-slide-bg" style={{ backgroundImage: `url(${slide.image})` }} />
             </div>
           ))}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(26,15,10,0.5) 0%, rgba(26,15,10,0.3) 50%, rgba(26,15,10,0.6) 100%)' }} />
+          <div className="hero-overlay" />
           
-          <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: 'var(--white)', paddingTop: '35vh' }}>
-            <p style={{ fontSize: '1rem', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '1rem', color: 'var(--warm)' }}>{heroSlides[currentSlide].subtitle}</p>
-            <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', marginBottom: '1.5rem' }}>
+          <div className="hero-content">
+            <p className="hero-subtitle">{heroSlides[currentSlide].subtitle}</p>
+            <h1 className="hero-title">
               {heroSlides[currentSlide].title}
-              {heroSlides[currentSlide].titleAccent && <span style={{ color: 'var(--warm)', display: 'block' }}>{heroSlides[currentSlide].titleAccent}</span>}
+              {heroSlides[currentSlide].titleAccent && <span className="hero-accent">{heroSlides[currentSlide].titleAccent}</span>}
             </h1>
-            <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', fontStyle: 'italic', color: 'var(--cream)', marginBottom: '2.5rem' }}>
-              {heroSlides[currentSlide].tagline}
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <Link href={heroSlides[currentSlide].ctaLink} className="btn btn-primary">{heroSlides[currentSlide].cta}</Link>
+            <p className="hero-tagline">{heroSlides[currentSlide].tagline}</p>
+            <div className="hero-cta">
+              <Link href={heroSlides[currentSlide].ctaLink} className="btn btn-primary">View Details</Link>
               <Link href="/menu" className="btn btn-ghost">View Menu</Link>
             </div>
           </div>
 
           {/* Hero Dots */}
-          <div style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '12px', zIndex: 20 }}>
+          <div className="hero-dots">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                style={{
-                  width: index === currentSlide ? '35px' : '12px',
-                  height: '12px',
-                  borderRadius: index === currentSlide ? '10px' : '50%',
-                  background: index === currentSlide ? 'var(--warm)' : 'rgba(255,255,255,0.4)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.4s ease',
-                  transform: index === currentSlide ? 'scale(1.4)' : 'scale(1)',
-                }}
+                className={`hero-dot ${index === currentSlide ? 'active' : ''}`}
               />
             ))}
-          </div>
-
-          {/* Scroll Indicator */}
-          <div style={{ position: 'absolute', bottom: '40px', right: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', color: 'var(--white)', zIndex: 20, animation: 'bounce 2s infinite' }}>
-            <span style={{ fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Scroll</span>
-            <i className="fas fa-chevron-down" />
           </div>
         </section>
 
