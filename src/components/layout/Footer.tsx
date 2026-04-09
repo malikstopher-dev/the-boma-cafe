@@ -71,9 +71,17 @@ export default function Footer({ settings, branding }: FooterProps) {
 
           <div>
             <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--white)', marginBottom: '1.5rem' }}>Quick Links</h4>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {['Home', 'About', 'Menu', 'Events', 'Gallery', 'Contact'].map(link => (
-                <Link key={link} href={`/${link.toLowerCase()}`} style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem' }}>{link}</Link>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              {[
+                { label: 'Home', href: '/' },
+                { label: 'About', href: '/about' },
+                { label: 'Menu', href: '/menu' },
+                { label: 'Events', href: '/events' },
+                { label: 'Gallery', href: '/gallery' },
+                { label: 'Promotions', href: '/promotions' },
+                { label: 'Contact', href: '/contact' },
+              ].map(link => (
+                <Link key={link.href} href={link.href} style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>{link.label}</Link>
               ))}
             </nav>
           </div>
