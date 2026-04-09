@@ -263,7 +263,7 @@ export const defaultEvents: Event[] = [
     location: 'Main Deck',
     status: 'upcoming',
     showOnHomepage: true,
-    galleryImages: [],
+    galleryImages: ['/images/event1.jpeg'],
     order: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
