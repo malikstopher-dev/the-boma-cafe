@@ -31,11 +31,12 @@ export default function Header() {
       left: 0,
       right: 0,
       zIndex: 1000,
-      padding: isScrolled ? '0.5rem 5%' : '1rem 5%',
+      padding: '0.75rem 5%',
       transition: 'all 0.3s ease',
-      background: isScrolled ? 'rgba(26, 15, 10, 0.95)' : 'transparent',
-      backdropFilter: isScrolled ? 'blur(10px)' : 'none',
-      boxShadow: isScrolled ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
+      background: isScrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.9)',
+      backdropFilter: 'blur(10px)',
+      boxShadow: isScrolled ? '0 2px 20px rgba(0,0,0,0.1)' : 'none',
+      borderBottom: isScrolled ? '1px solid rgba(0,0,0,0.05)' : 'none',
     }}>
       <div style={{
         maxWidth: '1400px',
@@ -49,27 +50,33 @@ export default function Header() {
           <img 
             src="/logo.png" 
             alt="The Boma Cafe" 
-            style={{ height: isScrolled ? '60px' : '80px', transition: 'height 0.3s ease' }}
+            style={{ 
+              height: '70px', 
+              width: 'auto',
+              objectFit: 'contain'
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
           />
         </Link>
 
         {/* Nav Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               style={{
-                color: '#fff',
+                color: 'var(--dark-brown)',
                 fontWeight: 500,
-                fontSize: '0.95rem',
+                fontSize: '0.9rem',
                 textDecoration: 'none',
-                letterSpacing: '0.5px',
-                position: 'relative',
+                letterSpacing: '0.3px',
                 transition: 'color 0.3s ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--warm)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#fff'}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--dark-brown)'}
             >
               {link.label}
             </Link>
@@ -77,24 +84,30 @@ export default function Header() {
         </nav>
 
         {/* Icons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <a 
             href="tel:072 996 2212" 
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              width: '40px', 
-              height: '40px',
+              width: '38px', 
+              height: '38px',
               borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#fff',
+              background: 'var(--cream)',
+              color: 'var(--dark-brown)',
               transition: 'all 0.3s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warm)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--primary)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--cream)';
+              e.currentTarget.style.color = 'var(--dark-brown)';
+            }}
           >
-            <i className="fas fa-phone" style={{ fontSize: '0.9rem' }} />
+            <i className="fas fa-phone" style={{ fontSize: '0.85rem' }} />
           </a>
           <a 
             href="mailto:info@thebomacafe.co.za" 
@@ -102,17 +115,23 @@ export default function Header() {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              width: '40px', 
-              height: '40px',
+              width: '38px', 
+              height: '38px',
               borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#fff',
+              background: 'var(--cream)',
+              color: 'var(--dark-brown)',
               transition: 'all 0.3s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warm)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--primary)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--cream)';
+              e.currentTarget.style.color = 'var(--dark-brown)';
+            }}
           >
-            <i className="fas fa-envelope" style={{ fontSize: '0.9rem' }} />
+            <i className="fas fa-envelope" style={{ fontSize: '0.85rem' }} />
           </a>
           <a 
             href="https://maps.app.goo.gl/Xca93TRsznn9GN8K7" 
@@ -122,17 +141,23 @@ export default function Header() {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              width: '40px', 
-              height: '40px',
+              width: '38px', 
+              height: '38px',
               borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#fff',
+              background: 'var(--cream)',
+              color: 'var(--dark-brown)',
               transition: 'all 0.3s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warm)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--primary)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--cream)';
+              e.currentTarget.style.color = 'var(--dark-brown)';
+            }}
           >
-            <i className="fas fa-map-marker-alt" style={{ fontSize: '0.9rem' }} />
+            <i className="fas fa-map-marker-alt" style={{ fontSize: '0.85rem' }} />
           </a>
         </div>
       </div>
