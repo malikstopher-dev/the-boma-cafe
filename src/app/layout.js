@@ -45,6 +45,7 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous" 
           referrerPolicy="no-referrer"
         />
+        <link rel="icon" href="/logo.png" type="image/png" />
       </head>
       <body className="min-h-screen">
         <AuthProvider>
