@@ -2,72 +2,138 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import styles from './Header.module.css';
 
-interface HeaderProps {
-  transparent?: boolean;
-}
-
-export default function Header({ transparent = false }: HeaderProps) {
+export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/about', label: 'About' },
-    { href: '/menu', label: 'Menu' },
+    { href: 'https://thebomacafe.co.za/assets/files/menu.pdf', label: 'Menu', external: true },
     { href: '/events', label: 'Events' },
-    { href: '/gallery', label: 'Gallery' },
-    { href: '/promotions', label: 'Promotions' },
     { href: '/contact', label: 'Contact' },
   ];
 
   return (
-    <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''} ${transparent ? styles.transparent : ''}`}>
-      <div className={styles.container}>
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoText}>The Boma</span>
-          <span className={styles.logoAccent}>Cafe</span>
+    <header style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+      padding: isScrolled ? '0.5rem 5%' : '1rem 5%',
+      transition: 'all 0.3s ease',
+      background: isScrolled ? 'rgba(26, 15, 10, 0.95)' : 'transparent',
+      backdropFilter: isScrolled ? 'blur(10px)' : 'none',
+      boxShadow: isScrolled ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
+    }}>
+      <div style={{
+        maxWidth: '1400px',
+        margin: '0 auto',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        {/* Logo */}
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <img 
+            src="/logo.png" 
+            alt="The Boma Cafe" 
+            style={{ height: isScrolled ? '60px' : '80px', transition: 'height 0.3s ease' }}
+          />
         </Link>
 
-        <nav className={`${styles.nav} ${isMobileMenuOpen ? styles.open : ''}`}>
+        {/* Nav Links */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           {navLinks.map((link) => (
-            <Link 
-              key={link.href} 
-              href={link.href} 
-              className={styles.navLink}
-              onClick={() => setIsMobileMenuOpen(false)}
+            <Link
+              key={link.href}
+              href={link.href}
+              target={link.external ? '_blank' : '_self'}
+              rel={link.external ? 'noopener noreferrer' : undefined}
+              style={{
+                color: '#fff',
+                fontWeight: 500,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                letterSpacing: '0.5px',
+                position: 'relative',
+                transition: 'color 0.3s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--warm)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#fff'}
             >
               {link.label}
             </Link>
           ))}
-          <Link 
-            href="/admin" 
-            className={styles.adminLink}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <span className={styles.adminIcon}>⚙</span>
-          </Link>
         </nav>
 
-        <button 
-          className={`${styles.mobileToggle} ${isMobileMenuOpen ? styles.open : ''}`}
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+        {/* Icons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <a 
+            href="tel:072 996 2212" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '40px', 
+              height: '40px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warm)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            <i className="fas fa-phone" style={{ fontSize: '0.9rem' }} />
+          </a>
+          <a 
+            href="mailto:info@thebomacafe.co.za" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '40px', 
+              height: '40px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warm)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            <i className="fas fa-envelope" style={{ fontSize: '0.9rem' }} />
+          </a>
+          <a 
+            href="https://maps.app.goo.gl/Xca93TRsznn9GN8K7" 
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '40px', 
+              height: '40px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warm)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            <i className="fas fa-map-marker-alt" style={{ fontSize: '0.9rem' }} />
+          </a>
+        </div>
       </div>
     </header>
   );
