@@ -182,11 +182,7 @@ export default function GalleryPage() {
                 controls
                 preload="metadata"
                 poster="/images/about.jpg"
-                style={{ width: '100%', display: 'block' }}
-              >
-                preload="metadata"
-                style={{ width: '100%', display: 'block' }}
-                poster="/images/about.jpg"
+                className="w-full block rounded-lg"
               >
                 <source src="/videos/gallery.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
