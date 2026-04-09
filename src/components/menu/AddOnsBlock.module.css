@@ -1,0 +1,55 @@
+.container {
+  margin-bottom: var(--space-md);
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: var(--space-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.addOns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.addOn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--white);
+  border: 1px solid var(--cream-dark);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.85rem;
+}
+
+.addOn:hover {
+  border-color: var(--primary);
+}
+
+.addOn.selected {
+  background: var(--cream);
+  border-color: var(--primary);
+}
+
+.checkbox {
+  display: none;
+}
+
+.name {
+  color: var(--dark-brown);
+  font-weight: 500;
+}
+
+.price {
+  color: var(--text-light);
+  font-size: 0.8rem;
+}

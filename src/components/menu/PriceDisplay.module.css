@@ -1,0 +1,36 @@
+.price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.currency {
+  font-size: 0.75em;
+  margin-right: 2px;
+}
+
+.sm {
+  font-size: 1rem;
+}
+
+.md {
+  font-size: 1.25rem;
+}
+
+.lg {
+  font-size: 1.5rem;
+}
+
+.discounted {
+  color: var(--primary);
+}
+
+.original {
+  font-size: 0.85em;
+  font-weight: 400;
+  color: var(--text-light);
+  text-decoration: line-through;
+}

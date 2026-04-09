@@ -1,18 +1,48 @@
+export interface MenuSize {
+  name: string;
+  price: number;
+}
+
+export interface MenuAddOn {
+  name: string;
+  price: number;
+}
+
+export interface MenuChoiceOption {
+  name: string;
+  price?: number;
+}
+
+export interface MenuChoice {
+  groupName: string;
+  required: boolean;
+  options: MenuChoiceOption[];
+  maxSelections?: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
-  description: string;
-  price: number;
+  description?: string;
+  price?: number;
   category: string;
+  subcategory?: string;
   image?: string;
   isFeatured: boolean;
   isOutOfStock: boolean;
   isOnPromo: boolean;
   promoBadge?: string;
+  badge?: string;
   showOnHomepage: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
+  variants?: MenuSize[];
+  flavours?: string[];
+  addOns?: MenuAddOn[];
+  choices?: MenuChoice[];
+  notes?: string[];
+  tags?: string[];
 }
 
 export interface MenuCategory {

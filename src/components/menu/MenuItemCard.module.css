@@ -1,0 +1,236 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.imageContainer {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform var(--transition-smooth);
+}
+
+.card:hover .image {
+  transform: scale(1.05);
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+.imagePlaceholder span {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.badgePromo {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background: var(--fire-orange);
+  color: var(--white);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}
+
+.badgeFeatured {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  background: var(--gold);
+  color: var(--dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.badgeCustom {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  background: var(--primary);
+  color: var(--white);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.content {
+  padding: var(--space-lg);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  margin-bottom: var(--space-sm);
+}
+
+.name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--dark-brown);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  background: var(--cream-dark);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.description {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  line-height: 1.5;
+  margin-bottom: var(--space-md);
+  min-height: 2.5em;
+}
+
+.notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.note {
+  display: inline-block;
+  font-size: 0.7rem;
+  color: var(--text-light);
+  background: var(--cream-dark);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--cream-dark);
+}
+
+.priceWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.priceRange {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.basePrice {
+  font-size: 0.7rem;
+  color: var(--text-light);
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.6rem 1.25rem;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.addButton:hover:not(:disabled) {
+  background: var(--secondary);
+  transform: scale(1.02);
+}
+
+.addButton.added {
+  background: #25D366;
+}
+
+.addButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .imageContainer {
+    height: 160px;
+  }
+  
+  .content {
+    padding: var(--space-md);
+  }
+  
+  .name {
+    font-size: 1rem;
+  }
+  
+  .footer {
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: stretch;
+  }
+  
+  .addButton {
+    justify-content: center;
+  }
+}
