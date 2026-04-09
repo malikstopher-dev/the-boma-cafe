@@ -45,46 +45,8 @@ export default function Header() {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <img 
-            src="/logo.png" 
-            alt="The Boma Cafe" 
-            style={{ 
-              height: '70px', 
-              width: 'auto',
-              objectFit: 'contain'
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </Link>
-
-        {/* Nav Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              style={{
-                color: 'var(--dark-brown)',
-                fontWeight: 500,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-                letterSpacing: '0.3px',
-                transition: 'color 0.3s ease',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--dark-brown)'}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Icons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Left Side - Icons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '160px' }}>
           <a 
             href="tel:072 996 2212" 
             style={{ 
@@ -160,6 +122,44 @@ export default function Header() {
             <i className="fas fa-map-marker-alt" style={{ fontSize: '0.85rem' }} />
           </a>
         </div>
+
+        {/* Center - Logo */}
+        <Link href="/" style={{ textDecoration: 'none', flex: '1', display: 'flex', justifyContent: 'center' }}>
+          <img 
+            src="/logo.png" 
+            alt="The Boma Cafe" 
+            style={{ 
+              height: '70px', 
+              width: 'auto',
+              objectFit: 'contain'
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </Link>
+
+        {/* Right Side - Nav Links */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', width: '160px', justifyContent: 'flex-end' }}>
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                color: 'var(--dark-brown)',
+                fontWeight: 500,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                letterSpacing: '0.3px',
+                transition: 'color 0.3s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--dark-brown)'}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   );
