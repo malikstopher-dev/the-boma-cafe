@@ -165,14 +165,127 @@ export default function GalleryPage() {
           </div>
         )}
 
-        {/* CTA */}
-        <section className="section" style={{ background: 'var(--dark-brown)', textAlign: 'center' }}>
+        {/* Featured Video Section */}
+        <section className="section" style={{ background: 'var(--cream)' }}>
           <div className="container">
-            <h2 style={{ fontSize: '2rem', color: 'var(--white)', marginBottom: '1rem' }}>Share Your Moments</h2>
-            <p style={{ color: 'var(--cream)', marginBottom: '2rem' }}>Tag us on social media to be featured</p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <a href="https://instagram.com" target="_blank" className="btn btn-ghost">Instagram</a>
-              <a href="https://facebook.com" target="_blank" className="btn btn-ghost">Facebook</a>
+            <div className="section-header">
+              <h2>Featured Video</h2>
+              <p>Watch the atmosphere, energy, and experience of The Boma Cafe.</p>
+            </div>
+            <div style={{ 
+              maxWidth: '900px', 
+              margin: '0 auto',
+              background: 'var(--white)',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.12)'
+            }}>
+              <video 
+                controls
+                preload="metadata"
+                style={{ width: '100%', display: 'block' }}
+                poster="/images/about.jpg"
+              >
+                <source src="/videos/gallery.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            
+            {/* Social Media Buttons */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '1.5rem', 
+              marginTop: '3rem',
+              flexWrap: 'wrap'
+            }}>
+              <a 
+                href="https://www.instagram.com/the_boma_cafe" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem 2rem',
+                  background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                  color: '#fff',
+                  borderRadius: '50px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 15px rgba(225, 48, 108, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(225, 48, 108, 0.4)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(225, 48, 108, 0.3)';
+                }}
+              >
+                <i className="fab fa-instagram" style={{ fontSize: '1.2rem' }} />
+                Follow on Instagram
+              </a>
+              <a 
+                href="https://www.tiktok.com/@thebomacafe" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem 2rem',
+                  background: '#000',
+                  color: '#fff',
+                  borderRadius: '50px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.4)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+                }}
+              >
+                <i className="fab fa-tiktok" style={{ fontSize: '1.2rem' }} />
+                Follow on TikTok
+              </a>
+              <a 
+                href="https://www.facebook.com/profile.php?id=61552775920918" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem 2rem',
+                  background: '#1877f2',
+                  color: '#fff',
+                  borderRadius: '50px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 15px rgba(24, 119, 242, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(24, 119, 242, 0.4)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(24, 119, 242, 0.3)';
+                }}
+              >
+                <i className="fab fa-facebook-f" style={{ fontSize: '1.2rem' }} />
+                Like on Facebook
+              </a>
             </div>
           </div>
         </section>

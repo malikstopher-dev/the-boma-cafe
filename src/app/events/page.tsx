@@ -8,6 +8,7 @@ import { dataService } from '@/lib/data';
 export default function EventsPage() {
   const [settings, setSettings] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     setSettings(dataService.getSettings());
@@ -17,6 +18,18 @@ export default function EventsPage() {
   const upcomingEvents = events.filter((e: any) => e.status === 'upcoming');
   const pastEvents = events.filter((e: any) => e.status === 'past');
   const featuredEvent = events.find((e: any) => e.status === 'featured') || upcomingEvents[0];
+
+  const slideshowImages = [
+    '/images/livemusic1.jpg',
+    '/images/livemusic2.jpg'
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slideshowImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <>
@@ -53,11 +66,50 @@ export default function EventsPage() {
                 boxShadow: 'var(--shadow-lg)'
               }}>
                 <div style={{
-                  background: featuredEvent.coverImage 
-                    ? `url(${featuredEvent.coverImage}) center/cover` 
-                    : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                  minHeight: '400px'
-                }} />
+                  position: 'relative',
+                  minHeight: '400px',
+                  background: '#f5f5f5'
+                }}>
+                  {slideshowImages.map((img, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `url(${img})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: index === currentSlide ? 1 : 0,
+                        transition: 'opacity 0.8s ease-in-out'
+                      }}
+                    />
+                  ))}
+                  {/* Navigation Dots */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '1.5rem',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    gap: '0.75rem'
+                  }}>
+                    {slideshowImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSlide(index)}
+                        style={{
+                          width: index === currentSlide ? '24px' : '10px',
+                          height: '10px',
+                          borderRadius: '5px',
+                          border: 'none',
+                          background: index === currentSlide ? 'var(--warm)' : 'rgba(255,255,255,0.5)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
                 <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <span style={{
                     display: 'inline-block',
