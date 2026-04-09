@@ -103,6 +103,18 @@ export const dataService = {
     }
     if (!localStorage.getItem(STORAGE_KEYS.menuItems)) {
       setToStorage(STORAGE_KEYS.menuItems, defaultMenuItems);
+    } else {
+      // Always sync menu items with latest defaults (including images)
+      const existing = getFromStorage(STORAGE_KEYS.menuItems) as any[];
+      const defaultIds = defaultMenuItems.map(m => m.id);
+      const updated = existing.map(item => {
+        const defaultItem = defaultMenuItems.find(d => d.id === item.id);
+        if (defaultItem && defaultItem.image) {
+          return { ...item, image: defaultItem.image };
+        }
+        return item;
+      });
+      setToStorage(STORAGE_KEYS.menuItems, updated);
     }
     if (!localStorage.getItem(STORAGE_KEYS.events)) {
       setToStorage(STORAGE_KEYS.events, defaultEvents);
