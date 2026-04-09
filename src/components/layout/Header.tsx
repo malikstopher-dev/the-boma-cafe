@@ -16,8 +16,11 @@ export default function Header() {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: 'https://thebomacafe.co.za/assets/files/menu.pdf', label: 'Menu', external: true },
+    { href: '/about', label: 'About' },
+    { href: '/menu', label: 'Menu' },
     { href: '/events', label: 'Events' },
+    { href: '/gallery', label: 'Gallery' },
+    { href: '/promotions', label: 'Promotions' },
     { href: '/contact', label: 'Contact' },
   ];
 
@@ -56,8 +59,6 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              target={link.external ? '_blank' : '_self'}
-              rel={link.external ? 'noopener noreferrer' : undefined}
               style={{
                 color: '#fff',
                 fontWeight: 500,

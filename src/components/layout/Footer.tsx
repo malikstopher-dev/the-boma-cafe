@@ -106,8 +106,10 @@ export default function Footer({ settings, branding }: FooterProps) {
         </div>
 
         <div style={{ paddingTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>{footerText}</p>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Crafted with passion for exceptional experiences</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>© Copyright 2026 TheBomaCafe - All Rights Reserved.</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+            Website by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--warm)', textDecoration: 'none' }}>Stopher Malik</a>
+          </p>
         </div>
       </div>
     </footer>

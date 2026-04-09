@@ -1,6 +1,8 @@
 import { Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
+import { CartProvider } from "@/lib/cart";
+import CartButton from "@/components/ui/CartButton";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -46,7 +48,10 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen">
         <AuthProvider>
-          {children}
+          <CartProvider>
+            {children}
+            <CartButton />
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

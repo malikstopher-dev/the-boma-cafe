@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { dataService } from '@/lib/data';
+import { useCart } from '@/lib/cart';
 
 export default function MenuPage() {
   const [settings, setSettings] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('All');
+  const { addItem } = useCart();
+  const [addedItem, setAddedItem] = useState<string | null>(null);
 
   useEffect(() => {
     setSettings(dataService.getSettings());
@@ -20,6 +23,18 @@ export default function MenuPage() {
   const filteredItems = activeCategory === 'All' 
     ? menuItems.filter((item: any) => !item.isOutOfStock)
     : menuItems.filter((item: any) => item.category === activeCategory && !item.isOutOfStock);
+
+  const handleAddToCart = (item: any) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      category: item.category
+    });
+    setAddedItem(item.id);
+    setTimeout(() => setAddedItem(null), 2000);
+  };
 
   return (
     <>
@@ -33,7 +48,7 @@ export default function MenuPage() {
         }}>
           <h1 style={{ fontSize: '3rem', color: 'var(--white)', marginBottom: '1rem' }}>Our Menu</h1>
           <p style={{ color: 'var(--cream)', maxWidth: '600px', margin: '0 auto' }}>
-            Discover our carefully crafted dishes made with love
+            Click on any item to add to your order
           </p>
         </section>
 
@@ -81,9 +96,9 @@ export default function MenuPage() {
           <div className="container">
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
               gap: '2rem', 
-              maxWidth: '1200px', 
+              maxWidth: '1400px', 
               margin: '0 auto' 
             }}>
               {filteredItems.map((item: any) => (
@@ -128,7 +143,7 @@ export default function MenuPage() {
                     </span>
                   )}
                   <div style={{
-                    height: '200px',
+                    height: '220px',
                     background: item.image 
                       ? `url(${item.image}) center/cover` 
                       : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)'
@@ -144,11 +159,25 @@ export default function MenuPage() {
                       <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
                         R{item.price}
                       </span>
-                      {item.category && (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', background: 'var(--white)', padding: '0.25rem 0.75rem', borderRadius: '15px' }}>
-                          {item.category}
-                        </span>
-                      )}
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        style={{
+                          padding: '0.75rem 1.25rem',
+                          background: addedItem === item.id ? '#25D366' : 'var(--primary)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '25px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <i className={addedItem === item.id ? 'fas fa-check' : 'fas fa-plus'} />
+                        {addedItem === item.id ? 'Added!' : 'Add'}
+                      </button>
                     </div>
                   </div>
                 </div>
