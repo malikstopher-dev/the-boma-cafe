@@ -703,32 +703,67 @@
   }
   
   .heroTitle {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   
   .heroSubtitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
   
   .searchSection {
-    padding: var(--space-md) 5%;
+    padding: var(--space-md) 4%;
+    position: relative;
+    top: 70px;
+  }
+  
+  .searchInput {
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-2xl);
+    font-size: 0.9rem;
   }
   
   .categoryTabs {
-    padding: var(--space-sm) 5%;
+    padding: var(--space-sm) 4%;
+    position: sticky;
+    top: 130px;
+    z-index: 80;
+  }
+  
+  .categoryTabsInner {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  
+  .categoryTabsInner::-webkit-scrollbar {
+    display: none;
   }
   
   .categoryTab {
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.85rem;
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.8rem;
+    flex-shrink: 0;
   }
   
   .menuContent {
-    padding: var(--space-lg) 5%;
+    padding: var(--space-lg) 4%;
+    position: relative;
+    top: 40px;
   }
   
   .categorySection {
     padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+  }
+  
+  .categoryTitle {
+    font-size: 1.5rem;
+  }
+  
+  .categoryDescription {
+    font-size: 0.9rem;
   }
   
   .itemsGrid {
@@ -740,44 +775,180 @@
     height: 160px;
   }
   
-  .modalContent {
-    max-width: 100%;
-    margin: var(--space-md);
+  .itemContent {
+    padding: var(--space-md);
   }
   
-  .modalFooter {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-  
-  .modalTotal {
-    text-align: center;
-  }
-  
-  .modalAddButton {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .heroTitle {
-    font-size: 1.75rem;
-  }
-  
-  .categoryTabsInner {
-    justify-content: flex-start;
-  }
-  
-  .categoryTab {
-    font-size: 0.8rem;
-  }
-  
-  .itemHeader {
-    flex-direction: column;
-    gap: var(--space-xs);
+  .itemName {
+    font-size: 1rem;
   }
   
   .itemPrice {
     font-size: 1.1rem;
+  }
+  
+  .itemDescription {
+    font-size: 0.85rem;
+  }
+  
+  .itemOptions {
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: stretch;
+  }
+  
+  .optionButton {
+    width: 100%;
+    text-align: center;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.85rem;
+  }
+  
+  .modalContent {
+    max-width: calc(100% - 32px);
+    margin: var(--space-md);
+    border-radius: var(--radius-lg);
+  }
+  
+  .modalHeader {
+    padding: var(--space-md) var(--space-lg);
+  }
+  
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+  
+  .modalBody {
+    padding: var(--space-lg);
+  }
+  
+  .optionGroup {
+    margin-bottom: var(--space-lg);
+  }
+  
+  .optionGroupTitle {
+    font-size: 0.9rem;
+  }
+  
+  .optionSelect {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .optionSelectName,
+  .checkboxLabel {
+    font-size: 0.9rem;
+  }
+  
+  .optionSelectPrice,
+  .checkboxPrice {
+    font-size: 0.85rem;
+  }
+  
+  .notesTextarea {
+    font-size: 0.9rem;
+    min-height: 70px;
+  }
+  
+  .modalFooter {
+    padding: var(--space-md) var(--space-lg);
+    flex-wrap: wrap;
+  }
+  
+  .modalTotal {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin-bottom: var(--space-sm);
+  }
+  
+  .modalTotalPrice {
+    font-size: 1.25rem;
+  }
+  
+  .modalAddButton {
+    width: 100%;
+    padding: var(--space-md);
+    font-size: 0.95rem;
+  }
+  
+  .ctaSection {
+    padding: var(--space-2xl) 5%;
+    position: relative;
+    top: 40px;
+  }
+  
+  .ctaSection h2 {
+    font-size: 1.5rem;
+  }
+  
+  .ctaSection p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: var(--space-xl) 4% var(--space-lg);
+  }
+  
+  .heroTitle {
+    font-size: 1.5rem;
+  }
+  
+  .searchSection {
+    top: 60px;
+  }
+  
+  .totalBox {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .totalLabel {
+    font-size: 0.8rem;
+  }
+  
+  .totalAmount {
+    font-size: 1rem;
+  }
+  
+  .categoryTabs {
+    top: 110px;
+  }
+  
+  .categoryTab {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+  
+  .menuContent {
+    top: 30px;
+  }
+  
+  .categorySection {
+    padding: var(--space-md);
+  }
+  
+  .categoryTitle {
+    font-size: 1.35rem;
+  }
+  
+  .itemImage {
+    height: 140px;
+  }
+  
+  .itemContent {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .itemBadges {
+    top: var(--space-sm);
+    left: var(--space-sm);
+    right: var(--space-sm);
+  }
+  
+  .badgePromo,
+  .badgeFeatured {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
   }
 }

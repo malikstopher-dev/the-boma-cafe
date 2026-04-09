@@ -74,6 +74,30 @@ body {
   overflow-x: hidden;
 }
 
+/* Global Mobile Overflow Fix */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  .section {
+    padding: var(--space-2xl) 4%;
+  }
+  
+  .container {
+    padding: 0 4%;
+  }
+  
+  .section-header h2 {
+    font-size: 1.75rem;
+  }
+  
+  .section-header p {
+    font-size: 1rem;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 600;
@@ -198,6 +222,18 @@ input, textarea, select {
 
 .btn-ghost:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile Button Styles */
+@media (max-width: 768px) {
+  .btn {
+    padding: var(--space-sm) var(--space-lg);
+    font-size: 0.85rem;
+  }
+  
+  .btn-primary {
+    padding: var(--space-sm) var(--space-lg);
+  }
 }
 
 /* Glassmorphism */
