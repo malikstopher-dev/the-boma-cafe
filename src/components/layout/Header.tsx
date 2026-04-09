@@ -46,11 +46,24 @@ export default function Header() {
       }}>
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <img 
-            src="/logo.png" 
-            alt="The Boma Cafe" 
-            style={{ height: isScrolled ? '60px' : '80px', transition: 'height 0.3s ease' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ 
+              fontFamily: 'var(--font-display)', 
+              fontSize: '1.8rem', 
+              fontWeight: 700, 
+              color: '#fff',
+              letterSpacing: '1px',
+              textTransform: 'uppercase'
+            }}>The Boma</span>
+            <span style={{ 
+              fontFamily: 'var(--font-display)', 
+              fontSize: '1.8rem', 
+              fontWeight: 700, 
+              color: 'var(--warm)',
+              letterSpacing: '1px',
+              textTransform: 'uppercase'
+            }}>Cafe</span>
+          </div>
         </Link>
 
         {/* Nav Links */}
