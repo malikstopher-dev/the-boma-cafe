@@ -1,4 +1,4 @@
-// Updated navbar
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -160,44 +160,6 @@ export default function Header() {
             <i className="fas fa-map-marker-alt" style={{ fontSize: '0.85rem' }} />
           </a>
         </div>
-
-        {/* Center - Logo */}
-        <Link href="/" style={{ textDecoration: 'none', flex: '1', display: 'flex', justifyContent: 'center' }}>
-          <img 
-            src="/logo.png" 
-            alt="The Boma Cafe" 
-            style={{ 
-              height: '70px', 
-              width: 'auto',
-              objectFit: 'contain'
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </Link>
-
-        {/* Right Side - Nav Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', width: '160px', justifyContent: 'flex-end' }}>
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              style={{
-                color: 'var(--dark-brown)',
-                fontWeight: 500,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-                letterSpacing: '0.3px',
-                transition: 'color 0.3s ease',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--dark-brown)'}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </header>
   );
