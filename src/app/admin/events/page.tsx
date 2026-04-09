@@ -7,7 +7,19 @@ export default function AdminEvents() {
   const [events, setEvents] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editEvent, setEditEvent] = useState<any>(null);
-  const [formData, setFormData] = useState({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '' });
+  const [formData, setFormData] = useState({ 
+    title: '', 
+    description: '', 
+    date: '', 
+    time: '', 
+    location: '', 
+    status: 'upcoming', 
+    showOnHomepage: false, 
+    ctaLink: '',
+    coverImage: '',
+    galleryImages: [] as string[]
+  });
+  const [imageInput, setImageInput] = useState('');
 
   useEffect(() => {
     setEvents(dataService.getEvents());
@@ -20,21 +32,35 @@ export default function AdminEvents() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const eventData = { ...formData, coverImage: imageInput, updatedAt: new Date().toISOString() };
     if (editEvent) {
-      const updated = events.map((e: any) => e.id === editEvent.id ? { ...e, ...formData, updatedAt: new Date().toISOString() } : e);
+      const updated = events.map((e: any) => e.id === editEvent.id ? { ...e, ...eventData } : e);
       saveEvents(updated);
     } else {
-      const newEvent = { ...formData, id: generateId(), coverImage: '', galleryImages: [], ticketLink: '', order: events.length + 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      const newEvent = { ...eventData, id: generateId(), galleryImages: [], ticketLink: '', order: events.length + 1, createdAt: new Date().toISOString() };
       saveEvents([...events, newEvent]);
     }
     setIsEditing(false);
     setEditEvent(null);
-    setFormData({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '' });
+    setFormData({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '', coverImage: '', galleryImages: [] });
+    setImageInput('');
   };
 
   const handleEdit = (event: any) => {
     setEditEvent(event);
-    setFormData({ title: event.title, description: event.description, date: event.date, time: event.time, location: event.location, status: event.status, showOnHomepage: event.showOnHomepage, ctaLink: event.ctaLink || '' });
+    setFormData({ 
+      title: event.title, 
+      description: event.description, 
+      date: event.date, 
+      time: event.time, 
+      location: event.location, 
+      status: event.status, 
+      showOnHomepage: event.showOnHomepage, 
+      ctaLink: event.ctaLink || '',
+      coverImage: event.coverImage || '',
+      galleryImages: event.galleryImages || []
+    });
+    setImageInput(event.coverImage || '');
     setIsEditing(true);
   };
 
@@ -64,6 +90,26 @@ export default function AdminEvents() {
             <input type="time" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             <input type="text" placeholder="Location" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}>
+              <option value="upcoming">Upcoming</option>
+              <option value="past">Past</option>
+              <option value="featured">Featured</option>
+            </select>
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--dark-brown)', fontWeight: 500 }}>Cover Image URL</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input 
+                  type="text" 
+                  placeholder="Paste image URL or /images/..." 
+                  value={imageInput} 
+                  onChange={e => setImageInput(e.target.value)}
+                  style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}
+                />
+                {imageInput && (
+                  <img src={imageInput} alt="Preview" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }} />
+                )}
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>Use /images/filename.jpg for uploaded images, or paste external URL</p>
+            </div>
               <option value="upcoming">Upcoming</option>
               <option value="past">Past</option>
               <option value="featured">Featured</option>

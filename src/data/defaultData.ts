@@ -315,6 +315,24 @@ export const defaultEvents: Event[] = [
 export const defaultPromotions: Promotion[] = [
   {
     id: '1',
+    title: 'Weekend Breakfast Buffet',
+    description: 'Saturday & Sunday from 9:30 to 12:30. Kids R45, Adult R89',
+    validFrom: '2026-04-01',
+    validUntil: '2026-12-31',
+    ctaText: 'Book Now',
+    ctaLink: '/contact',
+    displayOnHomepage: true,
+    displayAsPopup: false,
+    displayOnMenu: true,
+    displayOnPromotionsPage: true,
+    isFeatured: true,
+    isActive: true,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: '2',
     title: 'Happy Hour Specials',
     description: 'Buy one get one free on selected drinks from 4pm to 7pm daily!',
     validFrom: '2026-04-01',
@@ -327,7 +345,7 @@ export const defaultPromotions: Promotion[] = [
     displayOnPromotionsPage: true,
     isFeatured: true,
     isActive: true,
-    order: 1,
+    order: 2,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -345,7 +363,11 @@ export const defaultPromotions: Promotion[] = [
     displayOnPromotionsPage: true,
     isFeatured: false,
     isActive: true,
-    order: 2,
+    order: 3,
+    displayOnPromotionsPage: true,
+    isFeatured: false,
+    isActive: true,
+    order: 3,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
