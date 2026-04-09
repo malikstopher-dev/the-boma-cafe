@@ -77,7 +77,7 @@ export default function AdminEvents() {
           <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Events</h1>
           <p style={{ color: 'var(--text-light)' }}>{events.length} events</p>
         </div>
-        <button onClick={() => { setIsEditing(true); setEditEvent(null); setFormData({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '' }); }} className="btn btn-primary">+ Add Event</button>
+        <button onClick={() => { setIsEditing(true); setEditEvent(null); setFormData({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '', coverImage: '', galleryImages: [] }); setImageInput(''); }} className="btn btn-primary">+ Add Event</button>
       </div>
 
       {isEditing && (
@@ -94,6 +94,7 @@ export default function AdminEvents() {
               <option value="past">Past</option>
               <option value="featured">Featured</option>
             </select>
+            <input type="text" placeholder="CTA Link" value={formData.ctaLink} onChange={e => setFormData({...formData, ctaLink: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             <div style={{ gridColumn: 'span 2' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--dark-brown)', fontWeight: 500 }}>Cover Image URL</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -110,11 +111,6 @@ export default function AdminEvents() {
               </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>Use /images/filename.jpg for uploaded images, or paste external URL</p>
             </div>
-              <option value="upcoming">Upcoming</option>
-              <option value="past">Past</option>
-              <option value="featured">Featured</option>
-            </select>
-            <input type="text" placeholder="CTA Link" value={formData.ctaLink} onChange={e => setFormData({...formData, ctaLink: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><input type="checkbox" checked={formData.showOnHomepage} onChange={e => setFormData({...formData, showOnHomepage: e.target.checked})} /> Show on Homepage</label>
             <div style={{ gridColumn: 'span 2', display: 'flex', gap: '1rem' }}>
               <button type="submit" className="btn btn-primary">Save</button>
