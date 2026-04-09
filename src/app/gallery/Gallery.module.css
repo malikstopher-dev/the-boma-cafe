@@ -5,7 +5,6 @@
   overflow-x: hidden;
 }
 
-/* Hero */
 .hero {
   background: linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%);
   padding: var(--space-3xl) 5%;
@@ -25,7 +24,6 @@
   margin: 0 auto;
 }
 
-/* Category Navigation */
 .categoryNav {
   background: var(--cream);
   padding: var(--space-lg) 5%;
@@ -62,7 +60,6 @@
   color: var(--white);
 }
 
-/* Gallery Grid */
 .gallerySection {
   background: var(--white);
   padding: var(--space-2xl) 5%;
@@ -150,7 +147,6 @@
   color: var(--text-light);
 }
 
-/* Lightbox */
 .lightbox {
   position: fixed;
   inset: 0;
@@ -186,7 +182,6 @@
   justify-content: center;
 }
 
-/* Video Section */
 .videoSection {
   background: var(--cream);
   padding: var(--space-2xl) 5%;
@@ -226,7 +221,6 @@
   display: block;
 }
 
-/* Social Buttons */
 .socialButtons {
   display: flex;
   justify-content: center;
@@ -285,22 +279,32 @@
   box-shadow: 0 8px 25px rgba(24, 119, 242, 0.4);
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
+  .main {
+    padding-top: 70px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
   .hero {
-    padding: var(--space-2xl) 4%;
+    padding: var(--space-xl) 4%;
   }
   
   .heroTitle {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .heroSubtitle {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    max-width: 100%;
   }
   
   .categoryNav {
-    padding: var(--space-md) 4%;
+    padding: var(--space-sm) 4%;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
   
   .categoryButtons {
@@ -310,6 +314,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 4px;
+    max-width: 100%;
   }
   
   .categoryButtons::-webkit-scrollbar {
@@ -317,111 +322,167 @@
   }
   
   .categoryBtn {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.75rem;
     flex-shrink: 0;
   }
   
   .gallerySection {
-    padding: var(--space-lg) 4%;
+    padding: var(--space-md) 4%;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
   
   .galleryGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
   }
   
   .galleryItem.featured,
   .galleryItem.secondary {
     grid-column: span 2;
     grid-row: span 1;
-    height: 180px;
-  }
-  
-  .galleryItem.secondary {
-    height: 160px;
-  }
-  
-  .playIcon {
-    font-size: 2rem;
-  }
-  
-  .galleryTitle {
-    font-size: 0.8rem;
-  }
-  
-  .videoSection {
-    padding: var(--space-xl) 4%;
-  }
-  
-  .videoHeader {
-    margin-bottom: var(--space-lg);
-  }
-  
-  .videoTitle {
-    font-size: 1.5rem;
-  }
-  
-  .videoDesc {
-    font-size: 0.9rem;
-  }
-  
-  .videoWrapper {
-    border-radius: 12px;
-  }
-  
-  .socialButtons {
-    gap: var(--space-sm);
-    margin-top: var(--space-lg);
-  }
-  
-  .socialBtn {
-    padding: 0.75rem 1rem;
-    font-size: 0.8rem;
-  }
-  
-  .socialBtn i {
-    font-size: 1rem;
-  }
-  
-  .lightboxClose {
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero {
-    padding: var(--space-xl) 4%;
-  }
-  
-  .heroTitle {
-    font-size: 1.5rem;
-  }
-  
-  .galleryItem.featured {
     height: 150px;
+    min-height: 150px;
   }
   
   .galleryItem.secondary {
     height: 130px;
+    min-height: 130px;
   }
   
-  .playIcon {
-    font-size: 1.75rem;
+  .videoSection {
+    padding: var(--space-lg) 4%;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .videoContainer {
+    max-width: 100%;
+  }
+  
+  .videoHeader {
+    margin-bottom: var(--space-md);
+  }
+  
+  .videoTitle {
+    font-size: 1.25rem;
+  }
+  
+  .videoDesc {
+    font-size: 0.85rem;
+  }
+  
+  .videoWrapper {
+    border-radius: 12px;
+    width: 100%;
+  }
+  
+  .video {
+    width: 100%;
+    height: auto;
+    display: block;
   }
   
   .socialButtons {
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
     flex-direction: column;
     align-items: center;
   }
   
   .socialBtn {
     width: 100%;
-    max-width: 250px;
+    max-width: 220px;
     justify-content: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .lightbox {
+    padding: 0.5rem;
+  }
+  
+  .lightboxClose {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: var(--space-lg) 4%;
+  }
+  
+  .heroTitle {
+    font-size: 1.25rem;
+  }
+  
+  .galleryItem.featured,
+  .galleryItem.secondary {
+    height: 120px;
+    min-height: 120px;
+  }
+  
+  .galleryItem.secondary {
+    height: 100px;
+    min-height: 100px;
+  }
+  
+  .playIcon {
+    font-size: 1.5rem;
+  }
+  
+  .galleryTitle {
+    font-size: 0.75rem;
+  }
+  
+  .videoSection {
+    padding: var(--space-md) 4%;
+  }
+  
+  .videoHeader {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .videoTitle {
+    font-size: 1.1rem;
+  }
+  
+  .videoDesc {
+    font-size: 0.8rem;
+  }
+  
+  .videoWrapper {
+    border-radius: 10px;
+  }
+  
+  .socialButtons {
+    gap: var(--space-xs);
+  }
+  
+  .socialBtn {
+    max-width: 200px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .socialBtn i {
+    font-size: 0.9rem;
+  }
+  
+  .lightboxClose {
+    top: 0.25rem;
+    right: 0.25rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
   }
 }

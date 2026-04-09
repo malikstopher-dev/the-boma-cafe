@@ -694,38 +694,128 @@
 }
 
 @media (max-width: 768px) {
+  .main {
+    padding-top: 70px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
   .hero {
-    padding: var(--space-2xl) 5% var(--space-xl);
+    padding: var(--space-xl) 4%;
   }
   
   .breadcrumb {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
   
   .heroTitle {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .heroSubtitle {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    max-width: 100%;
   }
   
   .searchSection {
-    padding: var(--space-md) 4%;
+    padding: var(--space-sm) 4%;
     position: relative;
-    top: 70px;
+    top: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .searchRow {
+    width: 100%;
   }
   
   .searchInput {
-    padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-2xl);
-    font-size: 0.9rem;
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-xl);
+    font-size: 0.85rem;
+    width: 100%;
+  }
+  
+  .searchIcon {
+    left: var(--space-sm);
+    font-size: 0.85rem;
+  }
+  
+  .totalBox {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .totalLabel {
+    font-size: 0.8rem;
+  }
+  
+  .totalAmount {
+    font-size: 0.95rem;
   }
   
   .categoryTabs {
-    padding: var(--space-sm) 4%;
-    position: sticky;
-    top: 130px;
+    padding: var(--space-xs) 4%;
+    position: relative;
+    top: 0;
     z-index: 80;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .categoryTabsInner {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    max-width: 100%;
+  }
+  
+  .categoryTabsInner::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .categoryTab {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+  
+  .menuContent {
+    padding: var(--space-md) 4%;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .categorySection {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .categoryHeader {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+  }
+  
+  .categoryTitle {
+    font-size: 1.25rem;
+  }
+  
+  .categoryDescription {
+    font-size: 0.8rem;
+  }
+  
+  .itemsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    width: 100%;
+    max-width: 100%;
   }
   
   .categoryTabsInner {

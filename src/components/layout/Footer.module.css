@@ -150,33 +150,81 @@
 }
 
 @media (max-width: 768px) {
+  .footer {
+    padding: 2rem 4% 1.5rem;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
   .grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
   }
 
   .brand {
     grid-column: span 1;
     text-align: center;
+    max-width: 100%;
   }
 
   .logo {
     justify-content: center;
   }
 
+  .logoText,
+  .logoAccent {
+    font-size: 1.4rem;
+  }
+
   .social {
     justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .socialLink {
+    width: 36px;
+    height: 36px;
   }
 
   .links {
     text-align: center;
   }
+  
+  .links h4 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .nav {
+    gap: 0.5rem;
+  }
+  
+  .nav a {
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+  }
 
   .contact {
     text-align: center;
   }
+  
+  .contact h4 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
 
   .contactItem {
     justify-content: center;
+    font-size: 0.85rem;
+    gap: 0.5rem;
+  }
+  
+  .bottom {
+    padding-top: 1.5rem;
+  }
+  
+  .bottom p {
+    font-size: 0.8rem;
   }
 }
