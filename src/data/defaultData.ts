@@ -671,17 +671,162 @@ export const defaultMenuItems: MenuItem[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: '4',
-    name: 'Margherita Pizza',
+    id: 'p1',
+    name: 'Margherita',
     description: 'San Marzano tomatoes, fresh mozzarella, basil, extra virgin olive oil',
-    price: 155,
+    variants: [
+      { name: 'Small (9")', price: 135 },
+      { name: 'Large (12")', price: 185 }
+    ],
     category: 'Pizza',
     isFeatured: true,
     isOutOfStock: false,
     isOnPromo: false,
     showOnHomepage: true,
-    order: 4,
+    order: 1,
     image: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Extra Mozzarella', price: 25 },
+      { name: 'Fresh Basil', price: 15 },
+      { name: 'Balsamic Glaze', price: 15 }
+    ],
+    tags: ['Vegetarian'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'p2',
+    name: 'Pepperoni',
+    description: 'Tomato base, mozzarella, pepperoni, bell peppers, olives',
+    variants: [
+      { name: 'Small (9")', price: 155 },
+      { name: 'Large (12")', price: 215 }
+    ],
+    category: 'Pizza',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 2,
+    image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Extra Pepperoni', price: 30 },
+      { name: 'Jalapeños', price: 15 },
+      { name: 'Extra Cheese', price: 25 }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'p3',
+    name: 'BBQ Chicken',
+    description: 'BBQ sauce, grilled chicken, red onions, fresh cilantro',
+    variants: [
+      { name: 'Small (9")', price: 165 },
+      { name: 'Large (12")', price: 225 }
+    ],
+    category: 'Pizza',
+    isFeatured: true,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: true,
+    order: 3,
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Extra Chicken', price: 35 },
+      { name: 'Bacon', price: 25 },
+      { name: 'Extra Cheese', price: 25 }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'p4',
+    name: 'Hawaiian',
+    description: 'Tomato base, mozzarella, ham, pineapple',
+    variants: [
+      { name: 'Small (9")', price: 145 },
+      { name: 'Large (12")', price: 195 }
+    ],
+    category: 'Pizza',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 4,
+    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Extra Ham', price: 25 },
+      { name: 'Extra Pineapple', price: 15 }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'p5',
+    name: 'Meat Lovers',
+    description: 'Tomato base, mozzarella, pepperoni, bacon, ham, boerewors',
+    variants: [
+      { name: 'Small (9")', price: 175 },
+      { name: 'Large (12")', price: 245 }
+    ],
+    category: 'Pizza',
+    isFeatured: true,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: true,
+    order: 5,
+    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Extra Meat', price: 40 },
+      { name: 'Jalapeños', price: 15 }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'p6',
+    name: 'Veggie Supreme',
+    description: 'Tomato base, mushrooms, peppers, onions, olives, fresh tomatoes',
+    variants: [
+      { name: 'Small (9")', price: 145 },
+      { name: 'Large (12")', price: 195 }
+    ],
+    category: 'Pizza',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 6,
+    image: 'https://images.unsplash.com/photo-1511689660979-10d2b1aada49?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Feta Cheese', price: 20 },
+      { name: 'Extra Vegetables', price: 20 }
+    ],
+    tags: ['Vegetarian'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'p7',
+    name: 'Four Cheese',
+    description: 'Mozzarella, cheddar, parmesan, gorgonzola on creamy white base',
+    variants: [
+      { name: 'Small (9")', price: 165 },
+      { name: 'Large (12")', price: 225 }
+    ],
+    category: 'Pizza',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 7,
+    image: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=400&h=300&fit=crop',
+    addOns: [
+      { name: 'Extra Cheese', price: 30 },
+      { name: 'Fresh Basil', price: 15 }
+    ],
+    tags: ['Vegetarian'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -761,21 +906,6 @@ export const defaultMenuItems: MenuItem[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: '10',
-    name: 'Pepperoni Pizza',
-    description: 'Tomato base, mozzarella, pepperoni, bell peppers, olives',
-    price: 175,
-    category: 'Pizza',
-    isFeatured: false,
-    isOutOfStock: false,
-    isOnPromo: false,
-    showOnHomepage: false,
-    order: 10,
-    image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
     id: '11',
     name: 'Chicken Burger',
     description: 'Grilled chicken breast, bacon, avocado, tomato, lettuce, mayo',
@@ -820,36 +950,415 @@ export const defaultMenuItems: MenuItem[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
+  // HOT DRINKS
   {
-    id: '14',
-    name: 'Craft Lemonade',
-    description: 'Fresh squeezed lemonade with mint and honey',
-    price: 45,
-    category: 'Drinks',
+    id: 'hd1',
+    name: 'Americano',
+    description: 'Espresso with hot water',
+    price: 35,
+    category: 'Hot Drinks',
     isFeatured: false,
     isOutOfStock: false,
     isOnPromo: false,
     showOnHomepage: false,
-    order: 14,
-    image: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=300&fit=crop',
+    order: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
   {
-    id: '15',
-    name: 'Espresso',
-    description: 'Double shot espresso',
-    price: 35,
-    category: 'Drinks',
+    id: 'hd2',
+    name: 'Cappuccino',
+    description: 'Espresso with steamed milk foam',
+    price: 40,
+    category: 'Hot Drinks',
     isFeatured: false,
     isOutOfStock: false,
     isOnPromo: false,
     showOnHomepage: false,
-    order: 15,
-    image: 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400&h=300&fit=crop',
+    order: 2,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
-  }
+  },
+  {
+    id: 'hd3',
+    name: 'Latte',
+    description: 'Espresso with steamed milk',
+    price: 42,
+    category: 'Hot Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'hd4',
+    name: 'Flat White',
+    description: 'Double espresso with velvety milk',
+    price: 42,
+    category: 'Hot Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 4,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'hd5',
+    name: 'Tea',
+    description: 'Selection of tea bags - rooibos, black, green, Earl Grey',
+    price: 25,
+    category: 'Hot Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'hd6',
+    name: 'Hot Chocolate',
+    description: 'Rich chocolate with steamed milk & whipped cream',
+    price: 45,
+    category: 'Hot Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 6,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+  // COLD DRINKS
+  {
+    id: 'cd1',
+    name: 'Soft Drinks',
+    description: 'Coca-Cola, Sprite, Fanta, Twist',
+    price: 30,
+    category: 'Cold Drinks',
+    variants: [
+      { name: '330ml Can', price: 30 },
+      { name: '500ml Bottle', price: 40 }
+    ],
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'cd2',
+    name: 'Tonic Water / Soda Water',
+    price: 25,
+    category: 'Cold Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 2,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'cd3',
+    name: 'Craft Lemonade',
+    description: 'Fresh squeezed with mint and honey',
+    price: 45,
+    category: 'Cold Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'cd4',
+    name: 'Iced Coffee',
+    description: 'Espresso over ice with milk',
+    price: 45,
+    category: 'Cold Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 4,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'cd5',
+    name: 'Iced Tea',
+    description: 'Peach or lemon',
+    price: 35,
+    category: 'Cold Drinks',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+  // JUICES & SMOOTHIES
+  {
+    id: 'js1',
+    name: 'Fresh Juice',
+    description: 'Orange, Apple, or Carrot',
+    price: 40,
+    category: 'Juices & Smoothies',
+    variants: [
+      { name: 'Regular', price: 40 },
+      { name: 'Large', price: 55 }
+    ],
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'js2',
+    name: 'Smoothie',
+    description: 'Banana, Strawberry, or Mixed Berry',
+    price: 55,
+    category: 'Juices & Smoothies',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 2,
+    addOns: [
+      { name: 'Protein', price: 15 },
+      { name: 'Extra Fruit', price: 15 }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'js3',
+    name: 'Milkshake',
+    description: 'Chocolate, Vanilla, or Strawberry',
+    price: 55,
+    category: 'Juices & Smoothies',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+  // BEERS & CIDERS
+  {
+    id: 'bc1',
+    name: 'Castle Lager',
+    price: 40,
+    category: 'Beers & Ciders',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'bc2',
+    name: 'Heineken',
+    price: 45,
+    category: 'Beers & Ciders',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 2,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'bc3',
+    name: 'Carlsberg',
+    price: 42,
+    category: 'Beers & Ciders',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'bc4',
+    name: 'Savanna Light',
+    price: 45,
+    category: 'Beers & Ciders',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 4,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'bc5',
+    name: 'Strongbow',
+    price: 45,
+    category: 'Beers & Ciders',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+  // WINES
+  {
+    id: 'w1',
+    name: 'House Red',
+    description: 'Glass of our selection',
+    price: 55,
+    category: 'Wines',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'w2',
+    name: 'House White',
+    description: 'Glass of our selection',
+    price: 55,
+    category: 'Wines',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 2,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'w3',
+    name: 'Rosé',
+    description: 'Glass of house rosé',
+    price: 55,
+    category: 'Wines',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'w4',
+    name: 'Prosecco',
+    description: 'Glass of sparkling wine',
+    price: 65,
+    category: 'Wines',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 4,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+  // COCKTAILS
+  {
+    id: 'ck1',
+    name: 'Classic Mojito',
+    description: 'White rum, fresh mint, lime, soda',
+    price: 75,
+    category: 'Cocktails',
+    isFeatured: true,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'ck2',
+    name: 'Margarita',
+    description: 'Tequila, triple sec, lime',
+    price: 75,
+    category: 'Cocktails',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 2,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'ck3',
+    name: 'Pina Colada',
+    description: 'White rum, coconut cream, pineapple',
+    price: 75,
+    category: 'Cocktails',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'ck4',
+    name: 'Whiskey Sour',
+    description: 'Whiskey, lemon juice, sugar, egg white',
+    price: 80,
+    category: 'Cocktails',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 4,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'ck5',
+    name: 'Cosmopolitan',
+    description: 'Vodka, triple sec, cranberry, lime',
+    price: 75,
+    category: 'Cocktails',
+    isFeatured: false,
+    isOutOfStock: false,
+    isOnPromo: false,
+    showOnHomepage: false,
+    order: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
 ];
 
 export const defaultEvents: Event[] = [

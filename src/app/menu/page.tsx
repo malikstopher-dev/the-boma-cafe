@@ -1,33 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { dataService } from '@/lib/data';
 import { useCart } from '@/lib/cart';
-import { buildMenuData } from '@/data/menuData';
 import { MenuItem, MenuCategory } from '@/types';
 import MenuCategorySection from '@/components/menu/MenuCategorySection';
 import MenuItemCard from '@/components/menu/MenuItemCard';
+import { defaultCategories, defaultMenuItems } from '@/data/defaultData';
 import styles from './Menu.module.css';
 
+const FOOD_CATEGORIES = ['Breakfast', 'Toasties', 'Hungry... Ish', 'Curries & Bunnies', 'Starters', 'Mains', 'Burgers', 'Pizza', 'Salads', 'Desserts'];
+const DRINK_CATEGORIES = ['Hot Drinks', 'Cold Drinks', 'Juices & Smoothies', 'Beers & Ciders', 'Wines', 'Cocktails'];
+
 export default function MenuPage() {
-  const [settings, setSettings] = useState<any>(null);
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [menuData, setMenuData] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const { addItem } = useCart();
 
-  useEffect(() => {
-    const loadedSettings = dataService.getSettings();
-    const loadedCategories = dataService.getCategories();
-    const loadedMenuItems = dataService.getMenuItems();
+  const { categories, sections } = useMemo(() => {
+    const cats = defaultCategories.filter(c => c.isActive).sort((a, b) => a.order - b.order);
     
-    setSettings(loadedSettings);
-    setCategories(loadedCategories);
-    setMenuItems(loadedMenuItems);
-    setMenuData(buildMenuData(loadedCategories, loadedMenuItems));
+    const secs = cats.map(cat => {
+      const items = defaultMenuItems
+        .filter(item => item.category === cat.name && !item.isOutOfStock)
+        .sort((a, b) => a.order - b.order);
+      return { id: cat.id, name: cat.name, description: cat.description, items };
+    }).filter(s => s.items.length > 0);
+    
+    return { categories: cats, sections: secs };
   }, []);
 
   const handleAddToCart = (item: MenuItem, selectedSize?: string, selectedAddOns?: string[]) => {
@@ -63,17 +63,15 @@ export default function MenuPage() {
       const headerOffset = 100;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   };
 
   const filteredSections = activeCategory === 'All'
-    ? menuData?.sections || []
-    : menuData?.sections.filter((s: any) => s.name === activeCategory) || [];
+    ? sections
+    : sections.filter(s => s.name === activeCategory);
+
+  const visibleSections = filteredSections.length > 0 ? filteredSections : sections;
 
   return (
     <>
@@ -82,7 +80,7 @@ export default function MenuPage() {
         <section className={styles.hero}>
           <h1 className={styles.heroTitle}>Our Menu</h1>
           <p className={styles.heroSubtitle}>
-            Click on any item to add to your order
+            Fresh, hearty dishes made with love
           </p>
         </section>
 
@@ -94,7 +92,7 @@ export default function MenuPage() {
             >
               All
             </button>
-            {menuData?.categories.map((cat: MenuCategory) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 className={`${styles.categoryBtn} ${activeCategory === cat.name ? styles.active : ''}`}
@@ -110,7 +108,7 @@ export default function MenuPage() {
         </nav>
 
         <div className={styles.menuContent}>
-          {filteredSections.map((section: any) => (
+          {visibleSections.map((section) => (
             <MenuCategorySection
               key={section.id}
               id={section.id}
@@ -136,7 +134,7 @@ export default function MenuPage() {
           <a href="/contact" className="btn btn-primary">Contact Us</a>
         </section>
       </main>
-      <Footer settings={settings} />
+      <Footer settings={null} />
     </>
   );
 }
