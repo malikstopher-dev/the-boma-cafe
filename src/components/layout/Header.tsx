@@ -77,7 +77,7 @@ export default function Header() {
               src="/logo.png" 
               alt="The Boma Cafe" 
               style={{ 
-                height: '56px', 
+                height: '72px', 
                 width: 'auto',
                 objectFit: 'contain',
               }}

@@ -28,12 +28,12 @@ export default function Footer({ settings, branding }: FooterProps) {
   return (
     <footer style={{ background: 'var(--dark)', padding: '4rem 5% 2rem', color: 'rgba(255,255,255,0.8)' }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '3rem', paddingBottom: '3rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.3fr', gap: '2.5rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--white)', marginBottom: '0.75rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--white)', marginBottom: '0.5rem' }}>
               The Boma Cafe
             </h3>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', marginBottom: '1rem' }}>
               Where the Rustic Meets the Soulful
             </p>
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -69,8 +69,8 @@ export default function Footer({ settings, branding }: FooterProps) {
           </div>
 
           <div>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 600 }}>Quick Links</h4>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1rem', fontWeight: 600 }}>Quick Links</h4>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {[
                 { label: 'Home', href: '/' },
                 { label: 'About', href: '/about' },
@@ -86,8 +86,8 @@ export default function Footer({ settings, branding }: FooterProps) {
           </div>
 
           <div>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 600 }}>Contact Us</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1rem', fontWeight: 600 }}>Contact Us</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {c.phone && (
                 <a href={`tel:${c.phone}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem' }}>
                   <span>📞</span> {c.phone}
@@ -113,7 +113,7 @@ export default function Footer({ settings, branding }: FooterProps) {
         </div>
 
         <div style={{ paddingTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>© Copyright 2026 TheBomaCafe - All Rights Reserved.</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>© Copyright 2026 The Boma Cafe - All Rights Reserved.</p>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
             Website by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--warm)', textDecoration: 'none' }}>Stopher Malik</a>
           </p>

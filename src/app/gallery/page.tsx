@@ -166,7 +166,7 @@ export default function GalleryPage() {
         )}
 
         {/* Featured Video Section */}
-        <section style={{ background: 'var(--cream)', padding: '4rem 5%' }}>
+        <section style={{ background: 'var(--cream)', padding: '3rem 5%' }}>
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '2rem', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)' }}>Featured Video</h2>
