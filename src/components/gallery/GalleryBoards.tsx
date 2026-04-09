@@ -2,69 +2,28 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import styles from '@/app/gallery/Gallery.module.css';
+import { galleryCategories, galleryImages, getGalleryImages } from '@/data/galleryManifest';
 
 interface GalleryBoardsProps {
   onManageClick?: () => void;
 }
 
-interface BoardCategory {
-  id: string;
-  name: string;
-  folder: string;
-  icon: string;
-}
-
-const categories: BoardCategory[] = [
-  { id: 'events', name: 'Events', folder: 'events', icon: '🎉' },
-  { id: 'food', name: 'Food', folder: 'food', icon: '🍽️' },
-  { id: 'venue', name: 'Venue', folder: 'venue', icon: '🏠' },
-  { id: 'people', name: 'People', folder: 'people', icon: '👥' },
-  { id: 'promotions', name: 'Promotions', folder: 'promotions', icon: '🎁' },
-];
-
 export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
-  const [images, setImages] = useState<Record<string, string[]>>({});
   const [activeSlide, setActiveSlide] = useState<Record<string, number>>({});
-  const [isLoaded, setIsLoaded] = useState(false);
   const intervalRefs = useRef<Record<string, NodeJS.Timeout>>({});
 
   useEffect(() => {
-    const loadImages = async () => {
-      const loadedImages: Record<string, string[]> = {};
-      const initialSlides: Record<string, number> = {};
-      
-      for (const cat of categories) {
-        try {
-          const response = await fetch(`/api/gallery/${cat.folder}`);
-          if (response.ok) {
-            const data = await response.json();
-            loadedImages[cat.id] = data.images || [];
-          }
-        } catch (error) {
-          console.log(`Could not load ${cat.folder} images`);
-          loadedImages[cat.id] = [];
-        }
-        initialSlides[cat.id] = 0;
-      }
-      
-      setImages(loadedImages);
-      setActiveSlide(initialSlides);
-      setIsLoaded(true);
-    };
-
-    loadImages();
-
-    return () => {
-      Object.values(intervalRefs.current).forEach(clearInterval);
-    };
+    const initialSlides: Record<string, number> = {};
+    galleryCategories.forEach(cat => {
+      initialSlides[cat.id] = 0;
+    });
+    setActiveSlide(initialSlides);
   }, []);
 
   useEffect(() => {
-    if (!isLoaded) return;
-
-    categories.forEach(cat => {
-      const boardImages = images[cat.id] || [];
-      if (boardImages.length <= 1) return;
+    galleryCategories.forEach(cat => {
+      const images = getGalleryImages(cat.id);
+      if (images.length <= 1) return;
 
       if (intervalRefs.current[cat.id]) {
         clearInterval(intervalRefs.current[cat.id]);
@@ -73,7 +32,7 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
       intervalRefs.current[cat.id] = setInterval(() => {
         setActiveSlide(prev => ({
           ...prev,
-          [cat.id]: prev[cat.id] === boardImages.length - 1 ? 0 : prev[cat.id] + 1
+          [cat.id]: prev[cat.id] === images.length - 1 ? 0 : prev[cat.id] + 1
         }));
       }, 3000);
     });
@@ -81,7 +40,7 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
     return () => {
       Object.values(intervalRefs.current).forEach(clearInterval);
     };
-  }, [isLoaded, images]);
+  }, []);
 
   const handleDotClick = useCallback((boardId: string, index: number) => {
     setActiveSlide(prev => ({ ...prev, [boardId]: index }));
@@ -95,8 +54,8 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
       </div>
       
       <div className={styles.boardsGrid}>
-        {categories.map((cat) => {
-          const boardImages = images[cat.id] || [];
+        {galleryCategories.map((cat) => {
+          const boardImages = getGalleryImages(cat.id);
           const currentSlide = activeSlide[cat.id] ?? 0;
           
           if (boardImages.length === 0) {
@@ -126,7 +85,7 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
                     key={`${cat.id}-${idx}`}
                     className={`${styles.boardSlide} ${idx === currentSlide ? styles.active : ''}`}
                     style={{ 
-                      backgroundImage: `url(${img})`,
+                      backgroundImage: `url(${img.url})`,
                       zIndex: idx === currentSlide ? 1 : 0
                     }}
                   />
