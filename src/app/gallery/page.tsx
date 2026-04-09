@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { dataService } from '@/lib/data';
+import GalleryBoards from '@/components/gallery/GalleryBoards';
 import styles from './Gallery.module.css';
 
 export default function GalleryPage() {
@@ -98,6 +99,9 @@ export default function GalleryPage() {
             </button>
           </div>
         )}
+
+        {/* Gallery Boards Section */}
+        <GalleryBoards />
 
         {/* Featured Video Section */}
         <section className={styles.videoSection}>
