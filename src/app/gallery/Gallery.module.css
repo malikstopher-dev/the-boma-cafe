@@ -354,7 +354,6 @@
     min-height: 130px;
   }
   
-  /* Gallery Boards Mobile Styles */
   .boardsSection {
     padding: var(--space-lg) 4%;
   }
@@ -372,7 +371,7 @@
   }
   
   .boardsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.75rem;
   }
   
@@ -482,69 +481,7 @@
   }
 }
 
-@media (max-width: 480px) {
-  .hero {
-    padding: var(--space-lg) 4%;
-  }
-  
-  .heroTitle {
-    font-size: 1.25rem;
-  }
-  
-  .galleryItem.featured,
-  .galleryItem.secondary {
-    height: 120px;
-    min-height: 120px;
-  }
-  
-  .galleryItem.secondary {
-    height: 100px;
-    min-height: 100px;
-  }
-  
-  .playIcon {
-    font-size: 1.5rem;
-  }
-  
-  .galleryTitle {
-    font-size: 0.75rem;
-  }
-  
-  .videoSection {
-    padding: var(--space-md) 4%;
-  }
-  
-  .videoHeader {
-    margin-bottom: var(--space-sm);
-  }
-  
-  .videoTitle {
-    font-size: 1.1rem;
-  }
-  
-  .videoDesc {
-    font-size: 0.8rem;
-  }
-  
-  .videoWrapper {
-    border-radius: 10px;
-  }
-  
-  .socialButtons {
-    gap: var(--space-xs);
-  }
-  
-  .socialBtn {
-    max-width: 200px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
-  }
-  
-.socialBtn i {
-  font-size: 0.9rem;
-}
-
-/* ===== GALLERY BOARDS SECTION ===== */
+/* ===== GALLERY BOARDS SECTION - Desktop ===== */
 .boardsSection {
   background: var(--white);
   padding: var(--space-xl) 5%;
@@ -609,6 +546,7 @@
   position: relative;
   height: 120px;
   overflow: hidden;
+  background: var(--cream-dark);
 }
 
 .boardSlideTrack {
@@ -619,7 +557,10 @@
 
 .boardSlide {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
   opacity: 0;
@@ -712,6 +653,81 @@
   color: var(--text-light);
   font-size: 0.8rem;
 }
+
+@media (max-width: 480px) {
+  .hero {
+    padding: var(--space-lg) 4%;
+  }
+  
+  .heroTitle {
+    font-size: 1.25rem;
+  }
+  
+  .galleryItem.featured,
+  .galleryItem.secondary {
+    height: 120px;
+    min-height: 120px;
+  }
+  
+  .galleryItem.secondary {
+    height: 100px;
+    min-height: 100px;
+  }
+  
+  .playIcon {
+    font-size: 1.5rem;
+  }
+  
+  .galleryTitle {
+    font-size: 0.75rem;
+  }
+  
+  .boardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .boardSlideContainer {
+    height: 80px;
+  }
+  
+  .boardEmpty {
+    height: 80px;
+  }
+  
+  .videoSection {
+    padding: var(--space-md) 4%;
+  }
+  
+  .videoHeader {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .videoTitle {
+    font-size: 1.1rem;
+  }
+  
+  .videoDesc {
+    font-size: 0.8rem;
+  }
+  
+  .videoWrapper {
+    border-radius: 10px;
+  }
+  
+  .socialButtons {
+    gap: var(--space-xs);
+  }
+  
+  .socialBtn {
+    max-width: 200px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .socialBtn i {
+    font-size: 0.9rem;
+  }
   
   .lightboxClose {
     top: 0.25rem;

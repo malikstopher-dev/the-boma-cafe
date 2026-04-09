@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import styles from '@/app/gallery/Gallery.module.css';
 
 interface GalleryBoardsProps {
@@ -22,18 +22,16 @@ const categories: BoardCategory[] = [
   { id: 'promotions', name: 'Promotions', folder: 'promotions', icon: '🎁' },
 ];
 
-interface BoardSlide {
-  index: number;
-  isActive: boolean;
-}
-
 export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [activeSlide, setActiveSlide] = useState<Record<string, number>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
+  const intervalRefs = useRef<Record<string, NodeJS.Timeout>>({});
 
   useEffect(() => {
     const loadImages = async () => {
       const loadedImages: Record<string, string[]> = {};
+      const initialSlides: Record<string, number> = {};
       
       for (const cat of categories) {
         try {
@@ -46,32 +44,47 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
           console.log(`Could not load ${cat.folder} images`);
           loadedImages[cat.id] = [];
         }
+        initialSlides[cat.id] = 0;
       }
       
       setImages(loadedImages);
-      
-      const initialSlides: Record<string, number> = {};
-      categories.forEach(cat => {
-        initialSlides[cat.id] = 0;
-      });
       setActiveSlide(initialSlides);
+      setIsLoaded(true);
     };
 
     loadImages();
+
+    return () => {
+      Object.values(intervalRefs.current).forEach(clearInterval);
+    };
   }, []);
 
-  const nextSlide = useCallback((boardId: string, totalSlides: number) => {
-    setActiveSlide(prev => ({
-      ...prev,
-      [boardId]: prev[boardId] === totalSlides - 1 ? 0 : prev[boardId] + 1
-    }));
-  }, []);
+  useEffect(() => {
+    if (!isLoaded) return;
 
-  const prevSlide = useCallback((boardId: string, totalSlides: number) => {
-    setActiveSlide(prev => ({
-      ...prev,
-      [boardId]: prev[boardId] === 0 ? totalSlides - 1 : prev[boardId] - 1
-    }));
+    categories.forEach(cat => {
+      const boardImages = images[cat.id] || [];
+      if (boardImages.length <= 1) return;
+
+      if (intervalRefs.current[cat.id]) {
+        clearInterval(intervalRefs.current[cat.id]);
+      }
+
+      intervalRefs.current[cat.id] = setInterval(() => {
+        setActiveSlide(prev => ({
+          ...prev,
+          [cat.id]: prev[cat.id] === boardImages.length - 1 ? 0 : prev[cat.id] + 1
+        }));
+      }, 3000);
+    });
+
+    return () => {
+      Object.values(intervalRefs.current).forEach(clearInterval);
+    };
+  }, [isLoaded, images]);
+
+  const handleDotClick = useCallback((boardId: string, index: number) => {
+    setActiveSlide(prev => ({ ...prev, [boardId]: index }));
   }, []);
 
   return (
@@ -84,7 +97,7 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
       <div className={styles.boardsGrid}>
         {categories.map((cat) => {
           const boardImages = images[cat.id] || [];
-          const currentSlide = activeSlide[cat.id] || 0;
+          const currentSlide = activeSlide[cat.id] ?? 0;
           
           if (boardImages.length === 0) {
             return (
@@ -108,44 +121,28 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
               </div>
               
               <div className={styles.boardSlideContainer}>
-                <div className={styles.boardSlideTrack}>
-                  {boardImages.map((img, idx) => (
-                    <div
-                      key={idx}
-                      className={`${styles.boardSlide} ${idx === currentSlide ? styles.active : ''}`}
-                      style={{ backgroundImage: `url(${img})` }}
-                    />
-                  ))}
-                </div>
+                {boardImages.map((img, idx) => (
+                  <div
+                    key={`${cat.id}-${idx}`}
+                    className={`${styles.boardSlide} ${idx === currentSlide ? styles.active : ''}`}
+                    style={{ 
+                      backgroundImage: `url(${img})`,
+                      zIndex: idx === currentSlide ? 1 : 0
+                    }}
+                  />
+                ))}
                 
                 {boardImages.length > 1 && (
-                  <>
-                    <button 
-                      className={`${styles.boardNavBtn} ${styles.boardNavPrev}`}
-                      onClick={() => prevSlide(cat.id, boardImages.length)}
-                      aria-label="Previous image"
-                    >
-                      ‹
-                    </button>
-                    <button 
-                      className={`${styles.boardNavBtn} ${styles.boardNavNext}`}
-                      onClick={() => nextSlide(cat.id, boardImages.length)}
-                      aria-label="Next image"
-                    >
-                      ›
-                    </button>
-                    
-                    <div className={styles.boardDots}>
-                      {boardImages.map((_, idx) => (
-                        <button
-                          key={idx}
-                          className={`${styles.boardDot} ${idx === currentSlide ? styles.activeDot : ''}`}
-                          onClick={() => setActiveSlide(prev => ({ ...prev, [cat.id]: idx }))}
-                          aria-label={`Go to slide ${idx + 1}`}
-                        />
-                      ))}
-                    </div>
-                  </>
+                  <div className={styles.boardDots}>
+                    {boardImages.map((_, idx) => (
+                      <button
+                        key={`dot-${idx}`}
+                        className={`${styles.boardDot} ${idx === currentSlide ? styles.activeDot : ''}`}
+                        onClick={() => handleDotClick(cat.id, idx)}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
               
