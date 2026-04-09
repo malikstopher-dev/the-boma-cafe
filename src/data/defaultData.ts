@@ -364,10 +364,6 @@ export const defaultPromotions: Promotion[] = [
     isFeatured: false,
     isActive: true,
     order: 3,
-    displayOnPromotionsPage: true,
-    isFeatured: false,
-    isActive: true,
-    order: 3,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
