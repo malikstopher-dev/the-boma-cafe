@@ -105,7 +105,7 @@ export const dataService = {
       setToStorage(STORAGE_KEYS.menuItems, defaultMenuItems);
     } else {
       // Always sync menu items with latest defaults (including images)
-      const existing = getFromStorage(STORAGE_KEYS.menuItems) as any[];
+      const existing = getFromStorage(STORAGE_KEYS.menuItems, defaultMenuItems) as any[];
       const defaultIds = defaultMenuItems.map(m => m.id);
       const updated = existing.map(item => {
         const defaultItem = defaultMenuItems.find(d => d.id === item.id);
