@@ -754,11 +754,22 @@ input, textarea, select {
     grid-template-columns: repeat(2, 1fr) !important;
   }
   
-  /* Images */
-  img {
+  /* Images - scoped to content images only, not logos/icons */
+  .section img,
+  .container img,
+  [class*="Content"] img,
+  .card img {
     max-width: 100%;
     width: 100%;
     height: auto;
+  }
+  
+  /* Keep logos at natural size */
+  .logo img,
+  header img {
+    width: auto;
+    height: auto;
+    max-width: none;
   }
   
   [style*="height: 450px"],
