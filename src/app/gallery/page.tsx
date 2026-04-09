@@ -166,15 +166,13 @@ export default function GalleryPage() {
         )}
 
         {/* Featured Video Section */}
-        <section className="section" style={{ background: 'var(--cream)' }}>
-          <div className="container">
-            <div className="section-header">
-              <h2>Featured Video</h2>
-              <p>Watch the atmosphere, energy, and experience of The Boma Cafe.</p>
+        <section style={{ background: 'var(--cream)', padding: '4rem 5%' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '2rem', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)' }}>Featured Video</h2>
+              <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>Watch the atmosphere, energy, and experience of The Boma Cafe.</p>
             </div>
             <div style={{ 
-              maxWidth: '900px', 
-              margin: '0 auto',
               background: 'var(--white)',
               borderRadius: '20px',
               overflow: 'hidden',
@@ -182,6 +180,10 @@ export default function GalleryPage() {
             }}>
               <video 
                 controls
+                preload="metadata"
+                poster="/images/about.jpg"
+                style={{ width: '100%', display: 'block' }}
+              >
                 preload="metadata"
                 style={{ width: '100%', display: 'block' }}
                 poster="/images/about.jpg"
@@ -195,8 +197,8 @@ export default function GalleryPage() {
             <div style={{ 
               display: 'flex', 
               justifyContent: 'center', 
-              gap: '1.5rem', 
-              marginTop: '3rem',
+              gap: '1rem', 
+              marginTop: '2rem',
               flexWrap: 'wrap'
             }}>
               <a 

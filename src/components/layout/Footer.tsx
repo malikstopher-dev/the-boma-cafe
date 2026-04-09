@@ -30,12 +30,11 @@ export default function Footer({ settings, branding }: FooterProps) {
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '3rem', paddingBottom: '3rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 700, color: 'var(--white)' }}>{b.siteName || 'The Boma'}</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 700, color: 'var(--warm)' }}>Cafe</span>
-            </div>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', marginBottom: '1.5rem' }}>
-              {b.siteTagline || 'Where the Rustic Meets the Soulful'}
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--white)', marginBottom: '0.75rem' }}>
+              The Boma Cafe
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>
+              Where the Rustic Meets the Soulful
             </p>
             <div style={{ display: 'flex', gap: '1rem' }}>
               {b.facebook && (
@@ -70,8 +69,8 @@ export default function Footer({ settings, branding }: FooterProps) {
           </div>
 
           <div>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--white)', marginBottom: '1.5rem' }}>Quick Links</h4>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 600 }}>Quick Links</h4>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {[
                 { label: 'Home', href: '/' },
                 { label: 'About', href: '/about' },
@@ -87,8 +86,8 @@ export default function Footer({ settings, branding }: FooterProps) {
           </div>
 
           <div>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--white)', marginBottom: '1.5rem' }}>Contact Us</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 600 }}>Contact Us</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {c.phone && (
                 <a href={`tel:${c.phone}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem' }}>
                   <span>📞</span> {c.phone}
