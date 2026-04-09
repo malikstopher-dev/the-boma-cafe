@@ -32,10 +32,10 @@ const defaultSiteSettings: SiteSettings = {
   },
   contact: {
     address: 'Sandton, Johannesburg, South Africa',
-    phone: '072 996 2212',
-    phone2: '',
+    phone: '071 592 1190',
+    phone2: '072 996 2212',
     email: 'info@thebomacafe.co.za',
-    whatsapp: '',
+    whatsapp: 'https://wa.me/27715921190',
     openingHours: 'Mon-Sun: 8:00 AM - 10:00 PM',
     mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3586.584890123456!2d28.0567!3f-26.0833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e9573a1f9f9f9f9%3A0x1e9573a1f9f9f9f9f!2sSandton%2C%20Johannesburg%2C%20South%20Africa!5e0!3m2!1sen!2s!4v1630000000000!5m2!1sen!2s'
   },
@@ -54,6 +54,7 @@ const defaultSiteSettings: SiteSettings = {
     facebook: 'https://facebook.com/thebomacafe',
     instagram: 'https://instagram.com/thebomacafe',
     twitter: '',
+    tiktok: 'https://tiktok.com/@thebomacafe',
     youtube: ''
   },
   seo: {

@@ -19,14 +19,9 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const inquiries = dataService.getInquiries();
-    const newInquiry = {
-      id: generateId(),
-      ...formData,
-      createdAt: new Date().toISOString(),
-      isRead: false
-    };
-    dataService.saveInquiries([...inquiries, newInquiry]);
+    const subject = formData.subject ? `[The Boma Cafe] ${formData.subject}` : '[The Boma Cafe] New Inquiry';
+    const body = `Name: ${formData.name}%0D%0AEmail: ${formData.email}%0D%0APhone: ${formData.phone}%0D%0A%0D%0AMessage:%0D%0A${formData.message}`;
+    window.location.href = `mailto:info@thebomacafe.co.za?subject=${subject}&body=${body}`;
     setIsSubmitted(true);
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
   };

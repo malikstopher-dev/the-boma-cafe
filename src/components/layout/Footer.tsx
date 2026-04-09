@@ -65,6 +65,16 @@ export default function Footer({ settings, branding }: FooterProps) {
                   <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
                 </a>
               )}
+              {b.tiktok && (
+                <a href={b.tiktok} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px',
+                  background: 'rgba(255,255,255,0.1)', borderRadius: '50%', color: 'var(--white)', transition: 'all 0.3s ease'
+                }}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.12.02-2.23-.22-3.18-.79-.87-.5-1.51-1.24-1.91-2.12-.39-.84-.53-1.83-.39-2.76.16-1.11.87-2.08 1.89-2.57.96-.46 2.07-.42 3.02.08.52.27.97.67 1.32 1.18.33-.01.65-.01.98-.02.12-1.52.84-2.91 2.03-3.84.67-.53 1.5-.86 2.38-1.01V.02z"/>
+                  </svg>
+                </a>
+              )}
             </div>
           </div>
 
@@ -93,6 +103,11 @@ export default function Footer({ settings, branding }: FooterProps) {
                   <span>📞</span> {c.phone}
                 </a>
               )}
+              {c.phone2 && (
+                <a href={`tel:${c.phone2}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontSize: '0.85rem' }}>
+                  <span style={{ opacity: 0 }}>📞</span> {c.phone2}
+                </a>
+              )}
               {c.email && (
                 <a href={`mailto:${c.email}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem' }}>
                   <span>✉️</span> {c.email}
@@ -113,9 +128,9 @@ export default function Footer({ settings, branding }: FooterProps) {
         </div>
 
         <div style={{ paddingTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>© Copyright 2026 The Boma Cafe - All Rights Reserved.</p>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-            Website by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--warm)', textDecoration: 'none' }}>Stopher Malik</a>
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', lineHeight: 1.6 }}>© {currentYear} The Boma Cafe. All rights reserved.</p>
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', marginTop: '0.25rem' }}>
+            Site by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--warm)', textDecoration: 'none', fontWeight: 500 }}>Stopher Malik</a>
           </p>
         </div>
       </div>
