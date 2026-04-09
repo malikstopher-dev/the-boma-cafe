@@ -30,10 +30,12 @@ export const galleryImages: Record<string, GalleryImage[]> = {
     { url: '/gallery/food/gallery-1-800x600.jpeg', alt: 'Signature dish' },
     { url: '/gallery/food/gallery-2-800x600.jpeg', alt: 'Appetizer' },
     { url: '/gallery/food/2023-10-02.webp', alt: 'Main course' },
+    { url: '/gallery/food/2023-10-11.webp', alt: 'Appetizer' },
+    { url: '/gallery/food/2023-10-14.webp', alt: 'Plated meal' },
     { url: '/gallery/food/2025-02-19.webp', alt: 'Dessert' },
-    { url: '/gallery/food/2025-03-06.webp', alt: 'Plated meal' },
+    { url: '/gallery/food/2025-03-06.webp', alt: 'Beverage' },
     { url: '/gallery/food/2025-04-10.webp', alt: 'Cocktail' },
-    { url: '/gallery/food/2025-07-27.webp', alt: 'Beverage' },
+    { url: '/gallery/food/2025-07-27.webp', alt: 'Weekend special' },
   ],
   venue: [
     { url: '/gallery/venue/heroslide-1800x1013.jpeg', alt: 'Restaurant exterior' },
@@ -46,7 +48,6 @@ export const galleryImages: Record<string, GalleryImage[]> = {
   ],
   people: [
     { url: '/gallery/people/boma1-1152x864.jpeg', alt: 'Guests enjoying meal' },
-    { url: '/gallery/people/bomacafe2_large (1).jpg', alt: 'Table setting' },
     { url: '/gallery/people/bomacafe4_large.jpg', alt: 'Evening ambiance' },
     { url: '/gallery/people/gallery-7-800x600.jpeg', alt: 'Group gathering' },
     { url: '/gallery/people/2026-04-08 (3).webp', alt: 'Celebration' },
