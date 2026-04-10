@@ -401,6 +401,10 @@ export function getCategories(): any[] {
   const rows = database.prepare('SELECT * FROM menu_categories ORDER BY order_index ASC').all() as any[];
   return rows.map(row => ({
     ...row,
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    order: row.order_index,
     isActive: row.is_active === 1
   }));
 }
@@ -443,6 +447,7 @@ export function getMenuItems(): any[] {
   const rows = database.prepare('SELECT * FROM menu_items ORDER BY order_index ASC').all() as any[];
   return rows.map(row => ({
     ...row,
+    categoryId: row.category_id,
     isAvailable: row.is_available === 1,
     isFeatured: row.is_featured === 1,
     isOnPromo: row.is_on_promo === 1,
