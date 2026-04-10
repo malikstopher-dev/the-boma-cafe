@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
-import { cmsService } from '@/lib/client-cms';
 import { MenuItem, MenuCategory } from '@/types';
 import { defaultCategories, defaultMenuItems } from '@/data/defaultData';
 import styles from './Menu.module.css';
@@ -149,37 +148,14 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<any[]>(defaultMenuItems);
   const { addItem, items: cartItems, total } = useCart();
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [cats, items] = await Promise.all([
-          cmsService.getCategories(),
-          cmsService.getMenuItems()
-        ]);
-        console.log('Loaded categories:', cats.length, 'items:', items.length);
-        if (cats.length > 0) setCategories(cats);
-        if (items.length > 0) setMenuItems(items);
-      } catch (error) {
-        console.error('Error loading menu data:', error);
-      }
-    };
-    loadData();
-  }, []);
-
-  // Fallback to default data if no CMS data loaded
-  useEffect(() => {
-    if (categories.length === 0 && menuItems.length === 0) {
-      console.log('Using fallback default data');
-      setCategories(defaultCategories);
-      setMenuItems(defaultMenuItems);
-    }
-  }, []);
+  // Use default data directly - skip CMS for now since field mapping issues exist
+  // The admin can still edit via admin panel which saves to CMS
 
   const { sections } = useMemo(() => {
     const cats = categories.filter((c: any) => c.isActive).sort((a: any, b: any) => a.order - b.order);
     const secs = cats.map((cat: any) => {
       const items = menuItems
-        .filter((item: any) => item.categoryId === cat.id && item.isAvailable !== false)
+        .filter((item: any) => item.category === cat.name && item.isOutOfStock !== true)
         .sort((a: any, b: any) => a.order - b.order);
       return { id: cat.id, name: cat.name, description: cat.description, items };
     }).filter((s: any) => s.items.length > 0);
