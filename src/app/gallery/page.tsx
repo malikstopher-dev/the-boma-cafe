@@ -80,10 +80,11 @@ export default function GalleryPage() {
 
         {/* Top Gallery - Main Feature */}
         <section className={styles.topGallerySection}>
-          <div className={styles.topGalleryContainer} onClick={() => openLightbox(topGalleryImages.map(i => i.url), topGalleryIndex)}>
+          <div className={styles.topGalleryContainer}>
             <div 
               className={styles.topGalleryImage}
               style={{ backgroundImage: `url(${topGalleryImages[topGalleryIndex].url})` }}
+              onClick={() => openLightbox(topGalleryImages.map(i => i.url), topGalleryIndex)}
             />
             <div className={styles.topGalleryOverlay}>
               <span className={styles.topGalleryTitle}>Welcome to The Boma Cafe</span>
@@ -114,6 +115,40 @@ export default function GalleryPage() {
 
         {/* Gallery Boards Section */}
         <GalleryBoards onImageClick={openLightbox} />
+
+        {/* Lightbox */}
+        {lightboxImage && (
+          <div className={styles.lightbox} onClick={closeLightbox}>
+            <img 
+              src={lightboxImage} 
+              alt="Gallery" 
+              className={styles.lightboxImage}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button 
+              className={styles.lightboxClose}
+              onClick={closeLightbox}
+            >
+              ✕
+            </button>
+            {lightboxImages.length > 1 && (
+              <>
+                <button 
+                  className={styles.lightboxPrev}
+                  onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                >
+                  ‹
+                </button>
+                <button 
+                  className={styles.lightboxNext}
+                  onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                >
+                  ›
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Featured Video Section */}
         <section className={styles.videoSection}>
