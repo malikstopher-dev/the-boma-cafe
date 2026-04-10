@@ -156,6 +156,7 @@ export default function MenuPage() {
           cmsService.getCategories(),
           cmsService.getMenuItems()
         ]);
+        console.log('Loaded categories:', cats.length, 'items:', items.length);
         if (cats.length > 0) setCategories(cats);
         if (items.length > 0) setMenuItems(items);
       } catch (error) {
@@ -163,6 +164,15 @@ export default function MenuPage() {
       }
     };
     loadData();
+  }, []);
+
+  // Fallback to default data if no CMS data loaded
+  useEffect(() => {
+    if (categories.length === 0 && menuItems.length === 0) {
+      console.log('Using fallback default data');
+      setCategories(defaultCategories);
+      setMenuItems(defaultMenuItems);
+    }
   }, []);
 
   const { sections } = useMemo(() => {

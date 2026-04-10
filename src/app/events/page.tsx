@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cmsService } from '@/lib/client-cms';
+import { defaultEvents } from '@/data/defaultData';
 
 export default function EventsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -17,13 +18,22 @@ export default function EventsPage() {
           cmsService.getAllSettings(),
           cmsService.getEvents()
         ]);
+        console.log('Loaded events:', evts.length);
         setSettings(allSettings);
-        setEvents(evts);
+        if (evts.length > 0) setEvents(evts);
       } catch (error) {
         console.error('Error loading events data:', error);
       }
     };
     loadData();
+  }, []);
+
+  // Fallback to default data if no CMS data
+  useEffect(() => {
+    if (events.length === 0) {
+      console.log('Using fallback default events');
+      setEvents(defaultEvents);
+    }
   }, []);
 
   const upcomingEvents = events.filter((e: any) => e.isUpcoming);
