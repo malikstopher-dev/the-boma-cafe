@@ -655,8 +655,10 @@ export function saveGalleryItem(item: any): any {
 
 export function deleteGalleryItem(id: string): boolean {
   try {
+    console.log('Deleting gallery item with id:', id);
     const database = getDb();
-    database.prepare('DELETE FROM gallery WHERE id = ?').run(id);
+    const result = database.prepare('DELETE FROM gallery WHERE id = ?').run(id);
+    console.log('Delete result:', result.changes, 'rows affected');
     return true;
   } catch (error) {
     console.error('Error deleting gallery item:', error);

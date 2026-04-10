@@ -72,14 +72,19 @@ export default function AdminGallery() {
     if (!confirm(`Delete ${imageName}? This will remove the file from the server.`)) return;
     
     const folder = categoryFolders[localCategory];
+    const url = `/api/gallery/${folder}/${imageName}`;
+    console.log('Deleting:', url);
     try {
-      const response = await fetch(`/api/gallery/${folder}/${imageName}`, {
+      const response = await fetch(url, {
         method: 'DELETE',
       });
+      console.log('Delete response:', response.status, response.statusText);
       if (response.ok) {
         loadLocalImages(localCategory);
       } else {
-        alert('Failed to delete image. Please try again.');
+        const errorData = await response.json();
+        console.error('Delete error:', errorData);
+        alert('Failed to delete image: ' + (errorData.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Delete error:', error);
