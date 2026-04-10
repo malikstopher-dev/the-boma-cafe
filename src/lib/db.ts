@@ -224,6 +224,104 @@ function initializeDefaults(database: Database.Database) {
       insertBoard.run(index + 1, board.name, board.description, index);
     });
   }
+
+  const categoriesCount = database.prepare('SELECT COUNT(*) as count FROM menu_categories').get() as { count: number };
+  if (categoriesCount.count === 0) {
+    const defaultCategories = [
+      { name: 'Breakfast', description: 'Start your day with hearty, homestyle breakfast classics' },
+      { name: 'Toasties', description: 'Grilled to perfection with premium fillings' },
+      { name: 'Hungry... Ish', description: 'Shareable plates, crispy bites and satisfying stackers' },
+      { name: 'Curries & Bunnies', description: 'Aromatic curries and Bunny Chows straight from the pot' },
+      { name: 'Starters', description: 'Delicious appetizers to begin your meal' },
+      { name: 'Mains', description: 'Signature main courses' },
+      { name: 'Burgers', description: 'Gourmet burgers and sandwiches' },
+      { name: 'Pizza', description: 'Wood-fired artisan pizzas' },
+      { name: 'Salads', description: 'Fresh and healthy options' },
+      { name: 'Desserts', description: 'Sweet endings' },
+      { name: 'Hot Drinks', description: 'Coffee, tea & more' },
+      { name: 'Cold Drinks', description: 'Refreshing beverages' },
+      { name: 'Juices & Smoothies', description: 'Fresh juices & blended drinks' },
+      { name: 'Beers & Ciders', description: 'Local & imported brews' },
+      { name: 'Wines', description: 'Red, white & sparkling' },
+      { name: 'Cocktails', description: 'Signature cocktails & classic mixes' }
+    ];
+    const insertCat = database.prepare('INSERT INTO menu_categories (id, name, description, order_index, is_active) VALUES (?, ?, ?, ?, ?)');
+    defaultCategories.forEach((cat, index) => {
+      insertCat.run(uuidv4(), cat.name, cat.description, index + 1, 1);
+    });
+  }
+
+  const menuItemsCount = database.prepare('SELECT COUNT(*) as count FROM menu_items').get() as { count: number };
+  if (menuItemsCount.count === 0) {
+    const defaultMenuItems = [
+      { categoryId: 1, name: 'Full English', description: 'Two eggs any style, bacon, boerewors, sautéed mushrooms, roasted tomato, toast & golden chips', price: '115', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 1, name: 'Boma Breakfast', description: 'Eggs benedict with crispy bacon or wilted spinach on fresh muffin, finished with house hollandaise', price: '95', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryId: 1, name: 'Bacon & Eggs', description: 'Crispy streaky bacon with two eggs any style and toasted artisan bread', price: '75', isFeatured: false, isAvailable: true, order: 3 },
+      { categoryId: 1, name: 'Boma Omelette', description: 'Fluffy three-egg omelette filled with cheddar, mushrooms, caramelized onions & peppers', price: '85', isFeatured: false, isAvailable: true, order: 4 },
+      { categoryId: 1, name: 'Avocado Toast', description: 'Smashed avo on toasted sourdough with cherry tomatoes, fresh sprouts & olive oil', price: '75', isFeatured: false, isAvailable: true, order: 5 },
+      { categoryId: 1, name: 'Buttermilk Pancakes', description: 'Fluffy stack of three with maple syrup, butter & fresh seasonal berries', price: '85', isFeatured: true, isAvailable: true, order: 6 },
+      { categoryId: 2, name: 'Cheese & Tomato Toastie', description: 'Melted cheddar and fresh tomato on grilled ciabatta', price: '55', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 2, name: 'Bacon & Egg Toastie', description: 'Crispy bacon, fried egg & melted cheese in grilled ciabatta', price: '75', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryId: 2, name: 'Chicken Mayo', description: 'Grilled chicken breast with creamy mayo, lettuce & tomato', price: '70', isFeatured: false, isAvailable: true, order: 3 },
+      { categoryId: 3, name: 'Chicken Wings', description: 'Crispy wings tossed in your choice of sauce, served with blue cheese dip', price: '95', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 3, name: 'Ribs & Wings Combo', description: 'Half rack of ribs with 6 wings, served with chips & coleslaw', price: '195', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryId: 3, name: 'Calamari', description: 'Tender calamari rings with house-made tomato salsa & lemon aioli', price: '145', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryId: 4, name: 'Chicken Curry', description: 'Tender chicken in rich tomato-based curry, served with steamed rice', price: '145', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 4, name: 'Lamb Curry', description: 'Slow-cooked lamb in aromatic spices, served with steamed rice', price: '175', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryId: 4, name: 'Bunny Chow - Chicken', description: 'Freshly baked bread bowl filled with aromatic chicken curry', price: '95', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryId: 5, name: 'Crispy Calamari', description: 'Tender calamari rings served with house-made tomato salsa and lemon aioli', price: '145', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 6, name: 'Boma Platter', description: 'A sharing platter of mixed meats, wings, and sides - perfect for groups', price: '395', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 6, name: 'Grilled Salmon', description: 'Fresh Atlantic salmon with herb butter, roasted vegetables and choice of side', price: '245', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryId: 6, name: 'BBQ Ribs', description: 'Fall-off-the-bone tender ribs with smoky BBQ sauce, served with coleslaw', price: '225', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryId: 7, name: 'Classic Beef Burger', description: 'Angus beef patty, cheddar cheese, caramelized onions, fresh tomato, lettuce, house sauce', price: '165', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 8, name: 'Margherita', description: 'San Marzano tomatoes, fresh mozzarella, basil, extra virgin olive oil', price: '135', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 8, name: 'Pepperoni', description: 'Tomato base, mozzarella, pepperoni, bell peppers, olives', price: '155', isFeatured: false, isAvailable: true, order: 2 },
+      { categoryId: 8, name: 'BBQ Chicken', description: 'BBQ sauce, grilled chicken, red onions, fresh cilantro', price: '165', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryId: 9, name: 'Garden Salad', description: 'Mixed greens, cherry tomatoes, cucumber, red onion, feta, balsamic vinaigrette', price: '95', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 10, name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with molten center, served with vanilla ice cream', price: '85', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryId: 11, name: 'Americano', description: 'Espresso with hot water', price: '35', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 11, name: 'Cappuccino', description: 'Espresso with steamed milk foam', price: '40', isFeatured: false, isAvailable: true, order: 2 },
+      { categoryId: 12, name: 'Soft Drinks', description: 'Coca-Cola, Sprite, Fanta, Twist', price: '30', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 13, name: 'Fresh Juice', description: 'Orange, Apple, or Carrot', price: '40', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 14, name: 'Castle Lager', price: '40', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 15, name: 'House Red', description: 'Glass of our selection', price: '55', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryId: 16, name: 'Classic Mojito', description: 'White rum, fresh mint, lime, soda', price: '75', isFeatured: true, isAvailable: true, order: 1 }
+    ];
+    const insertItem = database.prepare('INSERT INTO menu_items (id, category_id, name, description, price, is_available, is_featured, order_index, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const now = new Date().toISOString();
+    defaultMenuItems.forEach((item, index) => {
+      insertItem.run(uuidv4(), item.categoryId, item.name, item.description, item.price, item.isAvailable ? 1 : 0, item.isFeatured ? 1 : 0, item.order, now, now);
+    });
+  }
+
+  const eventsCount = database.prepare('SELECT COUNT(*) as count FROM events').get() as { count: number };
+  if (eventsCount.count === 0) {
+    const defaultEvents = [
+      { title: 'Live Music Nights', description: 'Enjoy soulful performances from local artists every weekend in our intimate outdoor setting. Experience the magic of live music under the stars.', date: '2026-04-18', time: '19:00', location: 'Main Deck', status: 'upcoming', showOnHomepage: true },
+      { title: 'Friday Braai Evening', description: 'Experience traditional South African braai culture with expertly grilled meats, sides, and great company. Every Friday night!', date: '2026-04-11', time: '18:00', location: 'Firepit Area', status: 'upcoming', showOnHomepage: true },
+      { title: 'Sunday Family Brunch', description: 'Join us for relaxing Sunday brunch with family and friends. Kids eat free!', date: '2026-04-13', time: '10:00', location: 'Garden Terrace', status: 'upcoming', showOnHomepage: false },
+      { title: 'Corporate Events', description: 'Host your next corporate function in our unique rustic setting. Customized menus and dedicated service.', date: '2026-04-20', time: '09:00', location: 'Private Boma', status: 'upcoming', showOnHomepage: false }
+    ];
+    const insertEvent = database.prepare('INSERT INTO events (id, title, description, date, time, location, status, show_on_homepage, order_index, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const now = new Date().toISOString();
+    defaultEvents.forEach((event, index) => {
+      insertEvent.run(uuidv4(), event.title, event.description, event.date, event.time, event.location, event.status, event.showOnHomepage ? 1 : 0, index + 1, now, now);
+    });
+  }
+
+  const promotionsCount = database.prepare('SELECT COUNT(*) as count FROM promotions').get() as { count: number };
+  if (promotionsCount.count === 0) {
+    const defaultPromotions = [
+      { title: 'Weekend Breakfast Buffet', description: 'Saturday & Sunday from 9:30 to 12:30. Kids R45, Adult R89', priceText: 'Kids R45, Adult R89', ctaText: 'Book Now', ctaLink: '/contact', isActive: true, displayOnHomepage: true },
+      { title: 'Happy Hour Specials', description: 'Buy one get one free on selected drinks from 4pm to 7pm daily!', priceText: 'BOGO', ctaText: 'View Menu', ctaLink: '/menu', isActive: true, displayOnHomepage: true },
+      { title: 'Family Meal Deal', description: 'Family of 4 special - 2 mains, 2 sides, 4 drinks at only R450', priceText: 'R450', ctaText: 'Order Now', ctaLink: '/contact', isActive: true, displayOnHomepage: false }
+    ];
+    const insertPromo = database.prepare('INSERT INTO promotions (id, title, description, price_text, cta_text, cta_link, is_active, display_on_homepage, order_index, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const now = new Date().toISOString();
+    defaultPromotions.forEach((promo, index) => {
+      insertPromo.run(uuidv4(), promo.title, promo.description, promo.priceText, promo.ctaText, promo.ctaLink, promo.isActive ? 1 : 0, promo.displayOnHomepage ? 1 : 0, index + 1, now, now);
+    });
+  }
 }
 
 export function getSetting(key: string): any {
