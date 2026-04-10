@@ -21,6 +21,9 @@ export const metadata = {
   title: "The Boma Cafe | Sandton - Where the Rustic Meets the Soulful",
   description: "Experience authentic rustic charm at The Boma Cafe in Sandton. A premium outdoor restaurant and events venue featuring firepits, thatched roofing, and soulful ambiance.",
   keywords: "restaurant Sandton, Boma Cafe, outdoor dining Johannesburg, events venue, rustic restaurant, firepit dining, South African cuisine",
+  icons: {
+    icon: '/favicon.ico',
+  },
   openGraph: {
     title: "The Boma Cafe | Sandton",
     description: "Where the Rustic Meets the Soulful - Premium dining and events in Sandton",

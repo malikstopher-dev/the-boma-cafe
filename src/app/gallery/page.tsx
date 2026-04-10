@@ -80,11 +80,10 @@ export default function GalleryPage() {
 
         {/* Top Gallery - Main Feature */}
         <section className={styles.topGallerySection}>
-          <div className={styles.topGalleryContainer}>
+          <div className={styles.topGalleryContainer} onClick={() => openLightbox(topGalleryImages.map(i => i.url), topGalleryIndex)}>
             <div 
               className={styles.topGalleryImage}
               style={{ backgroundImage: `url(${topGalleryImages[topGalleryIndex].url})` }}
-              onClick={() => openLightbox(topGalleryImages.map(i => i.url), topGalleryIndex)}
             />
             <div className={styles.topGalleryOverlay}>
               <span className={styles.topGalleryTitle}>Welcome to The Boma Cafe</span>
