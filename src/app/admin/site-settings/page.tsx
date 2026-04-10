@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { siteSettingsService } from '@/lib/siteSettings';
+import { cmsService } from '@/lib/client-cms';
 
 export default function AdminSiteSettings() {
   const [activeTab, setActiveTab] = useState('homepage');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const [homepage, setHomepage] = useState({
     heroTitle: 'The Boma Cafe',
@@ -76,47 +77,41 @@ export default function AdminSiteSettings() {
   });
 
   useEffect(() => {
-    const settings = siteSettingsService.getSiteSettings();
-    setHomepage({ ...settings.homepage });
-    setAbout({ ...settings.about });
-    setContact({ ...settings.contact, phone2: settings.contact.phone2 || '', whatsapp: settings.contact.whatsapp || '' });
-    setPromoBar({ ...settings.promoBar });
-    setBranding({ 
-      ...settings.branding, 
-      facebook: settings.branding.facebook || '',
-      instagram: settings.branding.instagram || '',
-      twitter: settings.branding.twitter || '',
-      youtube: settings.branding.youtube || ''
-    });
-    setSeo({ ...settings.seo });
+    const loadSettings = async () => {
+      try {
+        const settings = await cmsService.getAllSettings();
+        setHomepage({ ...settings.homepage });
+        setAbout({ ...settings.about });
+        setContact({ ...settings.contact, phone2: settings.contact.phone2 || '', whatsapp: settings.contact.whatsapp || '' });
+        setPromoBar({ ...settings.promoBar });
+        setBranding({ 
+          ...settings.branding, 
+          facebook: settings.branding.facebook || '',
+          instagram: settings.branding.instagram || '',
+          twitter: settings.branding.twitter || '',
+          tiktok: settings.branding.tiktok || '',
+          youtube: settings.branding.youtube || ''
+        });
+        setSeo({ ...settings.seo });
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSettings();
   }, []);
 
-  const handleSave = (section: string) => {
+  const handleSave = async (section: string) => {
     setIsSaving(true);
+    setSaveMessage('');
     try {
-      switch (section) {
-        case 'homepage':
-          siteSettingsService.saveHomepageSettings(homepage);
-          break;
-        case 'about':
-          siteSettingsService.saveAboutSettings(about);
-          break;
-        case 'contact':
-          siteSettingsService.saveContactSettings(contact);
-          break;
-        case 'promoBar':
-          siteSettingsService.savePromoBarSettings(promoBar);
-          break;
-        case 'branding':
-          siteSettingsService.saveBrandingSettings(branding);
-          break;
-        case 'seo':
-          siteSettingsService.saveSEOSettings(seo);
-          break;
-      }
+      const allSettings = { homepage, about, contact, promoBar, branding, seo };
+      await cmsService.saveAllSettings(allSettings);
       setSaveMessage('Saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
+      console.error('Error saving settings:', error);
       setSaveMessage('Error saving settings');
     }
     setIsSaving(false);

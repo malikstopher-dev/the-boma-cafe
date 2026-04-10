@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { dataService, generateId } from '@/lib/data';
+import { cmsService, generateId } from '@/lib/client-cms';
 
 const categories = ['Events', 'Food', 'Venue', 'People', 'Promotions'];
 const categoryFolders: Record<string, string> = {
@@ -27,10 +27,21 @@ export default function AdminGallery() {
   const [localCategory, setLocalCategory] = useState('Events');
   const [localImages, setLocalImages] = useState<LocalImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setGallery(dataService.getGallery());
+    const loadGallery = async () => {
+      try {
+        const data = await cmsService.getGallery();
+        setGallery(data);
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadGallery();
     loadLocalImages('Events');
   }, []);
 
@@ -113,40 +124,54 @@ export default function AdminGallery() {
     }
   };
 
-  const saveGallery = (items: any[]) => {
-    dataService.saveGallery(items);
-    setGallery(items);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editItem) {
-      const updated = gallery.map((item: any) => item.id === editItem.id ? { ...item, ...formData } : item);
-      saveGallery(updated);
-    } else {
-      const newItem = { ...formData, id: generateId(), order: gallery.length + 1, createdAt: new Date().toISOString() };
-      saveGallery([...gallery, newItem]);
+    try {
+      if (editItem) {
+        const updated = gallery.map((item: any) => item.id === editItem.id ? { ...item, ...formData } : item);
+        await cmsService.reorderGallery(updated);
+        setGallery(updated);
+      } else {
+        const newItem = { ...formData, id: generateId(), order: gallery.length + 1, isFeatured: formData.isFeatured } as any;
+        const result = await cmsService.saveGalleryItem(newItem);
+        setGallery([...gallery, result.data]);
+      }
+      setIsEditing(false);
+      setEditItem(null);
+      setFormData({ type: 'image', url: '', title: '', category: 'Events', isFeatured: false });
+    } catch (error) {
+      console.error('Error saving gallery item:', error);
     }
-    setIsEditing(false);
-    setEditItem(null);
-    setFormData({ type: 'image', url: '', title: '', category: 'Events', isFeatured: false });
   };
 
   const handleEdit = (item: any) => {
     setEditItem(item);
-    setFormData({ type: item.type, url: item.url, title: item.title || '', category: item.category, isFeatured: item.isFeatured });
+    setFormData({ type: item.type || 'image', url: item.url, title: item.title || '', category: item.category, isFeatured: item.isFeatured });
     setIsEditing(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this item?')) {
-      saveGallery(gallery.filter((item: any) => item.id !== id));
+      try {
+        await cmsService.deleteGalleryItem(id);
+        setGallery(gallery.filter((item: any) => item.id !== id));
+      } catch (error) {
+        console.error('Error deleting gallery item:', error);
+      }
     }
   };
 
-  const toggleFeatured = (id: string) => {
-    const updated = gallery.map((item: any) => item.id === id ? { ...item, isFeatured: !item.isFeatured } : item);
-    saveGallery(updated);
+  const toggleFeatured = async (id: string) => {
+    const item = gallery.find((item: any) => item.id === id);
+    if (item) {
+      const updated = { ...item, isFeatured: !item.isFeatured } as any;
+      try {
+        await cmsService.saveGalleryItem(updated);
+        setGallery(gallery.map((i: any) => i.id === id ? updated : i));
+      } catch (error) {
+        console.error('Error toggling featured:', error);
+      }
+    }
   };
 
   return (

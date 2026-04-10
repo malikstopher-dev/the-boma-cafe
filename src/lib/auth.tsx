@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { cmsService } from './client-cms';
 
 interface AdminUser {
   id: string;
@@ -18,8 +19,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_PASSWORD = 'Lovers0884';
-const AUTH_KEY = 'boma_admin_auth';
 const USER_KEY = 'boma_admin_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -31,52 +30,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  const checkAuth = () => {
+  const checkAuth = async () => {
     if (typeof window === 'undefined') {
       setIsLoading(false);
       return;
     }
     
-    const auth = localStorage.getItem(AUTH_KEY);
-    const userData = localStorage.getItem(USER_KEY);
-    
-    if (auth === 'true' && userData) {
-      try {
-        setUser(JSON.parse(userData));
+    try {
+      const result = await cmsService.verifyAuth();
+      if (result.authenticated && result.user) {
+        setUser(result.user);
         setIsAuthenticated(true);
-      } catch {
-        localStorage.removeItem(AUTH_KEY);
+        localStorage.setItem(USER_KEY, JSON.stringify(result.user));
+      } else {
         localStorage.removeItem(USER_KEY);
       }
+    } catch {
+      const userData = localStorage.getItem(USER_KEY);
+      if (userData) {
+        try {
+          setUser(JSON.parse(userData));
+          setIsAuthenticated(true);
+        } catch {
+          localStorage.removeItem(USER_KEY);
+        }
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const login = async (password: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (password === ADMIN_PASSWORD) {
-          const adminUser: AdminUser = {
-            id: '1',
-            username: 'admin',
-            email: 'admin@thebomacafe.co.za'
-          };
-          
-          localStorage.setItem(AUTH_KEY, 'true');
-          localStorage.setItem(USER_KEY, JSON.stringify(adminUser));
-          
-          setUser(adminUser);
-          setIsAuthenticated(true);
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      }, 500);
-    });
+    try {
+      const result = await cmsService.login(password);
+      if (result.success && result.user) {
+        setUser(result.user);
+        setIsAuthenticated(true);
+        localStorage.setItem(USER_KEY, JSON.stringify(result.user));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem(AUTH_KEY);
     localStorage.removeItem(USER_KEY);
     setUser(null);
     setIsAuthenticated(false);

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { siteSettingsService } from '@/lib/siteSettings';
+import { cmsService } from '@/lib/client-cms';
 
 interface FooterProps {
   settings?: any;
@@ -14,9 +14,16 @@ export default function Footer({ settings, branding }: FooterProps) {
   const [contactSettings, setContactSettings] = useState<any>(null);
 
   useEffect(() => {
-    const siteSettings = siteSettingsService.getSiteSettings();
-    setSiteBranding(siteSettings.branding);
-    setContactSettings(siteSettings.contact);
+    const loadSettings = async () => {
+      try {
+        const allSettings = await cmsService.getAllSettings();
+        setSiteBranding(allSettings.branding);
+        setContactSettings(allSettings.contact);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+    loadSettings();
   }, []);
 
   const b = branding || siteBranding || {};

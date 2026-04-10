@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { dataService } from '@/lib/data';
+import { cmsService } from '@/lib/client-cms';
 import GalleryBoards from '@/components/gallery/GalleryBoards';
 import styles from './Gallery.module.css';
 
@@ -26,8 +26,19 @@ export default function GalleryPage() {
   const [topGalleryIndex, setTopGalleryIndex] = useState(0);
 
   useEffect(() => {
-    setSettings(dataService.getSettings());
-    setGallery(dataService.getGallery());
+    const loadData = async () => {
+      try {
+        const [allSettings, gal] = await Promise.all([
+          cmsService.getAllSettings(),
+          cmsService.getGallery()
+        ]);
+        setSettings(allSettings);
+        setGallery(gal);
+      } catch (error) {
+        console.error('Error loading gallery data:', error);
+      }
+    };
+    loadData();
   }, []);
 
   useEffect(() => {

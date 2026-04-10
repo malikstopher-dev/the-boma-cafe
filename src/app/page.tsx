@@ -6,8 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import PopupModal from '@/components/ui/PopupModal';
-import { dataService } from '@/lib/data';
-import { siteSettingsService } from '@/lib/siteSettings';
+import { cmsService } from '@/lib/client-cms';
 
 const heroSlides = [
   {
@@ -48,18 +47,33 @@ export default function Home() {
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [siteSettings, setSiteSettings] = useState<any>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    dataService.initializeDefaults();
-    siteSettingsService.initializeDefaults();
-    setSettings(dataService.getSettings());
-    setAnnouncement(dataService.getAnnouncement());
-    setPopup(dataService.getPopup());
-    setMenuItems(dataService.getMenuItems());
-    setEvents(dataService.getEvents());
-    setPromotions(dataService.getPromotions());
-    setTestimonials(dataService.getTestimonials());
-    setSiteSettings(siteSettingsService.getSiteSettings());
+    const loadData = async () => {
+      try {
+        const [allSettings, ann, pop, items, evts, promos] = await Promise.all([
+          cmsService.getAllSettings(),
+          cmsService.getAnnouncement(),
+          cmsService.getPopup(),
+          cmsService.getMenuItems(),
+          cmsService.getEvents(),
+          cmsService.getPromotions()
+        ]);
+        setSiteSettings(allSettings);
+        setSettings(allSettings);
+        setAnnouncement(ann);
+        setPopup(pop);
+        setMenuItems(items);
+        setEvents(evts);
+        setPromotions(promos);
+      } catch (error) {
+        console.error('Error loading CMS data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
     
     const slideTimer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);

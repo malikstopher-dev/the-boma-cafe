@@ -1,52 +1,77 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { dataService, generateId } from '@/lib/data';
+import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminPromotions() {
   const [promotions, setPromotions] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editPromo, setEditPromo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({ title: '', description: '', validFrom: '', validUntil: '', ctaText: '', ctaLink: '', isFeatured: false, isActive: true, displayOnHomepage: false, displayAsPopup: false, displayOnMenu: false, displayOnPromotionsPage: true });
 
   useEffect(() => {
-    setPromotions(dataService.getPromotions());
+    const loadPromotions = async () => {
+      try {
+        const data = await cmsService.getPromotions();
+        setPromotions(data);
+      } catch (error) {
+        console.error('Error loading promotions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadPromotions();
   }, []);
 
-  const savePromotions = (promos: any[]) => {
-    dataService.savePromotions(promos);
-    setPromotions(promos);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editPromo) {
-      const updated = promotions.map((p: any) => p.id === editPromo.id ? { ...p, ...formData, updatedAt: new Date().toISOString() } : p);
-      savePromotions(updated);
-    } else {
-      const newPromo = { ...formData, id: generateId(), image: '', order: promotions.length + 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-      savePromotions([...promotions, newPromo]);
+    try {
+      if (editPromo) {
+        const updated = { ...editPromo, ...formData, updatedAt: new Date().toISOString() };
+        await cmsService.savePromotion(updated);
+        setPromotions(promotions.map((p: any) => p.id === editPromo.id ? updated : p));
+      } else {
+        const newPromo = { ...formData, id: generateId(), image: '', order: promotions.length + 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        const result = await cmsService.savePromotion(newPromo);
+        setPromotions([...promotions, result.data]);
+      }
+      setIsEditing(false);
+      setEditPromo(null);
+      setFormData({ title: '', description: '', validFrom: '', validUntil: '', ctaText: '', ctaLink: '', isFeatured: false, isActive: true, displayOnHomepage: false, displayAsPopup: false, displayOnMenu: false, displayOnPromotionsPage: true });
+    } catch (error) {
+      console.error('Error saving promotion:', error);
     }
-    setIsEditing(false);
-    setEditPromo(null);
-    setFormData({ title: '', description: '', validFrom: '', validUntil: '', ctaText: '', ctaLink: '', isFeatured: false, isActive: true, displayOnHomepage: false, displayAsPopup: false, displayOnMenu: false, displayOnPromotionsPage: true });
   };
 
   const handleEdit = (promo: any) => {
     setEditPromo(promo);
-    setFormData({ title: promo.title, description: promo.description, validFrom: promo.validFrom, validUntil: promo.validUntil, ctaText: promo.ctaText, ctaLink: promo.ctaLink, isFeatured: promo.isFeatured, isActive: promo.isActive, displayOnHomepage: promo.displayOnHomepage, displayAsPopup: promo.displayAsPopup, displayOnMenu: promo.displayOnMenu, displayOnPromotionsPage: promo.displayOnPromotionsPage });
+    setFormData({ title: promo.title, description: promo.description, validFrom: promo.validFrom || '', validUntil: promo.validUntil || '', ctaText: promo.ctaText || '', ctaLink: promo.ctaLink || '', isFeatured: promo.isFeatured || false, isActive: promo.isActive !== false, displayOnHomepage: promo.displayOnHomepage || false, displayAsPopup: promo.displayAsPopup || false, displayOnMenu: promo.displayOnMenu || false, displayOnPromotionsPage: promo.displayOnPromotionsPage !== false });
     setIsEditing(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this promotion?')) {
-      savePromotions(promotions.filter((p: any) => p.id !== id));
+      try {
+        await cmsService.deletePromotion(id);
+        setPromotions(promotions.filter((p: any) => p.id !== id));
+      } catch (error) {
+        console.error('Error deleting promotion:', error);
+      }
     }
   };
 
-  const toggleActive = (id: string) => {
-    const updated = promotions.map((p: any) => p.id === id ? { ...p, isActive: !p.isActive } : p);
-    savePromotions(updated);
+  const toggleActive = async (id: string) => {
+    const promo = promotions.find((p: any) => p.id === id);
+    if (promo) {
+      const updated = { ...promo, isActive: !promo.isActive };
+      try {
+        await cmsService.savePromotion(updated);
+        setPromotions(promotions.map((p: any) => p.id === id ? updated : p));
+      } catch (error) {
+        console.error('Error toggling active:', error);
+      }
+    }
   };
 
   return (

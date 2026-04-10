@@ -1,52 +1,77 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { dataService, generateId } from '@/lib/data';
+import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editCategory, setEditCategory] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({ name: '', description: '', isActive: true });
 
   useEffect(() => {
-    setCategories(dataService.getCategories());
+    const loadCategories = async () => {
+      try {
+        const data = await cmsService.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadCategories();
   }, []);
 
-  const saveCategories = (cats: any[]) => {
-    dataService.saveCategories(cats);
-    setCategories(cats);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editCategory) {
-      const updated = categories.map((c: any) => c.id === editCategory.id ? { ...c, ...formData } : c);
-      saveCategories(updated);
-    } else {
-      const newCat = { ...formData, id: generateId(), order: categories.length + 1 };
-      saveCategories([...categories, newCat]);
+    try {
+      if (editCategory) {
+        const updated = { ...editCategory, ...formData };
+        await cmsService.saveCategory(updated);
+        setCategories(categories.map((c: any) => c.id === editCategory.id ? updated : c));
+      } else {
+        const newCat = { ...formData, id: generateId(), order: categories.length + 1 };
+        const result = await cmsService.saveCategory(newCat);
+        setCategories([...categories, result.data]);
+      }
+      setIsEditing(false);
+      setEditCategory(null);
+      setFormData({ name: '', description: '', isActive: true });
+    } catch (error) {
+      console.error('Error saving category:', error);
     }
-    setIsEditing(false);
-    setEditCategory(null);
-    setFormData({ name: '', description: '', isActive: true });
   };
 
   const handleEdit = (cat: any) => {
     setEditCategory(cat);
-    setFormData({ name: cat.name, description: cat.description || '', isActive: cat.isActive });
+    setFormData({ name: cat.name, description: cat.description || '', isActive: cat.isActive !== false });
     setIsEditing(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this category?')) {
-      saveCategories(categories.filter((c: any) => c.id !== id));
+      try {
+        await cmsService.deleteCategory(id);
+        setCategories(categories.filter((c: any) => c.id !== id));
+      } catch (error) {
+        console.error('Error deleting category:', error);
+      }
     }
   };
 
-  const toggleActive = (id: string) => {
-    const updated = categories.map((c: any) => c.id === id ? { ...c, isActive: !c.isActive } : c);
-    saveCategories(updated);
+  const toggleActive = async (id: string) => {
+    const cat = categories.find((c: any) => c.id === id);
+    if (cat) {
+      const updated = { ...cat, isActive: !cat.isActive };
+      try {
+        await cmsService.saveCategory(updated);
+        setCategories(categories.map((c: any) => c.id === id ? updated : c));
+      } catch (error) {
+        console.error('Error toggling category:', error);
+      }
+    }
   };
 
   return (

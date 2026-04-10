@@ -1,19 +1,35 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { dataService } from '@/lib/data';
+import { cmsService } from '@/lib/client-cms';
 
 export default function AdminDashboard() {
   const [menuItems, setMenuItems] = useState(0);
   const [events, setEvents] = useState(0);
   const [promotions, setPromotions] = useState(0);
   const [inquiries, setInquiries] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setMenuItems(dataService.getMenuItems().length);
-    setEvents(dataService.getEvents().length);
-    setPromotions(dataService.getPromotions().length);
-    setInquiries(dataService.getInquiries().length);
+    const loadStats = async () => {
+      try {
+        const [items, evts, promos, inqs] = await Promise.all([
+          cmsService.getMenuItems(),
+          cmsService.getEvents(),
+          cmsService.getPromotions(),
+          cmsService.getInquiries()
+        ]);
+        setMenuItems(items.length);
+        setEvents(evts.length);
+        setPromotions(promos.length);
+        setInquiries(inqs.length);
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadStats();
   }, []);
 
   const stats = [

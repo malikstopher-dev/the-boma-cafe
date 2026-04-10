@@ -1,28 +1,44 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { dataService } from '@/lib/data';
+import { cmsService } from '@/lib/client-cms';
 
 export default function AdminInquiries() {
   const [inquiries, setInquiries] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setInquiries(dataService.getInquiries());
+    const loadInquiries = async () => {
+      try {
+        const data = await cmsService.getInquiries();
+        setInquiries(data);
+      } catch (error) {
+        console.error('Error loading inquiries:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadInquiries();
   }, []);
 
-  const markAsRead = (id: string) => {
-    const updated = inquiries.map((i: any) => i.id === id ? { ...i, isRead: true } : i);
-    dataService.saveInquiries(updated);
-    setInquiries(updated);
-  };
-
-  const deleteInquiry = (id: string) => {
-    if (confirm('Delete this inquiry?')) {
-      const updated = inquiries.filter((i: any) => i.id !== id);
-      dataService.saveInquiries(updated);
-      setInquiries(updated);
+  const markAsRead = async (id: string) => {
+    try {
+      await cmsService.markInquiryRead(id);
+      setInquiries(inquiries.map((i: any) => i.id === id ? { ...i, isRead: true } : i));
+    } catch (error) {
+      console.error('Error marking inquiry as read:', error);
     }
   };
+
+  const deleteInquiry = async (id: string) => {
+    if (confirm('Delete this inquiry?')) {
+      setInquiries(inquiries.filter((i: any) => i.id !== id));
+    }
+  };
+
+  if (isLoading) {
+    return <div style={{ padding: '2rem' }}>Loading...</div>;
+  }
 
   return (
     <div>

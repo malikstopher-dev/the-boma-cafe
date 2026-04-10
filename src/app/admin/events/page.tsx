@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { dataService, generateId } from '@/lib/data';
+import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminEvents() {
   const [events, setEvents] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editEvent, setEditEvent] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({ 
     title: '', 
     description: '', 
@@ -22,28 +23,61 @@ export default function AdminEvents() {
   const [imageInput, setImageInput] = useState('');
 
   useEffect(() => {
-    setEvents(dataService.getEvents());
+    const loadEvents = async () => {
+      try {
+        const data = await cmsService.getEvents();
+        setEvents(data);
+      } catch (error) {
+        console.error('Error loading events:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadEvents();
   }, []);
 
-  const saveEvents = (evts: any[]) => {
-    dataService.saveEvents(evts);
+  const saveEvents = async (evts: any[]) => {
     setEvents(evts);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const eventData = { ...formData, coverImage: imageInput, updatedAt: new Date().toISOString() };
-    if (editEvent) {
-      const updated = events.map((e: any) => e.id === editEvent.id ? { ...e, ...eventData } : e);
-      saveEvents(updated);
-    } else {
-      const newEvent = { ...eventData, id: generateId(), galleryImages: [], ticketLink: '', order: events.length + 1, createdAt: new Date().toISOString() };
-      saveEvents([...events, newEvent]);
+    const eventData = { 
+      ...formData, 
+      coverImage: imageInput, 
+      updatedAt: new Date().toISOString(),
+      status: formData.status === 'featured' ? 'featured' : formData.status,
+      isFeatured: formData.status === 'featured',
+      isUpcoming: formData.status === 'upcoming'
+    };
+    
+    try {
+      if (editEvent) {
+        const updated = events.map((e: any) => e.id === editEvent.id ? { ...e, ...eventData } : e);
+        await cmsService.reorderEvents(updated);
+        setEvents(updated);
+      } else {
+        const newEvent = { 
+          ...eventData, 
+          id: generateId(), 
+          galleryImages: [], 
+          ticketLink: '', 
+          order: events.length + 1, 
+          createdAt: new Date().toISOString(),
+          image: imageInput,
+          isFeatured: formData.status === 'featured',
+          isUpcoming: formData.status === 'upcoming'
+        };
+        const result = await cmsService.saveEvent(newEvent);
+        setEvents([...events, result.data]);
+      }
+      setIsEditing(false);
+      setEditEvent(null);
+      setFormData({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '', coverImage: '', galleryImages: [] });
+      setImageInput('');
+    } catch (error) {
+      console.error('Error saving event:', error);
     }
-    setIsEditing(false);
-    setEditEvent(null);
-    setFormData({ title: '', description: '', date: '', time: '', location: '', status: 'upcoming', showOnHomepage: false, ctaLink: '', coverImage: '', galleryImages: [] });
-    setImageInput('');
   };
 
   const handleEdit = (event: any) => {
@@ -53,20 +87,25 @@ export default function AdminEvents() {
       description: event.description, 
       date: event.date, 
       time: event.time, 
-      location: event.location, 
-      status: event.status, 
-      showOnHomepage: event.showOnHomepage, 
+      location: event.location || '', 
+      status: event.isFeatured ? 'featured' : event.isUpcoming ? 'upcoming' : 'past', 
+      showOnHomepage: event.showOnHomepage || false, 
       ctaLink: event.ctaLink || '',
-      coverImage: event.coverImage || '',
+      coverImage: event.coverImage || event.image || '',
       galleryImages: event.galleryImages || []
     });
-    setImageInput(event.coverImage || '');
+    setImageInput(event.coverImage || event.image || '');
     setIsEditing(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this event?')) {
-      saveEvents(events.filter((e: any) => e.id !== id));
+      try {
+        await cmsService.deleteEvent(id);
+        setEvents(events.filter((e: any) => e.id !== id));
+      } catch (error) {
+        console.error('Error deleting event:', error);
+      }
     }
   };
 

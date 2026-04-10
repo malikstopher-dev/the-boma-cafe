@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { dataService, generateId } from '@/lib/data';
+import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminMenu() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -9,29 +9,39 @@ export default function AdminMenu() {
   const [isEditing, setIsEditing] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
-    category: '',
+    categoryId: '',
     isFeatured: false,
     isOnPromo: false,
     promoBadge: '',
     isOutOfStock: false,
-    image: ''
+    image: '',
+    isAvailable: true
   });
 
   useEffect(() => {
-    setMenuItems(dataService.getMenuItems());
-    setCategories(dataService.getCategories());
+    const loadData = async () => {
+      try {
+        const [items, cats] = await Promise.all([
+          cmsService.getMenuItems(),
+          cmsService.getCategories()
+        ]);
+        setMenuItems(items);
+        setCategories(cats);
+      } catch (error) {
+        console.error('Error loading menu data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
   }, []);
-
-  const saveItems = (items: any[]) => {
-    dataService.saveMenuItems(items);
-    setMenuItems(items);
-  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,53 +64,68 @@ export default function AdminMenu() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editItem) {
-      const updated = menuItems.map((item: any) =>
-        item.id === editItem.id
-          ? { ...item, ...formData, price: Number(formData.price), updatedAt: new Date().toISOString() }
-          : item
-      );
-      saveItems(updated);
-    } else {
-      const newItem = {
+    try {
+      const category = categories.find((c: any) => c.name === formData.categoryId || c.id === formData.categoryId);
+      const itemData = {
         ...formData,
-        price: Number(formData.price),
-        id: generateId(),
-        showOnHomepage: false,
-        order: menuItems.length + 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        price: String(formData.price),
+        categoryId: category?.id || formData.categoryId,
+        isAvailable: !formData.isOutOfStock
       };
-      saveItems([...menuItems, newItem]);
+      
+      if (editItem) {
+        const updated = { ...editItem, ...itemData, updatedAt: new Date().toISOString() };
+        await cmsService.saveMenuItem(updated);
+        setMenuItems(menuItems.map((item: any) => item.id === editItem.id ? updated : item));
+      } else {
+        const newItem = {
+          ...itemData,
+          id: generateId(),
+          order: menuItems.length + 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        const result = await cmsService.saveMenuItem(newItem);
+        setMenuItems([...menuItems, result.data]);
+      }
+      setIsEditing(false);
+      setEditItem(null);
+      setFormData({ name: '', description: '', price: '', categoryId: '', isFeatured: false, isOnPromo: false, promoBadge: '', isOutOfStock: false, image: '', isAvailable: true });
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error saving menu item:', error);
     }
-    setIsEditing(false);
-    setEditItem(null);
-    setFormData({ name: '', description: '', price: '', category: '', isFeatured: false, isOnPromo: false, promoBadge: '', isOutOfStock: false, image: '' });
-    setImagePreview(null);
   };
 
   const handleEdit = (item: any) => {
     setEditItem(item);
+    const category = categories.find((c: any) => c.id === item.categoryId);
     setFormData({
       name: item.name,
       description: item.description || '',
-      price: String(item.price),
-      category: item.category,
-      isFeatured: item.isFeatured,
-      isOnPromo: item.isOnPromo,
+      price: String(item.price).replace('R', ''),
+      categoryId: category?.name || item.categoryId || '',
+      isFeatured: item.isFeatured || false,
+      isOnPromo: item.isOnPromo || false,
       promoBadge: item.promoBadge || '',
-      isOutOfStock: item.isOutOfStock,
-      image: item.image || ''
+      isOutOfStock: !item.isAvailable,
+      image: item.image || '',
+      isAvailable: item.isAvailable !== false
     });
     setImagePreview(item.image || null);
     setIsEditing(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this item?')) {
-      saveItems(menuItems.filter((item: any) => item.id !== id));
+      try {
+        await cmsService.deleteMenuItem(id);
+        setMenuItems(menuItems.filter((item: any) => item.id !== id));
+      } catch (error) {
+        console.error('Error deleting menu item:', error);
+      }
     }
   };
 
@@ -111,12 +136,13 @@ export default function AdminMenu() {
       name: '',
       description: '',
       price: '',
-      category: categories[0]?.name || '',
+      categoryId: categories[0]?.id || '',
       isFeatured: false,
       isOnPromo: false,
       promoBadge: '',
       isOutOfStock: false,
-      image: ''
+      image: '',
+      isAvailable: true
     });
     setImagePreview(null);
   };
@@ -138,7 +164,7 @@ export default function AdminMenu() {
             <input type="text" placeholder="Item Name *" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             <input type="number" placeholder="Price (R) *" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             
-            <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}>
+            <select value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}>
               {categories.filter((c: any) => c.isActive).map((cat: any) => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
             </select>
             

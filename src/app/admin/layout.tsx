@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { dataService, generateId } from '@/lib/data';
 
 const menuItems = [
   { label: 'Dashboard', icon: '📊', href: '/admin/dashboard' },

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { dataService } from '@/lib/data';
+import { cmsService } from '@/lib/client-cms';
 
 export default function EventsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -11,13 +11,24 @@ export default function EventsPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    setSettings(dataService.getSettings());
-    setEvents(dataService.getEvents());
+    const loadData = async () => {
+      try {
+        const [allSettings, evts] = await Promise.all([
+          cmsService.getAllSettings(),
+          cmsService.getEvents()
+        ]);
+        setSettings(allSettings);
+        setEvents(evts);
+      } catch (error) {
+        console.error('Error loading events data:', error);
+      }
+    };
+    loadData();
   }, []);
 
-  const upcomingEvents = events.filter((e: any) => e.status === 'upcoming');
-  const pastEvents = events.filter((e: any) => e.status === 'past');
-  const featuredEvent = events.find((e: any) => e.status === 'featured') || upcomingEvents[0];
+  const upcomingEvents = events.filter((e: any) => e.isUpcoming);
+  const pastEvents = events.filter((e: any) => !e.isUpcoming && !e.isFeatured);
+  const featuredEvent = events.find((e: any) => e.isFeatured) || upcomingEvents[0];
 
   const slideshowImages = [
     '/images/livemusic1.jpg',

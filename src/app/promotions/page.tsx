@@ -4,18 +4,29 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { dataService } from '@/lib/data';
+import { cmsService } from '@/lib/client-cms';
 
 export default function PromotionsPage() {
   const [settings, setSettings] = useState<any>(null);
   const [promotions, setPromotions] = useState<any[]>([]);
 
   useEffect(() => {
-    setSettings(dataService.getSettings());
-    setPromotions(dataService.getPromotions());
+    const loadData = async () => {
+      try {
+        const [allSettings, promos] = await Promise.all([
+          cmsService.getAllSettings(),
+          cmsService.getPromotions()
+        ]);
+        setSettings(allSettings);
+        setPromotions(promos);
+      } catch (error) {
+        console.error('Error loading promotions data:', error);
+      }
+    };
+    loadData();
   }, []);
 
-  const activePromotions = promotions.filter((p: any) => p.isActive && p.displayOnPromotionsPage);
+  const activePromotions = promotions.filter((p: any) => p.isActive);
 
   return (
     <>

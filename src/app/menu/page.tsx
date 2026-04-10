@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
-import { MenuItem, MenuCategory, MenuSize, MenuAddOn } from '@/types';
+import { cmsService } from '@/lib/client-cms';
+import { MenuItem, MenuCategory } from '@/types';
 import { defaultCategories, defaultMenuItems } from '@/data/defaultData';
 import styles from './Menu.module.css';
 
@@ -144,18 +145,36 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [categories, setCategories] = useState<any[]>(defaultCategories);
+  const [menuItems, setMenuItems] = useState<any[]>(defaultMenuItems);
   const { addItem, items: cartItems, total } = useCart();
 
-  const { categories, sections } = useMemo(() => {
-    const cats = defaultCategories.filter(c => c.isActive).sort((a, b) => a.order - b.order);
-    const secs = cats.map(cat => {
-      const items = defaultMenuItems
-        .filter(item => item.category === cat.name && !item.isOutOfStock)
-        .sort((a, b) => a.order - b.order);
-      return { id: cat.id, name: cat.name, description: cat.description, items };
-    }).filter(s => s.items.length > 0);
-    return { categories: cats, sections: secs };
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [cats, items] = await Promise.all([
+          cmsService.getCategories(),
+          cmsService.getMenuItems()
+        ]);
+        if (cats.length > 0) setCategories(cats);
+        if (items.length > 0) setMenuItems(items);
+      } catch (error) {
+        console.error('Error loading menu data:', error);
+      }
+    };
+    loadData();
   }, []);
+
+  const { sections } = useMemo(() => {
+    const cats = categories.filter((c: any) => c.isActive).sort((a: any, b: any) => a.order - b.order);
+    const secs = cats.map((cat: any) => {
+      const items = menuItems
+        .filter((item: any) => item.categoryId === cat.id && item.isAvailable !== false)
+        .sort((a: any, b: any) => a.order - b.order);
+      return { id: cat.id, name: cat.name, description: cat.description, items };
+    }).filter((s: any) => s.items.length > 0);
+    return { sections: secs };
+  }, [categories, menuItems]);
 
   const filteredSections = useMemo(() => {
     let filtered = activeCategory === 'All' ? sections : sections.filter(s => s.name === activeCategory);
