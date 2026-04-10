@@ -29,14 +29,14 @@ export default function AnnouncementBar({ text, link, linkText }: AnnouncementBa
       right: 0,
       zIndex: 1001,
       background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-      padding: '0.6rem 5%',
+      padding: '0.6rem 1rem',
       borderBottom: '1px solid rgba(244, 164, 96, 0.3)'
     }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-        <p style={{ color: 'var(--cream)', fontSize: '0.9rem', textAlign: 'center', fontWeight: 500 }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative', gap: '1rem' }}>
+        <p style={{ color: 'var(--cream)', fontSize: '0.85rem', textAlign: 'left', fontWeight: 500, flex: 1 }}>
           {text}
           {link && (
-            <a href={link} style={{ color: 'var(--warm)', textDecoration: 'underline', marginLeft: '0.5rem' }}>
+            <a href={link} style={{ color: 'var(--warm)', textDecoration: 'underline', marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>
               {linkText || ' Learn more'}
             </a>
           )}
@@ -48,18 +48,17 @@ export default function AnnouncementBar({ text, link, linkText }: AnnouncementBa
           }}
           aria-label="Close announcement"
           style={{
-            position: 'absolute',
-            right: 0,
             background: 'none',
             border: 'none',
             color: 'var(--cream)',
             cursor: 'pointer',
-            padding: '4px',
+            padding: '4px 8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             opacity: 0.7,
-            transition: 'opacity 0.3s ease'
+            transition: 'opacity 0.3s ease',
+            flexShrink: 0
           }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '16px', height: '16px' }}>
