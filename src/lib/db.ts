@@ -246,51 +246,54 @@ function initializeDefaults(database: Database.Database) {
       { name: 'Cocktails', description: 'Signature cocktails & classic mixes' }
     ];
     const insertCat = database.prepare('INSERT INTO menu_categories (id, name, description, order_index, is_active) VALUES (?, ?, ?, ?, ?)');
+    const categoryIds: Record<string, string> = {};
     defaultCategories.forEach((cat, index) => {
-      insertCat.run(uuidv4(), cat.name, cat.description, index + 1, 1);
+      const catId = uuidv4();
+      categoryIds[cat.name] = catId;
+      insertCat.run(catId, cat.name, cat.description, index + 1, 1);
     });
-  }
 
-  const menuItemsCount = database.prepare('SELECT COUNT(*) as count FROM menu_items').get() as { count: number };
-  if (menuItemsCount.count === 0) {
     const defaultMenuItems = [
-      { categoryId: 1, name: 'Full English', description: 'Two eggs any style, bacon, boerewors, sautéed mushrooms, roasted tomato, toast & golden chips', price: '115', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 1, name: 'Boma Breakfast', description: 'Eggs benedict with crispy bacon or wilted spinach on fresh muffin, finished with house hollandaise', price: '95', isFeatured: true, isAvailable: true, order: 2 },
-      { categoryId: 1, name: 'Bacon & Eggs', description: 'Crispy streaky bacon with two eggs any style and toasted artisan bread', price: '75', isFeatured: false, isAvailable: true, order: 3 },
-      { categoryId: 1, name: 'Boma Omelette', description: 'Fluffy three-egg omelette filled with cheddar, mushrooms, caramelized onions & peppers', price: '85', isFeatured: false, isAvailable: true, order: 4 },
-      { categoryId: 1, name: 'Avocado Toast', description: 'Smashed avo on toasted sourdough with cherry tomatoes, fresh sprouts & olive oil', price: '75', isFeatured: false, isAvailable: true, order: 5 },
-      { categoryId: 1, name: 'Buttermilk Pancakes', description: 'Fluffy stack of three with maple syrup, butter & fresh seasonal berries', price: '85', isFeatured: true, isAvailable: true, order: 6 },
-      { categoryId: 2, name: 'Cheese & Tomato Toastie', description: 'Melted cheddar and fresh tomato on grilled ciabatta', price: '55', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 2, name: 'Bacon & Egg Toastie', description: 'Crispy bacon, fried egg & melted cheese in grilled ciabatta', price: '75', isFeatured: true, isAvailable: true, order: 2 },
-      { categoryId: 2, name: 'Chicken Mayo', description: 'Grilled chicken breast with creamy mayo, lettuce & tomato', price: '70', isFeatured: false, isAvailable: true, order: 3 },
-      { categoryId: 3, name: 'Chicken Wings', description: 'Crispy wings tossed in your choice of sauce, served with blue cheese dip', price: '95', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 3, name: 'Ribs & Wings Combo', description: 'Half rack of ribs with 6 wings, served with chips & coleslaw', price: '195', isFeatured: true, isAvailable: true, order: 2 },
-      { categoryId: 3, name: 'Calamari', description: 'Tender calamari rings with house-made tomato salsa & lemon aioli', price: '145', isFeatured: true, isAvailable: true, order: 3 },
-      { categoryId: 4, name: 'Chicken Curry', description: 'Tender chicken in rich tomato-based curry, served with steamed rice', price: '145', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 4, name: 'Lamb Curry', description: 'Slow-cooked lamb in aromatic spices, served with steamed rice', price: '175', isFeatured: true, isAvailable: true, order: 2 },
-      { categoryId: 4, name: 'Bunny Chow - Chicken', description: 'Freshly baked bread bowl filled with aromatic chicken curry', price: '95', isFeatured: true, isAvailable: true, order: 3 },
-      { categoryId: 5, name: 'Crispy Calamari', description: 'Tender calamari rings served with house-made tomato salsa and lemon aioli', price: '145', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 6, name: 'Boma Platter', description: 'A sharing platter of mixed meats, wings, and sides - perfect for groups', price: '395', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 6, name: 'Grilled Salmon', description: 'Fresh Atlantic salmon with herb butter, roasted vegetables and choice of side', price: '245', isFeatured: true, isAvailable: true, order: 2 },
-      { categoryId: 6, name: 'BBQ Ribs', description: 'Fall-off-the-bone tender ribs with smoky BBQ sauce, served with coleslaw', price: '225', isFeatured: true, isAvailable: true, order: 3 },
-      { categoryId: 7, name: 'Classic Beef Burger', description: 'Angus beef patty, cheddar cheese, caramelized onions, fresh tomato, lettuce, house sauce', price: '165', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 8, name: 'Margherita', description: 'San Marzano tomatoes, fresh mozzarella, basil, extra virgin olive oil', price: '135', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 8, name: 'Pepperoni', description: 'Tomato base, mozzarella, pepperoni, bell peppers, olives', price: '155', isFeatured: false, isAvailable: true, order: 2 },
-      { categoryId: 8, name: 'BBQ Chicken', description: 'BBQ sauce, grilled chicken, red onions, fresh cilantro', price: '165', isFeatured: true, isAvailable: true, order: 3 },
-      { categoryId: 9, name: 'Garden Salad', description: 'Mixed greens, cherry tomatoes, cucumber, red onion, feta, balsamic vinaigrette', price: '95', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 10, name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with molten center, served with vanilla ice cream', price: '85', isFeatured: true, isAvailable: true, order: 1 },
-      { categoryId: 11, name: 'Americano', description: 'Espresso with hot water', price: '35', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 11, name: 'Cappuccino', description: 'Espresso with steamed milk foam', price: '40', isFeatured: false, isAvailable: true, order: 2 },
-      { categoryId: 12, name: 'Soft Drinks', description: 'Coca-Cola, Sprite, Fanta, Twist', price: '30', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 13, name: 'Fresh Juice', description: 'Orange, Apple, or Carrot', price: '40', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 14, name: 'Castle Lager', price: '40', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 15, name: 'House Red', description: 'Glass of our selection', price: '55', isFeatured: false, isAvailable: true, order: 1 },
-      { categoryId: 16, name: 'Classic Mojito', description: 'White rum, fresh mint, lime, soda', price: '75', isFeatured: true, isAvailable: true, order: 1 }
+      { categoryName: 'Breakfast', name: 'Full English', description: 'Two eggs any style, bacon, boerewors, sautéed mushrooms, roasted tomato, toast & golden chips', price: '115', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Breakfast', name: 'Boma Breakfast', description: 'Eggs benedict with crispy bacon or wilted spinach on fresh muffin, finished with house hollandaise', price: '95', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryName: 'Breakfast', name: 'Bacon & Eggs', description: 'Crispy streaky bacon with two eggs any style and toasted artisan bread', price: '75', isFeatured: false, isAvailable: true, order: 3 },
+      { categoryName: 'Breakfast', name: 'Boma Omelette', description: 'Fluffy three-egg omelette filled with cheddar, mushrooms, caramelized onions & peppers', price: '85', isFeatured: false, isAvailable: true, order: 4 },
+      { categoryName: 'Breakfast', name: 'Avocado Toast', description: 'Smashed avo on toasted sourdough with cherry tomatoes, fresh sprouts & olive oil', price: '75', isFeatured: false, isAvailable: true, order: 5 },
+      { categoryName: 'Breakfast', name: 'Buttermilk Pancakes', description: 'Fluffy stack of three with maple syrup, butter & fresh seasonal berries', price: '85', isFeatured: true, isAvailable: true, order: 6 },
+      { categoryName: 'Toasties', name: 'Cheese & Tomato Toastie', description: 'Melted cheddar and fresh tomato on grilled ciabatta', price: '55', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Toasties', name: 'Bacon & Egg Toastie', description: 'Crispy bacon, fried egg & melted cheese in grilled ciabatta', price: '75', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryName: 'Toasties', name: 'Chicken Mayo', description: 'Grilled chicken breast with creamy mayo, lettuce & tomato', price: '70', isFeatured: false, isAvailable: true, order: 3 },
+      { categoryName: 'Hungry... Ish', name: 'Chicken Wings', description: 'Crispy wings tossed in your choice of sauce, served with blue cheese dip', price: '95', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Hungry... Ish', name: 'Ribs & Wings Combo', description: 'Half rack of ribs with 6 wings, served with chips & coleslaw', price: '195', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryName: 'Hungry... Ish', name: 'Calamari', description: 'Tender calamari rings with house-made tomato salsa & lemon aioli', price: '145', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryName: 'Curries & Bunnies', name: 'Chicken Curry', description: 'Tender chicken in rich tomato-based curry, served with steamed rice', price: '145', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Curries & Bunnies', name: 'Lamb Curry', description: 'Slow-cooked lamb in aromatic spices, served with steamed rice', price: '175', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryName: 'Curries & Bunnies', name: 'Bunny Chow - Chicken', description: 'Freshly baked bread bowl filled with aromatic chicken curry', price: '95', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryName: 'Starters', name: 'Crispy Calamari', description: 'Tender calamari rings served with house-made tomato salsa and lemon aioli', price: '145', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Mains', name: 'Boma Platter', description: 'A sharing platter of mixed meats, wings, and sides - perfect for groups', price: '395', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Mains', name: 'Grilled Salmon', description: 'Fresh Atlantic salmon with herb butter, roasted vegetables and choice of side', price: '245', isFeatured: true, isAvailable: true, order: 2 },
+      { categoryName: 'Mains', name: 'BBQ Ribs', description: 'Fall-off-the-bone tender ribs with smoky BBQ sauce, served with coleslaw', price: '225', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryName: 'Burgers', name: 'Classic Beef Burger', description: 'Angus beef patty, cheddar cheese, caramelized onions, fresh tomato, lettuce, house sauce', price: '165', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Pizza', name: 'Margherita', description: 'San Marzano tomatoes, fresh mozzarella, basil, extra virgin olive oil', price: '135', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Pizza', name: 'Pepperoni', description: 'Tomato base, mozzarella, pepperoni, bell peppers, olives', price: '155', isFeatured: false, isAvailable: true, order: 2 },
+      { categoryName: 'Pizza', name: 'BBQ Chicken', description: 'BBQ sauce, grilled chicken, red onions, fresh cilantro', price: '165', isFeatured: true, isAvailable: true, order: 3 },
+      { categoryName: 'Salads', name: 'Garden Salad', description: 'Mixed greens, cherry tomatoes, cucumber, red onion, feta, balsamic vinaigrette', price: '95', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Desserts', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with molten center, served with vanilla ice cream', price: '85', isFeatured: true, isAvailable: true, order: 1 },
+      { categoryName: 'Hot Drinks', name: 'Americano', description: 'Espresso with hot water', price: '35', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Hot Drinks', name: 'Cappuccino', description: 'Espresso with steamed milk foam', price: '40', isFeatured: false, isAvailable: true, order: 2 },
+      { categoryName: 'Cold Drinks', name: 'Soft Drinks', description: 'Coca-Cola, Sprite, Fanta, Twist', price: '30', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Juices & Smoothies', name: 'Fresh Juice', description: 'Orange, Apple, or Carrot', price: '40', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Beers & Ciders', name: 'Castle Lager', price: '40', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Wines', name: 'House Red', description: 'Glass of our selection', price: '55', isFeatured: false, isAvailable: true, order: 1 },
+      { categoryName: 'Cocktails', name: 'Classic Mojito', description: 'White rum, fresh mint, lime, soda', price: '75', isFeatured: true, isAvailable: true, order: 1 }
     ];
     const insertItem = database.prepare('INSERT INTO menu_items (id, category_id, name, description, price, is_available, is_featured, order_index, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     const now = new Date().toISOString();
-    defaultMenuItems.forEach((item, index) => {
-      insertItem.run(uuidv4(), item.categoryId, item.name, item.description, item.price, item.isAvailable ? 1 : 0, item.isFeatured ? 1 : 0, item.order, now, now);
+    defaultMenuItems.forEach((item) => {
+      const catId = categoryIds[item.categoryName];
+      if (catId) {
+        insertItem.run(uuidv4(), catId, item.name, item.description, item.price, item.isAvailable ? 1 : 0, item.isFeatured ? 1 : 0, item.order, now, now);
+      }
     });
   }
 
