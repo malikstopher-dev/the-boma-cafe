@@ -710,6 +710,7 @@
   height: 120px;
   overflow: hidden;
   background: var(--cream-dark);
+  cursor: pointer;
 }
 
 .boardSlideTrack {

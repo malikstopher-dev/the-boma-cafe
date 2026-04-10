@@ -80,7 +80,10 @@ export default function GalleryBoards({ onManageClick, onImageClick }: GalleryBo
                 <h3 className={styles.boardTitle}>{cat.name}</h3>
               </div>
               
-              <div className={styles.boardSlideContainer}>
+              <div 
+                className={styles.boardSlideContainer}
+                onClick={() => onImageClick && onImageClick(boardImages.map(i => i.url), currentSlide)}
+              >
                 {boardImages.map((img, idx) => (
                   <div
                     key={`${cat.id}-${idx}`}
@@ -98,7 +101,7 @@ export default function GalleryBoards({ onManageClick, onImageClick }: GalleryBo
                       <button
                         key={`dot-${idx}`}
                         className={`${styles.boardDot} ${idx === currentSlide ? styles.activeDot : ''}`}
-                        onClick={() => handleDotClick(cat.id, idx)}
+                        onClick={(e) => { e.stopPropagation(); handleDotClick(cat.id, idx); }}
                         aria-label={`Go to slide ${idx + 1}`}
                       />
                     ))}
