@@ -6,9 +6,10 @@ import { galleryCategories, galleryImages, getGalleryImages } from '@/data/galle
 
 interface GalleryBoardsProps {
   onManageClick?: () => void;
+  onImageClick?: (images: string[], index: number) => void;
 }
 
-export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
+export default function GalleryBoards({ onManageClick, onImageClick }: GalleryBoardsProps) {
   const [activeSlide, setActiveSlide] = useState<Record<string, number>>({});
   const intervalRefs = useRef<Record<string, NodeJS.Timeout>>({});
 
@@ -60,7 +61,7 @@ export default function GalleryBoards({ onManageClick }: GalleryBoardsProps) {
           
           if (boardImages.length === 0) {
             return (
-              <div key={cat.id} className={styles.boardCard}>
+<div key={cat.id} className={styles.boardCard} onClick={() => onImageClick && onImageClick(boardImages.map(i => i.url), currentSlide)}>
                 <div className={styles.boardHeader}>
                   <span className={styles.boardIcon}>{cat.icon}</span>
                   <h3 className={styles.boardTitle}>{cat.name}</h3>
