@@ -82,13 +82,12 @@ export default function AdminGallery() {
       if (response.ok) {
         loadLocalImages(localCategory);
       } else {
-        const errorData = await response.json();
-        console.error('Delete error:', errorData);
-        alert('Failed to delete image: ' + (errorData.error || 'Unknown error'));
+        // On Vercel, public folder is read-only, so delete will fail
+        alert('Note: Image deletion is not available in production (Vercel read-only filesystem). The file will remain but you can remove it from the gallery list below.');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete image.');
+      alert('Note: Image deletion is not available in production. The file will remain but you can remove it from the gallery list below.');
     }
   };
 
