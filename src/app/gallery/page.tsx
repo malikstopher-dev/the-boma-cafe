@@ -81,41 +81,165 @@ export default function GalleryPage() {
     <>
       <Header />
       <main className={styles.main}>
-        {/* Hero */}
-        <section className={styles.hero}>
-          <h1 className={styles.heroTitle}>Gallery</h1>
-          <p className={styles.heroSubtitle}>
-            Capturing moments of joy, delicious food, and unforgettable experiences
-          </p>
+        {/* Hero - Premium Design */}
+        <section style={{
+          background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
+          padding: 'var(--space-3xl) 5%',
+          textAlign: 'center',
+          position: 'relative'
+        }}>
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.08) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.08) 0%, transparent 50%)',
+            pointerEvents: 'none'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+              padding: '0.4rem 1rem',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--dark-brown)',
+              marginBottom: '1rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase'
+            }}>
+              Our Gallery
+            </div>
+            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--white)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
+              Gallery
+            </h1>
+            <p style={{ color: 'var(--cream)', fontSize: 'clamp(0.95rem, 2vw, 1.1rem)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+              Capturing moments of joy, delicious food, and unforgettable experiences at The Boma Cafe
+            </p>
+          </div>
         </section>
 
-        {/* Top Gallery - Main Feature */}
-        <section className={styles.topGallerySection}>
-          <div className={styles.topGalleryContainer} onClick={() => openLightbox(topGalleryImages.map(i => i.url), topGalleryIndex)}>
+        {/* Top Gallery - Main Feature - Premium Design */}
+        <section style={{ background: 'var(--white)', padding: 'var(--space-2xl) 5%' }}>
+          <div style={{
+            maxWidth: '1100px',
+            height: '500px',
+            margin: '0 auto',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: 'var(--shadow-lg)'
+          }} onClick={() => openLightbox(topGalleryImages.map(i => i.url), topGalleryIndex)}>
             <div 
-              className={styles.topGalleryImage}
-              style={{ backgroundImage: `url(${topGalleryImages[topGalleryIndex].url})` }}
+              style={{
+                width: '100%',
+                height: '100%',
+                backgroundImage: `url(${topGalleryImages[topGalleryIndex].url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                transition: 'opacity 0.6s ease'
+              }}
             />
-            <div className={styles.topGalleryOverlay}>
-              <span className={styles.topGalleryTitle}>Welcome to The Boma Cafe</span>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(to top, rgba(26,15,10,0.75) 0%, transparent 60%)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              padding: '2.5rem'
+            }}>
+              <div>
+                <span style={{
+                  display: 'inline-block',
+                  background: 'var(--primary)',
+                  color: 'var(--white)',
+                  padding: '0.4rem 1rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  marginBottom: '0.75rem',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase'
+                }}>
+                  Featured
+                </span>
+                <h2 style={{ color: 'var(--white)', fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 600 }}>
+                  Welcome to The Boma Cafe
+                </h2>
+                <p style={{ color: 'rgba(255,255,255,0.8)', marginTop: '0.5rem', fontSize: '1rem' }}>
+                  Experience the rustic charm and warm hospitality
+                </p>
+              </div>
             </div>
             <button 
-              className={styles.topGalleryNav} 
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '1rem',
+                transform: 'translateY(-50%)',
+                background: 'rgba(0, 0, 0, 0.4)',
+                color: 'white',
+                border: 'none',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                transition: 'all 0.3s ease',
+                zIndex: 2
+              }} 
               onClick={(e) => { e.stopPropagation(); setTopGalleryIndex(prev => prev > 0 ? prev - 1 : topGalleryImages.length - 1); }}
             >
               ‹
             </button>
             <button 
-              className={`${styles.topGalleryNav} ${styles.topGalleryNext}`}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                right: '1rem',
+                transform: 'translateY(-50%)',
+                background: 'rgba(0, 0, 0, 0.4)',
+                color: 'white',
+                border: 'none',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                transition: 'all 0.3s ease',
+                zIndex: 2
+              }}
               onClick={(e) => { e.stopPropagation(); setTopGalleryIndex(prev => (prev + 1) % topGalleryImages.length); }}
             >
               ›
             </button>
-            <div className={styles.topGalleryDots}>
+            <div style={{
+              position: 'absolute',
+              bottom: '1.25rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: '10px',
+              zIndex: 2
+            }}>
               {topGalleryImages.map((_, idx) => (
                 <button
                   key={idx}
-                  className={`${styles.topGalleryDot} ${idx === topGalleryIndex ? styles.activeDot : ''}`}
+                  style={{
+                    width: idx === topGalleryIndex ? '28px' : '10px',
+                    height: '10px',
+                    borderRadius: idx === topGalleryIndex ? '6px' : '50%',
+                    background: idx === topGalleryIndex ? 'var(--warm)' : 'rgba(255, 255, 255, 0.5)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'all 0.3s ease'
+                  }}
                   onClick={(e) => { e.stopPropagation(); setTopGalleryIndex(idx); }}
                 />
               ))}
@@ -160,53 +284,112 @@ export default function GalleryPage() {
           </div>
         )}
 
-        {/* Featured Video Section */}
-        <section className={styles.videoSection}>
-          <div className={styles.videoContainer}>
-            <div className={styles.videoHeader}>
-              <h2 className={styles.videoTitle}>Featured Video</h2>
-              <p className={styles.videoDesc}>Watch the atmosphere, energy, and experience of The Boma Cafe.</p>
+        {/* Featured Video Section - Premium Design */}
+        <section style={{ background: 'var(--cream)', padding: 'var(--space-2xl) 5%' }}>
+          <div style={{ maxWidth: '950px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                padding: '0.4rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--white)',
+                marginBottom: '0.75rem',
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}>
+                Watch Now
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', marginTop: '0.5rem' }}>
+                Experience The Boma Cafe
+              </h2>
+              <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>
+                Watch the atmosphere, energy, and experience of The Boma Cafe
+              </p>
             </div>
-            <div className={styles.videoWrapper}>
+            <div style={{
+              background: 'var(--white)',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-lg)'
+            }}>
               <video 
                 controls
                 preload="metadata"
                 poster="/images/about.jpg"
-                className={styles.video}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
               >
                 <source src="/videos/gallery.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
             
-            {/* Social Media Buttons */}
-            <div className={styles.socialButtons}>
+            {/* Social Media Buttons - Premium */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: 'var(--space-xl)', flexWrap: 'wrap' }}>
               <a 
                 href="https://www.instagram.com/the_boma_cafe" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className={styles.socialBtn + ' ' + styles.instagram}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: '50px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                  color: '#fff',
+                  boxShadow: '0 4px 15px rgba(225, 48, 108, 0.3)'
+                }}
               >
-                <i className="fab fa-instagram" />
-                Follow on Instagram
+                <i className="fab fa-instagram" style={{ fontSize: '1.1rem' }} />
+                <span>Follow on Instagram</span>
               </a>
               <a 
                 href="https://www.tiktok.com/@thebomacafe" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className={styles.socialBtn + ' ' + styles.tiktok}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: '50px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  background: '#000',
+                  color: '#fff',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+                }}
               >
-                <i className="fab fa-tiktok" />
-                Follow on TikTok
+                <i className="fab fa-tiktok" style={{ fontSize: '1.1rem' }} />
+                <span>Follow on TikTok</span>
               </a>
               <a 
                 href="https://www.facebook.com/profile.php?id=61552775920918" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className={styles.socialBtn + ' ' + styles.facebook}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: '50px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  background: '#1877f2',
+                  color: '#fff',
+                  boxShadow: '0 4px 15px rgba(24, 119, 242, 0.3)'
+                }}
               >
-                <i className="fab fa-facebook-f" />
-                Like on Facebook
+                <i className="fab fa-facebook-f" style={{ fontSize: '1.1rem' }} />
+                <span>Like on Facebook</span>
               </a>
             </div>
           </div>

@@ -97,16 +97,18 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 10px;
   background: #faf6f0;
   color: #1a140e;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   text-decoration: none;
 }
 
 .icon:hover {
-  background: #8b4513;
+  background: linear-gradient(135deg, #8b4513, #a0522d);
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.25);
 }
 
 .navLink {

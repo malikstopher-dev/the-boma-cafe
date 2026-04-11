@@ -32,69 +32,149 @@ export default function ContactPage() {
     <>
       <Header />
       <main style={{ paddingTop: '80px' }}>
-        {/* Hero */}
+        {/* Hero - Premium Design */}
         <section style={{
           background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-          padding: '6rem 5%',
-          textAlign: 'center'
+          padding: 'var(--space-3xl) 5%',
+          textAlign: 'center',
+          position: 'relative'
         }}>
-          <h1 style={{ fontSize: '3rem', color: 'var(--white)', marginBottom: '1rem' }}>Get in Touch</h1>
-          <p style={{ color: 'var(--cream)', maxWidth: '600px', margin: '0 auto' }}>
-            We&apos;d love to hear from you. Send us a message or visit us
-          </p>
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.1) 0%, transparent 50%)',
+            pointerEvents: 'none'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+              padding: '0.4rem 1rem',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--dark-brown)',
+              marginBottom: '1rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase'
+            }}>
+             Contact Us
+            </div>
+            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--white)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
+              Get in Touch
+            </h1>
+            <p style={{ color: 'var(--cream)', fontSize: 'clamp(1rem, 2vw, 1.15rem)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+              We&apos;d love to hear from you. Send us a message or visit us
+            </p>
+          </div>
         </section>
 
-        {/* Contact Info & Form */}
-        <section className="section" style={{ background: 'var(--white)' }}>
+        {/* Contact Info & Form - Premium Design */}
+        <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '4rem', maxWidth: '1200px', margin: '0 auto' }}>
               {/* Info */}
               <div>
-                <h2 style={{ fontSize: '2rem', color: 'var(--dark-brown)', marginBottom: '2rem' }}>Contact Information</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '2rem', fontFamily: 'var(--font-display)' }}>Contact Information</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
                   {contact.address && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ width: '50px', height: '50px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white)', flexShrink: 0 }}>📍</div>
+                      <div style={{ 
+                        width: '52px', 
+                        height: '52px', 
+                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        borderRadius: '14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'var(--white)', 
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                      }}>📍</div>
                       <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block' }}>Address</strong>
-                        <span style={{ color: 'var(--text-light)' }}>{contact.address}</span>
+                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Address</strong>
+                        <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.address}</span>
                       </div>
                     </div>
                   )}
                   {contact.phone && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ width: '50px', height: '50px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white)', flexShrink: 0 }}>📞</div>
+                      <div style={{ 
+                        width: '52px', 
+                        height: '52px', 
+                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        borderRadius: '14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'var(--white)', 
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                      }}>📞</div>
                       <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block' }}>Phone</strong>
-                        <a href={`tel:${contact.phone}`} style={{ color: 'var(--text-light)' }}>{contact.phone}</a>
-                        {contact.phone2 && <span style={{ color: 'var(--text-light)' }}>, {contact.phone2}</span>}
+                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Phone</strong>
+                        <a href={`tel:${contact.phone}`} style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.phone}</a>
+                        {contact.phone2 && <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>, {contact.phone2}</span>}
                       </div>
                     </div>
                   )}
                   {contact.email && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ width: '50px', height: '50px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white)', flexShrink: 0 }}>✉️</div>
+                      <div style={{ 
+                        width: '52px', 
+                        height: '52px', 
+                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        borderRadius: '14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'var(--white)', 
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                      }}>✉️</div>
                       <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block' }}>Email</strong>
-                        <a href={`mailto:${contact.email}`} style={{ color: 'var(--text-light)' }}>{contact.email}</a>
+                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Email</strong>
+                        <a href={`mailto:${contact.email}`} style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.email}</a>
                       </div>
                     </div>
                   )}
                   {contact.whatsapp && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ width: '50px', height: '50px', background: '#25D366', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white)', flexShrink: 0 }}>💬</div>
+                      <div style={{ 
+                        width: '52px', 
+                        height: '52px', 
+                        background: 'linear-gradient(135deg, #25D366, #20BD5A)',
+                        borderRadius: '14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'var(--white)', 
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+                      }}>💬</div>
                       <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block' }}>WhatsApp</strong>
-                        <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-light)' }}>Chat with us</a>
+                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>WhatsApp</strong>
+                        <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>Chat with us</a>
                       </div>
                     </div>
                   )}
                   {contact.openingHours && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ width: '50px', height: '50px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white)', flexShrink: 0 }}>🕐</div>
+                      <div style={{ 
+                        width: '52px', 
+                        height: '52px', 
+                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        borderRadius: '14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'var(--white)', 
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                      }}>🕐</div>
                       <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block' }}>Opening Hours</strong>
-                        <span style={{ color: 'var(--text-light)' }}>{contact.openingHours}</span>
+                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Opening Hours</strong>
+                        <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.openingHours}</span>
                       </div>
                     </div>
                   )}
@@ -102,7 +182,7 @@ export default function ContactPage() {
 
                 {/* Map */}
                 {contact.mapEmbedUrl && (
-                  <div style={{ marginTop: '2rem', borderRadius: '16px', overflow: 'hidden', height: '200px', background: 'var(--cream)' }}>
+                  <div style={{ marginTop: '2.5rem', borderRadius: '20px', overflow: 'hidden', height: '220px', background: 'var(--cream)', boxShadow: 'var(--shadow-md)' }}>
                     <iframe 
                       src={contact.mapEmbedUrl}
                       width="100%" 
@@ -115,16 +195,28 @@ export default function ContactPage() {
                 )}
               </div>
 
-              {/* Form */}
-              <div style={{ background: 'var(--cream)', borderRadius: '20px', padding: '2.5rem' }}>
-                <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '1.5rem' }}>Send us a Message</h2>
+              {/* Form - Premium */}
+              <div style={{ background: 'var(--cream)', borderRadius: '24px', padding: '2.75rem', boxShadow: 'var(--shadow-md)' }}>
+                <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '1.75rem', fontFamily: 'var(--font-display)' }}>Send us a Message</h2>
                 
                 {isSubmitted ? (
-                  <div style={{ textAlign: 'center', padding: '2rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-                    <h3 style={{ color: 'var(--dark-brown)', marginBottom: '0.5rem' }}>Message Sent!</h3>
-                    <p style={{ color: 'var(--text-light)' }}>Thank you for reaching out. We&apos;ll get back to you soon.</p>
-                    <button onClick={() => setIsSubmitted(false)} style={{ marginTop: '1.5rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Send another message</button>
+                  <div style={{ textAlign: 'center', padding: '2.5rem' }}>
+                    <div style={{ 
+                      width: '80px', 
+                      height: '80px', 
+                      background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      margin: '0 auto 1.5rem',
+                      fontSize: '2.5rem'
+                    }}>✓</div>
+                    <h3 style={{ color: 'var(--dark-brown)', marginBottom: '0.75rem', fontSize: '1.5rem' }}>Message Sent!</h3>
+                    <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>Thank you for reaching out. We&apos;ll get back to you soon.</p>
+                    <button onClick={() => setIsSubmitted(false)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.95rem', fontWeight: 600 }}>
+                      Send another message
+                    </button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -135,7 +227,7 @@ export default function ContactPage() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        style={{ padding: '1rem', borderRadius: '12px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem' }}
+                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       />
                       <input 
                         type="email" 
@@ -143,7 +235,7 @@ export default function ContactPage() {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        style={{ padding: '1rem', borderRadius: '12px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem' }}
+                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -152,12 +244,12 @@ export default function ContactPage() {
                         placeholder="Phone Number"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        style={{ padding: '1rem', borderRadius: '12px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem' }}
+                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       />
                       <select 
                         value={formData.subject}
                         onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        style={{ padding: '1rem', borderRadius: '12px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem' }}
+                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       >
                         <option value="">Select Subject</option>
                         <option value="reservation">Table Reservation</option>
@@ -172,9 +264,9 @@ export default function ContactPage() {
                       rows={5}
                       value={formData.message}
                       onChange={(e) => setFormData({...formData, message: e.target.value})}
-                      style={{ padding: '1rem', borderRadius: '12px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', resize: 'vertical' }}
+                      style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', resize: 'vertical', transition: 'border-color 0.2s ease' }}
                     />
-                    <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
+                    <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem', padding: '1rem 2rem' }}>
                       Send Message
                     </button>
                   </form>
