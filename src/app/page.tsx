@@ -573,13 +573,14 @@ export default function Home() {
                       justifyContent: 'center',
                       color: 'var(--white)',
                       fontWeight: 600,
-                      fontSize: '1rem'
+                      fontSize: '1rem',
+                      flexShrink: 0
                     }}>
                       {testimonial.author.charAt(0)}
                     </div>
-                    <div>
-                      <strong style={{ color: 'var(--dark-brown)', fontSize: '1rem' }}>{testimonial.author}</strong>
-                      <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-light)' }}>{testimonial.location}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ color: 'var(--dark-brown)', fontSize: '1rem', display: 'block', lineHeight: 1.3 }}>{testimonial.author}</strong>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginTop: '2px' }}>{testimonial.location}</span>
                     </div>
                   </div>
                 </div>
@@ -587,6 +588,29 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Mobile-only Testimonial Cards - Better Layout */}
+        <style>{`
+          @media (max-width: 768px) {
+            .section > div > div:nth-child(3) {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 1.5rem !important;
+              padding: 0 1rem !important;
+            }
+            .section > div > div:nth-child(3) > div {
+              padding: 1.5rem !important;
+            }
+            .section > div > div:nth-child(3) > div > p {
+              font-size: 0.95rem !important;
+              line-height: 1.6 !important;
+            }
+            .section > div > div:nth-child(3) > div > div:last-child {
+              flex-direction: row !important;
+              align-items: center !important;
+            }
+          }
+        `}</style>
 
         {/* CTA Section - Premium Design */}
         <section style={{ 

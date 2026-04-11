@@ -42,6 +42,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -53,7 +54,8 @@ export const defaultMenuItems: MenuItem[] = [
     category: 'Breakfast',
     order: 2,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -66,6 +68,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 3,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -104,6 +107,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -190,6 +194,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1608039829572-9432d2d1f104?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -201,7 +206,8 @@ export const defaultMenuItems: MenuItem[] = [
     category: 'Hungry... Ish',
     order: 2,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -311,7 +317,8 @@ export const defaultMenuItems: MenuItem[] = [
     subcategory: 'Famous Bunny Chows',
     order: 1,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -323,7 +330,8 @@ export const defaultMenuItems: MenuItem[] = [
     subcategory: 'Famous Bunny Chows',
     order: 2,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -809,7 +817,8 @@ export const defaultMenuItems: MenuItem[] = [
     category: 'Burgers',
     order: 1,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -822,6 +831,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1586816001966-79b736744398?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -967,7 +977,8 @@ export const defaultMenuItems: MenuItem[] = [
     ],
     order: 1,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -1174,7 +1185,8 @@ export const defaultMenuItems: MenuItem[] = [
     category: 'Desserts',
     order: 1,
     isOutOfStock: false,
-    isFeatured: false,
+    isFeatured: true,
+    image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -1186,6 +1198,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
