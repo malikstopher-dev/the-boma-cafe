@@ -41,8 +41,8 @@
   color: var(--white);
 }
 
+/* Logo stays the same on scroll - no color change */
 .header.scrolled .logoImg {
-  filter: brightness(0) invert(1);
 }
 
 .header.scrolled .toggleIcon {
@@ -258,8 +258,8 @@
     width: auto;
   }
 
+  /* Logo stays the same on scroll - no color change */
   .header.scrolled .logoImg {
-    filter: brightness(0) invert(1);
   }
 
   .mobileToggle {

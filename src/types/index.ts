@@ -65,10 +65,12 @@ export interface Event {
   ctaLink?: string;
   ticketLink?: string;
   status: 'upcoming' | 'past' | 'featured';
-  showOnHomepage: boolean;
+  isFeatured?: boolean;
+  isUpcoming?: boolean;
+  showOnHomepage?: boolean;
   order: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Promotion {
