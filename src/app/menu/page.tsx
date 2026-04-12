@@ -7,6 +7,16 @@ import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
 import { MenuItem, MenuCategory } from '@/types';
 import { defaultCategories, defaultMenuItems } from '@/data/defaultData';
+import {
+  hasSizes,
+  hasAddOns,
+  needsCustomization,
+  formatStartingPrice,
+  calculateItemTotal,
+  calculateAddOnsTotal,
+  getDefaultSize,
+  formatTotalPrice
+} from '@/lib/menuPricing';
 import styles from './Menu.module.css';
 
 interface OptionModalProps {
@@ -17,23 +27,16 @@ interface OptionModalProps {
 }
 
 function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
-  const [selectedSize, setSelectedSize] = useState<string>(item.variants?.[0]?.name || '');
+  const defaultSize = item.variants?.[0]?.name || '';
+  const [selectedSize, setSelectedSize] = useState<string>(defaultSize);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
-  const [spiceLevel, setSpiceLevel] = useState('');
 
   if (!isOpen) return null;
 
-  const basePrice = item.variants?.length 
-    ? (item.variants.find(v => v.name === selectedSize)?.price || item.variants[0].price)
-    : (item.price || 0);
-
-  const addOnsTotal = selectedAddOns.reduce((total, addOnName) => {
-    const addOn = item.addOns?.find(a => a.name === addOnName);
-    return total + (addOn?.price || 0);
-  }, 0);
-
-  const totalPrice = basePrice + addOnsTotal;
+  const totalPrice = calculateItemTotal(item, selectedSize, selectedAddOns);
+  const itemHasSizes = hasSizes(item);
+  const itemHasAddOns = hasAddOns(item);
 
   const handleToggleAddOn = (name: string) => {
     setSelectedAddOns(prev => 
@@ -46,11 +49,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
     onClose();
     setSelectedAddOns([]);
     setNotes('');
-    setSpiceLevel('');
   };
-
-  const hasVariants = item.variants && item.variants.length > 0;
-  const hasAddOns = item.addOns && item.addOns.length > 0;
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -65,14 +64,14 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
             <p className={styles.modalDescription}>{item.description}</p>
           )}
 
-          {hasVariants && (
+          {itemHasSizes && (
             <div className={styles.optionGroup}>
               <h3 className={styles.optionGroupTitle}>
                 Size <span className={styles.optionGroupRequired}>*</span>
               </h3>
               <div className={styles.optionGroupOptions}>
-                {item.variants.map((variant) => (
-                  <div
+                {item.variants!.map((variant) => (
+                  <button
                     key={variant.name}
                     className={`${styles.optionSelect} ${selectedSize === variant.name ? styles.selected : ''}`}
                     onClick={() => setSelectedSize(variant.name)}
@@ -84,18 +83,18 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
                       <span className={styles.optionSelectName}>{variant.name}</span>
                     </div>
                     <span className={styles.optionSelectPrice}>R{variant.price}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
-          {hasAddOns && (
+          {itemHasAddOns && (
             <div className={styles.optionGroup}>
               <h3 className={styles.optionGroupTitle}>Extras</h3>
               <div className={styles.optionGroupOptions}>
-                {item.addOns.map((addOn) => (
-                  <div
+                {item.addOns!.map((addOn) => (
+                  <button
                     key={addOn.name}
                     className={`${styles.checkboxOption} ${selectedAddOns.includes(addOn.name) ? styles.selected : ''}`}
                     onClick={() => handleToggleAddOn(addOn.name)}
@@ -109,7 +108,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
                       <span className={styles.checkboxLabel}>{addOn.name}</span>
                     </div>
                     <span className={styles.checkboxPrice}>+R{addOn.price}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -129,7 +128,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
         <div className={styles.modalFooter}>
           <div className={styles.modalTotal}>
             <div className={styles.modalTotalLabel}>Total</div>
-            <div className={styles.modalTotalPrice}>R{totalPrice}</div>
+            <div className={styles.modalTotalPrice}>{formatTotalPrice(totalPrice)}</div>
           </div>
           <button className={styles.modalAddButton} onClick={handleAdd}>
             Add to Order
@@ -180,27 +179,19 @@ export default function MenuPage() {
   }, [sections, activeCategory, searchQuery]);
 
   const handleAddToCart = (item: MenuItem, selectedSize?: string, selectedAddOns?: string[], notes?: string) => {
-    let itemPrice = item.price || 0;
-    if (selectedSize && item.variants?.length) {
-      const variant = item.variants.find(v => v.name === selectedSize);
-      if (variant) itemPrice = variant.price;
-    }
-    
-    const addOnsTotal = (selectedAddOns || []).reduce((total, addOnName) => {
-      const addOn = item.addOns?.find(a => a.name === addOnName);
-      return total + (addOn?.price || 0);
-    }, 0);
-    
-    const finalPrice = itemPrice + addOnsTotal;
+    const finalPrice = calculateItemTotal(item, selectedSize, selectedAddOns);
     const sizeDisplay = selectedSize ? ` (${selectedSize})` : '';
     const addOnsDisplay = (selectedAddOns?.length || 0) > 0 ? ` + ${selectedAddOns.join(', ')}` : '';
     
     addItem({
-      id: `${item.id}${selectedSize ? `-${selectedSize.replace(/\s/g, '')}` : ''}${(selectedAddOns?.length || 0) ? '-extras' : ''}`,
+      id: `${item.id}${selectedSize ? `-${selectedSize.replace(/\s/g, '')}` : ''}${(selectedAddOns?.length || 0) > 0 ? `-${selectedAddOns.length}extras` : ''}-${Date.now()}`,
       name: `${item.name}${sizeDisplay}${addOnsDisplay}`,
       price: finalPrice,
       quantity: 1,
-      category: item.category
+      category: item.category,
+      selectedSize,
+      selectedAddOns,
+      notes
     });
   };
 
@@ -215,15 +206,21 @@ export default function MenuPage() {
   };
 
   const getItemPrice = (item: MenuItem) => {
-    if (item.variants?.length) {
-      const prices = item.variants.map(v => v.price);
-      return `R${Math.min(...prices)}`;
-    }
-    return `R${item.price}`;
+    return formatStartingPrice(item);
   };
 
   const hasOptions = (item: MenuItem) => {
-    return (item.variants?.length || 0) > 1 || (item.addOns?.length || 0) > 0;
+    return needsCustomization(item);
+  };
+
+  const getOptionButtonText = (item: MenuItem) => {
+    if (hasSizes(item)) {
+      return 'Select Size';
+    }
+    if (hasAddOns(item)) {
+      return 'Customize';
+    }
+    return 'Add to Order';
   };
 
   return (
@@ -333,7 +330,7 @@ export default function MenuPage() {
                         )}
                         <div className={styles.itemOptions}>
                           <button className={styles.optionButton}>
-                            {hasOptions(item) ? 'Select Options' : 'Add to Order'}
+                            {getOptionButtonText(item)}
                           </button>
                         </div>
                       </div>

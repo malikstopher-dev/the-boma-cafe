@@ -92,10 +92,19 @@ export default function CartButton() {
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
                   {items.map(item => (
-                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--cream)', borderRadius: '12px' }}>
-                      <div>
+                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '1rem', background: 'var(--cream)', borderRadius: '12px' }}>
+                      <div style={{ flex: 1 }}>
                         <p style={{ fontWeight: 600, color: 'var(--dark-brown)' }}>{item.name}</p>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-light)' }}>R{item.price} each</p>
+                        {item.selectedSize && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '2px' }}>Size: {item.selectedSize}</p>
+                        )}
+                        {item.selectedAddOns && item.selectedAddOns.length > 0 && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '2px' }}>Extras: {item.selectedAddOns.join(', ')}</p>
+                        )}
+                        {item.notes && (
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontStyle: 'italic', marginTop: '2px' }}>Note: {item.notes}</p>
+                        )}
+                        <p style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '4px' }}>R{item.price} each</p>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <button onClick={() => useCart().updateQuantity(item.id, item.quantity - 1)} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid var(--primary)', background: 'none', cursor: 'pointer' }}>-</button>
@@ -115,8 +124,18 @@ export default function CartButton() {
 
                 <button
                   onClick={() => {
-                    const message = items.map(item => `• ${item.name} x${item.quantity} - R${item.price * item.quantity}`).join('%0A');
-                    const whatsappMessage = `Hello! I would like to order:%0A${message}%0A%0ATotal: R${total}%0A%0APlease confirm.`;
+                    const formatItem = (item: typeof items[0]) => {
+                      let details = `• ${item.name}`;
+                      if (item.selectedSize) details += ` (${item.selectedSize})`;
+                      if (item.selectedAddOns && item.selectedAddOns.length > 0) {
+                        details += ` + ${item.selectedAddOns.join(', ')}`;
+                      }
+                      if (item.notes) details += ` [Note: ${item.notes}]`;
+                      details += ` x${item.quantity} - R${item.price * item.quantity}`;
+                      return details;
+                    };
+                    const message = items.map(item => formatItem(item)).join('%0A');
+                    const whatsappMessage = `Hello! I would like to order:%0A%0A${message}%0A%0A📋 Total: R${total}%0A%0APlease confirm my order. Thank you!`;
                     window.open(`https://wa.me/27729962212?text=${whatsappMessage}`, '_blank');
                     useCart().clearCart();
                     setIsOpen(false);

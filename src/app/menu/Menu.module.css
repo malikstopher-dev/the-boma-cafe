@@ -315,30 +315,46 @@
   white-space: nowrap;
 }
 
-.itemDescription {
-  font-size: 0.9rem;
+.itemPriceFrom {
+  font-size: 0.85rem;
+  font-weight: 400;
   color: var(--text-light);
-  line-height: 1.5;
-  margin-bottom: var(--space-md);
 }
 
-.itemTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-md);
-}
-
-.itemTag {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.itemPriceFrom span {
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--primary);
-  background: var(--cream-dark);
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm);
 }
+
+  .itemDescription {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: var(--space-sm);
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .itemTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  .itemTag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    background: var(--cream-dark);
+    padding: 0.15rem 0.4rem;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
 
 .itemOptions {
   display: flex;
@@ -476,6 +492,10 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: border-color var(--transition-fast), background var(--transition-fast);
+  background: var(--white);
+  font-size: 1rem;
+  text-align: left;
+  width: 100%;
 }
 
 .optionSelect:hover {
@@ -541,6 +561,10 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: border-color var(--transition-fast), background var(--transition-fast);
+  background: var(--white);
+  font-size: 1rem;
+  text-align: left;
+  width: 100%;
 }
 
 .checkboxOption:hover {
@@ -863,6 +887,18 @@
   
   .itemImage {
     height: 160px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .itemImagePlaceholder {
+    height: 160px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .itemContent {
@@ -921,17 +957,23 @@
   }
   
   .optionSelect {
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-md);
+    min-height: 48px;
+  }
+  
+  .checkboxOption {
+    padding: var(--space-md);
+    min-height: 48px;
   }
   
   .optionSelectName,
   .checkboxLabel {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
   
   .optionSelectPrice,
   .checkboxPrice {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
   }
   
   .notesTextarea {
@@ -957,8 +999,9 @@
   
   .modalAddButton {
     width: 100%;
-    padding: var(--space-md);
-    font-size: 0.95rem;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1rem;
+    min-height: 52px;
   }
   
   .ctaSection {

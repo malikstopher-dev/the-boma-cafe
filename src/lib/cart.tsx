@@ -8,6 +8,9 @@ interface CartItem {
   price: number;
   quantity: number;
   category?: string;
+  selectedSize?: string;
+  selectedAddOns?: string[];
+  notes?: string;
 }
 
 interface CartContextType {
