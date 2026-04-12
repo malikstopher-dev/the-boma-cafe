@@ -139,19 +139,19 @@ const ITEM_IMAGES: Record<string, string> = {
   // PIZZA - Each with unique images
   'Something Meaty': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
   'Something Cheesy': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
-  'BBQ Chicken': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Lamb Curry & Cheese': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
+  'BBQ Chicken': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
+  'Lamb Curry & Cheese': 'https://images.unsplash.com/photo-1604103829192-1297d2b9e535?w=400&h=300&fit=crop',
   'Margherita': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
-  'Sausage': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
-  'Regina': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
+  'Sausage': 'https://images.unsplash.com/photo-1619546813926-a78b6379c2ba?w=400&h=300&fit=crop',
+  'Regina': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
   'Hawaiian': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
   'Pizza Extra: Ham': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
   'Pizza Extra: Salami': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
   'Pizza Extra: Mushrooms': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
-  'Pizza Extra: Peppers': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Pizza Extra: Cheese': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
-  'Pizza Extra: Olives': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
-  'Pizza Extra: Bacon': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+  'Pizza Extra: Peppers': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+  'Pizza Extra: Cheese': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
+  'Pizza Extra: Olives': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+  'Pizza Extra: Bacon': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
 
   // DESSERTS - Each with unique images
   'Cheese Cake': 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=300&fit=crop',
@@ -201,13 +201,13 @@ const ITEM_IMAGES: Record<string, string> = {
 
   // COLD BEVERAGES - Each with unique images
   'Cold Drink / Soda': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
-  'Appletiser / Grapetiser': 'https://images.unsplash.com/photo-1525385133512-2f346b384338?w=400&h=300&fit=crop',
+  'Appletiser / Grapetiser': 'https://images.unsplash.com/photo-1511690656952-34342d5c71df?w=400&h=300&fit=crop',
   'Still / Sparkling Water': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&h=300&fit=crop',
-  'Liquifruit': 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=300&fit=crop',
+  'Liquifruit': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
   'Red Bull': 'https://images.unsplash.com/photo-1527960471264-932f39eb5846?w=400&h=300&fit=crop',
-  'Rock Shandy': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
-  'Steelworks': 'https://images.unsplash.com/photo-1527960471264-932f39eb5846?w=400&h=300&fit=crop',
-  'Fresh Juice': 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=300&fit=crop',
+  'Rock Shandy': 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=300&fit=crop',
+  'Steelworks': 'https://images.unsplash.com/photo-1622543925917-7632a394a1f1?w=400&h=300&fit=crop',
+  'Fresh Juice': 'https://images.unsplash.com/photo-1579622561880-5f459d6c8cfe?w=400&h=300&fit=crop',
 };
 
 export function getMenuItemImage(item: { name: string; category: string }): string {

@@ -1023,65 +1023,78 @@
   .hero {
     padding: var(--space-xl) 4% var(--space-lg);
   }
-  
+   
   .heroTitle {
     font-size: 1.5rem;
   }
-  
+   
   .searchSection {
     top: 60px;
   }
-  
+   
   .totalBox {
     padding: var(--space-sm) var(--space-md);
   }
-  
+   
   .totalLabel {
     font-size: 0.8rem;
   }
-  
+   
   .totalAmount {
     font-size: 1rem;
   }
-  
+   
   .categoryTabs {
     top: 110px;
   }
-  
+   
   .categoryTab {
     padding: 6px 12px;
     font-size: 0.75rem;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
   }
-  
+   
   .menuContent {
     top: 30px;
   }
-  
+   
   .categorySection {
     padding: var(--space-md);
   }
-  
+   
   .categoryTitle {
     font-size: 1.35rem;
   }
-  
+   
   .itemImage {
     height: 140px;
   }
-  
+   
   .itemContent {
     padding: var(--space-sm) var(--space-md);
   }
-  
+   
   .itemBadges {
     top: var(--space-sm);
     left: var(--space-sm);
     right: var(--space-sm);
   }
-  
+   
   .badgePromo,
   .badgeFeatured {
     font-size: 0.6rem;
     padding: 0.2rem 0.5rem;
+  }
+   
+  /* Touch-friendly buttons */
+  .modalAddButton {
+    min-height: 52px;
+    -webkit-tap-highlight-color: transparent;
+  }
+   
+  .optionButton {
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
   }
 }
