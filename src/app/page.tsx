@@ -150,27 +150,27 @@ export default function Home() {
             backgroundImage: 'radial-gradient(circle at 15% 30%, rgba(244, 164, 96, 0.08) 0%, transparent 50%), radial-gradient(circle at 85% 70%, rgba(244, 164, 96, 0.08) 0%, transparent 50%)',
             pointerEvents: 'none'
           }} />
-          <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ maxWidth: '1300px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
               <div style={{
                 display: 'inline-block',
                 background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
-                padding: '0.4rem 1rem',
+                padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--dark-brown)',
                 marginBottom: '1rem',
-                letterSpacing: '1px',
+                letterSpacing: '1.5px',
                 textTransform: 'uppercase'
               }}>
                 Explore Our Menu
               </div>
-              <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.75rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)' }}>
+              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
                 Taste the Experience
               </h2>
-              <p style={{ color: 'var(--text-light)', fontSize: '1.05rem', maxWidth: '500px', margin: '0 auto' }}>
-                From hearty breakfasts to handcrafted cocktails, discover what makes The Boma Cafe special
+              <p style={{ color: 'var(--text-light)', fontSize: '1.1rem', maxWidth: '520px', margin: '0 auto', lineHeight: 1.6 }}>
+                From sunrise breakfasts to handcrafted cocktails, discover culinary excellence at The Boma Cafe
               </p>
             </div>
 
@@ -180,27 +180,27 @@ export default function Home() {
               gap: '1.5rem'
             }}>
               {[
-                { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500&h=400&fit=crop', link: '/menu?category=Breakfast' },
-                { title: 'Toasties', desc: 'Hot & satisfying', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&h=400&fit=crop', link: '/menu?category=Toasties' },
-                { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&h=400&fit=crop', link: '/menu?category=Curries' },
-                { title: 'Burgers', desc: 'Juicy & bold', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&h=400&fit=crop', link: '/menu?category=Burgers' },
-                { title: 'Wood-Fired Pizza', desc: 'Crispy & delicious', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&h=400&fit=crop', link: '/menu?category=Pizza' },
-                { title: 'Cocktails', desc: 'Crafted with care', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500&h=400&fit=crop', link: '/menu?category=Cocktails' },
-                { title: 'Milkshakes & Freezos', desc: 'Sweet indulgence', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&h=400&fit=crop', link: '/menu?category=Milkshakes' },
-                { title: 'Desserts', desc: 'Perfect ending', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500&h=400&fit=crop', link: '/menu?category=Desserts' }
+                { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&h=450&fit=crop', link: '/menu?category=Breakfast' },
+                { title: 'Toasties', desc: 'Hot & satisfying', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=600&h=450&fit=crop', link: '/menu?category=Toasties' },
+                { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=450&fit=crop', link: '/menu?category=Curries' },
+                { title: 'Burgers', desc: 'Juicy & bold', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=450&fit=crop', link: '/menu?category=Burgers' },
+                { title: 'Wood-Fired Pizza', desc: 'Crispy & delicious', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=450&fit=crop', link: '/menu?category=Pizza' },
+                { title: 'Cocktails', desc: 'Crafted with care', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=450&fit=crop', link: '/menu?category=Cocktails' },
+                { title: 'Milkshakes & Freezos', desc: 'Sweet indulgence', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&h=450&fit=crop', link: '/menu?category=Milkshakes' },
+                { title: 'Desserts', desc: 'Perfect ending', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=450&fit=crop', link: '/menu?category=Desserts' }
               ].map((category, idx) => (
                 <Link key={idx} href={category.link} style={{ textDecoration: 'none' }}>
                   <div className="menu-category-card" style={{
                     background: 'var(--white)',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     overflow: 'hidden',
                     boxShadow: 'var(--shadow-md)',
-                    transition: 'transform 0.4s ease, box-shadow 0.4s ease',
+                    transition: 'transform 0.5s ease, box-shadow 0.5s ease',
                     cursor: 'pointer',
                     height: '100%'
                   }}>
-                    <div style={{
-                      height: '160px',
+                    <div className="category-img" style={{
+                      height: '180px',
                       background: `url(${category.image}) center/cover`,
                       position: 'relative',
                       overflow: 'hidden'
@@ -208,22 +208,22 @@ export default function Home() {
                       <div style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(180deg, transparent 50%, rgba(26, 15, 10, 0.4) 100%)'
+                        background: 'linear-gradient(180deg, transparent 45%, rgba(26, 15, 10, 0.5) 100%)'
                       }} />
                     </div>
-                    <div style={{ padding: '1.25rem', textAlign: 'center' }}>
-                      <h3 style={{ fontSize: '1.15rem', color: 'var(--dark-brown)', marginBottom: '0.35rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>
+                    <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                      <h3 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)', marginBottom: '0.5rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>
                         {category.title}
                       </h3>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{category.desc}</p>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0 }}>{category.desc}</p>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-              <Link href="/menu" className="btn btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
+              <Link href="/menu" className="btn btn-primary" style={{ padding: '1.1rem 3rem', fontSize: '1.05rem', fontWeight: 600 }}>
                 View Full Menu
               </Link>
             </div>
@@ -231,8 +231,14 @@ export default function Home() {
 
           <style>{`
             .menu-category-card:hover {
-              transform: translateY(-6px);
-              box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12) !important;
+              transform: translateY(-10px);
+              box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15) !important;
+            }
+            .menu-category-card:hover .category-img {
+              transform: scale(1.08);
+            }
+            .category-img {
+              transition: transform 0.6s ease;
             }
             @media (max-width: 1024px) {
               .section + section > div > div:nth-child(3) {
@@ -245,16 +251,13 @@ export default function Home() {
                 gap: 1rem !important;
               }
               .section + section > div > div:nth-child(3) > a > div > div:first-child {
-                height: 120px !important;
+                height: 140px !important;
               }
             }
             @media (max-width: 480px) {
               .section + section > div > div:nth-child(3) {
                 grid-template-columns: 1fr 1fr !important;
                 gap: 0.75rem !important;
-              }
-              .section + section {
-                padding: var(--space-xl) 4% !important;
               }
             }
           `}</style>
@@ -647,33 +650,42 @@ export default function Home() {
         )}
 
 {/* Testimonials Section - Premium Design */}
-        <section className="section" style={{ background: 'var(--cream)', paddingTop: 'var(--space-4xl)', paddingBottom: 'var(--space-4xl)' }}>
-          <div className="container">
-            <div className="section-header">
+        <section style={{ background: 'var(--cream)', padding: 'var(--space-4xl) 5%', position: 'relative', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(201, 169, 98, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(201, 169, 98, 0.08) 0%, transparent 50%)',
+            pointerEvents: 'none'
+          }} />
+          <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
               <div style={{
                 display: 'inline-block',
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%)',
-                padding: '0.4rem 1rem',
+                padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--dark-brown)',
-                marginBottom: '0.75rem',
-                letterSpacing: '1px',
+                marginBottom: '1rem',
+                letterSpacing: '1.5px',
                 textTransform: 'uppercase'
               }}>
                 Guest Reviews
               </div>
-              <h2 style={{ marginTop: '0.5rem' }}>What Our Guests Say</h2>
-              <p>Hear from our satisfied customers</p>
+              <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+                What Our Guests Say
+              </h2>
+              <p style={{ color: 'var(--text-light)', fontSize: '1.1rem' }}>Hear from our satisfied customers</p>
             </div>
             
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '2rem',
-              maxWidth: '1100px',
-              margin: '0 auto'
+              gap: '2rem'
             }}>
               {[
                 { text: "Absolutely stunning venue! The rustic atmosphere with the thatched roof and firepits creates the perfect escape from city life. The food is incredible and the service is top-notch.", author: "Sarah M.", location: "Johannesburg" },
@@ -682,53 +694,55 @@ export default function Home() {
               ].map((testimonial: any, idx: number) => (
                 <div style={{
                   background: 'var(--white)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '2rem',
+                  borderRadius: '24px',
+                  padding: '2.25rem',
                   boxShadow: 'var(--shadow-md)',
-                  position: 'relative'
+                  position: 'relative',
+                  transition: 'transform 0.4s ease, box-shadow 0.4s ease'
                 }}>
                   <div style={{
                     position: 'absolute',
-                    top: '-12px',
-                    left: '24px',
-                    background: 'var(--warm)',
-                    width: '40px',
-                    height: '40px',
+                    top: '-14px',
+                    left: '28px',
+                    background: 'linear-gradient(135deg, var(--warm), var(--primary))',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.1rem'
+                    fontSize: '1.25rem',
+                    boxShadow: 'var(--shadow-md)'
                   }}>
                     &ldquo;
                   </div>
-                  <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', marginTop: '0.5rem', color: 'var(--gold)' }}>
+                  <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', marginTop: '0.75rem', color: 'var(--gold)' }}>
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} style={{ fontSize: '0.9rem' }}>★</span>
+                      <span key={i} style={{ fontSize: '1rem' }}>★</span>
                     ))}
                   </div>
-                  <p style={{ fontSize: '1rem', color: 'var(--text)', fontStyle: 'italic', marginBottom: '1.75rem', lineHeight: 1.7 }}>
+                  <p style={{ fontSize: '1.05rem', color: 'var(--text)', fontStyle: 'italic', marginBottom: '2rem', lineHeight: 1.75 }}>
                     {testimonial.text}
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderTop: '1px solid var(--cream)', paddingTop: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderTop: '1px solid var(--cream)', paddingTop: '1.25rem' }}>
                     <div style={{
-                      width: '44px',
-                      height: '44px',
+                      width: '48px',
+                      height: '48px',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: 'var(--white)',
-                      fontWeight: 600,
-                      fontSize: '1rem',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
                       flexShrink: 0
                     }}>
                       {testimonial.author.charAt(0)}
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <strong style={{ color: 'var(--dark-brown)', fontSize: '1rem', display: 'block', lineHeight: 1.3 }}>{testimonial.author}</strong>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginTop: '2px' }}>{testimonial.location}</span>
+                      <strong style={{ color: 'var(--dark-brown)', fontSize: '1.05rem', display: 'block', lineHeight: 1.3, fontWeight: 600 }}>{testimonial.author}</strong>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', display: 'block', marginTop: '3px' }}>{testimonial.location}</span>
                     </div>
                   </div>
                 </div>
@@ -748,15 +762,6 @@ export default function Home() {
             }
             .section > div > div:nth-child(3) > div {
               padding: 1.5rem !important;
-            }
-            .section > div > div:nth-child(3) > div > p {
-              font-size: 0.95rem !important;
-              line-height: 1.6 !important;
-            }
-            .section > div > div:nth-child(3) > div > div:last-child {
-              flex-direction: row !important;
-              align-items: center !important;
-            }
           }
         `}</style>
 
@@ -766,38 +771,38 @@ export default function Home() {
           position: 'relative',
           padding: 'var(--space-4xl) 5%'
         }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(26, 15, 10, 0.88) 0%, rgba(44, 24, 16, 0.75) 100%)' }} />
-          <div className="container" style={{ position: 'relative', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(26, 15, 10, 0.9) 0%, rgba(44, 24, 16, 0.7) 100%)' }} />
+          <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '850px', margin: '0 auto' }}>
             <div style={{
               display: 'inline-block',
-              background: 'var(--warm)',
-              padding: '0.4rem 1.25rem',
+              background: 'linear-gradient(135deg, var(--warm), var(--gold))',
+              padding: '0.5rem 1.5rem',
               borderRadius: 'var(--radius-full)',
               fontSize: '0.75rem',
               fontWeight: 600,
               color: 'var(--dark-brown)',
               marginBottom: '1.5rem',
-              letterSpacing: '1px',
+              letterSpacing: '1.5px',
               textTransform: 'uppercase'
             }}>
               Reservations
             </div>
-            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.75rem)', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 600 }}>
+            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-display)', textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
               Ready to Experience The Boma?
             </h2>
-            <p style={{ fontSize: 'clamp(1rem, 2vw, 1.15rem)', color: 'var(--cream)', marginBottom: '2.5rem', maxWidth: '600px', margin: '0 auto', lineHeight: 1.7 }}>
-              Book your table or reserve your event space today. We can&apos;t wait to welcome you!
+            <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.25rem)', color: 'var(--cream)', marginBottom: '2.5rem', maxWidth: '600px', margin: '0 auto', lineHeight: 1.7, fontStyle: 'italic' }}>
+              Book your table or reserve your event space today. We can't wait to welcome you!
             </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/contact" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>Book a Table</Link>
-              <Link href="/events" className="btn btn-ghost" style={{ padding: '1rem 2.5rem' }}>Plan an Event</Link>
+            <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/contact" className="btn btn-primary" style={{ padding: '1.1rem 3rem', fontSize: '1.05rem', fontWeight: 600 }}>Book a Table</Link>
+              <Link href="/events" className="btn btn-ghost" style={{ padding: '1.1rem 3rem', fontSize: '1.05rem', fontWeight: 600 }}>Plan an Event</Link>
             </div>
             
             <div style={{ 
               display: 'flex', 
               justifyContent: 'center', 
-              gap: '3rem', 
-              marginTop: '3.5rem',
+              gap: '3.5rem', 
+              marginTop: '4rem',
               paddingTop: '2rem',
               borderTop: '1px solid rgba(255,255,255,0.15)',
               flexWrap: 'wrap'
