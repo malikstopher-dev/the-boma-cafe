@@ -55,6 +55,8 @@ export const galleryImages: Record<string, GalleryImage[]> = {
     { url: '/gallery/people/gallery-7-800x600.jpeg', alt: 'Group gathering' },
     { url: '/gallery/people/2026-04-08-3.webp', alt: 'Celebration' },
     { url: '/gallery/people/2026-04-08-5.webp', alt: 'Special occasion' },
+    { url: '/gallery/people/tina.jpg', alt: 'Guest experience' },
+    { url: '/gallery/people/tina2.jpg', alt: 'Customer moment' },
   ],
   promotions: [
     { url: '/gallery/promotions/2024-07-31.jpg', alt: 'Special offer' },
