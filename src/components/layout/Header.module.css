@@ -6,53 +6,53 @@
   z-index: 1000;
   width: calc(100% - 48px);
   max-width: 1200px;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 248, 240, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.06);
   border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .header.scrolled {
-  top: 8px;
-  background: rgba(26, 20, 14, 0.92);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  top: 10px;
+  background: rgba(255, 248, 240, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 18px;
 }
 
 .header.scrolled .navLink {
-  color: rgba(255, 255, 255, 0.9);
+  color: #2E1B12;
 }
 
 .header.scrolled .navLink:hover {
-  color: var(--warm);
+  color: #B86B2B;
 }
 
 .header.scrolled .icon {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--cream);
+  background: rgba(255, 248, 240, 0.8);
+  color: #2E1B12;
 }
 
 .header.scrolled .icon:hover {
-  background: var(--warm);
-  color: var(--white);
+  background: linear-gradient(135deg, #D4A373, #B86B2B);
+  color: #fff;
 }
 
-/* Logo stays the same on scroll - no color change */
 .header.scrolled .logoImg {
 }
 
 .header.scrolled .toggleIcon {
-  color: var(--cream);
+  color: #2E1B12;
 }
 
 .header.scrolled .mobileToggle {
-  background: rgba(26, 20, 14, 0.9);
+  background: rgba(255, 248, 240, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .container {
@@ -100,31 +100,31 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #faf6f0;
-  color: #1a140e;
+  background: rgba(255, 248, 240, 0.8);
+  color: #2E1B12;
   transition: all 0.25s ease;
   text-decoration: none;
 }
 
 .icon:hover {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
+  background: linear-gradient(135deg, #D4A373, #B86B2B);
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.25);
+  box-shadow: 0 4px 12px rgba(139, 107, 43, 0.25);
 }
 
 .navLink {
-  color: #1a140e;
+  color: #2E1B12;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   letter-spacing: 0.3px;
-  transition: color 0.2s ease;
+  transition: color 0.25s ease;
   white-space: nowrap;
 }
 
 .navLink:hover {
-  color: #8b4513;
+  color: #B86B2B;
 }
 
 .mobileToggle {
@@ -133,17 +133,18 @@
   top: 20px;
   right: 20px;
   z-index: 1001;
-  background: #fff;
-  border: none;
-  border-radius: 8px;
+  background: rgba(255, 248, 240, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
   padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .toggleIcon {
   font-size: 1.2rem;
-  color: #1a140e;
+  color: #2E1B12;
 }
 
 .mobileOverlay {
@@ -153,7 +154,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 999;
 }
 
@@ -177,17 +178,18 @@
 }
 
 .mobileNavLink {
-  color: #1a140e;
+  color: #2E1B12;
   font-weight: 500;
   font-size: 1rem;
   text-decoration: none;
   padding: 0.875rem 1rem;
   border-radius: 8px;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .mobileNavLink:hover {
-  background: #faf6f0;
+  background: rgba(255, 248, 240, 0.8);
+  color: #B86B2B;
 }
 
 .mobileIcons {
@@ -206,14 +208,14 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #faf6f0;
-  color: #1a140e;
+  background: rgba(255, 248, 240, 0.8);
+  color: #2E1B12;
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .mobileIcon:hover {
-  background: #8b4513;
+  background: linear-gradient(135deg, #D4A373, #B86B2B);
   color: #fff;
 }
 
@@ -228,14 +230,15 @@
     transform: none;
     border-radius: 0;
     border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
   }
 
   .header.scrolled {
-    background: rgba(26, 20, 14, 0.95);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 248, 240, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
   }
 
   .container {
@@ -260,7 +263,6 @@
     width: auto;
   }
 
-  /* Logo stays the same on scroll - no color change */
   .header.scrolled .logoImg {
   }
 
@@ -272,8 +274,8 @@
   }
 
   .header.scrolled .mobileToggle {
-    background: rgba(26, 20, 14, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 248, 240, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.4);
   }
 
   .mobileOverlay {
