@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { dataService } from '@/lib/data';
 import { siteSettingsService } from '@/lib/siteSettings';
 import PremiumHero from '@/components/ui/PremiumHero';
+import Image from 'next/image';
 
 export default function AboutPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -70,9 +71,11 @@ export default function AboutPage() {
                   borderRadius: '24px',
                   opacity: 0.4
                 }} />
-                <img 
-                  src={aboutSettings?.heroImage || '/gallery/people/boma1-1152x864.jpeg'} 
+                <Image 
+                  src="/gallery/people/boma1-1152x864.jpeg"
                   alt="The Boma Cafe Experience"
+                  width={1152}
+                  height={864}
                   style={{ 
                     width: '100%', 
                     height: 'auto',
