@@ -120,6 +120,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -440,6 +441,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -452,6 +454,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -490,6 +493,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -502,6 +506,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -539,6 +544,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -550,6 +556,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -586,6 +593,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1575023782549-62ca0d244b69?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -598,6 +606,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1556855810-ac404aa91e85?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -744,6 +753,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -756,6 +766,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -937,6 +948,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -948,6 +960,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -996,6 +1009,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -1012,7 +1026,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 3,
     isOutOfStock: false,
     isFeatured: false,
-    createdAt: new Date().toISOString(),
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
     updatedAt: new Date().toISOString()
   },
   {
@@ -1118,6 +1132,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 10,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -1129,6 +1144,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 11,
     isOutOfStock: false,
     isFeatured: false,
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },

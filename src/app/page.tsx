@@ -139,6 +139,127 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Menu Categories Showcase - Premium Design */}
+        <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%', position: 'relative', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'radial-gradient(circle at 15% 30%, rgba(244, 164, 96, 0.08) 0%, transparent 50%), radial-gradient(circle at 85% 70%, rgba(244, 164, 96, 0.08) 0%, transparent 50%)',
+            pointerEvents: 'none'
+          }} />
+          <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+                padding: '0.4rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--dark-brown)',
+                marginBottom: '1rem',
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}>
+                Explore Our Menu
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.75rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)' }}>
+                Taste the Experience
+              </h2>
+              <p style={{ color: 'var(--text-light)', fontSize: '1.05rem', maxWidth: '500px', margin: '0 auto' }}>
+                From hearty breakfasts to handcrafted cocktails, discover what makes The Boma Cafe special
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '1.5rem'
+            }}>
+              {[
+                { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500&h=400&fit=crop', link: '/menu?category=Breakfast' },
+                { title: 'Toasties', desc: 'Hot & satisfying', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&h=400&fit=crop', link: '/menu?category=Toasties' },
+                { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&h=400&fit=crop', link: '/menu?category=Curries' },
+                { title: 'Burgers', desc: 'Juicy & bold', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&h=400&fit=crop', link: '/menu?category=Burgers' },
+                { title: 'Wood-Fired Pizza', desc: 'Crispy & delicious', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&h=400&fit=crop', link: '/menu?category=Pizza' },
+                { title: 'Cocktails', desc: 'Crafted with care', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500&h=400&fit=crop', link: '/menu?category=Cocktails' },
+                { title: 'Milkshakes & Freezos', desc: 'Sweet indulgence', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&h=400&fit=crop', link: '/menu?category=Milkshakes' },
+                { title: 'Desserts', desc: 'Perfect ending', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500&h=400&fit=crop', link: '/menu?category=Desserts' }
+              ].map((category, idx) => (
+                <Link key={idx} href={category.link} style={{ textDecoration: 'none' }}>
+                  <div className="menu-category-card" style={{
+                    background: 'var(--white)',
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-md)',
+                    transition: 'transform 0.4s ease, box-shadow 0.4s ease',
+                    cursor: 'pointer',
+                    height: '100%'
+                  }}>
+                    <div style={{
+                      height: '160px',
+                      background: `url(${category.image}) center/cover`,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(180deg, transparent 50%, rgba(26, 15, 10, 0.4) 100%)'
+                      }} />
+                    </div>
+                    <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+                      <h3 style={{ fontSize: '1.15rem', color: 'var(--dark-brown)', marginBottom: '0.35rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>
+                        {category.title}
+                      </h3>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{category.desc}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+              <Link href="/menu" className="btn btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1rem' }}>
+                View Full Menu
+              </Link>
+            </div>
+          </div>
+
+          <style>{`
+            .menu-category-card:hover {
+              transform: translateY(-6px);
+              box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12) !important;
+            }
+            @media (max-width: 1024px) {
+              .section + section > div > div:nth-child(3) {
+                grid-template-columns: repeat(3, 1fr) !important;
+              }
+            }
+            @media (max-width: 768px) {
+              .section + section > div > div:nth-child(3) {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1rem !important;
+              }
+              .section + section > div > div:nth-child(3) > a > div > div:first-child {
+                height: 120px !important;
+              }
+            }
+            @media (max-width: 480px) {
+              .section + section > div > div:nth-child(3) {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 0.75rem !important;
+              }
+              .section + section {
+                padding: var(--space-xl) 4% !important;
+              }
+            }
+          `}</style>
+        </section>
+
         {/* About Section - Premium Design */}
         <section className="section" style={{ background: 'var(--white)', paddingTop: 'var(--space-4xl)', paddingBottom: 'var(--space-4xl)' }}>
           <div className="container">
@@ -280,10 +401,19 @@ export default function Home() {
           </div>
         </section>
 
-{/* Featured Menu Section - Premium Design */}
-        <section className="section" style={{ background: 'var(--cream)', paddingTop: 'var(--space-4xl)', paddingBottom: 'var(--space-4xl)' }}>
-          <div className="container">
-            <div className="section-header">
+{/* Featured Menu Section - Premium Design with Animation */}
+        <section className="section" style={{ background: 'var(--cream)', paddingTop: 'var(--space-4xl)', paddingBottom: 'var(--space-4xl)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(244, 164, 96, 0.05) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(244, 164, 96, 0.05) 0%, transparent 40%)',
+            pointerEvents: 'none'
+          }} />
+          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+            <div className="section-header" style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
               <div style={{
                 display: 'inline-block',
                 background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
@@ -298,82 +428,100 @@ export default function Home() {
               }}>
                 Chef's Recommendations
               </div>
-              <h2 style={{ marginTop: '0.5rem' }}>{homepage.featuredSectionTitle || 'Signature Dishes'}</h2>
-              <p>{homepage.featuredSectionSubtitle || "Explore our chef's recommended selections"}</p>
+              <h2 style={{ marginTop: '0.5rem', fontSize: 'clamp(1.75rem, 3vw, 2.5rem)' }}>{homepage.featuredSectionTitle || 'Signature Dishes'}</h2>
+              <p style={{ fontSize: '1.05rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>{homepage.featuredSectionSubtitle || "Explore our chef's recommended selections"}</p>
             </div>
             
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '2rem',
+              gap: '1.75rem',
               maxWidth: '1200px',
               margin: '0 auto'
             }}>
-              {featuredMenuItems.map((item: any) => (
-                <Link href="/menu" className="card" style={{ padding: 0, textDecoration: 'none', display: 'block' }}>
-                  <div style={{
-                    height: '220px',
-                    background: item.image ? `url(${item.image}) center/cover` : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                    position: 'relative'
+              {[
+                { name: 'Classic Beef Burger', desc: 'Angus patty, cheddar, caramelized onions, fresh tomato & house sauce', price: 165, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop', category: 'Burgers' },
+                { name: 'Lamb Bunny Chow', desc: 'Slow-cooked lamb in aromatic spices, served in fresh bread bowl', price: 120, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=400&fit=crop', category: 'Curries' },
+                { name: 'BBQ Chicken Pizza', desc: 'Grilled chicken, red onions, cilantro on smoky BBQ base', price: 180, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop', category: 'Pizza' },
+                { name: 'Crispy Calamari', desc: 'Tender rings with house-made tomato salsa & lemon aioli', price: 145, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&h=400&fit=crop', category: 'Starters' }
+              ].map((item: any, idx: number) => (
+                <Link href="/menu" key={idx} style={{ textDecoration: 'none', display: 'block' }}>
+                  <div className="signature-dish-card" style={{
+                    background: 'var(--white)',
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-md)',
+                    transition: 'transform 0.4s ease, box-shadow 0.4s ease',
+                    cursor: 'pointer',
+                    height: '100%'
                   }}>
                     <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(180deg, transparent 50%, rgba(26, 15, 10, 0.6) 100%)'
-                    }} />
-                    {item.isOnPromo && item.promoBadge && (
-                      <span style={{
+                      height: '200px',
+                      background: `url(${item.image}) center/cover`,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
                         position: 'absolute',
-                        top: '1rem',
-                        left: '1rem',
-                        background: 'var(--fire-orange)',
-                        color: 'var(--white)',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.7rem',
-                        fontWeight: '600',
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase'
-                      }}>
-                        {item.promoBadge}
-                      </span>
-                    )}
-                    {item.isFeatured && (
+                        inset: 0,
+                        background: 'linear-gradient(180deg, transparent 50%, rgba(26, 15, 10, 0.5) 100%)'
+                      }} />
                       <span style={{
                         position: 'absolute',
                         top: '1rem',
                         right: '1rem',
                         background: 'var(--gold)',
                         color: 'var(--dark)',
-                        padding: '0.35rem 0.75rem',
+                        padding: '0.35rem 0.85rem',
                         borderRadius: 'var(--radius-full)',
                         fontSize: '0.7rem',
                         fontWeight: '600',
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase'
+                        letterSpacing: '0.5px'
                       }}>
                         ★ Featured
                       </span>
-                    )}
-                  </div>
-                  <div style={{ padding: '1.5rem' }}>
-                    <h4 style={{ fontSize: '1.15rem', color: 'var(--dark-brown)', marginBottom: '0.5rem', fontWeight: 600 }}>{item.name}</h4>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>
-                      {item.description}
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--cream-dark)', paddingTop: '1rem' }}>
-                      <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--primary)' }}>R{item.price}</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--warm)', fontWeight: 600 }}>View →</span>
+                    </div>
+                    <div style={{ padding: '1.5rem' }}>
+                      <h4 style={{ fontSize: '1.2rem', color: 'var(--dark-brown)', marginBottom: '0.5rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>{item.name}</h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '1rem', lineHeight: 1.5, minHeight: '2.5em' }}>
+                        {item.desc}
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--cream-dark)', paddingTop: '1rem' }}>
+                        <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--primary)' }}>R{item.price}</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--warm)', fontWeight: 600 }}>View Menu →</span>
+                      </div>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
-              <Link href="/menu" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>View Full Menu</Link>
+            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+              <Link href="/menu" className="btn btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1rem' }}>View Full Menu</Link>
             </div>
           </div>
+          
+          <style>{`
+            .signature-dish-card:hover {
+              transform: translateY(-8px);
+              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+            }
+            @media (max-width: 1024px) {
+              .section > div > div:nth-child(3) {
+                grid-template-columns: repeat(2, 1fr) !important;
+              }
+            }
+            @media (max-width: 600px) {
+              .section > div > div:nth-child(3) {
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem !important;
+                padding: 0 1rem !important;
+              }
+              .signature-dish-card > div:first-child {
+                height: 180px !important;
+              }
+            }
+          `}</style>
         </section>
 
 {/* Events Section - Premium Design */}
