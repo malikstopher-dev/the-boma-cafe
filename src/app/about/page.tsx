@@ -71,10 +71,14 @@ export default function AboutPage() {
                   opacity: 0.4
                 }} />
                 <img 
-                  src={aboutSettings?.heroImage || '/images/about.jpg'} 
-                  alt="The Boma Cafe Interior"
+                  src={aboutSettings?.heroImage || '/gallery/people/boma1-1152x864.jpeg'} 
+                  alt="The Boma Cafe Experience"
                   style={{ 
                     width: '100%', 
+                    height: 'auto',
+                    maxHeight: '500px',
+                    objectFit: 'cover',
+                    aspectRatio: '4/3',
                     borderRadius: '24px', 
                     boxShadow: 'var(--shadow-lg)',
                     position: 'relative',
