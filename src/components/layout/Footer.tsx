@@ -65,22 +65,7 @@ export default function Footer({ settings, branding }: FooterProps) {
           borderBottom: '1px solid rgba(212,163,115,0.12)'
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-              <div style={{
-                width: '52px',
-                height: '52px',
-                background: 'linear-gradient(135deg, #D4A373, #B8895E)',
-                borderRadius: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.6rem',
-                fontWeight: 700,
-                color: '#FFF7ED',
-                boxShadow: '0 4px 20px rgba(212,163,115,0.35)'
-              }}>
-                B
-              </div>
+            <div style={{ marginBottom: '1.25rem' }}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.65rem', fontWeight: 700, color: '#FFF7ED', letterSpacing: '1px' }}>
                 The Boma Cafe
               </h3>

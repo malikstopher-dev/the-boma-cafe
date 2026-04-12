@@ -1448,18 +1448,18 @@ input, textarea, select {
   position: absolute;
   top: 12px;
   left: 12px;
-  background: var(--white);
+  background: linear-gradient(135deg, #E8892E 0%, #C46A1C 100%);
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
   text-align: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 6px 18px rgba(232,137,46,0.35);
 }
 
 .event-day {
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--white);
   line-height: 1;
 }
 
@@ -1467,7 +1467,7 @@ input, textarea, select {
   display: block;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--text-light);
+  color: rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
