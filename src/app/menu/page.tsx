@@ -17,7 +17,51 @@ import {
   getDefaultSize,
   formatTotalPrice
 } from '@/lib/menuPricing';
+import UpsellModal from '@/components/ui/UpsellModal';
+import PremiumHero from '@/components/ui/PremiumHero';
 import styles from './Menu.module.css';
+
+const DRINK_CATEGORIES = [
+  'Cold Beverages',
+  'Hot Beverages',
+  'Milkshakes',
+  'Classic Cocktails',
+  'Non-Alcoholic Cocktails',
+  'Soft Drinks',
+  'Juices',
+  'DRNK',
+  'Freezos',
+  'Smoothies',
+  'Mocktails',
+];
+
+const HOT_DRINK_CATEGORIES = [
+  'Hot Beverages',
+];
+
+const DESSERT_CATEGORIES = [
+  'Desserts',
+];
+
+function getSpecialInstructionsPlaceholder(category?: string): string {
+  if (!category) {
+    return 'Any special requests or notes?';
+  }
+  
+  if (HOT_DRINK_CATEGORIES.some(c => category.toLowerCase().includes(c.toLowerCase()))) {
+    return 'Any preferences or notes? (e.g. no sugar, extra hot, less foam)';
+  }
+  
+  if (DRINK_CATEGORIES.some(c => category.toLowerCase().includes(c.toLowerCase()))) {
+    return 'Any preferences or notes? (e.g. less ice, no ice, extra cold)';
+  }
+  
+  if (DESSERT_CATEGORIES.some(c => category.toLowerCase().includes(c.toLowerCase()))) {
+    return 'Any preferences or notes? (e.g. extra chocolate sauce, no cream)';
+  }
+  
+  return 'Any allergies or special requests? (e.g. no onions, extra sauce)';
+}
 
 interface OptionModalProps {
   item: MenuItem;
@@ -118,7 +162,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
             <h3 className={styles.optionGroupTitle}>Special Instructions</h3>
             <textarea
               className={styles.notesTextarea}
-              placeholder="Any allergies or special requests? (e.g., no onions, extra sauce)"
+              placeholder={getSpecialInstructionsPlaceholder(item.category)}
               value={notes}
               onChange={e => setNotes(e.target.value)}
             />
@@ -145,6 +189,8 @@ export default function MenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [categories, setCategories] = useState<any[]>(defaultCategories);
   const [menuItems, setMenuItems] = useState<any[]>(defaultMenuItems);
+  const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [lastAddedItem, setLastAddedItem] = useState<MenuItem | null>(null);
   const { addItem, items: cartItems, total } = useCart();
 
   // Use default data directly - skip CMS for now since field mapping issues exist
@@ -193,6 +239,25 @@ export default function MenuPage() {
       selectedAddOns,
       notes
     });
+
+    setLastAddedItem(item);
+    setShowUpsellModal(true);
+  };
+
+  const handleUpsellAddToCart = (item: MenuItem, selectedSize?: string, selectedAddOns?: string[]) => {
+    const finalPrice = calculateItemTotal(item, selectedSize, selectedAddOns);
+    const sizeDisplay = selectedSize ? ` (${selectedSize})` : '';
+    const addOnsDisplay = (selectedAddOns?.length || 0) > 0 ? ` + ${selectedAddOns.join(', ')}` : '';
+    
+    addItem({
+      id: `${item.id}${selectedSize ? `-${selectedSize.replace(/\s/g, '')}` : ''}${(selectedAddOns?.length || 0) > 0 ? `-${selectedAddOns.length}extras` : ''}-${Date.now()}`,
+      name: `${item.name}${sizeDisplay}${addOnsDisplay}`,
+      price: finalPrice,
+      quantity: 1,
+      category: item.category,
+      selectedSize,
+      selectedAddOns
+    });
   };
 
   const scrollToCategory = (categoryId: string) => {
@@ -227,19 +292,11 @@ export default function MenuPage() {
     <>
       <Header />
       <main className={styles.main}>
-        <section className={styles.hero}>
-          <div className={styles.heroContent}>
-            <div className={styles.breadcrumb}>
-              <Link href="/" className={styles.breadcrumbLink}>Home</Link>
-              <span className={styles.breadcrumbSeparator}>›</span>
-              <span>Menu</span>
-            </div>
-            <h1 className={styles.heroTitle}>Restaurant Menu</h1>
-            <p className={styles.heroSubtitle}>
-              Fresh, hearty dishes made with love
-            </p>
-          </div>
-        </section>
+        <PremiumHero
+          imageUrl="/hero/hero-menu.jpg"
+          title="Our Menu"
+          subtitle="Fresh, hearty dishes made with love"
+        />
 
         <section className={styles.searchSection}>
           <div className={styles.searchRow}>
@@ -358,6 +415,14 @@ export default function MenuPage() {
           onAddToCart={handleAddToCart}
         />
       )}
+
+      <UpsellModal
+        isOpen={showUpsellModal}
+        onClose={() => setShowUpsellModal(false)}
+        addedItem={lastAddedItem}
+        allMenuItems={menuItems}
+        onAddToCart={handleUpsellAddToCart}
+      />
     </>
   );
 }

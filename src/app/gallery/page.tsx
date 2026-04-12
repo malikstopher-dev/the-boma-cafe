@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cmsService } from '@/lib/client-cms';
 import GalleryBoards from '@/components/gallery/GalleryBoards';
+import PremiumHero from '@/components/ui/PremiumHero';
 import styles from './Gallery.module.css';
 
 const topGalleryImages = [
@@ -81,42 +82,12 @@ export default function GalleryPage() {
     <>
       <Header />
       <main className={styles.main}>
-        {/* Hero - Premium Design */}
-        <section style={{
-          background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-          padding: 'var(--space-3xl) 5%',
-          textAlign: 'center',
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.08) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.08) 0%, transparent 50%)',
-            pointerEvents: 'none'
-          }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
-              padding: '0.4rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--dark-brown)',
-              marginBottom: '1rem',
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
-            }}>
-              Our Gallery
-            </div>
-            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--white)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
-              Gallery
-            </h1>
-            <p style={{ color: 'var(--cream)', fontSize: 'clamp(0.95rem, 2vw, 1.1rem)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-              Capturing moments of joy, delicious food, and unforgettable experiences at The Boma Cafe
-            </p>
-          </div>
-        </section>
+        <PremiumHero
+          imageUrl="/hero/hero-gallery.jpg"
+          badge="Our Gallery"
+          title="Gallery"
+          subtitle="Capturing moments of joy, delicious food, and unforgettable experiences at The Boma Café"
+        />
 
         {/* Top Gallery - Main Feature - Premium Design */}
         <section style={{ background: 'var(--white)', padding: 'var(--space-2xl) 5%' }}>

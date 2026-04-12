@@ -5,6 +5,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { dataService, generateId } from '@/lib/data';
 import { siteSettingsService } from '@/lib/siteSettings';
+import { BUSINESS_INFO } from '@/lib/whatsappConfig';
+import PremiumHero from '@/components/ui/PremiumHero';
 
 export default function ContactPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -32,42 +34,12 @@ export default function ContactPage() {
     <>
       <Header />
       <main style={{ paddingTop: '80px' }}>
-        {/* Hero - Premium Design */}
-        <section style={{
-          background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-          padding: 'var(--space-3xl) 5%',
-          textAlign: 'center',
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.1) 0%, transparent 50%)',
-            pointerEvents: 'none'
-          }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
-              padding: '0.4rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--dark-brown)',
-              marginBottom: '1rem',
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
-            }}>
-             Contact Us
-            </div>
-            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--white)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
-              Get in Touch
-            </h1>
-            <p style={{ color: 'var(--cream)', fontSize: 'clamp(1rem, 2vw, 1.15rem)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-              We&apos;d love to hear from you. Send us a message or visit us
-            </p>
-          </div>
-        </section>
+        <PremiumHero
+          imageUrl="/hero/hero-contact.jpg"
+          badge="Contact Us"
+          title="Get in Touch"
+          subtitle="We'd love to hear from you. Send us a message or visit us"
+        />
 
         {/* Contact Info & Form - Premium Design */}
         <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
@@ -77,122 +49,157 @@ export default function ContactPage() {
               <div>
                 <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '2rem', fontFamily: 'var(--font-display)' }}>Contact Information</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-                  {contact.address && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ 
-                        width: '52px', 
-                        height: '52px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '14px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'var(--white)', 
-                        flexShrink: 0,
-                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
-                      }}>📍</div>
-                      <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Address</strong>
-                        <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.address}</span>
+                  {/* Address - NAP Consistent */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ 
+                      width: '52px', 
+                      height: '52px', 
+                      background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      borderRadius: '14px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'var(--white)', 
+                      flexShrink: 0,
+                      boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                    }}>📍</div>
+                    <div>
+                      <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Address</strong>
+                      <span style={{ color: 'var(--text-light)', fontSize: '0.95rem', display: 'block' }}>{BUSINESS_INFO.address.street}</span>
+                      <span style={{ color: 'var(--text-light)', fontSize: '0.95rem', display: 'block' }}>{BUSINESS_INFO.address.suburb}, {BUSINESS_INFO.address.city}, {BUSINESS_INFO.address.postalCode}</span>
+                      <span style={{ color: 'var(--text-light)', fontSize: '0.95rem', display: 'block' }}>{BUSINESS_INFO.address.country}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Phone - NAP Consistent */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ 
+                      width: '52px', 
+                      height: '52px', 
+                      background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      borderRadius: '14px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'var(--white)', 
+                      flexShrink: 0,
+                      boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                    }}>📞</div>
+                    <div>
+                      <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Phone</strong>
+                      <a href={`tel:${BUSINESS_INFO.phone}`} style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{BUSINESS_INFO.phone}</a>
+                    </div>
+                  </div>
+                  
+                  {/* Email */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ 
+                      width: '52px', 
+                      height: '52px', 
+                      background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      borderRadius: '14px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'var(--white)', 
+                      flexShrink: 0,
+                      boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                    }}>✉️</div>
+                    <div>
+                      <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Email</strong>
+                      <a href={`mailto:${BUSINESS_INFO.email}`} style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{BUSINESS_INFO.email}</a>
+                    </div>
+                  </div>
+                  
+                  {/* Opening Hours */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ 
+                      width: '52px', 
+                      height: '52px', 
+                      background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      borderRadius: '14px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'var(--white)', 
+                      flexShrink: 0,
+                      boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
+                    }}>🕐</div>
+                    <div>
+                      <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Opening Hours</strong>
+                      <div style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>
+                        {BUSINESS_INFO.openingHours.map(h => (
+                          <div key={h.day} style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '200px' }}>
+                            <span>{h.day}</span>
+                            <span>{h.hours}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
-                  {contact.phone && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ 
-                        width: '52px', 
-                        height: '52px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '14px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'var(--white)', 
-                        flexShrink: 0,
-                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
-                      }}>📞</div>
-                      <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Phone</strong>
-                        <a href={`tel:${contact.phone}`} style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.phone}</a>
-                        {contact.phone2 && <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>, {contact.phone2}</span>}
-                      </div>
-                    </div>
-                  )}
-                  {contact.email && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ 
-                        width: '52px', 
-                        height: '52px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '14px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'var(--white)', 
-                        flexShrink: 0,
-                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
-                      }}>✉️</div>
-                      <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Email</strong>
-                        <a href={`mailto:${contact.email}`} style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.email}</a>
-                      </div>
-                    </div>
-                  )}
-                  {contact.whatsapp && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ 
-                        width: '52px', 
-                        height: '52px', 
-                        background: 'linear-gradient(135deg, #25D366, #20BD5A)',
-                        borderRadius: '14px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'var(--white)', 
-                        flexShrink: 0,
-                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
-                      }}>💬</div>
-                      <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>WhatsApp</strong>
-                        <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>Chat with us</a>
-                      </div>
-                    </div>
-                  )}
-                  {contact.openingHours && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div style={{ 
-                        width: '52px', 
-                        height: '52px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '14px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'var(--white)', 
-                        flexShrink: 0,
-                        boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)'
-                      }}>🕐</div>
-                      <div>
-                        <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Opening Hours</strong>
-                        <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>{contact.openingHours}</span>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Map */}
-                {contact.mapEmbedUrl && (
-                  <div style={{ marginTop: '2.5rem', borderRadius: '20px', overflow: 'hidden', height: '220px', background: 'var(--cream)', boxShadow: 'var(--shadow-md)' }}>
-                    <iframe 
-                      src={contact.mapEmbedUrl}
-                      width="100%" 
-                      height="100%" 
-                      style={{ border: 0 }} 
-                      allowFullScreen 
-                      loading="lazy"
-                    />
-                  </div>
-                )}
+                <div style={{ marginTop: '2.5rem', borderRadius: '20px', overflow: 'hidden', height: '250px', background: 'var(--cream)', boxShadow: 'var(--shadow-md)' }}>
+                  <iframe 
+                    src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3580.8!2d28.0594!3d-26.0444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDAyJzM0LjQiUyAyOMKwMDMnMzUuOCJF!5e0!3m2!1sen!2sza!4v1620000000000!5m2!1sen!2sza`}
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }} 
+                    allowFullScreen 
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="The Boma Café Location"
+                  />
+                </div>
+
+                {/* Directions Button */}
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(BUSINESS_INFO.address.full)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    marginTop: '1rem',
+                    padding: '0.875rem 1.5rem',
+                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    color: 'var(--white)',
+                    borderRadius: '12px',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)',
+                  }}
+                >
+                  <i className="fas fa-directions" /> Get Directions
+                </a>
+
+                {/* WhatsApp CTA */}
+                <a 
+                  href={`https://wa.me/${BUSINESS_INFO.phoneRaw}?text=${encodeURIComponent('Hello! I would like to inquire about The Boma Café')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.75rem',
+                    padding: '0.875rem 1.5rem',
+                    background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                    color: 'var(--white)',
+                    borderRadius: '12px',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+                  }}
+                >
+                  <i className="fab fa-whatsapp" /> Chat on WhatsApp
+                </a>
               </div>
 
               {/* Form - Premium */}

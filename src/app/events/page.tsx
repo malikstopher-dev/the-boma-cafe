@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cmsService } from '@/lib/client-cms';
 import { defaultEvents } from '@/data/defaultData';
+import PremiumHero from '@/components/ui/PremiumHero';
 
 export default function EventsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -56,42 +57,12 @@ export default function EventsPage() {
     <>
       <Header />
       <main style={{ paddingTop: '80px' }}>
-        {/* Hero - Premium Design */}
-        <section style={{
-          background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-          padding: 'var(--space-3xl) 5%',
-          textAlign: 'center',
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.1) 0%, transparent 50%)',
-            pointerEvents: 'none'
-          }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
-              padding: '0.4rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--dark-brown)',
-              marginBottom: '1rem',
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
-            }}>
-              What's Happening
-            </div>
-            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--white)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
-              Events & Experiences
-            </h1>
-            <p style={{ color: 'var(--cream)', fontSize: 'clamp(1rem, 2vw, 1.15rem)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-              Join us for unforgettable moments and memorable experiences
-            </p>
-          </div>
-        </section>
+        <PremiumHero
+          imageUrl="/hero/hero-events.jpg"
+          badge="What's Happening"
+          title="Events & Experiences"
+          subtitle="Join us for unforgettable moments and memorable experiences"
+        />
 
         {/* Featured Event - Premium Design */}
         {featuredEvent && (

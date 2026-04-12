@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { cmsService } from '@/lib/client-cms';
+import { BUSINESS_INFO } from '@/lib/whatsappConfig';
 
 interface FooterProps {
   settings?: any;
@@ -125,7 +126,7 @@ export default function Footer({ settings, branding }: FooterProps) {
           <div>
             <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--white)', marginBottom: '1.25rem', fontWeight: 600, letterSpacing: '0.5px' }}>CONTACT INFO</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <a href={`tel:${c.phone || '0729962212'}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--warm)'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
+              <a href={`tel:${BUSINESS_INFO.phone}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--warm)'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
                 <span style={{ 
                   width: '32px', 
                   height: '32px', 
@@ -137,9 +138,9 @@ export default function Footer({ settings, branding }: FooterProps) {
                   fontSize: '0.9rem',
                   flexShrink: 0
                 }}>📞</span> 
-                <span>{c.phone || '072 996 2212'}</span>
+                <span>{BUSINESS_INFO.phone}</span>
               </a>
-              <a href={`mailto:${c.email || 'info@thebomacafe.co.za'}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--warm)'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
+              <a href={`mailto:${BUSINESS_INFO.email}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--warm)'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
                 <span style={{ 
                   width: '32px', 
                   height: '32px', 
@@ -151,7 +152,7 @@ export default function Footer({ settings, branding }: FooterProps) {
                   fontSize: '0.9rem',
                   flexShrink: 0
                 }}>✉️</span> 
-                <span>{c.email || 'info@thebomacafe.co.za'}</span>
+                <span>{BUSINESS_INFO.email}</span>
               </a>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
                 <span style={{ 
@@ -165,7 +166,10 @@ export default function Footer({ settings, branding }: FooterProps) {
                   fontSize: '0.9rem',
                   flexShrink: 0
                 }}>📍</span> 
-                <span>{c.address || 'Sandton, Johannesburg, South Africa'}</span>
+                <div>
+                  <div>{BUSINESS_INFO.address.street}</div>
+                  <div>{BUSINESS_INFO.address.suburb}, {BUSINESS_INFO.address.city}, {BUSINESS_INFO.address.postalCode}</div>
+                </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
                 <span style={{ 
@@ -179,8 +183,29 @@ export default function Footer({ settings, branding }: FooterProps) {
                   fontSize: '0.9rem',
                   flexShrink: 0
                 }}>🕐</span> 
-                <span>{c.openingHours || 'Mon-Sun: 8:00 AM - 10:00 PM'}</span>
+                <span>Mon-Sun: 8:00 AM - 10:00 PM</span>
               </div>
+              <a 
+                href={`https://wa.me/${BUSINESS_INFO.phoneRaw}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s ease' }} 
+                onMouseEnter={e => e.currentTarget.style.color = '#25D366'} 
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+              >
+                <span style={{ 
+                  width: '32px', 
+                  height: '32px', 
+                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.9rem',
+                  flexShrink: 0
+                }}>💬</span> 
+                <span>WhatsApp Order</span>
+              </a>
             </div>
           </div>
         </div>
