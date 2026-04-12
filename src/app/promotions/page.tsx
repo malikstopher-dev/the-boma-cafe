@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import PremiumHero from '@/components/ui/PremiumHero';
 
 const promotionImages = [
   '/gallery/promotions/2026-04-05.webp',
@@ -91,42 +92,12 @@ export default function PromotionsPage() {
     <>
       <Header />
       <main style={{ paddingTop: '80px' }}>
-        {/* Hero */}
-        <section style={{
-          background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-          padding: 'var(--space-3xl) 5%',
-          textAlign: 'center',
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.1) 0%, transparent 50%)',
-            pointerEvents: 'none'
-          }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
-              padding: '0.4rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--dark-brown)',
-              marginBottom: '1rem',
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
-            }}>
-              Special Offers
-            </div>
-            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--white)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
-              Promotions
-            </h1>
-            <p style={{ color: 'var(--cream)', fontSize: 'clamp(1rem, 2vw, 1.15rem)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-              Don&apos;t miss out on our latest promotions and deals
-            </p>
-          </div>
-        </section>
+        <PremiumHero
+          imageUrl="/hero/hero-promotions.jpg"
+          badge="Special Offers"
+          title="Promotions"
+          subtitle="Don't miss out on our latest promotions and deals"
+        />
 
         {/* Featured Promo Slider */}
         <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
