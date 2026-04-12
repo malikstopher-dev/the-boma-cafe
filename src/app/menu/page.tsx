@@ -19,6 +19,7 @@ import {
 } from '@/lib/menuPricing';
 import UpsellModal from '@/components/ui/UpsellModal';
 import PremiumHero from '@/components/ui/PremiumHero';
+import { getMenuItemImage } from '@/lib/menuImages';
 import styles from './Menu.module.css';
 
 const DRINK_CATEGORIES = [
@@ -353,10 +354,12 @@ export default function MenuPage() {
                   )}
                 </div>
                 <div className={styles.itemsGrid}>
-                  {section.items.map((item: MenuItem) => (
+                  {section.items.map((item: MenuItem) => {
+                    const itemImage = getMenuItemImage({ name: item.name, category: item.category });
+                    return (
                     <div key={item.id} className={styles.itemCard} onClick={() => setSelectedItem(item)}>
-                      <div className={styles.itemImage} style={item.image ? { backgroundImage: `url(${item.image})` } : undefined}>
-                        {!item.image && (
+                      <div className={styles.itemImage} style={itemImage ? { backgroundImage: `url(${itemImage})` } : undefined}>
+                        {!itemImage && (
                           <div className={styles.itemImagePlaceholder}>
                             <span>{item.name.charAt(0)}</span>
                           </div>
@@ -392,7 +395,8 @@ export default function MenuPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             ))}
