@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import PopupModal from '@/components/ui/PopupModal';
 import { cmsService } from '@/lib/client-cms';
+import styles from './page.module.css';
 
 const heroSlides = [
   {
@@ -37,6 +38,117 @@ const heroSlides = [
   }
 ];
 
+const showcaseCategories = [
+  { title: 'Signature Meals', desc: 'Chef-crafted masterpieces', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=450&fit=crop', link: '/menu?category=Signature', badge: 'Chef Pick' },
+  { title: 'Wood-Fired Pizza', desc: 'Handcrafted perfection', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=450&fit=crop', link: '/menu?category=Pizza', badge: null },
+  { title: 'Cocktails & Drinks', desc: 'Artisan crafted', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=450&fit=crop', link: '/menu?category=Cocktails', badge: 'Popular' },
+  { title: 'Platters', desc: 'For sharing moments', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=450&fit=crop', link: '/menu?category=Platters', badge: null },
+  { title: 'Flame-Grilled', desc: 'Sizzling perfection', image: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600&h=450&fit=crop', link: '/menu?category=Flame-Grilled', badge: null },
+  { title: 'Desserts', desc: 'Sweet endings', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=450&fit=crop', link: '/menu?category=Desserts', badge: null },
+  { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=450&fit=crop', link: '/menu?category=Curries+%26+Bunnies', badge: null },
+  { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&h=450&fit=crop', link: '/menu?category=Breakfast', badge: null },
+];
+
+const experienceBlocks = [
+  {
+    icon: '🌿',
+    title: 'Escape the City',
+    description: 'Step into our tranquil outdoor sanctuary, where lush greenery and thatched roofing create an oasis of calm.',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop'
+  },
+  {
+    icon: '🔥',
+    title: 'Fire & Flavour',
+    description: 'Experience the magic of our open flame cooking, where every dish carries the essence of fire-kissed perfection.',
+    image: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=800&h=600&fit=crop'
+  },
+  {
+    icon: '🎵',
+    title: 'Live Entertainment',
+    description: 'Immerse yourself in soulful live music on weekends, setting the perfect atmosphere for memorable evenings.',
+    image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&h=600&fit=crop'
+  },
+  {
+    icon: '👨‍👩‍👧‍👦',
+    title: 'Family Friendly',
+    description: 'A welcoming space for all ages, where families gather to create cherished moments over delicious food.',
+    image: 'https://images.unsplash.com/photo-1529543544277-740f30239093?w=800&h=600&fit=crop'
+  }
+];
+
+const signatureCocktails = [
+  { name: 'Boma Sunset', desc: 'Aged rum, passion fruit, lime, hint of chilli', price: 125, image: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?w=400&h=500&fit=crop' },
+  { name: 'Safari Sour', desc: 'Amarula, honey, citrus, vanilla bean', price: 115, image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=500&fit=crop' },
+  { name: 'Thatched Toddy', desc: 'Spiced rum, warm spices, fresh ginger', price: 135, image: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?w=400&h=500&fit=crop' },
+  { name: 'Garden Spritz', desc: 'Gin, elderflower, cucumber, prosecco', price: 110, image: 'https://images.unsplash.com/photo-1560508180-03f285f67ded?w=400&h=500&fit=crop' },
+];
+
+const testimonials = [
+  { text: "Absolutely stunning venue! The rustic atmosphere with the thatched roof and firepits creates the perfect escape from city life. The food is incredible and the service is top-notch.", author: "Sarah M.", location: "Johannesburg", rating: 5 },
+  { text: "We've been coming here for years and it never disappoints. The Boma Breakfast is a must-try, and the outdoor seating area is perfect for families. Live music on weekends is the cherry on top!", author: "David K.", location: "Sandton", rating: 5 },
+  { text: "Best hidden gem in Sandton! The curry bunny chow is authentic and absolutely delicious. Staff are incredibly friendly and welcoming. Perfect for both romantic dates and family dinners.", author: "Priya S.", location: "Fourways", rating: 5 },
+  { text: "The ambiance is unmatched - there's something magical about dining under the stars with firepits glowing around you. Their wood-fired pizza is the best I've had in Joburg.", author: "Michael R.", location: "Rosebank", rating: 5 },
+];
+
+const galleryPreview = [
+  { url: '/gallery/gallery/bomacafe2-large-1.jpg', alt: 'Boma Cafe Exterior' },
+  { url: '/gallery/gallery/boy.jpg', alt: 'Happy Guest' },
+  { url: '/gallery/gallery/gallery-7-800x600.jpeg', alt: 'Food Spread' },
+  { url: '/gallery/people/boma1-1152x864.jpeg', alt: 'The Experience' },
+];
+
+function FadeInSection({ children, className = '', delay = 0, animationType = 'default' }: { children: React.ReactNode; className?: string; delay?: number; animationType?: 'default' | 'left' | 'right' | 'scale' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              setIsVisible(true);
+            }, delay);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [delay]);
+
+  const animationClass = animationType === 'left' ? styles.revealLeft :
+                         animationType === 'right' ? styles.revealRight :
+                         animationType === 'scale' ? styles.revealScale : '';
+
+  return (
+    <div
+      ref={ref}
+      className={`${styles.fadeInSection} ${animationClass} ${isVisible ? styles.visible : ''} ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className={styles.stars}>
+      {[...Array(5)].map((_, i) => (
+        <span key={i} className={i < rating ? styles.starFilled : styles.starEmpty}>★</span>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [settings, setSettings] = useState<any>(null);
   const [announcement, setAnnouncement] = useState<any>(null);
@@ -44,9 +156,9 @@ export default function Home() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
   const [siteSettings, setSiteSettings] = useState<any>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -81,6 +193,13 @@ export default function Home() {
     return () => clearInterval(slideTimer);
   }, []);
 
+  useEffect(() => {
+    const galleryTimer = setInterval(() => {
+      setGalleryIndex((prev) => (prev + 1) % galleryPreview.length);
+    }, 4000);
+    return () => clearInterval(galleryTimer);
+  }, []);
+
   const featuredMenuItems = menuItems.filter((item: any) => item.isFeatured && !item.isOutOfStock).slice(0, 4);
   const upcomingEvents = events.filter((event: any) => event.status === 'upcoming' && event.showOnHomepage).slice(0, 3);
   const activePromotions = promotions.filter((promo: any) => promo.isActive && promo.displayOnHomepage).slice(0, 2);
@@ -88,17 +207,6 @@ export default function Home() {
   const homepage = siteSettings?.homepage || {};
   const promoBar = siteSettings?.promoBar || {};
   const branding = siteSettings?.branding || {};
-
-  const showcaseCategories = [
-    { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&h=450&fit=crop', link: '/menu?category=Breakfast', badge: 'Popular' },
-    { title: 'Wood-Fired Pizza', desc: 'Handcrafted perfection', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=450&fit=crop', link: '/menu?category=Pizza', badge: 'Chef Pick' },
-    { title: 'Flame-Grilled', desc: 'Sizzle & smoke', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=450&fit=crop', link: '/menu?category=Flame-Grilled', badge: null },
-    { title: 'Burgers', desc: 'Juicy & bold', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=450&fit=crop', link: '/menu?category=Burgers', badge: 'Popular' },
-    { title: 'Cocktails', desc: 'Crafted cocktails', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=450&fit=crop', link: '/menu?category=Cocktails', badge: null },
-    { title: 'Desserts', desc: 'Sweet endings', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=450&fit=crop', link: '/menu?category=Desserts', badge: null },
-    { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=450&fit=crop', link: '/menu?category=Curries+%26+Bunnies', badge: null },
-    { title: 'Kids Corner', desc: 'Little favorites', image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&h=450&fit=crop', link: '/menu?category=Kids+Corner', badge: null },
-  ];
 
   return (
     <>
@@ -114,83 +222,150 @@ export default function Home() {
 
       <main>
         {/* Hero Section - Premium Design */}
-        <section className="hero-section">
+        <section className={styles.heroSection}>
           {heroSlides.map((slide, index) => (
             <div
               key={index}
-              className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
+              className={`${styles.heroSlide} ${index === currentSlide ? styles.active : ''}`}
             >
-              <div className="hero-slide-bg" style={{ backgroundImage: `url(${slide.image})` }} />
+              <div className={styles.heroSlideBg} style={{ backgroundImage: `url(${slide.image})` }} />
             </div>
           ))}
-          <div className="hero-overlay" />
+          <div className={styles.heroOverlay} />
           
-          <div className="hero-content">
-            <p className="hero-subtitle">{heroSlides[currentSlide].subtitle}</p>
-            <h1 className="hero-title">
+          <div className={styles.heroContent}>
+            <p className={styles.heroSubtitle}>{heroSlides[currentSlide].subtitle}</p>
+            <h1 className={styles.heroTitle}>
               {heroSlides[currentSlide].title}
-              {heroSlides[currentSlide].titleAccent && <span className="hero-accent">{heroSlides[currentSlide].titleAccent}</span>}
+              {heroSlides[currentSlide].titleAccent && <span className={styles.heroAccent}>{heroSlides[currentSlide].titleAccent}</span>}
             </h1>
-            <p className="hero-tagline">{heroSlides[currentSlide].tagline}</p>
-            <div className="hero-cta">
+            <p className={styles.heroTagline}>{heroSlides[currentSlide].tagline}</p>
+            <div className={styles.heroCta}>
               <Link href="/menu" className="btn btn-primary">View Menu</Link>
               <Link href="/contact" className="btn btn-ghost">Book a Table</Link>
             </div>
           </div>
 
-          {/* Hero Dots */}
-          <div className="hero-dots">
+          <div className={styles.heroDots}>
             {heroSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`hero-dot ${index === currentSlide ? 'active' : ''}`}
+                className={`${styles.heroDot} ${index === currentSlide ? styles.active : ''}`}
               />
             ))}
           </div>
         </section>
 
-        {/* Food & Drinks Experience - Premium Showcase */}
-        <section className="premium-showcase">
+        {/* Premium Food & Drinks Showcase */}
+        <section className={styles.premiumShowcase}>
           <div className="container">
-            <div className="section-header">
-              <span className="section-badge">Explore Our Menu</span>
+            <FadeInSection className={styles.sectionHeader}>
+              <span className="section-badge">Culinary Journey</span>
               <h2>Food & Drinks Experience</h2>
               <p>From sunrise breakfasts to handcrafted cocktails, discover culinary excellence</p>
-            </div>
+            </FadeInSection>
 
-            <div className="showcase-grid">
+            <div className={styles.showcaseGrid}>
               {showcaseCategories.map((category, idx) => (
-                <Link key={idx} href={category.link} className="showcase-card">
-                  <div className="showcase-card-image">
-                    <img src={category.image} alt={category.title} />
-                    <div className="showcase-card-overlay" />
-                    {category.badge && (
-                      <span className={`showcase-badge ${category.badge === 'Chef Pick' ? 'chef-pick' : ''}`}>
-                        {category.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div className="showcase-card-content">
-                    <h3>{category.title}</h3>
-                    <p>{category.desc}</p>
-                    <span className="showcase-cta">Explore <span>→</span></span>
-                  </div>
-                </Link>
+                <FadeInSection key={idx} delay={idx * 100} className={styles.showcaseCardWrapper}>
+                  <Link href={category.link} className={styles.showcaseCard}>
+                    <div className={styles.showcaseCardImage}>
+                      <img src={category.image} alt={category.title} />
+                      <div className={styles.showcaseCardOverlay} />
+                      {category.badge && (
+                        <span className={`${styles.showcaseBadge} ${category.badge === 'Chef Pick' ? styles.chefPick : ''}`}>
+                          {category.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.showcaseCardContent}>
+                      <h3>{category.title}</h3>
+                      <p>{category.desc}</p>
+                      <span className={styles.showcaseCta}>Explore <span>→</span></span>
+                    </div>
+                  </Link>
+                </FadeInSection>
               ))}
             </div>
 
-            <div className="section-cta">
+            <FadeInSection className={styles.sectionCta}>
               <Link href="/menu" className="btn btn-primary btn-lg">View Full Menu</Link>
+            </FadeInSection>
+          </div>
+        </section>
+
+        {/* Premium Signature Cocktails Section */}
+        <section className={styles.cocktailsSection}>
+          <div className="container">
+            <FadeInSection className={styles.sectionHeader}>
+              <span className="section-badge gold">Libations</span>
+              <h2>Signature Cocktails</h2>
+              <p>Artisan-crafted cocktails that capture the spirit of Africa</p>
+            </FadeInSection>
+
+            <div className={styles.cocktailsGrid}>
+              {signatureCocktails.map((cocktail, idx) => (
+                <FadeInSection key={idx} delay={idx * 100} className={styles.cocktailCardWrapper}>
+                  <div className={styles.cocktailCard}>
+                    <div className={styles.cocktailImageWrapper}>
+                      <img src={cocktail.image} alt={cocktail.name} className={styles.cocktailImage} />
+                      <div className={styles.cocktailOverlay} />
+                    </div>
+                    <div className={styles.cocktailContent}>
+                      <h4>{cocktail.name}</h4>
+                      <p>{cocktail.desc}</p>
+                      <span className={styles.cocktailPrice}>R{cocktail.price}</span>
+                    </div>
+                  </div>
+                </FadeInSection>
+              ))}
+            </div>
+
+            <FadeInSection className={styles.sectionCta}>
+              <Link href="/menu?category=Cocktails" className="btn btn-secondary btn-lg">Explore Our Bar</Link>
+            </FadeInSection>
+          </div>
+        </section>
+
+        {/* Experience Section */}
+        <section className={styles.experienceSection}>
+          <div className="container">
+            <FadeInSection className={styles.sectionHeader}>
+              <span className="section-badge primary">The Boma Experience</span>
+              <h2>More Than Just Dining</h2>
+              <p>Where every visit becomes a cherished memory</p>
+            </FadeInSection>
+
+            <div className={styles.experienceGrid}>
+              {experienceBlocks.map((exp, idx) => (
+                <FadeInSection 
+                  key={idx} 
+                  delay={idx * 150} 
+                  animationType={idx % 2 === 0 ? 'left' : 'right'}
+                  className={`${styles.experienceCardWrapper} ${idx % 2 === 1 ? styles.reversed : ''}`}
+                >
+                  <div className={styles.experienceCard}>
+                    <div className={styles.experienceImage}>
+                      <img src={exp.image} alt={exp.title} />
+                    </div>
+                    <div className={styles.experienceContent}>
+                      <div className={styles.experienceIcon}>{exp.icon}</div>
+                      <h3>{exp.title}</h3>
+                      <p>{exp.description}</p>
+                    </div>
+                  </div>
+                </FadeInSection>
+              ))}
             </div>
           </div>
         </section>
 
         {/* About Section - Premium Design */}
-        <section className="about-section">
+        <section className={styles.aboutSection}>
           <div className="container">
-            <div className="about-grid">
-              <div className="about-content">
+            <div className={styles.aboutGrid}>
+              <FadeInSection className={styles.aboutContent}>
                 <span className="section-badge">Welcome to The Boma Cafe</span>
                 <h3>{siteSettings?.about?.introTitle || 'Authentic Rustic Charm'}</h3>
                 <p>
@@ -200,14 +375,14 @@ export default function Home() {
                   {siteSettings?.about?.fullDescription || 'Experience the perfect blend of rustic elegance and modern sophistication, designed to transport you away from the chaos of everyday life.'}
                 </p>
                 
-                <div className="about-features">
+                <div className={styles.aboutFeatures}>
                   {[
                     { icon: '🔥', title: 'Cozy Firepits', desc: 'Warm glow for romantic evenings' },
                     { icon: '🌿', title: 'Lush Greenery', desc: 'Surrounded by nature' },
                     { icon: '🏠', title: 'Thatched Roof', desc: 'Authentic African architecture' }
                   ].map((feature, index) => (
-                    <div key={index} className="about-feature">
-                      <div className="about-feature-icon">{feature.icon}</div>
+                    <div key={index} className={styles.aboutFeature}>
+                      <div className={styles.aboutFeatureIcon}>{feature.icon}</div>
                       <div>
                         <strong>{feature.title}</strong>
                         <span>{feature.desc}</span>
@@ -216,195 +391,238 @@ export default function Home() {
                   ))}
                 </div>
                 
-                <Link href="/about" className="about-link">
+                <Link href="/about" className={styles.aboutLink}>
                   Learn more about us <span>→</span>
                 </Link>
-              </div>
+              </FadeInSection>
               
-              <div className="about-image">
-                <img 
-                  src={siteSettings?.about?.heroImage || '/images/about.jpg'} 
-                  alt="Boma Cafe Interior"
-                />
-              </div>
+              <FadeInSection delay={200} animationType="scale" className={styles.aboutImageWrapper}>
+                <div className={styles.aboutImage}>
+                  <img 
+                    src={siteSettings?.about?.heroImage || '/images/about.jpg'} 
+                    alt="Boma Cafe Interior"
+                  />
+                </div>
+              </FadeInSection>
             </div>
           </div>
         </section>
 
         {/* Welcome Banner */}
-        <section className="welcome-banner">
+        <section className={styles.welcomeBanner}>
           <div className="container">
             <h2>{homepage.welcomeTitle || 'More than just a place to eat'}</h2>
-            <div className="banner-divider" />
+            <div className={styles.bannerDivider} />
             <p>{homepage.welcomeDescription || 'The Boma Cafe is a place to experience!'}</p>
           </div>
         </section>
 
         {/* Signature Dishes Section */}
-        <section className="signature-section">
+        <section className={styles.signatureSection}>
           <div className="container">
-            <div className="section-header">
+            <FadeInSection className={styles.sectionHeader}>
               <span className="section-badge gold">Chef's Recommendations</span>
               <h2>Signature Dishes</h2>
               <p>Explore our chef's recommended selections</p>
-            </div>
+            </FadeInSection>
             
-            <div className="signature-grid">
+            <div className={styles.signatureGrid}>
               {[
                 { name: 'Classic Beef Burger', desc: 'Angus patty, cheddar, caramelized onions, fresh tomato & house sauce', price: 165, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop', category: 'Burgers' },
                 { name: 'Lamb Bunny Chow', desc: 'Slow-cooked lamb in aromatic spices, served in fresh bread bowl', price: 120, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=400&fit=crop', category: 'Curries' },
                 { name: 'BBQ Chicken Pizza', desc: 'Grilled chicken, red onions, cilantro on smoky BBQ base', price: 180, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop', category: 'Pizza' },
                 { name: 'Flame-Grilled Ribs', desc: 'Succulent ribs with our signature BBQ basting', price: 250, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=400&fit=crop', category: 'Flame-Grilled' }
               ].map((item: any, idx: number) => (
-                <Link href="/menu" key={idx} className="signature-card">
-                  <div className="signature-card-image">
-                    <img src={item.image} alt={item.name} />
-                    <span className="signature-badge">★ Featured</span>
-                  </div>
-                  <div className="signature-card-content">
-                    <h4>{item.name}</h4>
-                    <p>{item.desc}</p>
-                    <div className="signature-card-footer">
-                      <span className="signature-price">R{item.price}</span>
-                      <span className="signature-link">View Menu →</span>
+                <FadeInSection key={idx} delay={idx * 100} className={styles.signatureCardWrapper}>
+                  <Link href="/menu" className={styles.signatureCard}>
+                    <div className={styles.signatureCardImage}>
+                      <img src={item.image} alt={item.name} />
+                      <span className={styles.signatureBadge}>★ Featured</span>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="section-cta">
-              <Link href="/menu" className="btn btn-primary">View Full Menu</Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Events Section */}
-        {upcomingEvents.length > 0 && (
-          <section className="events-section">
-            <div className="container">
-              <div className="section-header">
-                <span className="section-badge primary">What's Happening</span>
-                <h2>Upcoming Events</h2>
-                <p>Join us for memorable experiences</p>
-              </div>
-              
-              <div className="events-grid">
-                {upcomingEvents.map((event: any) => (
-                  <Link href="/events" key={event.id} className="event-card">
-                    <div className="event-card-image">
-                      <img src={event.coverImage || '/images/events.jpg'} alt={event.title} />
-                      <div className="event-date">
-                        <span className="event-day">{new Date(event.date).getDate()}</span>
-                        <span className="event-month">{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}</span>
-                      </div>
-                    </div>
-                    <div className="event-card-content">
-                      <h4>{event.title}</h4>
-                      <p>{event.description}</p>
-                      <div className="event-meta">
-                        <span>📍 {event.location}</span>
-                        <span>🕐 {event.time}</span>
+                    <div className={styles.signatureCardContent}>
+                      <h4>{item.name}</h4>
+                      <p>{item.desc}</p>
+                      <div className={styles.signatureCardFooter}>
+                        <span className={styles.signaturePrice}>R{item.price}</span>
+                        <span className={styles.signatureLink}>View Menu →</span>
                       </div>
                     </div>
                   </Link>
+                </FadeInSection>
+              ))}
+            </div>
+
+            <FadeInSection className={styles.sectionCta}>
+              <Link href="/menu" className="btn btn-primary">View Full Menu</Link>
+            </FadeInSection>
+          </div>
+        </section>
+
+        {/* Premium Events Section */}
+        {upcomingEvents.length > 0 && (
+          <section className={styles.eventsSection}>
+            <div className="container">
+              <FadeInSection className={styles.sectionHeader}>
+                <span className="section-badge primary">What's Happening</span>
+                <h2>Upcoming Events</h2>
+                <p>Join us for memorable experiences</p>
+              </FadeInSection>
+              
+              <div className={styles.eventsGrid}>
+                {upcomingEvents.map((event: any) => (
+                  <FadeInSection key={event.id} delay={event.id * 100} className={styles.eventCardWrapper}>
+                    <Link href="/events" className={styles.eventCard}>
+                      <div className={styles.eventCardImage}>
+                        <img src={event.coverImage || '/images/events.jpg'} alt={event.title} />
+                        <div className={styles.eventOverlay} />
+                        <div className={styles.eventDate}>
+                          <span className={styles.eventDay}>{new Date(event.date).getDate()}</span>
+                          <span className={styles.eventMonth}>{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}</span>
+                        </div>
+                      </div>
+                      <div className={styles.eventCardContent}>
+                        <h4>{event.title}</h4>
+                        <p>{event.description}</p>
+                        <div className={styles.eventMeta}>
+                          <span>📍 {event.location}</span>
+                          <span>🕐 {event.time}</span>
+                        </div>
+                        <span className={styles.eventCta}>View Event →</span>
+                      </div>
+                    </Link>
+                  </FadeInSection>
                 ))}
               </div>
 
-              <div className="section-cta">
+              <FadeInSection className={styles.sectionCta}>
                 <Link href="/events" className="btn btn-primary">View All Events</Link>
-              </div>
+              </FadeInSection>
             </div>
           </section>
         )}
+
+        {/* Premium Gallery Preview Section */}
+        <section className={styles.gallerySection}>
+          <div className="container">
+            <FadeInSection className={styles.sectionHeader}>
+              <span className="section-badge">Gallery</span>
+              <h2>Captured Moments</h2>
+              <p>A glimpse into the Boma Cafe experience</p>
+            </FadeInSection>
+
+            <FadeInSection animationType="scale" className={styles.galleryPreviewWrapper}>
+              <div className={styles.galleryPreview}>
+                <div className={styles.galleryMainImage}>
+                  <img src={galleryPreview[galleryIndex].url} alt={galleryPreview[galleryIndex].alt} />
+                  <div className={styles.galleryOverlay} />
+                  <button className={styles.galleryNavPrev} onClick={() => setGalleryIndex(prev => prev > 0 ? prev - 1 : galleryPreview.length - 1)}>‹</button>
+                  <button className={styles.galleryNavNext} onClick={() => setGalleryIndex(prev => (prev + 1) % galleryPreview.length)}>›</button>
+                  <div className={styles.galleryDots}>
+                    {galleryPreview.map((_, idx) => (
+                      <button
+                        key={idx}
+                        className={`${styles.galleryDot} ${idx === galleryIndex ? styles.active : ''}`}
+                        onClick={() => setGalleryIndex(idx)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </FadeInSection>
+
+            <FadeInSection className={styles.sectionCta}>
+              <Link href="/gallery" className="btn btn-primary">Explore Full Gallery</Link>
+            </FadeInSection>
+          </div>
+        </section>
 
         {/* Promotions Section */}
         {activePromotions.length > 0 && (
-          <section className="promotions-section">
+          <section className={styles.promotionsSection}>
             <div className="container">
-              <div className="section-header light">
+              <FadeInSection className={`${styles.sectionHeader} light`}>
                 <h2>Special Offers</h2>
                 <p>Don&apos;t miss out on our current promotions</p>
-              </div>
+              </FadeInSection>
               
-              <div className="promotions-grid">
+              <div className={styles.promotionsGrid}>
                 {activePromotions.map((promo: any) => (
-                  <div key={promo.id} className="promo-card">
+                  <FadeInSection key={promo.id} className={styles.promoCard}>
                     <h3>{promo.title}</h3>
                     <p>{promo.description}</p>
                     <Link href={promo.ctaLink} className="btn btn-secondary">{promo.ctaText}</Link>
-                  </div>
+                  </FadeInSection>
                 ))}
               </div>
 
-              <div className="section-cta">
+              <FadeInSection className={styles.sectionCta}>
                 <Link href="/promotions" className="btn btn-ghost">View All Promotions</Link>
-              </div>
+              </FadeInSection>
             </div>
           </section>
         )}
 
-        {/* Testimonials Section */}
-        <section className="testimonials-section">
+        {/* Premium Testimonials Section */}
+        <section className={styles.testimonialsSection}>
           <div className="container">
-            <div className="section-header">
+            <FadeInSection className={styles.sectionHeader}>
               <span className="section-badge gold">Guest Reviews</span>
               <h2>What Our Guests Say</h2>
-              <p>Hear from our satisfied customers</p>
-            </div>
+              <p>Stories from our cherished patrons</p>
+            </FadeInSection>
             
-            <div className="testimonials-grid">
-              {[
-                { text: "Absolutely stunning venue! The rustic atmosphere with the thatched roof and firepits creates the perfect escape from city life. The food is incredible and the service is top-notch.", author: "Sarah M.", location: "Johannesburg" },
-                { text: "We've been coming here for years and it never disappoints. The Boma Breakfast is a must-try, and the outdoor seating area is perfect for families. Love the live music on weekends!", author: "David K.", location: "Sandton" },
-                { text: "Best hidden gem in Sandton! The curry bunny chow is authentic and delicious. Staff are friendly and welcoming. Perfect for both date nights and family dinners.", author: "Priya S.", location: "Fourways" }
-              ].map((testimonial: any, idx: number) => (
-                <div key={idx} className="testimonial-card">
-                  <div className="testimonial-quote">"</div>
-                  <div className="testimonial-stars">★★★★★</div>
-                  <p>{testimonial.text}</p>
-                  <div className="testimonial-author">
-                    <div className="testimonial-avatar">{testimonial.author.charAt(0)}</div>
-                    <div>
-                      <strong>{testimonial.author}</strong>
-                      <span>{testimonial.location}</span>
+            <div className={styles.testimonialsGrid}>
+              {testimonials.map((testimonial: any, idx: number) => (
+                <FadeInSection key={idx} delay={idx * 100} className={styles.testimonialCardWrapper}>
+                  <div className={styles.testimonialCard}>
+                    <div className={styles.testimonialQuote}>"</div>
+                    <StarRating rating={testimonial.rating} />
+                    <p className={styles.testimonialText}>{testimonial.text}</p>
+                    <div className={styles.testimonialAuthor}>
+                      <div className={styles.testimonialAvatar}>{testimonial.author.charAt(0)}</div>
+                      <div>
+                        <strong>{testimonial.author}</strong>
+                        <span>{testimonial.location}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </FadeInSection>
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="cta-section">
-          <div className="cta-bg" />
+        {/* Premium Reservation CTA Section */}
+        <section className={styles.reservationSection}>
+          <div className={styles.reservationBg} />
           <div className="container">
-            <span className="section-badge gold">Reservations</span>
-            <h2>Ready to Experience The Boma?</h2>
-            <p>Book your table or reserve your event space today. We can't wait to welcome you!</p>
-            <div className="cta-buttons">
-              <Link href="/contact" className="btn btn-primary btn-lg">Book a Table</Link>
-              <Link href="/events" className="btn btn-ghost btn-lg">Plan an Event</Link>
-            </div>
-            
-            <div className="cta-info">
-              <div>
-                <span>📞</span>
-                <strong>Call Us</strong>
-                <a href="tel:0729962212">072 996 2212</a>
+            <FadeInSection className={styles.reservationContent}>
+              <span className="section-badge gold">Reservations</span>
+              <h2>Reserve Your Table</h2>
+              <p>Plan your perfect Boma experience. Whether it's a romantic dinner, family gathering, or celebration with friends, we're ready to welcome you.</p>
+              <div className={styles.reservationButtons}>
+                <Link href="/contact" className="btn btn-primary btn-lg">Book a Table</Link>
+                <Link href="/events" className="btn btn-secondary btn-lg">Plan an Event</Link>
               </div>
-              <div>
-                <span>✉️</span>
-                <strong>Email</strong>
-                <a href="mailto:info@thebomacafe.co.za">info@thebomacafe.co.za</a>
+              
+              <div className={styles.reservationInfo}>
+                <div className={styles.reservationInfoItem}>
+                  <span className={styles.reservationInfoIcon}>📞</span>
+                  <strong>Call Us</strong>
+                  <a href="tel:0729962212">072 996 2212</a>
+                </div>
+                <div className={styles.reservationInfoItem}>
+                  <span className={styles.reservationInfoIcon}>✉️</span>
+                  <strong>Email</strong>
+                  <a href="mailto:info@thebomacafe.co.za">info@thebomacafe.co.za</a>
+                </div>
+                <div className={styles.reservationInfoItem}>
+                  <span className={styles.reservationInfoIcon}>📍</span>
+                  <strong>Location</strong>
+                  <span>Sandton, Johannesburg</span>
+                </div>
               </div>
-              <div>
-                <span>📍</span>
-                <strong>Location</strong>
-                <span>Sandton, Johannesburg</span>
-              </div>
-            </div>
+            </FadeInSection>
           </div>
         </section>
       </main>
