@@ -72,7 +72,7 @@ const experienceBlocks = [
     icon: '👨‍👩‍👧‍👦',
     title: 'Family Friendly',
     description: 'A welcoming space for all ages, where families gather to create cherished moments over delicious food.',
-    image: 'https://images.unsplash.com/photo-1529543544277-740f30239093?w=800&h=600&fit=crop'
+    image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&h=600&fit=crop'
   }
 ];
 
