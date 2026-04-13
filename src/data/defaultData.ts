@@ -3,7 +3,7 @@ import { MenuItem, MenuCategory, Event, Promotion, GalleryItem, Popup, Announcem
 export const defaultSettings: any = {
   siteName: 'The Boma Cafe',
   siteTagline: 'Where the Rustic Meets the Soulful',
-  contactPhone: '072 996 2212',
+  contactPhone: '071 592 1190',
   contactEmail: 'info@thebomacafe.co.za',
   contactAddress: 'Sandton, Johannesburg, South Africa',
   contactMapLink: 'https://maps.app.goo.gl/Xca93TRsznn9GN8K7',
