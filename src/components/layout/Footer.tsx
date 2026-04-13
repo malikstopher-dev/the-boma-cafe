@@ -35,7 +35,7 @@ export default function Footer({ settings, branding }: FooterProps) {
 
   return (
     <footer style={{ 
-      background: 'linear-gradient(180deg, #2B1A12 0%, #3A2418 50%, #1F120D 100%)', 
+      background: 'linear-gradient(135deg, #2B1A12 0%, #1F120D 100%)', 
       padding: '5rem 5% 2.5rem', 
       color: '#D6C2B5',
       position: 'relative',
@@ -43,12 +43,12 @@ export default function Footer({ settings, branding }: FooterProps) {
     }}>
       <div style={{ 
         position: 'absolute',
-        top: '-20%',
+        top: '-30%',
         left: '50%',
         transform: 'translateX(-50%)',
-        width: '80%',
-        height: '60%',
-        background: 'radial-gradient(ellipse at center, rgba(212,163,115,0.15) 0%, transparent 70%)',
+        width: '100%',
+        height: '80%',
+        background: 'radial-gradient(ellipse at center top, rgba(201,169,98,0.12) 0%, transparent 60%)',
         pointerEvents: 'none'
       }}></div>
       <div style={{ 

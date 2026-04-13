@@ -256,23 +256,36 @@ export default function GalleryPage() {
         )}
 
         {/* Featured Video Section - Premium Design */}
-        <section style={{ background: 'var(--cream)', padding: 'var(--space-2xl) 5%' }}>
+        <section id="video-section" style={{ background: 'var(--cream)', padding: 'var(--space-2xl) 5%' }}>
           <div style={{ maxWidth: '950px', margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-              <div style={{
-                display: 'inline-block',
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                padding: '0.4rem 1rem',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--white)',
-                marginBottom: '0.75rem',
-                letterSpacing: '1px',
-                textTransform: 'uppercase'
-              }}>
+              <button 
+                onClick={() => {
+                  const videoSection = document.getElementById('video-section');
+                  if (videoSection) {
+                    videoSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                      const video = videoSection.querySelector('video');
+                      if (video) video.play().catch(() => {});
+                    }, 500);
+                  }
+                }}
+                style={{
+                  display: 'inline-block',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                  padding: '0.4rem 1rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--white)',
+                  marginBottom: '0.75rem',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  border: 'none'
+                }}>
                 Watch Now
-              </div>
+              </button>
               <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', marginTop: '0.5rem' }}>
                 Experience The Boma Cafe
               </h2>

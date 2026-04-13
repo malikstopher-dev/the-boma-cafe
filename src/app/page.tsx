@@ -464,7 +464,7 @@ export default function Home() {
                   <FadeInSection key={event.id} delay={event.id * 100} className={styles.eventCardWrapper}>
                     <Link href="/events" className={styles.eventCard}>
                       <div className={styles.eventCardImage}>
-                        <img src={event.coverImage || '/images/events.jpg'} alt={event.title} />
+                        <img src={event.coverImage || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop'} alt={event.title} />
                         <div className={styles.eventOverlay} />
                         <div className={styles.eventDate}>
                           <span className={styles.eventDay}>{new Date(event.date).getDate()}</span>

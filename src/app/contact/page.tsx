@@ -44,7 +44,7 @@ export default function ContactPage() {
         {/* Contact Info & Form - Premium Design */}
         <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '4rem', maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '3rem', maxWidth: '1100px', margin: '0 auto', alignItems: 'start' }}>
               {/* Info */}
               <div>
                 <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '2rem', fontFamily: 'var(--font-display)' }}>Contact Information</h2>
@@ -142,7 +142,7 @@ export default function ContactPage() {
                 {/* Map */}
                 <div style={{ marginTop: '2.5rem', borderRadius: '20px', overflow: 'hidden', height: '250px', background: 'var(--cream)', boxShadow: 'var(--shadow-md)' }}>
                   <iframe 
-                    src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3580.8!2d28.0594!3d-26.0444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDAyJzM0LjQiUyAyOMKwMDMnMzUuOCJF!5e0!3m2!1sen!2sza!4v1620000000000!5m2!1sen!2sza`}
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3580.096099327458!2d28.05762037431698!3d-26.045961999999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e957fcb4e722a79%3A0xc8e2d31c9e14a19e!2sThe%20Boma%20Cafe!5e0!3m2!1sen!2sza!4v1700000000000!5m2!1sen!2sza"
                     width="100%" 
                     height="100%" 
                     style={{ border: 0 }} 
