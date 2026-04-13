@@ -478,7 +478,7 @@ export default function Home() {
                           <span>📍 {event.location}</span>
                           <span>🕐 {event.time}</span>
                         </div>
-                        <span className={styles.eventCta}>View Event →</span>
+                        <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
                       </div>
                     </Link>
                   </FadeInSection>
