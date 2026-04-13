@@ -4,25 +4,25 @@ export interface MenuImageConfig {
 }
 
 const CATEGORY_FALLBACKS: Record<string, string> = {
-  'Breakfast': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop',
+  'Breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop',
   'Toasties': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
-  'Hungry... Ish': 'https://images.unsplash.com/photo-1608039829572-9432d2d1f104?w=400&h=300&fit=crop',
-  'Curries & Bunnies': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop',
-  'Flame-Grilled': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
+  'Hungry... Ish': 'https://images.unsplash.com/photo-1555041469-a586c61b9fe4?w=400&h=300&fit=crop',
+  'Curries & Bunnies': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
+  'Flame-Grilled': 'https://images.unsplash.com/photo-1555041469-a586c61b9fe4?w=400&h=300&fit=crop',
   'Braai Platters': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
   'Hot Beverages': 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop',
-  'Cold Beverages': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
+  'Cold Beverages': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400&h=300&fit=crop',
   'DRNK Freezos': 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=300&fit=crop',
   'Milkshakes': 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop',
   'Classic Cocktails': 'https://images.unsplash.com/photo-1556855810-ac404aa91e85?w=400&h=300&fit=crop',
   'Non-Alcoholic Cocktails': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&h=300&fit=crop',
   'Burgers': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
-  'Burger Extras': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop',
+  'Burger Extras': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
   'Fries & Extras': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
-  'Pizza': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+  'Pizza': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
   'Desserts': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
   'Kids Corner': 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400&h=300&fit=crop',
-  'Platters': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop',
+  'Platters': 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=300&fit=crop',
 };
 
 const ITEM_IMAGES: Record<string, string> = {

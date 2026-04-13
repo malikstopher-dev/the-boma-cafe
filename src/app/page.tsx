@@ -39,13 +39,13 @@ const heroSlides = [
 ];
 
 const showcaseCategories = [
-  { title: 'Signature Meals', desc: 'Chef-crafted masterpieces', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=450&fit=crop', link: '/menu?category=Signature', badge: 'Chef Pick' },
-  { title: 'Wood-Fired Pizza', desc: 'Handcrafted perfection', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=450&fit=crop', link: '/menu?category=Pizza', badge: null },
-  { title: 'Cocktails & Drinks', desc: 'Artisan crafted', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=450&fit=crop', link: '/menu?category=Cocktails', badge: 'Popular' },
-  { title: 'Platters', desc: 'For sharing moments', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=450&fit=crop', link: '/menu?category=Platters', badge: null },
-  { title: 'Flame-Grilled', desc: 'Sizzling perfection', image: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600&h=450&fit=crop', link: '/menu?category=Flame-Grilled', badge: null },
-  { title: 'Desserts', desc: 'Sweet endings', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=450&fit=crop', link: '/menu?category=Desserts', badge: null },
-  { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=450&fit=crop', link: '/menu?category=Curries+%26+Bunnies', badge: null },
+  { title: 'Signature Meals', desc: 'Chef-crafted masterpieces', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=450&fit=crop', link: '/menu?category=Signature', badge: 'Chef Pick' },
+  { title: 'Wood-Fired Pizza', desc: 'Handcrafted perfection', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=450&fit=crop', link: '/menu?category=Pizza', badge: null },
+  { title: 'Cocktails & Drinks', desc: 'Artisan crafted', image: 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&h=450&fit=crop', link: '/menu?category=Cocktails', badge: 'Popular' },
+  { title: 'Platters', desc: 'For sharing moments', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&h=450&fit=crop', link: '/menu?category=Platters', badge: null },
+  { title: 'Flame-Grilled', desc: 'Sizzling perfection', image: 'https://images.unsplash.com/photo-1555041469-a586c61b9fe4?w=600&h=450&fit=crop', link: '/menu?category=Flame-Grilled', badge: null },
+  { title: 'Desserts', desc: 'Sweet endings', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=450&fit=crop', link: '/menu?category=Desserts', badge: null },
+  { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=450&fit=crop', link: '/menu?category=Curries+%26+Bunnies', badge: null },
   { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&h=450&fit=crop', link: '/menu?category=Breakfast', badge: null },
 ];
 
@@ -60,25 +60,25 @@ const experienceBlocks = [
     icon: '🔥',
     title: 'Fire & Flavour',
     description: 'Experience the magic of our open flame cooking, where every dish carries the essence of fire-kissed perfection.',
-    image: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=800&h=600&fit=crop'
+    image: 'https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?w=800&h=600&fit=crop'
   },
   {
     icon: '🎵',
     title: 'Live Entertainment',
     description: 'Immerse yourself in soulful live music on weekends, setting the perfect atmosphere for memorable evenings.',
-    image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&h=600&fit=crop'
+    image: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=600&fit=crop'
   },
   {
     icon: '❤️',
     title: 'Family Friendly',
     description: 'A welcoming space for all ages, where families gather to create cherished moments over delicious food.',
-    image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&h=600&fit=crop'
+    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop'
   }
 ];
 
 const signatureCocktails = [
-  { name: 'Boma Sunset', desc: 'Aged rum, passion fruit, lime, hint of chilli', price: 125, image: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?w=400&h=500&fit=crop' },
-  { name: 'Safari Sour', desc: 'Amarula, honey, citrus, vanilla bean', price: 115, image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=500&fit=crop' },
+  { name: 'Boma Sunset', desc: 'Aged rum, passion fruit, lime, hint of chilli', price: 125, image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=500&fit=crop' },
+  { name: 'Safari Sour', desc: 'Amarula, honey, citrus, vanilla bean', price: 115, image: 'https://images.unsplash.com/photo-1556855810-ac404aa91e85?w=400&h=500&fit=crop' },
   { name: 'Thatched Toddy', desc: 'Spiced rum, warm spices, fresh ginger', price: 135, image: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?w=400&h=500&fit=crop' },
   { name: 'Garden Spritz', desc: 'Gin, elderflower, cucumber, prosecco', price: 110, image: 'https://images.unsplash.com/photo-1560508180-03f285f67ded?w=400&h=500&fit=crop' },
 ];
@@ -420,8 +420,8 @@ export default function Home() {
             <div className={styles.signatureGrid}>
               {[
                 { name: 'Classic Beef Burger', desc: 'Angus patty, cheddar, caramelized onions, fresh tomato & house sauce', price: 165, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop', category: 'Burgers' },
-                { name: 'Lamb Bunny Chow', desc: 'Slow-cooked lamb in aromatic spices, served in fresh bread bowl', price: 120, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=400&fit=crop', category: 'Curries' },
-                { name: 'BBQ Chicken Pizza', desc: 'Grilled chicken, red onions, cilantro on smoky BBQ base', price: 180, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop', category: 'Pizza' },
+                { name: 'Lamb Bunny Chow', desc: 'Slow-cooked lamb in aromatic spices, served in fresh bread bowl', price: 120, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop', category: 'Curries' },
+                { name: 'BBQ Chicken Pizza', desc: 'Grilled chicken, red onions, cilantro on smoky BBQ base', price: 180, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=400&fit=crop', category: 'Pizza' },
                 { name: 'Flame-Grilled Ribs', desc: 'Succulent ribs with our signature BBQ basting', price: 250, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=400&fit=crop', category: 'Flame-Grilled' }
               ].map((item: any, idx: number) => (
                 <FadeInSection key={idx} delay={idx * 100} className={styles.signatureCardWrapper}>
