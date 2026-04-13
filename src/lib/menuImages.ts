@@ -6,23 +6,27 @@ export interface MenuImageConfig {
 const CATEGORY_FALLBACKS: Record<string, string> = {
   'Breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop',
   'Toasties': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
-  'Hungry... Ish': 'https://images.unsplash.com/photo-1555041469-a586c61b9fe4?w=400&h=300&fit=crop',
+  'Hungry... Ish': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
   'Curries & Bunnies': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
   'Flame-Grilled': 'https://images.unsplash.com/photo-1555041469-a586c61b9fe4?w=400&h=300&fit=crop',
-  'Braai Platters': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
+  'Braai Platters': 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=300&fit=crop',
   'Hot Beverages': 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop',
-  'Cold Beverages': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400&h=300&fit=crop',
+  'Cold Beverages': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
   'DRNK Freezos': 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=300&fit=crop',
   'Milkshakes': 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop',
   'Classic Cocktails': 'https://images.unsplash.com/photo-1556855810-ac404aa91e85?w=400&h=300&fit=crop',
   'Non-Alcoholic Cocktails': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&h=300&fit=crop',
   'Burgers': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
-  'Burger Extras': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
+  'Burger Extras': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
   'Fries & Extras': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
   'Pizza': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
   'Desserts': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
   'Kids Corner': 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400&h=300&fit=crop',
   'Platters': 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=300&fit=crop',
+  'Soft Drinks': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
+  'Juices': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400&h=300&fit=crop',
+  'Smoothies': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=400&h=300&fit=crop',
+  'Mocktails': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&h=300&fit=crop',
 };
 
 const ITEM_IMAGES: Record<string, string> = {
@@ -123,91 +127,50 @@ const ITEM_IMAGES: Record<string, string> = {
   'Boma Double Burger': 'https://images.unsplash.com/photo-1550547660-d9450f859043?w=400&h=300&fit=crop',
   'Veggie Burger': 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&h=300&fit=crop',
 
-  // BURGER EXTRAS - Each with relevant images
+  // BURGER EXTRAS
   'Egg': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop',
   'Bacon': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
   'Avo': 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=300&fit=crop',
   'Cheese': 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop',
-  'Beef Patty': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
-  'Lamb Patty': 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=400&h=300&fit=crop',
 
   // FRIES & EXTRAS
-  'Small Fries': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
-  'Medium Fries': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
-  'Large Fries': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
+  'Chunky Chips': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop',
+  'Sweet Potato': 'https://images.unsplash.com/photo-1529589510304-b7e994a92f60?w=400&h=300&fit=crop',
+  'Onion Rings': 'https://images.unsplash.com/photo-1639024471287-9b3a0b5c9b4f?w=400&h=300&fit=crop',
 
-  // PIZZA - Each with unique images
-  'Something Meaty': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Something Cheesy': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
-  'BBQ Chicken': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
-  'Lamb Curry & Cheese': 'https://images.unsplash.com/photo-1604103829192-1297d2b9e535?w=400&h=300&fit=crop',
+  // PIZZA
   'Margherita': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
-  'Sausage': 'https://images.unsplash.com/photo-1619546813926-a78b6379c2ba?w=400&h=300&fit=crop',
-  'Regina': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
-  'Hawaiian': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Pizza Extra: Ham': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Pizza Extra: Salami': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
-  'Pizza Extra: Mushrooms': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
-  'Pizza Extra: Peppers': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
-  'Pizza Extra: Cheese': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
-  'Pizza Extra: Olives': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Pizza Extra: Bacon': 'https://images.unsplash.com/photo-1595944024804-5a687f3c935e?w=400&h=300&fit=crop',
+  'BBQ Chicken Pizza': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+  'Meat Lovers Pizza': 'https://images.unsplash.com/photo-1595708680250-7f380d413703?w=400&h=300&fit=crop',
+  'Vegetarian Pizza': 'https://images.unsplash.com/photo-1511689660979-10d2b1aada49?w=400&h=300&fit=crop',
 
-  // DESSERTS - Each with unique images
-  'Cheese Cake': 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=300&fit=crop',
-  'Carrot Cake': 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=400&h=300&fit=crop',
-  'Chocolate Cake': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
-  'Ice Cream & Chocolate Sauce': 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=400&h=300&fit=crop',
-  'Seasonal Fruit': 'https://images.unsplash.com/photo-1511690656952-34342d5c71df?w=400&h=300&fit=crop',
+  // DESSERTS
+  'Chocolate Brownie': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
+  'Tiramisu': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop',
+  'Cheesecake': 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=300&fit=crop',
+  'Ice Cream Sundae': 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=300&fit=crop',
 
   // KIDS CORNER
-  'Chicken Strips & Fries': 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400&h=300&fit=crop',
-  'Wings & Fries': 'https://images.unsplash.com/photo-1608039829572-9432d2d1f104?w=400&h=300&fit=crop',
-  'Ribs & Wings': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  'Burger & Waffle Fries': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
-  'Kiddies Pizza (20cm)': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
-  'Milkshake': 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop',
-  'Juice': 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=300&fit=crop',
+  'Kids Burger & Chips': 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400&h=300&fit=crop',
+  'Kids Chicken & Chips': 'https://images.unsplash.com/photo-1586816001966-79b736744398?w=400&h=300&fit=crop',
+  'Pasta': 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop',
 
-  // PLATTERS - Each with unique images
-  'Boma Pastry Platter': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop',
-  'Boma Platter': 'https://images.unsplash.com/photo-1555939594-58d7cb560e0d?w=400&h=300&fit=crop',
-  'Boma Chicken Platter': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
-  'Boma Meaty Platter': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  'Boma Sandwich Platter': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
-  'Boma Hungry Mix Platter': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
-  'Boma Sweet Platter 1': 'https://images.unsplash.com/photo-1551014738-593c98783c09?w=400&h=300&fit=crop',
-  'Boma Sweet Platter 2': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
-  'Customized Platter': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop',
+  // PLATTERS
+  'Boma Platter': 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=300&fit=crop',
+  'Meat Platter': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
+  'Seafood Platter': 'https://images.unsplash.com/photo-1553247407-23251b9c19e8?w=400&h=300&fit=crop',
+  'Veggie Platter': 'https://images.unsplash.com/photo-1511689660979-10d2b1aada49?w=400&h=300&fit=crop',
 
-  // FLAME-GRILLED - Each with appropriate images
-  '1/4 Chicken, Pap & Gravy': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
-  '300g T-Bone Steak, Egg & Chips': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  '500g T-Bone Steak': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&h=300&fit=crop',
-  '300g T-Bone Steak': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  '300g Steak Sirloin': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&h=300&fit=crop',
-  '500g Rack of Ribs': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  '300g Rack of Ribs': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  '2 Piece Hake & Chips': 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=300&fit=crop',
-  '1/4 Chicken and Chips': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
-  '1/2 Chicken and Chips': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
-  '1/4 Chicken Tikka, Chips & Roti': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
-  'Full Chicken, Chips & 4 Rotis': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop',
+  // SOFT DRINKS & JUICES
+  'Coke': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
+  'Fanta': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
+  'Orange Juice': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400&h=300&fit=crop',
+  'Apple Juice': 'https://images.unsplash.com/photo-1576673442511-7e39b6545c87?w=400&h=300&fit=crop',
 
-  // BRAAI PLATTERS
-  'Braai Platter for 2': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-  'Braai Platter for 4': 'https://images.unsplash.com/photo-1555939594-58d7cb560e0d?w=400&h=300&fit=crop',
-  'Braai Platter for 6': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop',
-
-  // COLD BEVERAGES - Each with unique images
-  'Cold Drink / Soda': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
-  'Appletiser / Grapetiser': 'https://images.unsplash.com/photo-1511690656952-34342d5c71df?w=400&h=300&fit=crop',
-  'Still / Sparkling Water': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&h=300&fit=crop',
-  'Liquifruit': 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=300&fit=crop',
-  'Red Bull': 'https://images.unsplash.com/photo-1527960471264-932f39eb5846?w=400&h=300&fit=crop',
-  'Rock Shandy': 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=300&fit=crop',
-  'Steelworks': 'https://images.unsplash.com/photo-1522543921200-a6d1757e4c66?w=400&h=300&fit=crop',
-  'Fresh Juice': 'https://images.unsplash.com/photo-1579622561880-5f459d6c8cfe?w=400&h=300&fit=crop',
+  // SMOOTHIES
+  'Berry Blast': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=400&h=300&fit=crop',
+  'Tropical': 'https://images.unsplash.com/photo-1629203851122-3726c5f7c4bd?w=400&h=300&fit=crop',
+  'Green Power': 'https://images.unsplash.com/photo-1610970881699-44a8ad1fcd8c?w=400&h=300&fit=crop',
 };
 
 export function getMenuItemImage(item: { name: string; category: string }): string {
