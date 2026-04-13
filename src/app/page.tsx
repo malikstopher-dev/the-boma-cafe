@@ -69,7 +69,7 @@ const experienceBlocks = [
     image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&h=600&fit=crop'
   },
   {
-    icon: '👨‍👩‍👧‍👦',
+    icon: '❤️',
     title: 'Family Friendly',
     description: 'A welcoming space for all ages, where families gather to create cherished moments over delicious food.',
     image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&h=600&fit=crop'
@@ -408,15 +408,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Welcome Banner */}
-        <section className={styles.welcomeBanner}>
-          <div className="container">
-            <h2>{homepage.welcomeTitle || 'More than just a place to eat'}</h2>
-            <div className={styles.bannerDivider} />
-            <p>{homepage.welcomeDescription || 'The Boma Cafe is a place to experience!'}</p>
-          </div>
-        </section>
-
         {/* Signature Dishes Section */}
         <section className={styles.signatureSection}>
           <div className="container">
@@ -609,7 +600,7 @@ export default function Home() {
                 <div className={styles.reservationInfoItem}>
                   <span className={styles.reservationInfoIcon}>📞</span>
                   <strong>Call Us</strong>
-                  <a href="tel:0729962212">072 996 2212</a>
+                  <a href="tel:0715921190">071 592 1190</a>
                 </div>
                 <div className={styles.reservationInfoItem}>
                   <span className={styles.reservationInfoIcon}>✉️</span>
