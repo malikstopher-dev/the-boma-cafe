@@ -109,18 +109,20 @@ export default function CartButton() {
         {itemCount > 0 && (
           <span style={{
             position: 'absolute',
-            top: '-5px',
-            right: '-5px',
-            background: 'var(--fire-orange)',
+            top: '-2px',
+            right: '-2px',
+            background: '#dc3545',
             color: '#fff',
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            fontSize: '0.75rem',
+            minWidth: '20px',
+            height: '20px',
+            borderRadius: '10px',
+            fontSize: '0.7rem',
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            padding: '0 4px',
+            zIndex: 1001,
           }}>
             {itemCount}
           </span>

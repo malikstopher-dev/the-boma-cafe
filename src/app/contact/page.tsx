@@ -44,9 +44,19 @@ export default function ContactPage() {
 
         {/* Contact Info & Form - Premium Design */}
         </div>
-        <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
-          <div className="container">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '3rem', maxWidth: '1100px', margin: '0 auto', alignItems: 'start' }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .contact-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+            .contact-form-card { padding: 1.5rem !important; border-radius: 16px !important; }
+            .contact-form-inputs { grid-template-columns: 1fr !important; }
+            .contact-map-container { height: 200px !important; margin-top: 1.5rem !important; }
+            .contact-section { padding: var(--space-xl) 4% !important; }
+            .contact-form-card input, .contact-form-card textarea { width: 100% !important; box-sizing: border-box !important; }
+          }
+        `}</style>
+        <section className="contact-section" style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '3rem', alignItems: 'start' }}>
               {/* Info */}
               <div>
                 <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '2rem', fontFamily: 'var(--font-display)' }}>Contact Information</h2>
@@ -142,7 +152,7 @@ export default function ContactPage() {
                 </div>
 
                 {/* Map */}
-                <div style={{ marginTop: '2.5rem', borderRadius: '20px', overflow: 'hidden', height: '250px', background: 'var(--cream)', boxShadow: 'var(--shadow-md)' }}>
+                <div className="contact-map-container" style={{ marginTop: '2.5rem', borderRadius: '20px', overflow: 'hidden', height: '250px', background: 'var(--cream)', boxShadow: 'var(--shadow-md)' }}>
                   <iframe 
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3580.096099327458!2d28.05762037431698!3d-26.045961999999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e957fcb4e722a79%3A0xc8e2d31c9e14a19e!2sThe%20Boma%20Cafe!5e0!3m2!1sen!2sza!4v1700000000000!5m2!1sen!2sza"
                     width="100%" 
@@ -205,7 +215,7 @@ export default function ContactPage() {
               </div>
 
               {/* Form - Premium */}
-              <div style={{ background: 'var(--cream)', borderRadius: '24px', padding: '2.75rem', boxShadow: 'var(--shadow-md)' }}>
+              <div className="contact-form-card" style={{ background: 'var(--cream)', borderRadius: '24px', padding: '2.75rem', boxShadow: 'var(--shadow-md)' }}>
                 <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '1.75rem', fontFamily: 'var(--font-display)' }}>Send us a Message</h2>
                 
                 {isSubmitted ? (
@@ -229,14 +239,14 @@ export default function ContactPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="contact-form-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <input 
                         type="text" 
                         placeholder="Your Name *" 
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       />
                       <input 
                         type="email" 
@@ -244,7 +254,7 @@ export default function ContactPage() {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -253,12 +263,12 @@ export default function ContactPage() {
                         placeholder="Phone Number"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       />
                       <select 
                         value={formData.subject}
                         onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        style={{ padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '1rem 1.25rem', borderRadius: '14px', border: '2px solid transparent', background: 'var(--white)', fontSize: '1rem', transition: 'border-color 0.2s ease' }}
                       >
                         <option value="">Select Subject</option>
                         <option value="reservation">Table Reservation</option>
