@@ -149,7 +149,7 @@ export default function AboutPage() {
         </section>
 
         {/* CTA - Premium Design */}
-        <section style={{ background: 'var(--dark-brown)', padding: 'var(--space-3xl) 5%', textAlign: 'center', position: 'relative' }}>
+        <section style={{ background: 'var(--beige)', padding: 'var(--space-3xl) 5%', textAlign: 'center', position: 'relative' }}>
           <div style={{
             position: 'absolute',
             inset: 0,

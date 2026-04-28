@@ -1,62 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MenuItem } from '@/types';
 import PriceDisplay from './PriceDisplay';
 import SizeSelector from './SizeSelector';
 import AddOnsBlock from './AddOnsBlock';
+import { getMenuItemImage, FALLBACK_IMAGE } from '@/lib/menuImage';
 import styles from './MenuItemCard.module.css';
 
 interface MenuItemCardProps {
   item: MenuItem;
+  categoryName?: string;
   onAddToCart: (item: MenuItem, selectedSize?: string, selectedAddOns?: string[]) => void;
 }
 
-export default function MenuItemCard({ item, onAddToCart }: MenuItemCardProps) {
+export default function MenuItemCard({ item, categoryName = '', onAddToCart }: MenuItemCardProps) {
   const [selectedSize, setSelectedSize] = useState<string>(
     item.variants?.[0]?.name || ''
   );
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [isAdded, setIsAdded] = useState(false);
 
-  const hasVariants = item.variants && item.variants.length > 0;
-  
-  const currentPrice = hasVariants && selectedSize
-    ? item.variants.find(v => v.name === selectedSize)?.price || item.variants[0].price
-    : (item.price || 0);
-
-  const addOnsTotal = selectedAddOns.reduce((total, addOnName) => {
-    const addOn = item.addOns?.find(a => a.name === addOnName);
-    return total + (addOn?.price || 0);
-  }, 0);
-
-  const totalPrice = currentPrice + addOnsTotal;
-
-  const getPriceDisplay = () => {
-    if (hasVariants && item.variants) {
-      const prices = item.variants.map(v => v.price);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
-      if (min === max) return `R${min}`;
-      return `R${min} - R${max}`;
+  const imageSrc = useMemo((): string => {
+    if (item.image && typeof item.image === 'string' && item.image.trim()) {
+      return item.image.startsWith('/') ? item.image : `/${item.image}`;
     }
-    return null;
+    return getMenuItemImage(item.name || '');
+  }, [item.name, item.image]);
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLDivElement>) => {
+    e.currentTarget.style.backgroundImage = `url(${FALLBACK_IMAGE})`;
   };
 
-  const handleSizeChange = (size: string, price: number) => {
+  const handleSizeChange = (size: string) => {
     setSelectedSize(size);
   };
 
-  const handleToggleAddOn = (name: string, price: number) => {
+  const handleToggleAddOn = (addOn: string) => {
     setSelectedAddOns(prev => 
-      prev.includes(name)
-        ? prev.filter(a => a !== name)
-        : [...prev, name]
+      prev.includes(addOn) 
+        ? prev.filter(a => a !== addOn)
+        : [...prev, addOn]
     );
   };
 
   const handleAddToCart = () => {
-    onAddToCart(item, selectedSize || undefined, selectedAddOns);
+    onAddToCart(item, selectedSize, selectedAddOns);
     setIsAdded(true);
     setTimeout(() => {
       setIsAdded(false);
@@ -70,16 +59,11 @@ export default function MenuItemCard({ item, onAddToCart }: MenuItemCardProps) {
   return (
     <div className={styles.card}>
       <div className={styles.imageContainer}>
-        {item.image ? (
-          <div 
-            className={styles.image}
-            style={{ backgroundImage: `url(${item.image})` }}
-          />
-        ) : (
-          <div className={styles.imagePlaceholder}>
-            <span>{item.name.charAt(0)}</span>
-          </div>
-        )}
+        <div 
+          className={styles.image}
+          style={{ backgroundImage: `url(${imageSrc})` }}
+          onError={handleImageError}
+        />
         
         {item.isOnPromo && item.promoBadge && (
           <span className={styles.badgePromo}>{item.promoBadge}</span>
@@ -133,29 +117,17 @@ export default function MenuItemCard({ item, onAddToCart }: MenuItemCardProps) {
         )}
 
         <div className={styles.footer}>
-          <div className={styles.priceWrapper}>
-            {hasVariants ? (
-              <span className={styles.priceRange}>{getPriceDisplay()}</span>
-            ) : (
-              <PriceDisplay 
-                price={totalPrice} 
-                originalPrice={item.isOnPromo ? item.price : undefined}
-                size="lg"
-              />
-            )}
-            {addOnsTotal > 0 && !hasVariants && (
-              <span className={styles.basePrice}>Base: R{item.price}</span>
-            )}
-          </div>
-          <button
+          <PriceDisplay 
+            price={typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0}
+            size="md"
+          />
+          
+          <button 
             className={`${styles.addButton} ${isAdded ? styles.added : ''}`}
             onClick={handleAddToCart}
-            disabled={item.isOutOfStock}
+            disabled={isAdded}
           >
-            <span className={styles.addIcon}>
-              {isAdded ? '✓' : '+'}
-            </span>
-            {isAdded ? 'Added!' : 'Add'}
+            {isAdded ? '✓ Added' : 'Add to Cart'}
           </button>
         </div>
       </div>

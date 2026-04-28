@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
-import PopupModal from '@/components/ui/PopupModal';
 import { cmsService } from '@/lib/client-cms';
 import styles from './page.module.css';
+
+const PopupModal = dynamic(() => import('@/components/ui/PopupModal'), { ssr: false });
 
 const heroSlides = [
   {
@@ -43,37 +46,10 @@ const showcaseCategories = [
   { title: 'Wood-Fired Pizza', desc: 'Handcrafted perfection', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=450&fit=crop', link: '/menu?category=Pizza', badge: null },
   { title: 'Cocktails & Drinks', desc: 'Artisan crafted', image: 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&h=450&fit=crop', link: '/menu?category=Cocktails', badge: 'Popular' },
   { title: 'Platters', desc: 'For sharing moments', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&h=450&fit=crop', link: '/menu?category=Platters', badge: null },
-  { title: 'Flame-Grilled', desc: 'Sizzling perfection', image: 'https://images.unsplash.com/photo-1555041469-a586c61b9fe4?w=600&h=450&fit=crop', link: '/menu?category=Flame-Grilled', badge: null },
+  { title: 'Flame-Grilled', desc: 'Sizzling perfection', image: '/gallery/flame-grilled.jpg', link: '/menu?category=Flame-Grilled', badge: null },
   { title: 'Desserts', desc: 'Sweet endings', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=450&fit=crop', link: '/menu?category=Desserts', badge: null },
   { title: 'Curries & Bunnies', desc: 'Rich & aromatic', image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=450&fit=crop', link: '/menu?category=Curries+%26+Bunnies', badge: null },
   { title: 'Breakfast', desc: 'Start your day right', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&h=450&fit=crop', link: '/menu?category=Breakfast', badge: null },
-];
-
-const experienceBlocks = [
-  {
-    icon: '🌿',
-    title: 'Escape the City',
-    description: 'Step into our tranquil outdoor sanctuary, where lush greenery and thatched roofing create an oasis of calm.',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop'
-  },
-  {
-    icon: '🔥',
-    title: 'Fire & Flavour',
-    description: 'Experience the magic of our open flame cooking, where every dish carries the essence of fire-kissed perfection.',
-    image: 'https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?w=800&h=600&fit=crop'
-  },
-  {
-    icon: '🎵',
-    title: 'Live Entertainment',
-    description: 'Immerse yourself in soulful live music on weekends, setting the perfect atmosphere for memorable evenings.',
-    image: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=600&fit=crop'
-  },
-  {
-    icon: '❤️',
-    title: 'Family Friendly',
-    description: 'A welcoming space for all ages, where families gather to create cherished moments over delicious food.',
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop'
-  }
 ];
 
 const signatureCocktails = [
@@ -160,6 +136,7 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDearMamaModal, setShowDearMamaModal] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -200,8 +177,22 @@ export default function Home() {
     return () => clearInterval(galleryTimer);
   }, []);
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowDearMamaModal(false);
+    };
+    if (showDearMamaModal) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = '';
+    };
+  }, [showDearMamaModal]);
+
   const featuredMenuItems = menuItems.filter((item: any) => item.isFeatured && !item.isOutOfStock).slice(0, 4);
-  const upcomingEvents = events.filter((event: any) => event.status === 'upcoming' && event.showOnHomepage).slice(0, 3);
+  const upcomingEvents = events.filter((event: any) => event.status === 'upcoming' && event.showOnHomepage).slice(0, 0);
   const activePromotions = promotions.filter((promo: any) => promo.isActive && promo.displayOnHomepage).slice(0, 2);
 
   const homepage = siteSettings?.homepage || {};
@@ -271,7 +262,7 @@ export default function Home() {
                 <FadeInSection key={idx} delay={idx * 100} className={styles.showcaseCardWrapper}>
                   <Link href={category.link} className={styles.showcaseCard}>
                     <div className={styles.showcaseCardImage}>
-                      <img src={category.image} alt={category.title} />
+                      <img src={category.image} alt={category.title} loading="lazy" decoding="async" />
                       <div className={styles.showcaseCardOverlay} />
                       {category.badge && (
                         <span className={`${styles.showcaseBadge} ${category.badge === 'Chef Pick' ? styles.chefPick : ''}`}>
@@ -309,7 +300,7 @@ export default function Home() {
                 <FadeInSection key={idx} delay={idx * 100} className={styles.cocktailCardWrapper}>
                   <div className={styles.cocktailCard}>
                     <div className={styles.cocktailImageWrapper}>
-                      <img src={cocktail.image} alt={cocktail.name} className={styles.cocktailImage} />
+                      <img src={cocktail.image} alt={cocktail.name} className={styles.cocktailImage} loading="lazy" decoding="async" />
                       <div className={styles.cocktailOverlay} />
                     </div>
                     <div className={styles.cocktailContent}>
@@ -323,41 +314,8 @@ export default function Home() {
             </div>
 
             <FadeInSection className={styles.sectionCta}>
-              <Link href="/menu?category=Cocktails" className="btn btn-secondary btn-lg">Explore Our Bar</Link>
+              <Link href="/bar-menu" className="btn btn-secondary btn-lg">Explore Our Bar</Link>
             </FadeInSection>
-          </div>
-        </section>
-
-        {/* Experience Section */}
-        <section className={styles.experienceSection}>
-          <div className="container">
-            <FadeInSection className={styles.sectionHeader}>
-              <span className="section-badge primary">The Boma Experience</span>
-              <h2>More Than Just Dining</h2>
-              <p>Where every visit becomes a cherished memory</p>
-            </FadeInSection>
-
-            <div className={styles.experienceGrid}>
-              {experienceBlocks.map((exp, idx) => (
-                <FadeInSection 
-                  key={idx} 
-                  delay={idx * 150} 
-                  animationType={idx % 2 === 0 ? 'left' : 'right'}
-                  className={`${styles.experienceCardWrapper} ${idx % 2 === 1 ? styles.reversed : ''}`}
-                >
-                  <div className={styles.experienceCard}>
-                    <div className={styles.experienceImage}>
-                      <img src={exp.image} alt={exp.title} />
-                    </div>
-                    <div className={styles.experienceContent}>
-                      <div className={styles.experienceIcon}>{exp.icon}</div>
-                      <h3>{exp.title}</h3>
-                      <p>{exp.description}</p>
-                    </div>
-                  </div>
-                </FadeInSection>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -427,7 +385,7 @@ export default function Home() {
                 <FadeInSection key={idx} delay={idx * 100} className={styles.signatureCardWrapper}>
                   <Link href="/menu" className={styles.signatureCard}>
                     <div className={styles.signatureCardImage}>
-                      <img src={item.image} alt={item.name} />
+                      <img src={item.image} alt={item.name} loading="lazy" decoding="async" />
                       <span className={styles.signatureBadge}>★ Featured</span>
                     </div>
                     <div className={styles.signatureCardContent}>
@@ -450,47 +408,133 @@ export default function Home() {
         </section>
 
         {/* Premium Events Section */}
-        {upcomingEvents.length > 0 && (
-          <section className={styles.eventsSection}>
-            <div className="container">
-              <FadeInSection className={styles.sectionHeader}>
-                <span className="section-badge primary">What's Happening</span>
-                <h2>Upcoming Events</h2>
-                <p>Join us for memorable experiences</p>
+        <section className={styles.eventsSection}>
+          <div className="container">
+            <FadeInSection className={styles.sectionHeader}>
+              <span className="section-badge primary">What's Happening</span>
+              <h2>Upcoming Events</h2>
+              <p>Join us for memorable experiences</p>
+            </FadeInSection>
+            
+            <div className={styles.eventsGrid}>
+              {upcomingEvents.map((event: any) => (
+                <FadeInSection key={event.id} delay={event.id * 100} className={styles.eventCardWrapper}>
+                  <Link href="/events" className={styles.eventCard}>
+                    <div className={styles.eventCardImage}>
+                      <img src={event.coverImage || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop'} alt={event.title} loading="lazy" decoding="async" />
+                      <div className={styles.eventOverlay} />
+                      <div className={styles.eventDate}>
+                        <span className={styles.eventDay}>{new Date(event.date).getDate()}</span>
+                        <span className={styles.eventMonth}>{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}</span>
+                      </div>
+                    </div>
+                    <div className={styles.eventCardContent}>
+                      <h4>{event.title}</h4>
+                      <p>{event.description}</p>
+                      <div className={styles.eventMeta}>
+                        <span>📍 {event.location}</span>
+                        <span>🕐 {event.time}</span>
+                      </div>
+                      <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
+                    </div>
+                  </Link>
+                </FadeInSection>
+              ))}
+              <FadeInSection delay={100} className={styles.eventCardWrapper}>
+                <div 
+                  className={styles.eventCard}
+                  onClick={() => setShowDearMamaModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className={styles.eventCardImage}>
+                    <img src="/gallery/events/mama-day.png" alt="Dear Mama Mother's Day" loading="lazy" decoding="async" />
+                    <div className={styles.eventOverlay} />
+                    <div className={styles.eventDate}>
+                      <span className={styles.eventDay}>10</span>
+                      <span className={styles.eventMonth}>MAY</span>
+                    </div>
+                  </div>
+                  <div className={styles.eventCardContent}>
+                    <h4>Dear Mama</h4>
+                    <p>A Mother's Day celebration by Just Like Sunday Social Club at The Boma Café.</p>
+                    <div className={styles.eventMeta}>
+                      <span>📍 The Boma Cafe</span>
+                      <span>🕐 1PM - 6PM</span>
+                    </div>
+                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>View Details</button>
+                  </div>
+                </div>
               </FadeInSection>
-              
-              <div className={styles.eventsGrid}>
-                {upcomingEvents.map((event: any) => (
-                  <FadeInSection key={event.id} delay={event.id * 100} className={styles.eventCardWrapper}>
-                    <Link href="/events" className={styles.eventCard}>
-                      <div className={styles.eventCardImage}>
-                        <img src={event.coverImage || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop'} alt={event.title} />
-                        <div className={styles.eventOverlay} />
-                        <div className={styles.eventDate}>
-                          <span className={styles.eventDay}>{new Date(event.date).getDate()}</span>
-                          <span className={styles.eventMonth}>{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}</span>
-                        </div>
-                      </div>
-                      <div className={styles.eventCardContent}>
-                        <h4>{event.title}</h4>
-                        <p>{event.description}</p>
-                        <div className={styles.eventMeta}>
-                          <span>📍 {event.location}</span>
-                          <span>🕐 {event.time}</span>
-                        </div>
-                        <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
-                      </div>
-                    </Link>
-                  </FadeInSection>
-                ))}
-              </div>
+              <FadeInSection delay={200} className={styles.eventCardWrapper}>
+                <Link href="/experience" className={styles.eventCard}>
+                  <div className={styles.eventCardImage}>
+                    <img src="/gallery/weekend-buffet.jpg" alt="Weekend Breakfast Buffet" loading="lazy" decoding="async" />
+                    <div className={styles.eventOverlay} />
+                    <div className={styles.eventDate}>
+                      <span className={styles.eventDay}>SAT</span>
+                      <span className={styles.eventMonth}>SUN</span>
+                    </div>
+                  </div>
+                  <div className={styles.eventCardContent}>
+                    <h4>Weekend Breakfast Buffet</h4>
+                    <p>Start your weekend with our delicious all-you-can-eat breakfast spread</p>
+<div className={styles.eventMeta}>
+                      <span>📍 The Boma Cafe</span>
+                      <span>🕐 9h30 - 12h00pm Sat & Sun</span>
+                    </div>
+                  <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
+                  </div>
+                </Link>
+              </FadeInSection>
+              <FadeInSection delay={300} className={styles.eventCardWrapper}>
+                <Link href="/events" className={styles.eventCard}>
+                  <div className={styles.eventCardImage}>
+                    <img src="/gallery/events/friday-braai.jpg" alt="Friday Braai Evening" loading="lazy" decoding="async" />
+                    <div className={styles.eventOverlay} />
+                    <div className={styles.eventDate}>
+                      <span className={styles.eventDay}>FRI</span>
+                      <span className={styles.eventMonth}>EVE</span>
+                    </div>
+                  </div>
+                  <div className={styles.eventCardContent}>
+                    <h4>Friday Braai Evening</h4>
+                    <p>Join us for sizzling braai and live music every Friday night</p>
+                    <div className={styles.eventMeta}>
+                      <span>📍 The Boma Cafe</span>
+                      <span>🕐 6pm - 10pm</span>
+                    </div>
+<button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
+                  </div>
+                </Link>
+              </FadeInSection>
+              <FadeInSection delay={400} className={styles.eventCardWrapper}>
+                <Link href="/entertainment" className={styles.eventCard}>
+                  <div className={styles.eventCardImage}>
+                    <img src="/gallery/events/live-music.jpg" alt="Live Music Night" loading="lazy" decoding="async" />
+                    <div className={styles.eventOverlay} />
+                    <div className={styles.eventDate}>
+                      <span className={styles.eventDay}>SAT</span>
+                      <span className={styles.eventMonth}>NIGHT</span>
+                    </div>
+                  </div>
+                  <div className={styles.eventCardContent}>
+                    <h4>Live Music Nights</h4>
+                    <p>Enjoy soulful live performances every Saturday night</p>
+                    <div className={styles.eventMeta}>
+                      <span>📍 The Boma Cafe</span>
+                      <span>🕐 7pm - 11pm</span>
+                    </div>
+                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
+                  </div>
+                </Link>
+              </FadeInSection>
+            </div>
 
               <FadeInSection className={styles.sectionCta}>
                 <Link href="/events" className="btn btn-primary">View All Events</Link>
               </FadeInSection>
             </div>
           </section>
-        )}
 
         {/* Premium Gallery Preview Section */}
         <section className={styles.gallerySection}>
@@ -504,7 +548,7 @@ export default function Home() {
             <FadeInSection animationType="scale" className={styles.galleryPreviewWrapper}>
               <div className={styles.galleryPreview}>
                 <div className={styles.galleryMainImage}>
-                  <img src={galleryPreview[galleryIndex].url} alt={galleryPreview[galleryIndex].alt} />
+                  <img src={galleryPreview[galleryIndex].url} alt={galleryPreview[galleryIndex].alt} loading="lazy" decoding="async" />
                   <div className={styles.galleryOverlay} />
                   <button className={styles.galleryNavPrev} onClick={() => setGalleryIndex(prev => prev > 0 ? prev - 1 : galleryPreview.length - 1)}>‹</button>
                   <button className={styles.galleryNavNext} onClick={() => setGalleryIndex(prev => (prev + 1) % galleryPreview.length)}>›</button>
@@ -541,7 +585,11 @@ export default function Home() {
                   <FadeInSection key={promo.id} className={styles.promoCard}>
                     <h3>{promo.title}</h3>
                     <p>{promo.description}</p>
-                    <Link href={promo.ctaLink} className="btn btn-secondary">{promo.ctaText}</Link>
+                    {promo.ctaLink ? (
+                      <Link href={promo.ctaLink} className="btn btn-secondary">{promo.ctaText || 'Learn More'}</Link>
+                    ) : (
+                      <Link href="/promotions" className="btn btn-secondary">{promo.ctaText || 'Learn More'}</Link>
+                    )}
                   </FadeInSection>
                 ))}
               </div>
@@ -616,9 +664,236 @@ export default function Home() {
             </FadeInSection>
           </div>
         </section>
+
+        {/* About the Founder - Premium Compact Section */}
+        <section style={{
+          background: 'linear-gradient(180deg, var(--cream) 0%, var(--beige) 100%)',
+          padding: 'var(--space-3xl) 5%',
+          position: 'relative'
+        }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div className="founder-card" style={{
+              background: 'var(--white)',
+              borderRadius: '20px',
+              padding: '2.5rem',
+              boxShadow: '0 4px 20px rgba(26, 15, 10, 0.08)',
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '2rem',
+              alignItems: 'center'
+            }}>
+              {/* Founder Image */}
+              <div className="founder-image" style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '4px solid var(--primary)',
+                boxShadow: '0 4px 16px rgba(194, 106, 45, 0.25)',
+                flexShrink: 0
+              }}>
+                <Image
+                  src="/gallery/people/mahendra.jpg"
+                  alt="Mahendra Singh, Founder of The Boma Café Sandton"
+                  width={140}
+                  height={140}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+              
+              {/* Founder Content */}
+              <div>
+                <div style={{
+                  display: 'inline-block',
+                  background: 'var(--primary)',
+                  color: 'var(--white)',
+                  padding: '0.3rem 0.85rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  marginBottom: '1rem',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase'
+                }}>
+                  About the Founder
+                </div>
+                <h3 style={{
+                  fontSize: 'clamp(1.5rem, 2.5vw, 1.75rem)',
+                  color: 'var(--dark-brown)',
+                  marginBottom: '0.75rem',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600
+                }}>
+                  Mahendra Singh
+                </h3>
+                <p style={{
+                  color: 'var(--text)',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.7,
+                  marginBottom: '1rem'
+                }}>
+                  Mahendra Singh is the visionary behind The Boma Café Sandton, bringing a refined approach to hospitality shaped by years of experience in retail and restaurant operations. Having built his foundation with Pick n Pay and later creating ventures such as 101 on Fraser, he combines business insight with a passion for exceptional guest experiences.
+                </p>
+                <p style={{
+                  color: 'var(--text)',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.7,
+                  marginBottom: '1rem',
+                  fontStyle: 'italic'
+                }}>
+                  "A place where food, atmosphere, and people come together."
+                </p>
+                
+                {/* Credibility Badges */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap'
+                }}>
+                  {[
+                    { icon: '🏪', label: 'Pick n Pay Experience' },
+                    { icon: '✨', label: 'Creator of 101 on Fraser' },
+                    { icon: '👔', label: 'Hospitality Leadership' }
+                  ].map((badge, i) => (
+                    <div key={i} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      background: 'var(--cream)',
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.75rem',
+                      color: 'var(--text)',
+                      fontWeight: 500
+                    }}>
+                      <span>{badge.icon}</span>
+                      <span>{badge.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer settings={settings} branding={branding} />
+
+      {showDearMamaModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.3s ease'
+          }}
+          onClick={() => setShowDearMamaModal(false)}
+        >
+          <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
+          <div 
+            style={{
+              background: 'var(--white)',
+              borderRadius: '24px',
+              maxWidth: '500px',
+              width: '100%',
+              overflow: 'hidden',
+              position: 'relative',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+              animation: 'scaleUp 0.3s ease'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <style>{`@keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }`}</style>
+            <button
+              onClick={() => setShowDearMamaModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                zIndex: 10,
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.9)',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}
+            >
+              ✕
+            </button>
+            <img 
+              src="/gallery/events/mama-day.png" 
+              alt="Dear Mama" 
+              style={{
+                width: '100%',
+                height: '250px',
+                objectFit: 'cover'
+              }}
+            />
+            <div style={{ padding: '1.5rem' }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                color: 'var(--white)',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '20px',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                marginBottom: '0.75rem'
+              }}>
+                Mother's Day Celebration
+              </div>
+              <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '0.25rem', fontFamily: 'var(--font-display)' }}>
+                Dear Mama
+              </h2>
+              <p style={{ fontSize: '1rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                by Just Like Sunday Social Club
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.2rem' }}>📅</span>
+                  <span style={{ color: 'var(--text)' }}>Sunday 10 May</span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.2rem' }}>🕐</span>
+                  <span style={{ color: 'var(--text)' }}>1PM - 6PM</span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.2rem' }}>📍</span>
+                  <span style={{ color: 'var(--text)' }}>The Boma Café, 127 B Wroxham Rd, Paulshof, JHB</span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.2rem' }}>🎟️</span>
+                  <span style={{ color: 'var(--text)' }}>Tickets available on Quicket</span>
+                </div>
+              </div>
+              <a 
+                href="https://www.quicket.co.za" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem 1.5rem', textDecoration: 'none' }}
+              >
+                Get Tickets
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

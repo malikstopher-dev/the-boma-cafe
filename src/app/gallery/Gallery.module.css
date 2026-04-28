@@ -1,24 +1,24 @@
 .main {
-  padding-top: 80px;
+  padding-top: 0;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
 }
 
 .hero {
-  background: linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%);
-  padding: var(--space-3xl) 5%;
+  background: transparent;
+  padding: 0;
   text-align: center;
 }
 
 .heroTitle {
   font-size: clamp(2rem, 5vw, 3rem);
-  color: var(--white);
+  color: var(--brown-heading);
   margin-bottom: var(--space-sm);
 }
 
 .heroSubtitle {
-  color: var(--cream);
+  color: var(--brown-secondary);
   font-size: 1rem;
   max-width: 600px;
   margin: 0 auto;
@@ -203,7 +203,7 @@
 .videoPlaceholder {
   width: 100%;
   height: 100%;
-  background: var(--dark-brown);
+  background: var(--beige-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -211,7 +211,7 @@
 
 .playIcon {
   font-size: 3rem;
-  color: var(--white);
+  color: var(--brown-heading);
 }
 
 .galleryOverlay {

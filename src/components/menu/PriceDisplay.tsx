@@ -14,14 +14,10 @@ export default function PriceDisplay({ price, originalPrice, size = 'md', showR 
   
   return (
     <div className={`${styles.price} ${styles[size]}`}>
-      <span className={hasDiscount ? styles.discounted : ''}>
-        {showR && <span className={styles.currency}>R</span>}
-        {price.toFixed(0)}
-      </span>
+      {showR && <span className={styles.currency}>R</span>}
+      <span className={styles.amount}>{price}</span>
       {hasDiscount && (
-        <span className={styles.original}>
-          R{originalPrice}
-        </span>
+        <span className={styles.originalPrice}>R{originalPrice}</span>
       )}
     </div>
   );

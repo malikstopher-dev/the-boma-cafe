@@ -1,4 +1,4 @@
-import { SiteSettings, MenuCategory, MenuItem, Event, Promotion, GalleryItem, Popup, Announcement, Testimonial } from './types';
+import { SiteSettings, MenuCategory, MenuItem, Event, Promotion, GalleryItem, Popup, Announcement, Testimonial, LastWeekHighlight } from './types';
 
 export const defaultSettings: SiteSettings = {
   siteName: 'The Boma Cafe',
@@ -6,7 +6,7 @@ export const defaultSettings: SiteSettings = {
   logo: '/logo.png',
   favicon: '/favicon.ico',
   footerText: '© {year} The Boma Cafe. All rights reserved.',
-  phone: '071 592 1190',
+  phone: '072 996 2212',
   phone2: '072 996 2212',
   email: 'info@thebomacafe.co.za',
   address: 'Sandton, Johannesburg, South Africa',
@@ -34,9 +34,31 @@ export const defaultMenuItems: MenuItem[] = [
 ];
 
 export const defaultEvents: Event[] = [
-  { id: 'evt-1', title: 'Live Jazz Night', date: '2026-04-18', time: '7:00 PM', description: 'Enjoy smooth jazz by the fire', image: '/gallery/events/2024-09-15.webp', isFeatured: true, isUpcoming: true, order: 1 },
-  { id: 'evt-2', title: 'Sunday Braai', date: '2026-04-19', time: '12:00 PM', description: 'Classic South African braai', image: '/gallery/events/2025-04-23.webp', isFeatured: false, isUpcoming: true, order: 2 },
+  { id: 'evt-1', title: 'Weekend Buffet Experience', date: '2026-04-25', time: '12:00 PM - 3:00 PM', description: 'Indulge in our legendary weekend buffet with fresh salads, grilled meats, local delicacies, and decadent desserts. Perfect for family gatherings.', category: 'Buffet', image: '/gallery/events/2025-04-23.webp', images: ['/gallery/events/2025-04-23.webp', '/gallery/events/2024-09-15.webp'], isFeatured: true, isUpcoming: true, order: 1, ctaLabel: 'Book Table', ctaLink: '/contact', location: 'The Boma Café', visible: true },
+  { id: 'evt-2', title: 'Live DJ Night', date: '2026-04-25', time: '8:00 PM - Late', description: 'Experience electrifying beats with our resident DJ spinning the hottest tracks. Dance the night away in our vibrant atmosphere.', category: 'DJ Night', image: '/gallery/events/2024-09-15.webp', images: ['/gallery/events/2024-09-15.webp', '/gallery/gallery/bomacafe2-large-1.jpg'], isFeatured: false, isUpcoming: true, order: 2, ctaLabel: 'Reserve Spot', ctaLink: '/contact', location: 'Main Deck', visible: true },
+  { id: 'evt-3', title: 'Karaoke Evening', date: '2026-04-26', time: '7:00 PM - 11:00 PM', description: 'Showcase your vocal talents! Join us for a fun-filled karaoke night with friendly competition and great prizes.', category: 'Karaoke', image: '/gallery/events/2025-03-01.webp', images: ['/gallery/events/2025-03-01.webp'], isFeatured: false, isUpcoming: true, order: 3, ctaLabel: 'Sign Up', ctaLink: '/contact', location: 'Lounge', visible: true },
+  { id: 'evt-4', title: 'Sunday Family Lunch', date: '2026-04-26', time: '12:00 PM - 3:00 PM', description: 'Quality time with family over delicious food. Kids eat free with paying adults. Create lasting memories.', category: 'Family', image: '/gallery/events/2025-01-20.webp', images: ['/gallery/events/2025-01-20.webp', '/gallery/events/2025-04-23.webp'], isFeatured: false, isUpcoming: true, order: 4, ctaLabel: 'Book Family Table', ctaLink: '/contact', location: 'Garden Area', visible: true },
+  { id: 'evt-5', title: 'Venue Hire Showcase', date: '2026-05-01', time: 'By Appointment', description: 'Looking for the perfect venue? Book a showcase tour and discover why The Boma Café is Sandton\'s most sought-after event space.', category: 'Venue Hire', image: '/gallery/gallery/bomacafe2-large-1.jpg', images: ['/gallery/gallery/bomacafe2-large-1.jpg', '/gallery/gallery/bomacafe4-large.jpg', '/gallery/gallery/bomacafe6-large.jpg'], isFeatured: false, isUpcoming: true, order: 5, ctaLabel: 'Schedule Tour', ctaLink: '/contact', location: 'All Areas', visible: true },
+  { id: 'evt-past-1', title: 'Valentine\'s Dinner', date: '2026-02-14', time: '6:00 PM - 10:00 PM', description: 'A magical evening of romance with a special 5-course menu, live serenade, and champagne surprises. Couples\' favorite.', category: 'Celebration', image: '/gallery/events/2025-02-14.webp', images: ['/gallery/events/2025-02-14.webp', '/gallery/events/2025-01-20.webp'], isFeatured: false, isUpcoming: false, order: 1, visible: true },
+  { id: 'evt-past-2', title: 'Easter Weekend Celebration', date: '2026-04-18', time: '10:00 AM - 6:00 PM', description: 'Easter fun for the whole family with egg hunting, festive meals, and entertainment.', category: 'Celebration', image: '/gallery/events/2025-04-23.webp', images: ['/gallery/events/2025-04-23.webp', '/gallery/events/2025-03-01.webp'], isFeatured: false, isUpcoming: false, order: 2, visible: true },
+  { id: 'evt-past-3', title: 'Mr Magic Live', date: '2026-04-11', time: '8:00 PM - 11:00 PM', description: 'Mind-bending magic and illusion show. An unforgettable night of wonder and entertainment.', category: 'Live Music', image: '/gallery/events/2024-09-15.webp', images: ['/gallery/events/2024-09-15.webp'], isFeatured: false, isUpcoming: false, order: 3, visible: true },
+  { id: 'evt-past-4', title: 'Thursday Burger Special', date: '2026-04-17', time: '5:00 PM - 9:00 PM', description: 'Our famous gourmet burgers with craft beers. Half-price burgers from 5-7PM!', category: 'Buffet', image: '/gallery/events/2025-04-23.webp', images: ['/gallery/events/2025-04-23.webp'], isFeatured: false, isUpcoming: false, order: 4, visible: true },
+  { id: 'evt-past-5', title: 'Live Music Night', date: '2026-04-10', time: '7:00 PM - 10:00 PM', description: 'Local band delivered an incredible acoustic set. Great vibes, great food, great company.', category: 'Live Music', image: '/gallery/events/2024-09-15.webp', images: ['/gallery/events/2024-09-15.webp', '/gallery/gallery/bomacafe2-large-1.jpg'], isFeatured: false, isUpcoming: false, order: 5, visible: true },
 ];
+
+export const defaultLastWeekHighlight: LastWeekHighlight = {
+  id: 'hlw-1',
+  title: 'Last Week at The Boma Café',
+  description: 'Missed the action? Here\'s what went down last week - live music, great food, and good vibes!',
+  videoSrc: '/videos/gallery.mp4',
+  posterImage: '/gallery/events/2025-04-23.webp',
+  ctaLabel: 'Book This Weekend',
+  ctaLink: '/contact',
+  visible: true,
+  autoplay: true,
+  muted: true,
+  loop: true
+};
 
 export const defaultPromotions: Promotion[] = [
   { id: 'promo-1', title: 'Weekend Special', description: '20% off all mains on Saturday', image: '/gallery/promotions/2024-07-31.jpg', priceText: '20% OFF', isActive: true, order: 1 },

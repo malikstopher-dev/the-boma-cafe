@@ -1,9 +1,14 @@
+// ⚠️ DO NOT MODIFY
+// This file contains the production menu structure.
+// Changes here will directly affect live menu rendering.
+// Only edit if explicitly instructed.
+
 import { MenuItem, MenuCategory, Event, Promotion, GalleryItem, Popup, Announcement, Testimonial, ContactInquiry } from '@/types';
 
 export const defaultSettings: any = {
   siteName: 'The Boma Cafe',
   siteTagline: 'Where the Rustic Meets the Soulful',
-  contactPhone: '071 592 1190',
+  contactPhone: '072 996 2212',
   contactEmail: 'info@thebomacafe.co.za',
   contactAddress: 'Sandton, Johannesburg, South Africa',
   contactMapLink: 'https://maps.app.goo.gl/Xca93TRsznn9GN8K7',

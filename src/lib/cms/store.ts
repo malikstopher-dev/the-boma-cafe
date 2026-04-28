@@ -15,6 +15,7 @@ const DATA_FILES = {
   testimonials: 'testimonials.json',
   inquiries: 'inquiries.json',
   pages: 'pages.json',
+  lastWeekHighlight: 'lastWeekHighlight.json',
 } as const;
 
 type DataKey = keyof typeof DATA_FILES;

@@ -62,13 +62,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (password: string): Promise<boolean> => {
     try {
-      const result = await cmsService.login(password);
+      console.log('Attempting login with password:', password);
+      const result = await cmsService.login(password) as { success?: boolean; user?: any; error?: string };
+      console.log('Login result:', result);
+      // Check for success or handle error response from 401
       if (result.success && result.user) {
+        console.log('Login successful');
         setUser(result.user);
         setIsAuthenticated(true);
         localStorage.setItem(USER_KEY, JSON.stringify(result.user));
         return true;
       }
+      // Handle error response from failed login
+      if (result.error) {
+        console.error('Login failed:', result.error);
+      }
+      console.log('Login returning false');
       return false;
     } catch (error) {
       console.error('Login error:', error);

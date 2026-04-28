@@ -1,0 +1,173 @@
+const LEGACY_IMAGE_MAP: Record<string, string> = {
+  'Day Breaker': '/menu/day-breaker.jpg',
+  'Cheese Griller Breakfast': '/menu/cheese-griller-breakfast.jpg',
+  'Wors Breakfast': '/menu/Wors Breakfast.jpg',
+  'Carb-Conscious Breakfast': '/menu/carb-conscious-breakfast.jpg',
+  'Boma Breakfast': '/menu/boma-breakfast.jpg',
+  'Cheese & Tomato': '/menu/cheese-tomato-toastie.webp',
+  'Chicken & Mayo': '/menu/chickenwings.webp',
+'Bacon, Egg & Cheese': '/menu/Bacon-Egg-and-Cheese.jpg',
+  'Steak & Cheese': '/menu/Steak-And-Cheese.jpg',
+  '8 Wings & Chips': '/menu/8-Wings-and-Chips.jpg',
+  'Wors & 1/4 Chicken': '/menu/Wors-and-1-4-Chicken.jpg',
+  '200g Ribs & 5 Wings': '/menu/200g-Ribs-and-5-Wings.jpeg',
+  'Wors & 5 Wings': '/menu/Wors-and-5-Wings.jpg',
+  '200g Wors & Ribs': '/menu/200g-Wors-And-Ribs.jpeg',
+  '200g Ribs & 1/4 Chicken': '/menu/200g-Ribs-and-5-Wings.jpeg',
+  '8 Wings & Ribs': '/menu/8-Wings-and-Ribs.webp',
+  '200g Ribs & Steak': '/menu/200g-Ribs-and-Steak.jpg',
+  'Boma Basket': '/menu/Boma-Basket.jpg',
+  'Lamb Bunny Chow': '/menu/Lamb-Bunny-Chow.jpg',
+  'Beef Bunny Chow': '/menu/Beef-Bunny-Chow.jpg',
+  'Butter Chicken Bunny Chow': '/menu/Butter-Chicken-Bunny-Chow.jpg',
+  'Lamb Durban Curry': '/menu/lambcurry.jpg',
+  'Beef Durban Curry': '/menu/beefcurry.jpg',
+  'Butter Chicken Durban Curry': '/menu/Butter-Chicken-Durban-Curry.webp',
+  'Lamb Roti Roll': '/menu/Lamb-Roti-Roll.jpg',
+  'Rbos Cappuccino': '/menu/Rbos-Cappuccino.jpg',
+  'Vanilla Latte': '/menu/Vanilla-Latte.jpg',
+  'Brown Butter Latte': '/menu/Brown-Butter-Latte.jpg',
+  'Hazelnut Latte': '/menu/Hazelnut-Latte.webp',
+  'Chai Tea': '/menu/Chai-Tea.jpg',
+  'Spicy Chai': '/menu/Spicy-Chai.jpg',
+  'Five Roses Tea': '/menu/Five-Roses-Tea.jpg',
+  'Rooibos Tea': '/menu/Rooibos-Tea.jpg',
+  'Hot Chocolate': '/menu/Hot-Chocolate.jpg',
+  'Americano': '/menu/Americano.jpg',
+  'Espresso': '/menu/expresso.jpg',
+  'Cappuccino': '/menu/Cappuccino.jpg',
+  'Café Latte': '/menu/Cafe-Latte.jpg',
+  'Filter Coffee': '/menu/Filter-Coffee.jpg',
+  'Moccachino': '/menu/Moccachino.jpg',
+  'Coffee Freezo': '/menu/Coffee-Freezo.jpg',
+  'Spiced Chai Freezo': '/menu/Spiced-Chai-Freezo.jpg',
+  'Decadent Chocolate Freezo': '/menu/Decadent-Chocolate-Freezo.jpg',
+  'White Chocolate Freezo': '/menu/White-Chocolate-Freezo.jpg',
+  'Chocolate Shake': '/menu/Chocolate-Shake.jpg',
+  'Strawberry Shake': '/menu/Strawberry-Shake.jpg',
+  'Bubblegum Shake': '/menu/Bubblegum-Shake.jpg',
+  'Oreo Shake': '/menu/Oreo-Shake.jpg',
+  'Mojito': '/menu/Mojito.jpg',
+  'Classic Martini': '/menu/Classic-Martini.jpg',
+  'Margarita': '/menu/Margarita.jpg',
+  'Caipirinha': '/menu/Caipirinha.jpg',
+  'Pina Colada': '/menu/Pina-Colada.jpg',
+  'Strawberry Daiquiri': '/menu/Strawberry-Daiquiri.jpg',
+  'Cosmopolitan': '/menu/Cosmopolitan.jpg',
+  'Long Island Iced Tea': '/menu/Long-Island-Iced-Tea.jpg',
+  'Sex on the beach': '/menu/Sex-on-the-beach.jpg',
+  'Rosemary Yuzu G&T': '/menu/Rosemary-Yuzu-G-and-T.jpg',
+  'Cherry blossom ginger G&T': '/menu/Rosemary-Yuzu-G-and-T.jpg',
+  'Yuzu whiskey Sours': '/menu/Yuzu-whiskey-Sours.jpg',
+  'Brown butter Old Fashioned': '/menu/Brown-butter-Old-Fashioned.jpg',
+  'Berry Citrus Twist': '/menu/Berry-Citrus-Twist.webp',
+  'Cosmo Crush': '/menu/Cosmo-Crush.jpg',
+  'No-Jito': '/menu/No-Jito.jpg',
+  'Virgin Pina Colada': '/menu/No-Jito.jpg',
+  'Virgin Strawberry Daiquiri': '/menu/No-Jito.jpg',
+  'Cherry blossom martini': '/menu/Cherry-blossom-martini.jpg',
+  'Classic Beef Burger': '/menu/Classic-Beef-Burger.jpg',
+  'Chicken Burger': '/menu/Chicken-Burger.jpg',
+  'Boma Double Burger': '/menu/Boma-Double-Burger.jpg',
+  'Veggie Burger': '/menu/Veggie-Burger.jpg',
+  'Egg': '/menu/Egg.jpg',
+  'Bacon': '/menu/Bacon.png',
+  'Avo': '/menu/Avo.jpg',
+  'Cheese': '/menu/Cheese.jpg',
+  'Beef Patty': '/menu/Beef-Patty.jpg',
+  'Lamb Patty': '/menu/Lamb-Patty.jpg',
+  'Small Fries': '/menu/Small-Fries.jpg',
+  'Medium Fries': '/menu/Medium-Fries.jpg',
+  'Large Fries': '/menu/Large-Fries.jpg',
+  'Something Meaty': '/menu/pizza.webp',
+  'Something Cheesy': '/menu/pizza.webp',
+  'BBQ Chicken': '/menu/pizza3.webp',
+  'Lamb Curry & Cheese': '/menu/Lamb-Curry-and-Cheese.jpg',
+  'Margherita': '/menu/Margherita.jpg',
+  'Sausage': '/menu/Sausase.jpg',
+  'Regina': '/menu/pizza.webp',
+  'Hawaiian': '/menu/pizza.webp',
+  'Pizza Extra: Ham': '/menu/pizza.webp',
+  'Pizza Extra: Salami': '/menu/Pizza-Extra-Salami.jpg',
+  'Pizza Extra: Mushrooms': '/menu/Pizza-Extra-Mushrooms.jpg',
+  'Pizza Extra: Peppers': '/menu/Pizza-Extra-Peppers.jpg',
+  'Pizza Extra: Cheese': '/menu/pizza.webp',
+  'Pizza Extra: Olives': '/menu/pizza.webp',
+  'Pizza Extra: Bacon': '/menu/pizza.webp',
+  'Cheese Cake': '/menu/Cheese-Cake.jpg',
+  'Carrot Cake': '/menu/Carrot-Cake.jpg',
+  'Chocolate Cake': '/menu/Chocolate-Cake.jpg',
+  'Ice Cream & Chocolate Sauce': '/menu/Chocolate-Cake.jpg',
+  'Seasonal Fruit': '/menu/Seasonal-Fruit.jpg',
+  'Chicken Strips & Fries': '/menu/Chicken-Strips-and-Fries.jpg',
+  'Wings & Fries': '/menu/Wings-and-Fries.jpg',
+  'Ribs & Wings': '/menu/Ribs-and-Wings.jpg',
+  'Burger & Waffle Fries': '/menu/Burger-and-Waffle-Fries.jpg',
+  'Kiddies Pizza (20cm)': '/menu/pizza.webp',
+  'Milkshake': '/menu/Milkshake.jpg',
+  'Juice': '/menu/Juice.jpg',
+  'Boma Pastry Platter': '/menu/samossa.jpg',
+  'Boma Platter': '/menu/Boma-Platter.jpg',
+  'Boma Chicken Platter': '/menu/Boma-Chicken-Platter.jpg',
+  'Boma Meaty Platter': '/menu/Boma-Meaty-Platter.jpg',
+  'Boma Sandwich Platter': '/menu/Boma-Sandwich-Platter.jpg',
+  'Boma Hungry Mix Platter': '/menu/Boma-Hungry-Mix-Platter.jpeg',
+  'Boma Sweet Platter 1': '/menu/boma-breakfast.jpg',
+  'Boma Sweet Platter 2': '/menu/boma-breakfast.jpg',
+  'Customized Platter': '/menu/Boma-Platter.jpg',
+  '1/4 Chicken and Chips': '/menu/1-4-Chicken-and-Chips.jpg',
+  '1/2 Chicken and Chips': '/menu/1-2-Chicken-and-Chips.webp',
+  '1/4 Chicken, Pap & Gravy': '/menu/1-4-Chicken-Pap-and-Gravy.jpg',
+  '1/4 Chicken Tikka, Chips & Roti': '/menu/1-4-Chicken-Tikka-Chips-and-Roti.jpg',
+  '2 Piece Hake & Chips': '/menu/2-Piece-Hake-and-Chips.jpg',
+  '300g T-Bone Steak': '/menu/300g-T-Bone-Steak.jpg',
+  '300g T-Bone Steak, Egg & Chips': '/menu/300g-T-Bone-Steak.jpg',
+  '500g T-Bone Steak': '/menu/300g-T-Bone-Steak.jpg',
+  '300g Steak Sirloin': '/menu/300g-Steak-Sirloin.jpg',
+  '300g Rack of Ribs': '/menu/300g-Rack-of-Ribs.jpg',
+  '500g Rack of Ribs': '/menu/500g-Rack-of-Ribs.jpg',
+  'Braai Platter for 2': '/menu/Braai-Platter-for-2.jpg',
+  'Braai Platter for 4': '/menu/Braai-Platter-for-4.jpg',
+  'Braai Platter for 6': '/menu/Braai-Platter-for-6.jpg',
+  'Beef Roti Roll': '/menu/Beef-Roti-Roll.jpg',
+  'Butter Chicken Roti Roll': '/menu/Beef-Roti-Roll.jpg',
+  'Cold Drink / Soda': '/menu/Cold-Drink-Soda.jpg',
+  'Appletiser / Grapetiser': '/menu/Appletiser-Grapetiser.jpg',
+  'Still / Sparkling Water': '/menu/Still-Sparkling-Water.jpg',
+  'Liquifruit': '/menu/liquifruit.jpg',
+  'Red Bull': '/menu/Red-Bull.jpg',
+  'Rock Shandy': '/menu/Rock-Shandy.jpg',
+  'Steelworks': '/menu/Steelworks.jpg',
+  'Fresh Juice': '/menu/Fresh-Juice.jpg',
+};
+
+export function slugify(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+const IMAGE_EXTS = ['webp', 'jpg', 'jpeg', 'png'] as const;
+
+export function getMenuImage(name: string, ext: string = 'jpg'): string {
+  const slug = slugify(name);
+  return `/menu/${slug}.${ext}`;
+}
+
+export function getImagePathWithExt(name: string): { paths: string[], fallback: string } {
+  const slug = slugify(name);
+  const paths = IMAGE_EXTS.map(ext => `/menu/${slug}.${ext}`);
+  const fallback = '/menu/boma-breakfast.jpg';
+  return { paths, fallback };
+}
+
+export const FALLBACK_IMAGE = '/menu/fallback.jpg';
+
+export function getMenuItemImage(itemName: string): string {
+  if (LEGACY_IMAGE_MAP[itemName]) {
+    return LEGACY_IMAGE_MAP[itemName];
+  }
+  return FALLBACK_IMAGE;
+}

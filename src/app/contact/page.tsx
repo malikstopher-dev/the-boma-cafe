@@ -33,8 +33,9 @@ export default function ContactPage() {
   return (
     <>
       <Header />
-      <main style={{ paddingTop: '80px' }}>
-        <PremiumHero
+      <main style={{ paddingTop: 0 }}>
+        <div style={{ paddingTop: 80 }}>
+          <PremiumHero
           imageUrl="/hero/hero-contact.jpg"
           badge="Contact Us"
           title="Get in Touch"
@@ -42,6 +43,7 @@ export default function ContactPage() {
         />
 
         {/* Contact Info & Form - Premium Design */}
+        </div>
         <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '3rem', maxWidth: '1100px', margin: '0 auto', alignItems: 'start' }}>

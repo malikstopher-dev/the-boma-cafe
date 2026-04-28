@@ -24,11 +24,11 @@ export default function Header() {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/about', label: 'About' },
     { href: '/menu', label: 'Menu' },
-    { href: '/events', label: 'Events' },
+    { href: '/experience', label: 'Experience' },
+    { href: '/entertainment', label: 'Entertainment' },
+    { href: '/events', label: 'Events & Venue Hire' },
     { href: '/gallery', label: 'Gallery' },
-    { href: '/promotions', label: 'Promotions' },
     { href: '/contact', label: 'Contact' },
   ];
 
@@ -65,7 +65,7 @@ export default function Header() {
               </Link>
             ))}
             <div className={styles.icons}>
-              <a href="tel:071 592 1190" className={styles.icon} title="Call Us">
+              <a href="tel:0729962212" className={styles.icon} title="Call Us">
                 <i className="fas fa-phone" style={{ fontSize: '0.8rem' }} />
               </a>
               <a href="mailto:info@thebomacafe.co.za" className={styles.icon} title="Email Us">
@@ -102,7 +102,7 @@ export default function Header() {
               ))}
             </nav>
             <div className={styles.mobileIcons}>
-              <a href="tel:071 592 1190" className={styles.mobileIcon} title="Call">
+              <a href="tel:0729962212" className={styles.mobileIcon} title="Call">
                 <i className="fas fa-phone" />
               </a>
               <a href="mailto:info@thebomacafe.co.za" className={styles.mobileIcon} title="Email">

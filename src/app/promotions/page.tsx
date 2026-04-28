@@ -8,6 +8,7 @@ import PremiumHero from '@/components/ui/PremiumHero';
 
 const promotionImages = [
   '/gallery/promotions/2026-04-05.webp',
+  '/gallery/events/live-music.jpg',
   '/gallery/promotions/2026-04-08.webp',
   '/gallery/promotions/2026-04-08-2.webp',
   '/gallery/promotions/2026-03-27-1.jpg',
@@ -306,8 +307,8 @@ export default function PromotionsPage() {
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
                         Until {new Date(promo.validUntil).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })}
                       </span>
-                      <Link href={promo.ctaLink} style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.875rem' }}>
-                        {promo.ctaText} →
+                      <Link href={promo.ctaLink || '/menu'} style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.875rem' }}>
+                        {promo.ctaText || 'Learn More'} →
                       </Link>
                     </div>
                   </div>
@@ -318,7 +319,7 @@ export default function PromotionsPage() {
         </section>
 
         {/* Newsletter */}
-        <section style={{ background: 'var(--dark-brown)', padding: 'var(--space-3xl) 5%', textAlign: 'center', position: 'relative' }}>
+        <section style={{ background: 'var(--beige)', padding: 'var(--space-3xl) 5%', textAlign: 'center', position: 'relative' }}>
           <div style={{
             position: 'absolute',
             inset: 0,

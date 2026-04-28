@@ -1,5 +1,5 @@
 export const WHATSAPP_CONFIG = {
-  phoneNumber: '27715921190',
+  phoneNumber: '27729962212',
   businessName: 'The Boma Café',
   defaultMessage: 'Hello! I would like to place an order.',
 };
@@ -7,36 +7,36 @@ export const WHATSAPP_CONFIG = {
 export const BUSINESS_INFO = {
   name: 'The Boma Café',
   address: {
-    street: '127B Wroxham Road',
+    street: '127 Wroxham Road',
     suburb: 'Paulshof',
     city: 'Sandton',
     postalCode: '2191',
     country: 'South Africa',
-    full: '127B Wroxham Road, Paulshof, Sandton, 2191, South Africa',
+    full: '127 Wroxham Road, Paulshof, Sandton, 2191, South Africa',
   },
-  phone: '+27 71 592 1190',
-  phoneRaw: '27715921190',
+  phone: '+27 72 996 2212',
+  phoneRaw: '27729962212',
   email: 'info@thebomacafe.co.za',
   website: 'https://thebomacafe.co.za',
   coordinates: {
-    lat: -26.0444,
-    lng: 28.0594,
+    lat: -26.035,
+    lng: 28.059,
   },
   openingHours: [
-    { day: 'Monday', hours: '8:00 AM - 10:00 PM' },
-    { day: 'Tuesday', hours: '8:00 AM - 10:00 PM' },
-    { day: 'Wednesday', hours: '8:00 AM - 10:00 PM' },
-    { day: 'Thursday', hours: '8:00 AM - 10:00 PM' },
-    { day: 'Friday', hours: '8:00 AM - 11:00 PM' },
-    { day: 'Saturday', hours: '8:00 AM - 11:00 PM' },
-    { day: 'Sunday', hours: '8:00 AM - 10:00 PM' },
+    { day: 'Monday', hours: '10:00 - 22:00' },
+    { day: 'Tuesday', hours: '10:00 - 22:00' },
+    { day: 'Wednesday', hours: '10:00 - 22:00' },
+    { day: 'Thursday', hours: '10:00 - 22:00' },
+    { day: 'Friday', hours: '10:00 - 22:00' },
+    { day: 'Saturday', hours: '10:00 - 22:00' },
+    { day: 'Sunday', hours: '10:00 - 22:00' },
   ],
   social: {
-    facebook: 'https://facebook.com/thebomacafe',
-    instagram: 'https://instagram.com/thebomacafe',
+    facebook: 'https://www.facebook.com/thebomacafe/',
+    instagram: 'https://www.instagram.com/the_boma_cafe/',
   },
-  priceRange: 'R',
-  servesCuisine: 'South African, Café, Pub Food',
+  priceRange: 'R50–R250',
+  servesCuisine: ['South African', 'Wood-Fired Pizza', 'Braai', 'Burgers', 'Curries'],
   menuUrl: 'https://thebomacafe.co.za/menu',
 };
 
@@ -52,6 +52,10 @@ export function generateOrderMessage(
     quantity: number;
     selectedSize?: string;
     selectedAddOns?: string[];
+    spiceLevel?: string;
+    basting?: string;
+    starch?: string;
+    dietaryFlags?: string[];
     notes?: string;
   }>,
   total: number,
@@ -69,16 +73,29 @@ export function generateOrderMessage(
   items.forEach((item, index) => {
     message += `${index + 1}. ${item.name}`;
     if (item.selectedSize) {
-      message += ` - ${item.selectedSize}`;
+      message += ` (${item.selectedSize})`;
     }
-    message += ` - R${item.price * item.quantity}`;
+    message += ` × ${item.quantity} — R${item.price * item.quantity}`;
     
+    const customizations: string[] = [];
+    if (item.spiceLevel && item.spiceLevel !== 'none') {
+      customizations.push(`Spice: ${item.spiceLevel}`);
+    }
+    if (item.basting && item.basting !== 'none') {
+      customizations.push(`Basting: ${item.basting}`);
+    }
+    if (item.starch && item.starch !== 'none') {
+      customizations.push(`Starch: ${item.starch}`);
+    }
     if (item.selectedAddOns && item.selectedAddOns.length > 0) {
-      message += `\n   Add-ons: ${item.selectedAddOns.join(', ')}`;
+      customizations.push(`+ ${item.selectedAddOns.join(', ')}`);
+    }
+    if (item.dietaryFlags && item.dietaryFlags.length > 0) {
+      customizations.push(`Dietary: ${item.dietaryFlags.join(', ')}`);
     }
     
-    if (item.quantity > 1) {
-      message += ` (x${item.quantity} @ R${item.price} each)`;
+    if (customizations.length > 0) {
+      message += `\n   ${customizations.join(' · ')}`;
     }
     
     if (item.notes) {

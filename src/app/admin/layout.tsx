@@ -7,11 +7,13 @@ import { useAuth } from '@/lib/auth';
 
 const menuItems = [
   { label: 'Dashboard', icon: '📊', href: '/admin/dashboard' },
+  { label: 'Content Map', icon: '🗺️', href: '/admin/content-map' },
   { label: 'Site Settings', icon: '⚙️', href: '/admin/site-settings' },
-  { label: 'Menu Items', icon: '🍽️', href: '/admin/menu' },
-  { label: 'Categories', icon: '📁', href: '/admin/categories' },
-  { label: 'Events', icon: '📅', href: '/admin/events' },
-  { label: 'Promotions', icon: '🎉', href: '/admin/promotions' },
+  { label: 'Menu', icon: '🍽️', href: '/admin/menu' },
+  { label: 'Bar Menu', icon: '🍹', href: '/admin/bar-menu' },
+  { label: 'Categories', icon: '🗂️', href: '/admin/categories' },
+  { label: 'Events', icon: '🎉', href: '/admin/events' },
+  { label: 'Promotions', icon: '🎁', href: '/admin/promotions' },
   { label: 'Gallery', icon: '🖼️', href: '/admin/gallery' },
   { label: 'Popup', icon: '🔔', href: '/admin/popup' },
   { label: 'Announcement', icon: '📢', href: '/admin/announcement' },
@@ -79,8 +81,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Admin Dashboard</p>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {menuItems.map((item) => (
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {menuItems.filter((item): item is { label: string; icon: string; href: string } => !!(item && item.href)).map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -88,11 +90,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
-                padding: '0.75rem 1rem',
+                padding: '0.875rem 1rem',
                 borderRadius: '10px',
                 textDecoration: 'none',
                 color: currentPath === item.href ? 'var(--white)' : 'rgba(255,255,255,0.7)',
-                background: currentPath === item.href ? 'rgba(244,164,96,0.2)' : 'transparent',
+                background: currentPath === item.href ? 'rgba(244,164,96,0.25)' : 'transparent',
+                borderLeft: currentPath === item.href ? '3px solid var(--warm)' : '3px solid transparent',
                 fontSize: '0.95rem',
                 fontWeight: 500,
                 transition: 'all 0.2s ease'

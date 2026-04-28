@@ -80,9 +80,10 @@ export default function GalleryPage() {
 
   return (
     <>
-      <Header />
-      <main className={styles.main}>
-        <PremiumHero
+<Header />
+      <main>
+        <div style={{ paddingTop: 80 }}>
+          <PremiumHero
           imageUrl="/hero/hero-gallery.jpg"
           badge="Our Gallery"
           title="Gallery"
@@ -90,6 +91,7 @@ export default function GalleryPage() {
         />
 
         {/* Top Gallery - Main Feature - Premium Design */}
+        </div>
         <section style={{ background: 'var(--white)', padding: 'var(--space-2xl) 5%' }}>
           <div style={{
             maxWidth: '1100px',

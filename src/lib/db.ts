@@ -69,13 +69,31 @@ function initializeTables() {
       date TEXT,
       time TEXT,
       location TEXT,
+      category TEXT,
       cover_image TEXT,
       gallery_images TEXT,
       status TEXT DEFAULT 'upcoming',
       show_on_homepage INTEGER DEFAULT 0,
+      cta_label TEXT,
       cta_link TEXT,
       order_index INTEGER DEFAULT 0,
+      visible INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS last_week_highlights (
+      id TEXT PRIMARY KEY,
+      title TEXT,
+      description TEXT,
+      video_src TEXT,
+      poster_image TEXT,
+      cta_label TEXT,
+      cta_link TEXT,
+      visible INTEGER DEFAULT 1,
+      autoplay INTEGER DEFAULT 1,
+      muted INTEGER DEFAULT 1,
+      loop_video INTEGER DEFAULT 1,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -128,6 +146,11 @@ function initializeTables() {
       show_once_per_session INTEGER DEFAULT 1,
       start_date TEXT,
       end_date TEXT,
+      start_time TEXT,
+      end_time TEXT,
+      active_days TEXT,
+      adult_price TEXT,
+      kids_price TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -174,7 +197,7 @@ function initializeDefaults(database: Database.Database) {
       logo: '/logo.png',
       favicon: '/favicon.ico',
       footerText: '© {year} The Boma Cafe. All rights reserved.',
-      phone: '071 592 1190',
+      phone: '072 996 2212',
       phone2: '072 996 2212',
       email: 'info@thebomacafe.co.za',
       address: 'Sandton, Johannesburg, South Africa',
@@ -512,9 +535,12 @@ export function getEvents(): any[] {
   const rows = database.prepare('SELECT * FROM events ORDER BY order_index ASC').all() as any[];
   return rows.map(row => ({
     ...row,
+    category: row.category || '',
     isFeatured: row.status === 'featured',
     isUpcoming: row.status === 'upcoming',
     showOnHomepage: row.show_on_homepage === 1,
+    visible: row.visible !== 0,
+    ctaLabel: row.cta_label || 'Book Now',
     galleryImages: row.gallery_images ? JSON.parse(row.gallery_images) : []
   }));
 }
@@ -528,26 +554,26 @@ export function saveEvent(event: any): any {
   if (event.id) {
     database.prepare(`
       UPDATE events 
-      SET title = ?, description = ?, date = ?, time = ?, location = ?, cover_image = ?, 
-          gallery_images = ?, status = ?, show_on_homepage = ?, cta_link = ?, order_index = ?, updated_at = ?
+      SET title = ?, description = ?, date = ?, time = ?, location = ?, category = ?, cover_image = ?, 
+          gallery_images = ?, status = ?, show_on_homepage = ?, cta_label = ?, cta_link = ?, order_index = ?, visible = ?, updated_at = ?
       WHERE id = ?
     `).run(
       event.title, event.description || '', event.date || '', event.time || '', 
-      event.location || '', event.coverImage || event.image || '',
+      event.location || '', event.category || '', event.coverImage || event.image || '',
       event.galleryImages ? JSON.stringify(event.galleryImages) : null,
-      status, event.showOnHomepage ? 1 : 0, event.ctaLink || '', event.order || 0, now, event.id
+      status, event.showOnHomepage ? 1 : 0, event.ctaLabel || 'Book Now', event.ctaLink || '', event.order || 0, event.visible !== false ? 1 : 0, now, event.id
     );
     return event;
   } else {
     const id = uuidv4();
     database.prepare(`
-      INSERT INTO events (id, title, description, date, time, location, cover_image, gallery_images, status, show_on_homepage, cta_link, order_index, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO events (id, title, description, date, time, location, category, cover_image, gallery_images, status, show_on_homepage, cta_label, cta_link, order_index, visible, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id, event.title, event.description || '', event.date || '', event.time || '', 
-      event.location || '', event.coverImage || event.image || '',
+      event.location || '', event.category || '', event.coverImage || event.image || '',
       event.galleryImages ? JSON.stringify(event.galleryImages) : null,
-      status, event.showOnHomepage ? 1 : 0, event.ctaLink || '', event.order || 0, now, now
+      status, event.showOnHomepage ? 1 : 0, event.ctaLabel || 'Book Now', event.ctaLink || '', event.order || 0, event.visible !== false ? 1 : 0, now, now
     );
     return { ...event, id };
   }
@@ -560,6 +586,58 @@ export function deleteEvent(id: string): boolean {
     return true;
   } catch (error) {
     console.error('Error deleting event:', error);
+    return false;
+  }
+}
+
+export function getLastWeekHighlight(): any {
+  const database = getDb();
+  const row = database.prepare('SELECT * FROM last_week_highlights LIMIT 1').get() as any;
+  if (row) {
+    return {
+      ...row,
+      visible: row.visible === 1,
+      autoplay: row.autoplay === 1,
+      muted: row.muted === 1,
+      loop: row.loop_video === 1
+    };
+  }
+  return null;
+}
+
+export function saveLastWeekHighlight(highlight: any): boolean {
+  try {
+    const database = getDb();
+    const now = new Date().toISOString();
+    
+    const existing = database.prepare('SELECT id FROM last_week_highlights LIMIT 1').get() as { id: string } | undefined;
+    
+    if (existing) {
+      database.prepare(`
+        UPDATE last_week_highlights 
+        SET title = ?, description = ?, video_src = ?, poster_image = ?, cta_label = ?, cta_link = ?, 
+            visible = ?, autoplay = ?, muted = ?, loop_video = ?, updated_at = ?
+        WHERE id = ?
+      `).run(
+        highlight.title || '', highlight.description || '', highlight.videoSrc || '', 
+        highlight.posterImage || '', highlight.ctaLabel || '', highlight.ctaLink || '',
+        highlight.visible ? 1 : 0, highlight.autoplay ? 1 : 0, highlight.muted ? 1 : 0, 
+        highlight.loop ? 1 : 0, now, existing.id
+      );
+    } else {
+      database.prepare(`
+        INSERT INTO last_week_highlights (id, title, description, video_src, poster_image, cta_label, cta_link, visible, autoplay, muted, loop_video, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        uuidv4(), highlight.title || '', highlight.description || '', highlight.videoSrc || '',
+        highlight.posterImage || '', highlight.ctaLabel || '', highlight.ctaLink || '',
+        highlight.visible !== false ? 1 : 0, highlight.autoplay !== false ? 1 : 0, 
+        highlight.muted !== false ? 1 : 0, highlight.loop !== false ? 1 : 0, now
+      );
+    }
+    return true;
+  } catch (error) {
+    console.error('Error saving last week highlight:', error);
     return false;
   }
 }
@@ -678,7 +756,12 @@ export function getPopup(): any {
     return {
       ...row,
       isEnabled: row.is_enabled === 1,
-      showOncePerSession: row.show_once_per_session === 1
+      showOncePerSession: row.show_once_per_session === 1,
+      startTime: row.start_time || '09:30',
+      endTime: row.end_time || '12:30',
+      activeDays: row.active_days ? JSON.parse(row.active_days) : [6, 0],
+      adultPrice: row.adult_price || 'R89',
+      kidsPrice: row.kids_price || 'R45'
     };
   }
   return null;
@@ -689,29 +772,38 @@ export function savePopup(popup: any): boolean {
     const database = getDb();
     const now = new Date().toISOString();
     
+    const activeDays = Array.isArray(popup.activeDays) ? popup.activeDays : [6, 0];
+    
     const existing = database.prepare('SELECT id FROM popup LIMIT 1').get() as { id: string } | undefined;
     
     if (existing) {
       database.prepare(`
         UPDATE popup 
         SET type = ?, title = ?, description = ?, image = ?, cta_text = ?, cta_link = ?, 
-            is_enabled = ?, show_once_per_session = ?, start_date = ?, end_date = ?, updated_at = ?
+            is_enabled = ?, show_once_per_session = ?, start_date = ?, end_date = ?,
+            start_time = ?, end_time = ?, active_days = ?, adult_price = ?, kids_price = ?, updated_at = ?
         WHERE id = ?
       `).run(
         popup.type || 'announcement', popup.title || '', popup.description || '', 
         popup.image || '', popup.ctaText || '', popup.ctaLink || '',
         popup.isEnabled ? 1 : 0, popup.showOncePerSession ? 1 : 0,
-        popup.startDate || null, popup.endDate || null, now, existing.id
+        popup.startDate || null, popup.endDate || null,
+        popup.startTime || '09:30', popup.endTime || '12:30',
+        JSON.stringify(activeDays), popup.adultPrice || 'R89', popup.kidsPrice || 'R45',
+        now, existing.id
       );
     } else {
       database.prepare(`
-        INSERT INTO popup (id, type, title, description, image, cta_text, cta_link, is_enabled, show_once_per_session, start_date, end_date, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO popup (id, type, title, description, image, cta_text, cta_link, is_enabled, show_once_per_session, start_date, end_date, start_time, end_time, active_days, adult_price, kids_price, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         uuidv4(), popup.type || 'announcement', popup.title || '', popup.description || '',
         popup.image || '', popup.ctaText || '', popup.ctaLink || '',
         popup.isEnabled ? 1 : 0, popup.showOncePerSession ? 1 : 0,
-        popup.startDate || null, popup.endDate || null, now
+        popup.startDate || null, popup.endDate || null,
+        popup.startTime || '09:30', popup.endTime || '12:30',
+        JSON.stringify(activeDays), popup.adultPrice || 'R89', popup.kidsPrice || 'R45',
+        now
       );
     }
     return true;

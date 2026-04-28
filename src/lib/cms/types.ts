@@ -43,13 +43,35 @@ export interface MenuItem {
 export interface Event {
   id: string;
   title: string;
+  slug?: string;
   date: string;
   time: string;
   description: string;
-  image: string;
+  image?: string;
+  category?: string;
+  coverImage?: string;
+  images?: string[];
   isFeatured: boolean;
   isUpcoming: boolean;
   order: number;
+  ctaLabel?: string;
+  ctaLink?: string;
+  location?: string;
+  visible?: boolean;
+}
+
+export interface LastWeekHighlight {
+  id: string;
+  title: string;
+  description?: string;
+  videoSrc?: string;
+  posterImage?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
+  visible?: boolean;
+  autoplay?: boolean;
+  muted?: boolean;
+  loop?: boolean;
 }
 
 export interface Promotion {
@@ -84,6 +106,11 @@ export interface Popup {
   showOncePerSession: boolean;
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
+  activeDays?: number[];
+  adultPrice?: string;
+  kidsPrice?: string;
 }
 
 export interface Announcement {

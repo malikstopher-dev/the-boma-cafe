@@ -34,21 +34,21 @@
 }
 
 .header.scrolled .navLink {
-  color: #2A2A2A;
+  color: var(--heading);
 }
 
 .header.scrolled .navLink:hover {
-  color: #B86B2B;
+  color: var(--primary);
 }
 
 .header.scrolled .icon {
   background: rgba(255, 255, 255, 0.6);
-  color: #2A2A2A;
+  color: var(--heading);
 }
 
 .header.scrolled .icon:hover {
-  background: linear-gradient(135deg, #D4A373, #B86B2B);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-soft), var(--primary));
+  color: var(--white);
 }
 
 .header.scrolled .logoImg {
@@ -109,20 +109,20 @@
   height: 36px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.5);
-  color: #2A2A2A;
+  color: var(--heading);
   transition: all 0.25s ease;
   text-decoration: none;
 }
 
 .icon:hover {
-  background: linear-gradient(135deg, #D4A373, #B86B2B);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-soft), var(--primary));
+  color: var(--white);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 107, 43, 0.25);
+  box-shadow: 0 4px 12px rgba(194, 106, 45, 0.25);
 }
 
 .navLink {
-  color: #2A2A2A;
+  color: var(--heading);
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
@@ -132,7 +132,7 @@
 }
 
 .navLink:hover {
-  color: #B86B2B;
+  color: var(--primary);
 }
 
 .mobileToggle {
@@ -152,7 +152,7 @@
 
 .toggleIcon {
   font-size: 1.2rem;
-  color: #2A2A2A;
+  color: var(--heading);
 }
 
 .mobileOverlay {
@@ -173,7 +173,7 @@
   transform: translateX(-50%);
   width: calc(100% - 40px);
   max-width: 400px;
-  background: #fff;
+  background: var(--white);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -186,7 +186,7 @@
 }
 
 .mobileNavLink {
-  color: #2A2A2A;
+  color: var(--heading);
   font-weight: 500;
   font-size: 1rem;
   text-decoration: none;
@@ -197,7 +197,7 @@
 
 .mobileNavLink:hover {
   background: rgba(248, 248, 248, 0.8);
-  color: #B86B2B;
+  color: var(--primary);
 }
 
 .mobileIcons {
@@ -206,7 +206,7 @@
   gap: 1rem;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #f0e8dc;
+  border-top: 1px solid var(--beige-dark);
 }
 
 .mobileIcon {
@@ -217,14 +217,14 @@
   height: 44px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.6);
-  color: #2A2A2A;
+  color: var(--heading);
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .mobileIcon:hover {
-  background: linear-gradient(135deg, #D4A373, #B86B2B);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-soft), var(--primary));
+  color: var(--white);
 }
 
 /* Mobile Styles */
@@ -238,7 +238,7 @@
     transform: none;
     border-radius: 0;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    border-bottom: none;
   }
 
   .header.scrolled {
@@ -250,7 +250,7 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+    border-bottom: none;
   }
 
   .container {

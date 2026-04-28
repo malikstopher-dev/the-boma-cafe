@@ -10,6 +10,10 @@ interface CartItem {
   category?: string;
   selectedSize?: string;
   selectedAddOns?: string[];
+  spiceLevel?: string;
+  basting?: string;
+  starch?: string;
+  dietaryFlags?: string[];
   notes?: string;
 }
 

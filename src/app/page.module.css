@@ -423,7 +423,7 @@
 /* ===== COCKTAILS SECTION ===== */
 .cocktailsSection {
   padding: 7rem 5%;
-  background: linear-gradient(135deg, var(--dark-brown) 0%, var(--dark) 50%, var(--dark-brown-light) 100%);
+  background: linear-gradient(135deg, var(--beige) 0%, var(--beige-light) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -435,13 +435,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0' fill='%238B4513' fill-opacity='0.03'/%3E%3C/svg%3E");
   pointer-events: none;
 }
 
 .cocktailsSection .sectionHeader h2,
 .cocktailsSection .sectionHeader p {
-  color: var(--white);
+  color: var(--brown-primary);
 }
 
 .cocktailsSection .sectionHeader h2::after {
@@ -459,9 +459,9 @@
 }
 
 .cocktailCard {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FDF8F3 100%);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(107,94,74,0.1);
   border-radius: var(--radius-xl);
   overflow: hidden;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -476,15 +476,15 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(139,69,19,0.3), transparent);
   opacity: 0;
   transition: opacity 0.5s ease;
 }
 
 .cocktailCard:hover {
   transform: translateY(-10px);
-  border-color: rgba(201, 169, 98, 0.4);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(201, 169, 98, 0.1);
+  border-color: rgba(139,69,19,0.3);
+  box-shadow: 0 25px 60px rgba(44,44,44,0.15), 0 0 40px rgba(201, 169, 98, 0.1);
 }
 
 .cocktailCard:hover::before {
@@ -534,7 +534,7 @@
 }
 
 .cocktailContent h4 {
-  color: var(--white);
+  color: var(--dark-brown);
   font-size: 1.2rem;
   margin-bottom: 0.6rem;
   font-weight: 600;
@@ -542,7 +542,7 @@
 }
 
 .cocktailContent p {
-  color: rgba(245, 230, 211, 0.8);
+  color: var(--text-light);
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
   line-height: 1.6;
@@ -589,127 +589,6 @@
 
 .cocktailsSection .btn-secondary:hover::before {
   transform: scaleX(1);
-}
-
-/* ===== EXPERIENCE SECTION ===== */
-.experienceSection {
-  padding: 8rem 5%;
-  background: linear-gradient(180deg, var(--cream) 0%, #f8f3eb 100%);
-  position: relative;
-}
-
-.experienceSection::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--cream-dark), transparent);
-}
-
-.experienceGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 5rem;
-}
-
-.experienceCardWrapper {
-  width: 100%;
-}
-
-.experienceCardWrapper.reversed {
-  direction: rtl;
-}
-
-.experienceCardWrapper.reversed > * {
-  direction: ltr;
-}
-
-.experienceCard {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 5rem;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.experienceCardWrapper:nth-child(even) .experienceCard {
-  direction: rtl;
-}
-
-.experienceCardWrapper:nth-child(even) .experienceCard > * {
-  direction: ltr;
-}
-
-.experienceImage {
-  position: relative;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: 0 20px 50px rgba(26, 15, 10, 0.15), 0 10px 20px rgba(26, 15, 10, 0.1);
-  height: 380px;
-}
-
-.experienceImage::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.experienceImage::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), transparent);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.experienceImage img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.experienceCard:hover .experienceImage img {
-  transform: scale(1.08);
-}
-
-.experienceContent {
-  padding: 1.5rem 0;
-}
-
-.experienceIcon {
-  font-size: 3.5rem;
-  margin-bottom: 1.25rem;
-  display: inline-block;
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-.experienceContent h3 {
-  font-size: 2rem;
-  margin-bottom: 1.25rem;
-  color: var(--dark-brown);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.experienceContent p {
-  color: var(--text-light);
-  font-size: 1.1rem;
-  line-height: 1.9;
 }
 
 /* ===== ABOUT SECTION ===== */
@@ -849,7 +728,7 @@
 /* ===== WELCOME BANNER ===== */
 .welcomeBanner {
   padding: 5rem 5%;
-  background: linear-gradient(135deg, var(--dark-brown) 0%, var(--dark) 50%, var(--dark-brown-light) 100%);
+  background: linear-gradient(135deg, var(--beige) 0%, var(--beige-light) 100%);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -862,7 +741,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(139,69,19,0.2), transparent);
 }
 
 .welcomeBanner::after {
@@ -876,7 +755,7 @@
 }
 
 .welcomeBanner h2 {
-  color: var(--white);
+  color: var(--brown-heading);
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
   margin-bottom: 1.25rem;
   font-weight: 600;
@@ -892,7 +771,7 @@
 }
 
 .welcomeBanner p {
-  color: var(--cream);
+  color: var(--brown-secondary);
   font-size: 1.15rem;
   font-style: italic;
   max-width: 600px;
@@ -1355,7 +1234,7 @@
 /* ===== PROMOTIONS SECTION ===== */
 .promotionsSection {
   padding: 7rem 5%;
-  background: linear-gradient(135deg, var(--dark-brown) 0%, var(--dark) 50%, var(--dark-brown-light) 100%);
+  background: linear-gradient(135deg, var(--beige) 0%, var(--beige-light) 100%);
   position: relative;
 }
 
@@ -1366,12 +1245,12 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(139,69,19,0.2), transparent);
 }
 
 .promotionsSection .sectionHeader h2,
 .promotionsSection .sectionHeader p {
-  color: var(--white);
+  color: var(--brown-primary);
 }
 
 .promotionsSection .sectionHeader h2::after {
@@ -1386,9 +1265,9 @@
 }
 
 .promoCard {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FDF8F3 100%);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(107,94,74,0.1);
   border-radius: var(--radius-xl);
   padding: 3rem 2.5rem;
   text-align: center;
@@ -1410,10 +1289,10 @@
 }
 
 .promoCard:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
-  border-color: rgba(201, 169, 98, 0.3);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F5EDE3 100%);
+  border-color: rgba(139,69,19,0.2);
   transform: translateY(-8px);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px rgba(44,44,44,0.12);
 }
 
 .promoCard:hover::before {
@@ -1421,14 +1300,14 @@
 }
 
 .promoCard h3 {
-  color: var(--gold);
+  color: var(--primary);
   margin-bottom: 1rem;
   font-size: 1.35rem;
   font-weight: 600;
 }
 
 .promoCard p {
-  color: var(--cream);
+  color: var(--brown-secondary);
   margin-bottom: 1.5rem;
   font-size: 1rem;
   line-height: 1.7;
@@ -1578,7 +1457,7 @@
 .reservationSection {
   position: relative;
   padding: 8rem 5%;
-  background: linear-gradient(135deg, var(--dark-brown) 0%, var(--dark) 50%, var(--dark-brown-light) 100%);
+  background: linear-gradient(135deg, var(--beige) 0%, var(--beige-light) 100%);
   text-align: center;
   overflow: hidden;
 }
@@ -1590,7 +1469,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(139,69,19,0.2), transparent);
 }
 
 .reservationBg {
@@ -1608,14 +1487,14 @@
 }
 
 .reservationContent h2 {
-  color: var(--white);
+  color: var(--brown-heading);
   margin: 1.25rem 0;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 .reservationContent p {
-  color: var(--cream);
+  color: var(--brown-secondary);
   font-size: 1.15rem;
   max-width: 650px;
   margin: 0 auto 2.5rem;
@@ -1692,10 +1571,6 @@
     gap: 3rem;
   }
   
-  .experienceCard {
-    gap: 3.5rem;
-  }
-  
   .eventsGrid {
     gap: 2rem;
   }
@@ -1704,19 +1579,6 @@
 @media (max-width: 1024px) {
   .showcaseGrid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .experienceCard {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-  
-  .experienceCardWrapper.reversed {
-    direction: ltr;
-  }
-  
-  .experienceImage {
-    height: 300px;
   }
   
   .aboutGrid {
@@ -1758,7 +1620,6 @@
 @media (max-width: 768px) {
   .premiumShowcase,
   .cocktailsSection,
-  .experienceSection,
   .aboutSection,
   .signatureSection,
   .eventsSection,
@@ -1819,26 +1680,6 @@
   
   .cocktailContent {
     padding: 1.5rem;
-  }
-  
-  .experienceGrid {
-    gap: 3.5rem;
-  }
-  
-  .experienceImage {
-    height: 260px;
-  }
-  
-  .experienceContent h3 {
-    font-size: 1.5rem;
-  }
-  
-  .experienceContent p {
-    font-size: 1rem;
-  }
-  
-  .experienceIcon {
-    font-size: 2.5rem;
   }
   
   .signatureGrid {

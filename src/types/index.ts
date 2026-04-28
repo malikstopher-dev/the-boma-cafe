@@ -185,6 +185,24 @@ export interface ContactPageSettings {
   mapEmbedUrl: string;
 }
 
+export interface ExperiencePageSettings {
+  heroBadge: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  videoEnabled: boolean;
+  videoPath: string;
+  videoTitle: string;
+  videoSubtitle: string;
+}
+
+export interface EventsPageSettings {
+  heroBadge: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  slideshowEnabled: boolean;
+  slideshowImages: string[];
+}
+
 export interface PromoBarSettings {
   isEnabled: boolean;
   message: string;
@@ -220,6 +238,8 @@ export interface SiteSettings {
   homepage: HomepageSettings;
   about: AboutPageSettings;
   contact: ContactPageSettings;
+  experience: ExperiencePageSettings;
+  events: EventsPageSettings;
   promoBar: PromoBarSettings;
   branding: BrandingSettings;
   seo: SEOSettings;

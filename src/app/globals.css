@@ -1,23 +1,54 @@
-/* Premium Color Palette - The Boma Cafe */
+/* Luxury Color Palette - The Boma Cafe */
 :root {
-  --primary: #8B4513;
-  --primary-dark: #6B3410;
-  --secondary: #A0522D;
-  --accent: #D2691E;
-  --warm: #F4A460;
-  --warm-light: #F7C788;
-  --dark: #1a0f0a;
+  /* Backgrounds */
+  --beige: #F5EDE3;
+  --beige-light: #EFE4D6;
+  --beige-dark: #E6D3B3;
+  --white: #FFFFFF;
+  
+  /* Text */
+  --heading: #1F1F1F;
+  --body: #4B4033;
+  --muted: #7A6A58;
+  
+  /* Accent Colors */
+  --primary: #C26A2D;
+  --primary-hover: #A65A1F;
+  --primary-soft: #D9A066;
+  
+  /* Functional */
+  --dark: #1A0F0A;
   --dark-brown: #2C1810;
-  --dark-brown-light: #3D2317;
+  --red: #C0392B;
+  
+  /* Contrast System - Safe text colors for all backgrounds */
+  --text-dark: #1F1712;
+  --text-muted: #5F4A3F;
+  --text-on-dark: #FFF8EF;
+  --text-gold: #C46B2C;
+  --overlay-dark: rgba(0, 0, 0, 0.58);
+  --overlay-soft: rgba(31, 23, 18, 0.38);
+  --overlay-gradient: linear-gradient(180deg, rgba(15, 8, 5, 0.5) 0%, rgba(20, 12, 8, 0.65) 100%);
+  
+  /* Legacy mappings for existing references */
   --light: #FDF8F3;
   --cream: #F5E6D3;
   --cream-dark: #E8D5C4;
-  --text: #3D2914;
-  --text-light: #6B5344;
-  --white: #FFFFFF;
+  --text: #4B4033;
+  --text-light: #7A6A58;
   --gold: #C9A962;
   --gold-light: #E5D4A1;
-  --fire-orange: #E85D04;
+  --fire-orange: #C0392B;
+  --warm: #C26A2D;
+  --warm-light: #D9A066;
+  --accent: #D2691E;
+  --secondary: #A0522D;
+  --primary-dark: #A65A1F;
+  --dark-brown-light: #3D2317;
+  --brown-primary: #2C2C2C;
+  --brown-secondary: #6B5E4A;
+  --brown-heading: #1F1F1F;
+  --footer-beige: #E6D3B3;
   
   /* Spacing */
   --space-xs: 0.25rem;
@@ -135,7 +166,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 600;
   line-height: 1.25;
-  color: var(--dark-brown);
+  color: var(--heading);
   word-wrap: break-word;
   overflow-wrap: break-word;
   letter-spacing: -0.01em;
@@ -148,13 +179,18 @@ h4 { font-size: clamp(1rem, 1.5vw, 1.35rem); }
 
 p {
   line-height: 1.75;
+  color: var(--body);
   letter-spacing: 0.01em;
 }
 
 a {
   text-decoration: none;
-  color: inherit;
+  color: var(--primary);
   transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-hover);
 }
 
 img {
@@ -208,12 +244,12 @@ input, textarea, select {
   transform: translateX(-50%);
   width: 50px;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary), var(--warm));
+  background: linear-gradient(90deg, var(--primary), var(--primary-soft));
   border-radius: 2px;
 }
 
 .section-header p {
-  color: var(--text-light);
+  color: var(--muted);
   font-size: 1.05rem;
   margin-top: var(--space-md);
   line-height: 1.65;
@@ -222,7 +258,7 @@ input, textarea, select {
   margin-right: auto;
 }
 
-/* Premium Buttons */
+/* Luxury Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -240,13 +276,10 @@ input, textarea, select {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #8B4513 0%, #C96A1B 45%, #F2B84B 100%);
+  background: linear-gradient(135deg, var(--primary), var(--primary-soft));
   color: var(--white);
   border: none;
-  box-shadow: 
-    0 6px 18px rgba(201, 106, 27, 0.28),
-    0 0 18px rgba(242, 184, 75, 0.18);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 18px rgba(194, 106, 45, 0.28);
 }
 
 .btn-primary::before {
@@ -262,29 +295,24 @@ input, textarea, select {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  filter: brightness(1.08);
-  box-shadow: 
-    0 10px 24px rgba(201, 106, 27, 0.34),
-    0 0 24px rgba(242, 184, 75, 0.24);
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+  box-shadow: 0 10px 24px rgba(194, 106, 45, 0.34);
 }
 
 .btn-primary:active {
   transform: translateY(0);
   filter: brightness(0.95);
-  box-shadow: 
-    0 6px 14px rgba(201, 106, 27, 0.25),
-    0 0 14px rgba(242, 184, 75, 0.15);
 }
 
 .btn-primary:focus-visible {
-  outline: 2px solid rgba(242, 184, 75, 0.7);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--white);
-  border: 2px solid rgba(244, 164, 96, 0.6);
+  color: var(--primary);
+  border: 2px solid var(--primary);
   box-shadow: inset 0 0 0 0 transparent;
 }
 
@@ -294,16 +322,16 @@ input, textarea, select {
 }
 
 .btn-secondary:hover {
-  background: rgba(244, 164, 96, 0.15);
-  border-color: var(--warm);
-  color: var(--warm);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(31, 31, 31, 0.06);
   backdrop-filter: blur(10px);
-  color: var(--white);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--heading);
+  border: 1.5px solid rgba(31, 31, 31, 0.15);
 }
 
 .btn-ghost::before,
@@ -312,7 +340,8 @@ input, textarea, select {
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(31, 31, 31, 0.12);
+  border-color: rgba(31, 31, 31, 0.25);
 }
 
 /* Mobile Button Styles */
@@ -1343,12 +1372,12 @@ input, textarea, select {
 /* ===== WELCOME BANNER ===== */
 .welcome-banner {
   padding: var(--space-3xl) 5%;
-  background: linear-gradient(135deg, var(--dark-brown), var(--dark));
+  background: linear-gradient(135deg, var(--beige), var(--beige-light));
   text-align: center;
 }
 
 .welcome-banner h2 {
-  color: var(--white);
+  color: var(--brown-heading);
   font-size: clamp(1.5rem, 3vw, 2.25rem);
   margin-bottom: var(--space-md);
 }
@@ -1566,12 +1595,12 @@ input, textarea, select {
 /* ===== PROMOTIONS SECTION ===== */
 .promotions-section {
   padding: var(--space-4xl) 5%;
-  background: linear-gradient(135deg, var(--dark-brown), var(--dark));
+  background: linear-gradient(135deg, var(--beige), var(--beige-light));
 }
 
 .promotions-section .section-header.light h2,
 .promotions-section .section-header.light p {
-  color: var(--white);
+  color: var(--brown-primary);
 }
 
 .promotions-grid {
@@ -1688,7 +1717,7 @@ input, textarea, select {
 .cta-section {
   position: relative;
   padding: var(--space-4xl) 5%;
-  background: linear-gradient(135deg, var(--dark-brown), var(--dark));
+  background: linear-gradient(135deg, var(--beige), var(--beige-light));
   text-align: center;
   overflow: hidden;
 }
@@ -1696,7 +1725,7 @@ input, textarea, select {
 .cta-bg {
   position: absolute;
   inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238B4513' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   opacity: 0.5;
 }
 
@@ -1706,7 +1735,7 @@ input, textarea, select {
 }
 
 .cta-section h2 {
-  color: var(--white);
+  color: var(--brown-heading);
   margin: 1rem 0;
 }
 
@@ -1979,5 +2008,28 @@ input, textarea, select {
   .btn-lg {
     padding: var(--space-sm) var(--space-lg);
     font-size: 0.9rem;
+  }
+}
+
+/* Founder Section Mobile */
+@media (max-width: 768px) {
+  .founder-section {
+    padding: var(--space-2xl) 4%;
+  }
+  
+  .founder-card {
+    padding: 1.5rem;
+    grid-template-columns: 1fr !important;
+    text-align: center;
+  }
+  
+  .founder-image {
+    width: 100px !important;
+    height: 100px !important;
+    margin: 0 auto;
+  }
+  
+  .founder-badges {
+    justify-content: center;
   }
 }

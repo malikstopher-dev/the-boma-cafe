@@ -19,7 +19,7 @@ import {
 } from '@/lib/menuPricing';
 import UpsellModal from '@/components/ui/UpsellModal';
 import PremiumHero from '@/components/ui/PremiumHero';
-import { getMenuItemImage } from '@/lib/menuImages';
+import { getMenuItemImage } from '@/lib/menuImage';
 import styles from './Menu.module.css';
 
 const DRINK_CATEGORIES = [
@@ -293,11 +293,15 @@ export default function MenuPage() {
     <>
       <Header />
       <main className={styles.main}>
-        <PremiumHero
-          imageUrl="/hero/hero-menu.jpg"
-          title="Our Menu"
-          subtitle="Fresh, hearty dishes made with love"
-        />
+        <div className={styles.heroBgContainer}>
+          <div className={styles.heroBgImage} />
+          <div className={styles.heroBgOverlay} />
+          <PremiumHero
+            imageUrl="/hero/hero-menu.jpg"
+            title="Our Menu"
+            subtitle="Fresh, hearty dishes made with love"
+          />
+        </div>
 
         <section className={styles.searchSection}>
           <div className={styles.searchRow}>
@@ -355,15 +359,15 @@ export default function MenuPage() {
                 </div>
                 <div className={styles.itemsGrid}>
                   {section.items.map((item: MenuItem) => {
-                    const itemImage = getMenuItemImage({ name: item.name, category: item.category });
+                    const itemImage = getMenuItemImage(item.name);
                     return (
                     <div key={item.id} className={styles.itemCard} onClick={() => setSelectedItem(item)}>
-                      <div className={styles.itemImage} style={itemImage ? { backgroundImage: `url(${itemImage})` } : undefined}>
-                        {!itemImage && (
-                          <div className={styles.itemImagePlaceholder}>
-                            <span>{item.name.charAt(0)}</span>
-                          </div>
-                        )}
+                      <div className={styles.imageWrapper}>
+                        <img
+                          src={itemImage}
+                          alt={item.name}
+                          className={styles.itemImage}
+                        />
                         <div className={styles.itemBadges}>
                           {item.isOnPromo && item.promoBadge && (
                             <span className={styles.badgePromo}>{item.promoBadge}</span>

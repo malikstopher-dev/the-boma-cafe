@@ -4,67 +4,531 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cmsService } from '@/lib/client-cms';
-import { defaultEvents } from '@/data/defaultData';
+import { defaultEvents, defaultLastWeekHighlight } from '@/lib/cms/defaults';
 import PremiumHero from '@/components/ui/PremiumHero';
+import Slideshow from '@/components/ui/Slideshow';
+
+function GallerySlider({ images, alt }: { images: string[]; alt: string }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  if (!images || images.length === 0) {
+    return (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        background: 'linear-gradient(135deg, var(--beige) 0%, var(--beige-light) 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '3rem'
+      }}>
+        🎉
+      </div>
+    );
+  }
+  
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
+  
+  const prevSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex(currentIndex === 0 ? images.length - 1 : currentIndex - 1);
+  };
+  
+  const nextSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex(currentIndex === images.length - 1 ? 0 : currentIndex + 1);
+  };
+  
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url(${images[currentIndex]})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          transition: 'background-image 0.4s ease-in-out'
+        }}
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prevSlide}
+            style={{
+              position: 'absolute',
+              left: '0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              border: 'none',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.25rem',
+              transition: 'background 0.2s'
+            }}
+          >
+            ‹
+          </button>
+          <button
+            onClick={nextSlide}
+            style={{
+              position: 'absolute',
+              right: '0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              border: 'none',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.25rem',
+              transition: 'background 0.2s'
+            }}
+          >
+            ›
+          </button>
+          <div style={{
+            position: 'absolute',
+            bottom: '0.75rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '0.5rem'
+          }}>
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => goToSlide(idx)}
+                style={{
+                  width: idx === currentIndex ? '20px' : '8px',
+                  height: '8px',
+                  borderRadius: idx === currentIndex ? '4px' : '50%',
+                  border: 'none',
+                  background: idx === currentIndex ? 'var(--warm)' : 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  padding: 0
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function UpcomingEventCard({ event }: { event: any }) {
+  const galleryImages = event.galleryImages?.length > 0 
+    ? event.galleryImages 
+    : event.coverImage || event.image 
+      ? [event.coverImage || event.image] 
+      : [];
+  
+  return (
+    <div style={{
+      background: 'var(--white)',
+      borderRadius: '20px',
+      overflow: 'hidden',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-4px)';
+      e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
+    }}
+    >
+      <div style={{ height: '200px', position: 'relative' }}>
+        <GallerySlider images={galleryImages} alt={event.title} />
+        {event.category && (
+          <div style={{
+            position: 'absolute',
+            top: '1rem',
+            left: '1rem',
+            background: 'var(--primary)',
+            color: 'var(--white)',
+            padding: '0.35rem 0.75rem',
+            borderRadius: '20px',
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            {event.category}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '1.5rem' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          marginBottom: '0.75rem'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+            color: 'var(--white)',
+            padding: '0.5rem 0.75rem',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '55px'
+          }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1 }}>
+              {new Date(event.date).getDate()}
+            </div>
+            <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}
+            </div>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.15rem', color: 'var(--dark-brown)', fontWeight: 600, lineHeight: 1.3 }}>
+              {event.title}
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+              {event.time}
+            </p>
+          </div>
+        </div>
+        <p style={{ 
+          fontSize: '0.9rem', 
+          color: 'var(--text)', 
+          marginBottom: '1.25rem', 
+          lineHeight: 1.6,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden'
+        }}>
+          {event.description}
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <a 
+            href={event.ctaLink || '/contact'}
+            className="btn btn-primary"
+            style={{ 
+              padding: '0.65rem 1.25rem', 
+              fontSize: '0.85rem',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            {event.ctaLabel || 'Book'} ↗
+          </a>
+          <a 
+            href="https://wa.me/27729961190"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '0.65rem 1.25rem',
+              background: '#25D366',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PastEventCard({ event }: { event: any }) {
+  const galleryImages = event.galleryImages?.length > 0 
+    ? event.galleryImages 
+    : event.coverImage || event.image 
+      ? [event.coverImage || event.image] 
+      : [];
+  
+  return (
+    <div style={{
+      background: 'var(--white)',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+      opacity: 0.85
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-3px)';
+      e.currentTarget.style.opacity = '1';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.opacity = '0.85';
+    }}
+    >
+      <div style={{ height: '160px', position: 'relative' }}>
+        <GallerySlider images={galleryImages} alt={event.title} />
+        {event.category && (
+          <div style={{
+            position: 'absolute',
+            top: '0.75rem',
+            right: '0.75rem',
+            background: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            padding: '0.25rem 0.6rem',
+            borderRadius: '12px',
+            fontSize: '0.65rem',
+            fontWeight: 500,
+            textTransform: 'uppercase'
+          }}>
+            {event.category}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '1.25rem' }}>
+        <h4 style={{ fontSize: '1rem', color: 'var(--dark-brown)', marginBottom: '0.4rem', fontWeight: 600 }}>
+          {event.title}
+        </h4>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
+          {new Date(event.date).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </p>
+        <p style={{ 
+          fontSize: '0.8rem', 
+          color: 'var(--text)', 
+          lineHeight: 1.5,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden'
+        }}>
+          {event.description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function LastWeekHighlight({ highlight }: { highlight: any }) {
+  if (!highlight?.visible) return null;
+  
+  return (
+    <section style={{ 
+      background: 'var(--beige)', 
+      padding: 'var(--space-3xl) 5%',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: highlight.posterImage 
+          ? `url(${highlight.posterImage})`
+          : highlight.videoSrc
+            ? undefined
+            : 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        opacity: 0.4
+      }} />
+      {highlight.videoSrc && (
+        <video
+          autoPlay={highlight.autoplay !== false}
+          muted={highlight.muted !== false}
+          loop={highlight.loop !== false}
+          playsInline
+          preload="metadata"
+          poster={highlight.posterImage}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.5
+          }}
+        >
+          <source src={highlight.videoSrc} type="video/mp4" />
+        </video>
+      )}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        maxWidth: '800px',
+        margin: '0 auto',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          display: 'inline-block',
+          background: 'var(--warm)',
+          padding: '0.4rem 1rem',
+          borderRadius: 'var(--radius-full)',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          color: 'var(--dark-brown)',
+          marginBottom: '1rem',
+          letterSpacing: '1px',
+          textTransform: 'uppercase'
+        }}>
+          Last Week
+        </div>
+        <h2 style={{ 
+          fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', 
+          color: 'var(--white)', 
+          marginBottom: '1rem',
+          fontFamily: 'var(--font-display)'
+        }}>
+          {highlight.title || 'Last Week at The Boma Café'}
+        </h2>
+        <p style={{ 
+          color: 'rgba(255,255,255,0.85)', 
+          marginBottom: '2rem', 
+          maxWidth: '550px', 
+          margin: '0 auto 2rem',
+          lineHeight: 1.7,
+          fontSize: '1.05rem'
+        }}>
+          {highlight.description || "Missed the action? Here's what went down last week - live music, great food, and good vibes!"}
+        </p>
+        <a 
+          href={highlight.ctaLink || '/contact'}
+          className="btn btn-primary"
+          style={{ 
+            padding: '1rem 2.5rem',
+            fontSize: '1rem'
+          }}
+        >
+          {highlight.ctaLabel || 'Book This Weekend'}
+        </a>
+      </div>
+    </section>
+  );
+}
 
 export default function EventsPage() {
   const [settings, setSettings] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [lastWeek, setLastWeek] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [allSettings, evts] = await Promise.all([
+        const [allSettings, evts, hlw] = await Promise.all([
           cmsService.getAllSettings(),
-          cmsService.getEvents()
+          cmsService.getEvents(),
+          cmsService.getLastWeekHighlight()
         ]);
-        console.log('Loaded events:', evts.length);
         setSettings(allSettings);
-        if (evts.length > 0) setEvents(evts);
+        setEvents(evts);
+        setLastWeek(hlw);
       } catch (error) {
         console.error('Error loading events data:', error);
+        setEvents(defaultEvents);
+        setLastWeek(defaultLastWeekHighlight);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadData();
   }, []);
 
-  // Fallback to default data if no CMS data
-  useEffect(() => {
-    if (events.length === 0) {
-      console.log('Using fallback default events');
-      setEvents(defaultEvents);
-    }
-  }, []);
+  const upcomingEvents = events.filter((e: any) => e.isUpcoming && e.visible !== false).slice(0, 6);
+  const pastEvents = events.filter((e: any) => !e.isUpcoming && e.visible !== false).slice(0, 6);
+  const featuredEvent = events.find((e: any) => e.isFeatured && e.visible !== false) || upcomingEvents[0];
 
-  const upcomingEvents = events.filter((e: any) => e.isUpcoming);
-  const pastEvents = events.filter((e: any) => !e.isUpcoming && !e.isFeatured);
-  const featuredEvent = events.find((e: any) => e.isFeatured) || upcomingEvents[0];
-
-  const slideshowImages = [
-    '/images/livemusic1.jpg',
-    '/images/livemusic2.jpg'
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slideshowImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main style={{ paddingTop: '80px', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🎉</div>
+            <p style={{ color: 'var(--text-light)' }}>Loading events...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
       <Header />
-      <main style={{ paddingTop: '80px' }}>
-        <PremiumHero
+      <main style={{ paddingTop: 0 }}>
+        <div style={{ paddingTop: 80 }}>
+          <PremiumHero
           imageUrl="/hero/hero-events.jpg"
-          badge="What's Happening"
-          title="Events & Experiences"
-          subtitle="Join us for unforgettable moments and memorable experiences"
+          badge="Celebrate"
+          title="Events & Venue Hire"
+          subtitle="Host unforgettable celebrations at The Boma Café — from live music nights and buffet experiences to private functions and corporate events in Sandton."
         />
 
-        {/* Featured Event - Premium Design */}
+        {/* Events Slideshow */}
+        <div style={{ 
+          maxWidth: '900px', 
+          margin: '0 auto', 
+          padding: '0 5%' 
+        }}>
+          <Slideshow
+            images={[
+              { src: '/gallery/events/events-slideshow/slide1.webp', alt: 'Boma Café event celebration' },
+              { src: '/gallery/events/events-slideshow/slide2.webp', alt: 'Live music at The Boma Café' },
+              { src: '/gallery/events/events-slideshow/slide3.webp', alt: 'Corporate event venue' },
+              { src: '/gallery/events/events-slideshow/slide4.webp', alt: 'Birthday celebration' },
+              { src: '/gallery/events/events-slideshow/slide5.webp', alt: 'Buffet experience' },
+              { src: '/gallery/events/events-slideshow/slide6.webp', alt: 'Private dining' },
+              { src: '/gallery/events/events-slideshow/slide7.jpg', alt: 'Group booking' },
+              { src: '/gallery/events/events-slideshow/slide.webp', alt: 'Event hosting' },
+              { src: '/gallery/events/events-slideshow/2024-09-15.webp', alt: 'Garden celebration' },
+              { src: '/gallery/events/events-slideshow/2025-04-23.webp', alt: 'Special occasion' },
+              { src: '/gallery/events/events-slideshow/2026-03-27.webp', alt: 'Anniversary event' },
+              { src: '/gallery/events/events-slideshow/2026-04-19 (1).webp', alt: 'Team gathering' },
+            ]}
+            autoPlayInterval={6000}
+          />
+        </div>
+
+        {/* SEO Content */}
+        </div>
+        <div style={{ 
+          background: 'var(--cream)', 
+          padding: '1.5rem 5%', 
+          textAlign: 'center',
+          borderBottom: '1px solid var(--cream-dark)'
+        }}>
+          <p style={{ 
+            fontSize: '0.9rem', 
+            color: 'var(--text-light)',
+            maxWidth: '800px',
+            margin: '0 auto',
+            lineHeight: 1.6
+          }}>
+            <strong style={{ color: 'var(--dark-brown)' }}>Live music in Paulshof</strong> • <strong style={{ color: 'var(--dark-brown)' }}>Weekend buffet Sandton</strong> • <strong style={{ color: 'var(--dark-brown)' }}>Venue hire Johannesburg</strong> • <strong style={{ color: 'var(--dark-brown)' }}>Restaurant events Sandton</strong>
+          </p>
+        </div>
+
+        {/* Last Week Highlight */}
+        <LastWeekHighlight highlight={lastWeek} />
+
+        {/* Featured Event */}
         {featuredEvent && (
           <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
             <div className="container">
@@ -81,13 +545,15 @@ export default function EventsPage() {
                   letterSpacing: '1px',
                   textTransform: 'uppercase'
                 }}>
-                  Don't Miss Out
+                  Featured Event
                 </div>
-                <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>Featured Event</h2>
+                <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>
+                  {featuredEvent.title}
+                </h2>
               </div>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1.5fr 1fr',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                 gap: '0',
                 maxWidth: '1100px',
                 margin: '0 auto',
@@ -98,168 +564,61 @@ export default function EventsPage() {
               }}>
                 <div style={{
                   position: 'relative',
-                  minHeight: '420px',
+                  minHeight: '350px',
                   background: '#f5f5f5'
                 }}>
-                  {slideshowImages.map((img, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url(${img})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        opacity: index === currentSlide ? 1 : 0,
-                        transition: 'opacity 0.8s ease-in-out'
-                      }}
-                    />
-                  ))}
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(90deg, rgba(26,15,10,0.3) 0%, transparent 30%, transparent 70%, rgba(26,15,10,0.3) 100%)'
-                  }} />
-                  {/* Previous Arrow */}
-                  <button
-                    onClick={() => setCurrentSlide(prev => prev > 0 ? prev - 1 : slideshowImages.length - 1)}
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '1rem',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      color: 'white',
-                      border: 'none',
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.5rem',
-                      transition: 'all 0.3s ease',
-                      zIndex: 2
-                    }}
-                  >
-                    ‹
-                  </button>
-                  {/* Next Arrow */}
-                  <button
-                    onClick={() => setCurrentSlide(prev => (prev + 1) % slideshowImages.length)}
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      right: '1rem',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      color: 'white',
-                      border: 'none',
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.5rem',
-                      transition: 'all 0.3s ease',
-                      zIndex: 2
-                    }}
-                  >
-                    ›
-                  </button>
-                  {/* Navigation Dots */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '1.5rem',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    display: 'flex',
-                    gap: '0.75rem'
-                  }}>
-                    {slideshowImages.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentSlide(index)}
-                        style={{
-                          width: index === currentSlide ? '28px' : '10px',
-                          height: '10px',
-                          borderRadius: index === currentSlide ? '6px' : '50%',
-                          border: 'none',
-                          background: index === currentSlide ? 'var(--warm)' : 'rgba(255,255,255,0.6)',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease'
-                        }}
-                      />
-                    ))}
-                  </div>
+                  <GallerySlider 
+                    images={
+                      featuredEvent.galleryImages?.length > 0 
+                        ? featuredEvent.galleryImages 
+                        : featuredEvent.coverImage || featuredEvent.image 
+                          ? [featuredEvent.coverImage || featuredEvent.image] 
+                          : []
+                    } 
+                    alt={featuredEvent.title} 
+                  />
                 </div>
-                <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <span style={{
-                    display: 'inline-block',
-                    background: 'linear-gradient(135deg, var(--gold), var(--gold-light))',
-                    color: 'var(--dark)',
-                    padding: '0.4rem 1rem',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    width: 'fit-content',
-                    marginBottom: '1.25rem',
-                    letterSpacing: '0.5px'
-                  }}>
-                    ★ FEATURED
-                  </span>
-                  <h2 style={{ fontSize: '2rem', color: 'var(--dark-brown)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
+                <div style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  {featuredEvent.category && (
+                    <span style={{
+                      display: 'inline-block',
+                      background: 'linear-gradient(135deg, var(--gold), var(--gold-light))',
+                      color: 'var(--dark)',
+                      padding: '0.35rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      width: 'fit-content',
+                      marginBottom: '1rem',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {featuredEvent.category}
+                    </span>
+                  )}
+                  <h3 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
                     {featuredEvent.title}
-                  </h2>
-                  <p style={{ color: 'var(--text)', marginBottom: '1.75rem', lineHeight: 1.7, fontSize: '1.05rem' }}>
+                  </h3>
+                  <p style={{ color: 'var(--text)', marginBottom: '1.5rem', lineHeight: 1.7, fontSize: '1.05rem' }}>
                     {featuredEvent.description}
                   </p>
-                  <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-light)', fontSize: '1rem' }}>
-                      <span style={{ 
-                        width: '36px', 
-                        height: '36px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1rem'
-                      }}>📅</span> 
+                  <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                      <span style={{ width: '32px', height: '32px', background: 'var(--cream)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>📅</span>
                       {new Date(featuredEvent.date).toLocaleDateString('en-ZA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-light)', fontSize: '1rem' }}>
-                      <span style={{ 
-                        width: '36px', 
-                        height: '36px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1rem'
-                      }}>🕐</span> 
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                      <span style={{ width: '32px', height: '32px', background: 'var(--cream)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🕐</span>
                       {featuredEvent.time}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-light)', fontSize: '1rem' }}>
-                      <span style={{ 
-                        width: '36px', 
-                        height: '36px', 
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1rem'
-                      }}>📍</span> 
-                      {featuredEvent.location}
-                    </div>
+                    {featuredEvent.location && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                        <span style={{ width: '32px', height: '32px', background: 'var(--cream)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>📍</span>
+                        {featuredEvent.location}
+                      </div>
+                    )}
                   </div>
                   <a href={featuredEvent.ctaLink || '/contact'} className="btn btn-primary" style={{ width: 'fit-content', padding: '1rem 2.5rem' }}>
-                    Book Now
+                    {featuredEvent.ctaLabel || 'Book Now'}
                   </a>
                 </div>
               </div>
@@ -267,7 +626,7 @@ export default function EventsPage() {
           </section>
         )}
 
-        {/* Upcoming Events - Premium Design */}
+        {/* Upcoming Events */}
         <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
@@ -285,101 +644,64 @@ export default function EventsPage() {
               }}>
                 Calendar
               </div>
-              <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>Upcoming Events</h2>
-              <p style={{ color: 'var(--text-light)', marginTop: '0.5rem' }}>Mark your calendar</p>
+              <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>
+                Upcoming Events
+              </h2>
+              <p style={{ color: 'var(--text-light)', marginTop: '0.5rem' }}>Mark your calendar for these unmissable experiences</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
               {upcomingEvents.map((event: any) => (
-                <div key={event.id} style={{
-                  background: 'var(--cream)',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-md)',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                }}>
-                  <div style={{
-                    height: '200px',
-                    background: event.coverImage 
-                      ? `url(${event.coverImage}) center/cover` 
-                      : 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-                    position: 'relative'
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(180deg, transparent 50%, rgba(26, 15, 10, 0.7) 100%)'
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '1rem',
-                      left: '1rem',
-                      right: '1rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-end'
-                    }}>
-                      <div style={{
-                        background: 'var(--primary)',
-                        color: 'var(--white)',
-                        padding: '0.6rem 1.25rem',
-                        borderRadius: 'var(--radius-md)',
-                        textAlign: 'center',
-                        minWidth: '70px'
-                      }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1 }}>{new Date(event.date).getDate()}</div>
-                        <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '2px' }}>{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ padding: '1.75rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontWeight: 600 }}>
-                      {event.title}
-                    </h3>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '1.25rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>
-                      {event.description}
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--cream-dark)', paddingTop: '1rem', fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>🕐 {event.time}</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>📍 {event.location}</span>
-                    </div>
-                  </div>
-                </div>
+                <UpcomingEventCard key={event.id} event={event} />
               ))}
             </div>
+            {upcomingEvents.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)' }}>
+                <p>No upcoming events scheduled. Check back soon!</p>
+              </div>
+            )}
           </div>
         </section>
 
         {/* Past Events */}
         {pastEvents.length > 0 && (
-          <section className="section" style={{ background: 'var(--cream)' }}>
+          <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
             <div className="container">
-              <div className="section-header">
-                <h2>Past Events</h2>
-                <p>Relive the memories</p>
+              <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+                <div style={{
+                  display: 'inline-block',
+                  background: 'var(--beige)',
+                  padding: '0.4rem 1rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--white)',
+                  marginBottom: '0.75rem',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
+                }}>
+                  Memories
+                </div>
+                <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>
+                  Past Events
+                </h2>
+                <p style={{ color: 'var(--text-light)', marginTop: '0.5rem' }}>Relive the good times</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
                 {pastEvents.map((event: any) => (
-                  <div key={event.id} style={{
-                    background: 'var(--white)',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    boxShadow: 'var(--shadow-sm)',
-                    opacity: 0.8
-                  }}>
-                    <div style={{ height: '120px', background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)' }} />
-                    <div style={{ padding: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', color: 'var(--dark-brown)', marginBottom: '0.5rem' }}>{event.title}</h4>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                    </div>
-                  </div>
+                  <PastEventCard key={event.id} event={event} />
                 ))}
               </div>
             </div>
           </section>
         )}
 
-        {/* CTA - Premium Design */}
-        <section style={{ background: 'var(--dark-brown)', padding: 'var(--space-3xl) 5%', textAlign: 'center', position: 'relative' }}>
+        {/* Venue Hire CTA */}
+        <section style={{ 
+          background: 'var(--beige)', 
+          padding: 'var(--space-3xl) 5%', 
+          textAlign: 'center',
+          position: 'relative'
+        }}>
           <div style={{
             position: 'absolute',
             inset: 0,
@@ -401,9 +723,35 @@ export default function EventsPage() {
             }}>
               Private Events
             </div>
-            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--white)', marginBottom: '1rem' }}>Host Your Event With Us</h2>
-            <p style={{ color: 'var(--cream)', marginBottom: '2.5rem', maxWidth: '550px', margin: '0 auto', lineHeight: 1.6 }}>From corporate functions to private celebrations, we make it memorable</p>
-            <a href="/contact" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>Plan Your Event</a>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--white)', marginBottom: '1rem' }}>
+              Host Your Event With Us
+            </h2>
+            <p style={{ color: 'var(--cream)', marginBottom: '2.5rem', maxWidth: '550px', margin: '0 auto', lineHeight: 1.6 }}>
+              From corporate functions to private celebrations, we make it memorable
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
+              <a href="/contact" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
+                Plan Your Event
+              </a>
+              <a 
+                href="https://wa.me/27729961190"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '1rem 2.5rem',
+                  background: 'transparent',
+                  border: '2px solid var(--warm)',
+                  color: 'var(--warm)',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  display: 'inline-block'
+                }}
+              >
+                WhatsApp Us
+              </a>
+            </div>
           </div>
         </section>
       </main>

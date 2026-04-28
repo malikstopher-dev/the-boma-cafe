@@ -32,12 +32,41 @@ const defaultSiteSettings: SiteSettings = {
   },
   contact: {
     address: 'Sandton, Johannesburg, South Africa',
-    phone: '071 592 1190',
+    phone: '072 996 2212',
     phone2: '072 996 2212',
     email: 'info@thebomacafe.co.za',
     whatsapp: 'https://wa.me/27715921190',
     openingHours: 'Mon-Sun: 8:00 AM - 10:00 PM',
     mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3586.584890123456!2d28.0567!3f-26.0833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e9573a1f9f9f9f9%3A0x1e9573a1f9f9f9f9f!2sSandton%2C%20Johannesburg%2C%20South%20Africa!5e0!3m2!1sen!2s!4v1630000000000!5m2!1sen!2s'
+  },
+  experience: {
+    heroBadge: 'Discover',
+    heroTitle: 'The Experience',
+    heroSubtitle: 'More than just a restaurant — a destination for every occasion',
+    videoEnabled: true,
+    videoPath: '/videos/gallery.mp4',
+    videoTitle: 'Experience The Boma Café',
+    videoSubtitle: 'Book your table today'
+  },
+  events: {
+    heroBadge: 'Celebrate',
+    heroTitle: 'Events & Venue Hire',
+    heroSubtitle: 'Host unforgettable celebrations at The Boma Café',
+    slideshowEnabled: true,
+    slideshowImages: [
+      '/gallery/events/events-slideshow/slide1.webp',
+      '/gallery/events/events-slideshow/slide2.webp',
+      '/gallery/events/events-slideshow/slide3.webp',
+      '/gallery/events/events-slideshow/slide4.webp',
+      '/gallery/events/events-slideshow/slide5.webp',
+      '/gallery/events/events-slideshow/slide6.webp',
+      '/gallery/events/events-slideshow/slide7.jpg',
+      '/gallery/events/events-slideshow/slide.webp',
+      '/gallery/events/events-slideshow/2024-09-15.webp',
+      '/gallery/events/events-slideshow/2025-04-23.webp',
+      '/gallery/events/events-slideshow/2026-03-27.webp',
+      '/gallery/events/events-slideshow/2026-04-19 (1).webp'
+    ]
   },
   promoBar: {
     isEnabled: true,
@@ -110,6 +139,18 @@ export const siteSettingsService = {
   saveContactSettings: (contact: SiteSettings['contact']) => {
     const current = getFromStorage();
     setToStorage({ ...current, contact });
+  },
+  
+  getExperienceSettings: () => getFromStorage().experience,
+  saveExperienceSettings: (experience: SiteSettings['experience']) => {
+    const current = getFromStorage();
+    setToStorage({ ...current, experience });
+  },
+  
+  getEventsSettings: () => getFromStorage().events,
+  saveEventsSettings: (events: SiteSettings['events']) => {
+    const current = getFromStorage();
+    setToStorage({ ...current, events });
   },
   
   getPromoBarSettings: () => getFromStorage().promoBar,

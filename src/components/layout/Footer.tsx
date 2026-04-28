@@ -35,9 +35,9 @@ export default function Footer({ settings, branding }: FooterProps) {
 
   return (
     <footer style={{ 
-      background: 'linear-gradient(135deg, #2B1A12 0%, #1F120D 100%)', 
+      background: 'linear-gradient(180deg, var(--beige-dark) 0%, #D9C4A9 100%)', 
       padding: '5rem 5% 2.5rem', 
-      color: '#D6C2B5',
+      color: 'var(--brown-secondary)',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -48,7 +48,7 @@ export default function Footer({ settings, branding }: FooterProps) {
         transform: 'translateX(-50%)',
         width: '100%',
         height: '80%',
-        background: 'radial-gradient(ellipse at center top, rgba(201,169,98,0.12) 0%, transparent 60%)',
+        background: 'radial-gradient(ellipse at center top, rgba(201,169,98,0.15) 0%, transparent 60%)',
         pointerEvents: 'none'
       }}></div>
       <div style={{ 
@@ -62,36 +62,34 @@ export default function Footer({ settings, branding }: FooterProps) {
           gridTemplateColumns: '1.4fr 1fr 1.4fr', 
           gap: '4rem', 
           paddingBottom: '3rem', 
-          borderBottom: '1px solid rgba(212,163,115,0.12)'
+          borderBottom: '1px solid rgba(107,94,74,0.2)'
         }}>
           <div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.65rem', fontWeight: 700, color: '#FFF7ED', letterSpacing: '1px' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.65rem', fontWeight: 700, color: 'var(--brown-heading)', letterSpacing: '1px' }}>
                 The Boma Cafe
               </h3>
             </div>
-            <p style={{ color: '#D6C2B5', fontSize: '0.95rem', marginBottom: '1.75rem', lineHeight: 1.7 }}>
+            <p style={{ color: 'var(--brown-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem', lineHeight: 1.7 }}>
               Where the Rustic Meets the Soulful. Escape the city and experience authentic rustic charm in the heart of Sandton.
             </p>
             <div style={{ display: 'flex', gap: '0.875rem' }}>
               {b.facebook && (
                 <a href={b.facebook} target="_blank" rel="noopener noreferrer" style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
-                  background: 'rgba(212,163,115,0.12)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: '#FFF7ED', 
+                  background: 'rgba(107,94,74,0.15)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: 'var(--brown-heading)', 
                   transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textDecoration: 'none', border: '1px solid rgba(212,163,115,0.2)'
+                  textDecoration: 'none', border: '1px solid rgba(107,94,74,0.2)'
                 }} 
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.25)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.4)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.4)';
                   e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(212,163,115,0.3)';
                 }} 
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.2)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.2)';
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
                 }}
                 title="Facebook">
                   <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
@@ -100,21 +98,19 @@ export default function Footer({ settings, branding }: FooterProps) {
               {b.instagram && (
                 <a href={b.instagram} target="_blank" rel="noopener noreferrer" style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
-                  background: 'rgba(212,163,115,0.12)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: '#FFF7ED', 
+                  background: 'rgba(107,94,74,0.15)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: 'var(--brown-heading)', 
                   transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textDecoration: 'none', border: '1px solid rgba(212,163,115,0.2)'
+                  textDecoration: 'none', border: '1px solid rgba(107,94,74,0.2)'
                 }} 
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.25)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.4)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.4)';
                   e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(212,163,115,0.3)';
                 }} 
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.2)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.2)';
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
                 }}
                 title="Instagram">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
@@ -127,21 +123,19 @@ export default function Footer({ settings, branding }: FooterProps) {
               {b.twitter && (
                 <a href={b.twitter} target="_blank" rel="noopener noreferrer" style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
-                  background: 'rgba(212,163,115,0.12)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: '#FFF7ED', 
+                  background: 'rgba(107,94,74,0.15)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: 'var(--brown-heading)', 
                   transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textDecoration: 'none', border: '1px solid rgba(212,163,115,0.2)'
+                  textDecoration: 'none', border: '1px solid rgba(107,94,74,0.2)'
                 }} 
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.25)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.4)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.4)';
                   e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(212,163,115,0.3)';
                 }} 
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.2)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.2)';
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
                 }}
                 title="X/Twitter">
                   <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
@@ -150,21 +144,19 @@ export default function Footer({ settings, branding }: FooterProps) {
               {b.tiktok && (
                 <a href={b.tiktok} target="_blank" rel="noopener noreferrer" style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px',
-                  background: 'rgba(212,163,115,0.12)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: '#FFF7ED', 
+                  background: 'rgba(107,94,74,0.15)', backdropFilter: 'blur(10px)', borderRadius: '12px', color: 'var(--brown-heading)', 
                   transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textDecoration: 'none', border: '1px solid rgba(212,163,115,0.2)'
+                  textDecoration: 'none', border: '1px solid rgba(107,94,74,0.2)'
                 }} 
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.25)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.4)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.4)';
                   e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(212,163,115,0.3)';
                 }} 
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(212,163,115,0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(212,163,115,0.2)';
+                  e.currentTarget.style.background = 'rgba(107,94,74,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(107,94,74,0.2)';
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
                 }}
                 title="TikTok">
                   <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -176,25 +168,25 @@ export default function Footer({ settings, branding }: FooterProps) {
           </div>
 
           <div>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: '#FFF7ED', marginBottom: '1.5rem', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' }}>Quick Links</h4>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--brown-heading)', marginBottom: '1.5rem', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' }}>Quick Links</h4>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {[
                 { label: 'Home', href: '/' },
-                { label: 'About Us', href: '/about' },
                 { label: 'Menu', href: '/menu' },
-                { label: 'Events', href: '/events' },
+                { label: 'Experience', href: '/experience' },
+                { label: 'Entertainment', href: '/entertainment' },
+                { label: 'Events & Venue Hire', href: '/events' },
                 { label: 'Gallery', href: '/gallery' },
-                { label: 'Promotions', href: '/promotions' },
                 { label: 'Contact', href: '/contact' },
-              ].map(link => (
+              ].filter((link): link is { label: string; href: string } => !!(link && link.href)).map(link => (
                 <Link key={link.href} href={link.href} 
-                  style={{ color: '#D6C2B5', textDecoration: 'none', fontSize: '0.925rem', transition: 'all 0.3s ease' }} 
+                  style={{ color: 'var(--brown-secondary)', textDecoration: 'none', fontSize: '0.925rem', transition: 'all 0.3s ease' }} 
                   onMouseEnter={e => {
-                    e.currentTarget.style.color = '#D4A373';
+                    e.currentTarget.style.color = 'var(--primary)';
                     e.currentTarget.style.transform = 'translateX(6px)';
                   }} 
                   onMouseLeave={e => {
-                    e.currentTarget.style.color = '#D6C2B5';
+                    e.currentTarget.style.color = 'var(--brown-secondary)';
                     e.currentTarget.style.transform = 'translateX(0)';
                   }}
                 >{link.label}</Link>
@@ -203,13 +195,13 @@ export default function Footer({ settings, branding }: FooterProps) {
           </div>
 
           <div>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: '#FFF7ED', marginBottom: '1.5rem', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' }}>Contact Info</h4>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--brown-heading)', marginBottom: '1.5rem', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' }}>Contact Info</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
-              <a href={`tel:${BUSINESS_INFO.phone}`} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', color: '#D6C2B5', textDecoration: 'none', fontSize: '0.925rem', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#D4A373'} onMouseLeave={e => e.currentTarget.style.color = '#D6C2B5'}>
+              <a href={`tel:${BUSINESS_INFO.phone}`} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', color: 'var(--brown-secondary)', textDecoration: 'none', fontSize: '0.925rem', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--brown-secondary)'}>
                 <span style={{ 
                   width: '36px', 
                   height: '36px', 
-                  background: 'rgba(212,163,115,0.12)',
+                  background: 'rgba(107,94,74,0.1)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: '10px',
                   display: 'flex',
@@ -217,15 +209,15 @@ export default function Footer({ settings, branding }: FooterProps) {
                   justifyContent: 'center',
                   fontSize: '0.9rem',
                   flexShrink: 0,
-                  border: '1px solid rgba(212,163,115,0.2)'
+                  border: '1px solid rgba(107,94,74,0.15)'
                 }}>📞</span> 
                 <span>{BUSINESS_INFO.phone}</span>
               </a>
-              <a href={`mailto:${BUSINESS_INFO.email}`} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', color: '#D6C2B5', textDecoration: 'none', fontSize: '0.925rem', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#D4A373'} onMouseLeave={e => e.currentTarget.style.color = '#D6C2B5'}>
+              <a href={`mailto:${BUSINESS_INFO.email}`} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', color: 'var(--brown-secondary)', textDecoration: 'none', fontSize: '0.925rem', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--brown-secondary)'}>
                 <span style={{ 
                   width: '36px', 
                   height: '36px', 
-                  background: 'rgba(212,163,115,0.12)',
+                  background: 'rgba(107,94,74,0.1)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: '10px',
                   display: 'flex',
@@ -233,15 +225,15 @@ export default function Footer({ settings, branding }: FooterProps) {
                   justifyContent: 'center',
                   fontSize: '0.9rem',
                   flexShrink: 0,
-                  border: '1px solid rgba(212,163,115,0.2)'
+                  border: '1px solid rgba(107,94,74,0.15)'
                 }}>✉️</span> 
                 <span>{BUSINESS_INFO.email}</span>
               </a>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem', color: '#D6C2B5', fontSize: '0.925rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem', color: 'var(--brown-secondary)', fontSize: '0.925rem' }}>
                 <span style={{ 
                   width: '36px', 
                   height: '36px', 
-                  background: 'rgba(212,163,115,0.12)',
+                  background: 'rgba(107,94,74,0.1)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: '10px',
                   display: 'flex',
@@ -249,18 +241,18 @@ export default function Footer({ settings, branding }: FooterProps) {
                   justifyContent: 'center',
                   fontSize: '0.9rem',
                   flexShrink: 0,
-                  border: '1px solid rgba(212,163,115,0.2)'
+                  border: '1px solid rgba(107,94,74,0.15)'
                 }}>📍</span> 
                 <div>
                   <div>{BUSINESS_INFO.address.street}</div>
                   <div style={{ opacity: 0.8 }}>{BUSINESS_INFO.address.suburb}, {BUSINESS_INFO.address.city}, {BUSINESS_INFO.address.postalCode}</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem', color: '#D6C2B5', fontSize: '0.925rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem', color: 'var(--brown-secondary)', fontSize: '0.925rem' }}>
                 <span style={{ 
                   width: '36px', 
                   height: '36px', 
-                  background: 'rgba(212,163,115,0.12)',
+                  background: 'rgba(107,94,74,0.1)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: '10px',
                   display: 'flex',
@@ -268,7 +260,7 @@ export default function Footer({ settings, branding }: FooterProps) {
                   justifyContent: 'center',
                   fontSize: '0.9rem',
                   flexShrink: 0,
-                  border: '1px solid rgba(212,163,115,0.2)'
+                  border: '1px solid rgba(107,94,74,0.15)'
                 }}>🕐</span> 
                 <span>Mon-Sun: 8:00 AM - 10:00 PM</span>
               </div>
@@ -276,9 +268,9 @@ export default function Footer({ settings, branding }: FooterProps) {
                 href={`https://wa.me/${BUSINESS_INFO.phoneRaw}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', color: '#D6C2B5', textDecoration: 'none', fontSize: '0.925rem', transition: 'color 0.3s ease' }} 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', color: 'var(--brown-secondary)', textDecoration: 'none', fontSize: '0.925rem', transition: 'color 0.3s ease' }} 
                 onMouseEnter={e => e.currentTarget.style.color = '#25D366'} 
-                onMouseLeave={e => e.currentTarget.style.color = '#D6C2B5'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--brown-secondary)'}
               >
                 <span style={{ 
                   width: '36px', 
@@ -300,10 +292,10 @@ export default function Footer({ settings, branding }: FooterProps) {
         </div>
 
         <div style={{ paddingTop: '2.25rem', textAlign: 'center' }}>
-          <div style={{ width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(212,163,115,0.2), transparent)', margin: '0 auto 2rem' }}></div>
-          <p style={{ color: '#D6C2B5', fontSize: '0.8rem', lineHeight: 1.6, opacity: 0.75 }}>© {currentYear} The Boma Cafe. All rights reserved.</p>
-          <p style={{ color: '#D6C2B5', fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.75 }}>
-            Designed with ♥ by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" style={{ color: '#D4A373', textDecoration: 'none', fontWeight: 500, transition: 'opacity 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.8'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>Stopher Malik</a>
+          <div style={{ width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(107,94,74,0.2), transparent)', margin: '0 auto 2rem' }}></div>
+          <p style={{ color: 'var(--brown-secondary)', fontSize: '0.8rem', lineHeight: 1.6, opacity: 0.75 }}>© {currentYear} The Boma Cafe. All rights reserved.</p>
+          <p style={{ color: 'var(--brown-secondary)', fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.75 }}>
+            Designed with ♥ by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, transition: 'opacity 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.8'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>Stopher Malik</a>
           </p>
         </div>
       </div>

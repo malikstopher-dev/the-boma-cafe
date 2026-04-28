@@ -1,10 +1,13 @@
 'use client';
 
-import { SiteSettings, MenuCategory, MenuItem, Event, Promotion, GalleryItem, Popup, Announcement, Testimonial, ContactInquiry } from '@/lib/cms/types';
+import { SiteSettings, MenuCategory, MenuItem, Event, Promotion, GalleryItem, Popup, Announcement, Testimonial, ContactInquiry, LastWeekHighlight } from '@/lib/cms/types';
 
 interface AllSiteSettings {
   homepage: any;
   about: any;
+  experience: any;
+  entertainment: any;
+  venueHire: any;
   contact: any;
   promoBar: any;
   branding: any;
@@ -38,9 +41,76 @@ const defaultAllSettings: AllSiteSettings = {
     additionalImage1: '/images/about.jpg',
     additionalImage2: '/images/about.jpg'
   },
+  experience: {
+    heroTitle: 'The Experience',
+    heroSubtitle: 'More than just a restaurant — a destination for every occasion',
+    heroBadge: 'Discover',
+    diningTitle: 'Dining',
+    diningSubtitle: 'Rustic Outdoor Restaurant',
+    diningDescription: 'Experience authentic outdoor dining beneath our signature thatched roof. From hearty breakfasts to wood-fired pizzas and flame-grilled specialties, every meal is crafted with fresh, locally-sourced ingredients.',
+    diningHighlights: 'Thatched roof ambiance, Open-air seating, Fresh local ingredients, Cozy firepits',
+    diningImage: '/hero/hero-experience.jpg',
+    diningCta: 'View Menu',
+    diningCtaLink: '/menu',
+    puffTitle: 'Puff Lounge',
+    puffSubtitle: 'A Different Vibe',
+    puffDescription: 'A separate lounge area with a distinct atmosphere from our main restaurant. Enjoy curated music, a relaxed social setting, and your own space to unwind.',
+    puffHighlights: 'Separate lounge area, Curated music selection, Relaxed social vibe, Intimate setting',
+    puffImage: '/hero/hero-experience.jpg',
+    puffCta: 'Learn More',
+    puffCtaLink: '/contact',
+    familyTitle: 'Family & Activities',
+    familySubtitle: 'Fun for All Ages',
+    familyDescription: 'A welcoming destination for families. Let the little ones explore our dedicated kiddies area, enjoy clay painting activities, and create cherished memories together.',
+    familyHighlights: 'Kiddies play area, Clay painting activity, Family-friendly atmosphere, Spacious outdoor setting',
+    familyImage: '/hero/hero-experience.jpg',
+    familyCta: 'Plan Your Visit',
+    familyCtaLink: '/contact',
+    weekendTitle: 'Weekend Buffet',
+    weekendDescription: 'Join us on weekends for our signature buffet experience. Enjoy a wide variety of dishes, from aromatic curries to grilled specialties, in our relaxed outdoor setting.',
+    weekendCta: 'View Menu',
+    weekendCtaLink: '/menu'
+  },
+  entertainment: {
+    heroTitle: 'Live Entertainment',
+    heroSubtitle: 'Thursday to Sunday — music, energy, and unforgettable evenings',
+    heroBadge: 'Entertainment',
+    introTitle: 'Every Weekend is a Celebration',
+    introDescription: 'The Boma Café comes alive from Thursday to Sunday with a vibrant lineup of entertainment. Whether you\'re here for a relaxed dinner or a night of dancing, our live music creates the perfect atmosphere.',
+    djTitle: 'Live DJs',
+    djDescription: 'Feel the rhythm with our talented DJs spinning curated tracks across various genres.',
+    karaokeTitle: 'Karaoke',
+    karaokeDescription: 'Step into the spotlight and showcase your vocals in our lively karaoke sessions.',
+    liveTitle: 'Live Performances',
+    liveDescription: 'Experience passionate performances from local and visiting artists.',
+    vibeTitle: 'Weekend Evenings at The Boma Café',
+    vibeDescription: 'As the sun sets, The Boma Café transforms into the ultimate weekend destination. Gather with friends, enjoy great food and drinks, and let the music set the mood for an unforgettable evening.',
+    vibeImage: '/hero/hero-entertainment.jpg',
+    ctaBook: 'Book a Table',
+    ctaFollow: 'Follow Us'
+  },
+  venueHire: {
+    heroTitle: 'Events & Venue Hire',
+    heroSubtitle: 'Host your special occasions at The Boma Café',
+    heroBadge: 'Celebrate',
+    introTitle: 'Host Your Special Occasion',
+    introDescription: 'From intimate gatherings to grand celebrations, The Boma Café offers a stunning backdrop for your event.',
+    meetingTitle: 'Meetings',
+    meetingDesc: 'Professional spaces for corporate gatherings',
+    yearEndTitle: 'Year-End Functions',
+    yearEndDesc: 'Celebrate achievements in style',
+    weddingTitle: 'Weddings',
+    weddingDesc: 'Create magical moments in our rustic setting',
+    privateTitle: 'Private Functions',
+    privateDesc: 'Birthdays, anniversaries, and more',
+    ctaTitle: 'Ready to Host?',
+    ctaDescription: 'From corporate functions to private celebrations, we make it memorable',
+    cta: 'Enquire Now',
+    ctaLink: '/contact'
+  },
   contact: {
     address: 'Sandton, Johannesburg, South Africa',
-    phone: '071 592 1190',
+    phone: '072 996 2212',
     phone2: '072 996 2212',
     email: 'info@thebomacafe.co.za',
     whatsapp: 'https://wa.me/27715921190',
@@ -85,6 +155,25 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
       ...options?.headers,
     },
   });
+  
+  // Handle auth errors specifically - return the error response instead of throwing
+  if (res.status === 401) {
+    // Try to parse error response, but handle parsing failures
+    let errorObj = { error: 'Invalid password' };
+    try {
+      const text = await res.text();
+      if (text) {
+        errorObj = JSON.parse(text);
+      }
+    } catch (e) {
+      // If parsing fails, use default
+    }
+    // Return the error as a valid response for auth endpoints
+    if (endpoint.includes('/api/admin/auth')) {
+      return errorObj as T;
+    }
+    throw new Error(errorObj.error || 'Invalid credentials');
+  }
   
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
@@ -148,6 +237,13 @@ export const cmsService = {
   reorderEvents: (events: Event[]) => fetchApi<{ success: boolean }>('/api/cms/events', {
     method: 'PATCH',
     body: JSON.stringify({ events }),
+  }),
+
+  // Last Week Highlight
+  getLastWeekHighlight: () => fetchApi<LastWeekHighlight>('/api/cms/last-week'),
+  saveLastWeekHighlight: (highlight: LastWeekHighlight) => fetchApi<{ success: boolean }>('/api/cms/last-week', {
+    method: 'POST',
+    body: JSON.stringify(highlight),
   }),
 
   // Promotions

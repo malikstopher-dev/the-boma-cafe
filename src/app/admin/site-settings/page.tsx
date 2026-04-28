@@ -36,9 +36,94 @@ export default function AdminSiteSettings() {
     additionalImage2: '/images/about.jpg'
   });
 
+  const [experience, setExperience] = useState({
+    heroTitle: 'The Experience',
+    heroSubtitle: 'More than just a restaurant — a destination for every occasion',
+    heroBadge: 'Discover',
+    diningTitle: 'Dining',
+    diningSubtitle: 'Rustic Outdoor Restaurant',
+    diningDescription: 'Experience authentic outdoor dining beneath our signature thatched roof.',
+    diningHighlights: 'Thatched roof ambiance, Open-air seating, Fresh local ingredients, Cozy firepits',
+    diningImage: '/hero/hero-experience.jpg',
+    diningCta: 'View Menu',
+    diningCtaLink: '/menu',
+    puffTitle: 'Bisou El Patrona',
+    puffSubtitle: 'A Different Vibe',
+    puffDescription: 'A separate lounge area with a distinct atmosphere from our main restaurant.',
+    puffHighlights: 'Separate lounge area, Curated music selection, Relaxed social vibe, Intimate setting',
+    puffImage: '/hero/hero-experience.jpg',
+    puffCta: 'Learn More',
+    puffCtaLink: '/contact',
+    familyTitle: 'Family & Activities',
+    familySubtitle: 'Fun for All Ages',
+    familyDescription: 'A welcoming destination for families.',
+    familyHighlights: 'Kiddies play area, Clay painting activity, Family-friendly atmosphere',
+    familyImage: '/hero/hero-experience.jpg',
+    familyCta: 'Plan Your Visit',
+    familyCtaLink: '/contact',
+    weekendTitle: 'Weekend Buffet',
+    weekendDescription: 'Join us on weekends for our signature buffet experience.',
+    weekendCta: 'View Menu',
+    weekendCtaLink: '/menu',
+    videoEnabled: true,
+    videoPath: '/videos/gallery.mp4',
+    videoTitle: 'Experience The Boma Café',
+    videoSubtitle: 'Book your table today'
+  });
+
+  const [entertainment, setEntertainment] = useState({
+    heroTitle: 'Live Entertainment',
+    heroSubtitle: 'Thursday to Sunday — music, energy, and unforgettable evenings',
+    heroBadge: 'Entertainment',
+    introTitle: 'Every Weekend is a Celebration',
+    introDescription: 'The Boma Café comes alive from Thursday to Sunday with a vibrant lineup of entertainment.',
+    djTitle: 'Live DJs',
+    djDescription: 'Feel the rhythm with our talented DJs spinning curated tracks.',
+    karaokeTitle: 'Karaoke',
+    karaokeDescription: 'Step into the spotlight and showcase your vocals.',
+    liveTitle: 'Live Performances',
+    liveDescription: 'Experience passionate performances from local artists.',
+    vibeTitle: 'Weekend Evenings',
+    vibeDescription: 'The Boma Café transforms into the ultimate weekend destination.',
+    vibeImage: '/hero/hero-entertainment.jpg',
+    ctaBook: 'Book a Table',
+    ctaFollow: 'Follow Us'
+  });
+
+  const [venueHire, setVenueHire] = useState({
+    heroTitle: 'Events & Venue Hire',
+    heroSubtitle: 'Host your special occasions at The Boma Café',
+    heroBadge: 'Celebrate',
+    introTitle: 'Host Your Special Occasion',
+    introDescription: 'From intimate gatherings to grand celebrations.',
+    meetingTitle: 'Meetings',
+    meetingDesc: 'Professional spaces for corporate gatherings',
+    yearEndTitle: 'Year-End Functions',
+    yearEndDesc: 'Celebrate achievements in style',
+    weddingTitle: 'Weddings',
+    weddingDesc: 'Create magical moments in our rustic setting',
+    privateTitle: 'Private Functions',
+    privateDesc: 'Birthdays, anniversaries, and more',
+    ctaTitle: 'Ready to Host?',
+    ctaDescription: 'From corporate functions to private celebrations.',
+    cta: 'Enquire Now',
+    ctaLink: '/contact',
+    slideshowEnabled: true,
+    slideshowImages: [
+      '/gallery/events/events-slideshow/slide1.webp',
+      '/gallery/events/events-slideshow/slide2.webp',
+      '/gallery/events/events-slideshow/slide3.webp',
+      '/gallery/events/events-slideshow/slide4.webp',
+      '/gallery/events/events-slideshow/slide5.webp',
+      '/gallery/events/events-slideshow/slide6.webp',
+      '/gallery/events/events-slideshow/slide7.jpg',
+      '/gallery/events/events-slideshow/slide.webp'
+    ]
+  });
+
   const [contact, setContact] = useState({
     address: 'Sandton, Johannesburg, South Africa',
-    phone: '071 592 1190',
+    phone: '072 996 2212',
     phone2: '072 996 2212',
     email: 'info@thebomacafe.co.za',
     whatsapp: '',
@@ -82,6 +167,9 @@ export default function AdminSiteSettings() {
         const settings = await cmsService.getAllSettings();
         setHomepage({ ...settings.homepage });
         setAbout({ ...settings.about });
+        setExperience({ ...settings.experience });
+        setEntertainment({ ...settings.entertainment });
+        setVenueHire({ ...settings.venueHire });
         setContact({ ...settings.contact, phone2: settings.contact.phone2 || '', whatsapp: settings.contact.whatsapp || '' });
         setPromoBar({ ...settings.promoBar });
         setBranding({ 
@@ -106,7 +194,7 @@ export default function AdminSiteSettings() {
     setIsSaving(true);
     setSaveMessage('');
     try {
-      const allSettings = { homepage, about, contact, promoBar, branding, seo };
+      const allSettings = { homepage, about, experience, entertainment, venueHire, contact, promoBar, branding, seo };
       await cmsService.saveAllSettings(allSettings);
       setSaveMessage('Saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -120,6 +208,9 @@ export default function AdminSiteSettings() {
   const tabs = [
     { id: 'homepage', label: 'Homepage', icon: '🏠' },
     { id: 'about', label: 'About', icon: '📖' },
+    { id: 'experience', label: 'Experience', icon: '🌿' },
+    { id: 'entertainment', label: 'Entertainment', icon: '🎵' },
+    { id: 'venueHire', label: 'Venue Hire', icon: '🏟️' },
     { id: 'contact', label: 'Contact', icon: '📞' },
     { id: 'promoBar', label: 'Promo Bar', icon: '📢' },
     { id: 'branding', label: 'Branding', icon: '🎨' },
@@ -307,6 +398,360 @@ export default function AdminSiteSettings() {
           </div>
           <button onClick={() => handleSave('about')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
             {isSaving ? 'Saving...' : 'Save About Settings'}
+          </button>
+        </div>
+      )}
+
+      {/* Experience Tab */}
+      {activeTab === 'experience' && (
+        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Experience Page Settings</h2>
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            <div>
+              <label style={labelStyle}>Hero Title</label>
+              <input type="text" value={experience.heroTitle} onChange={e => setExperience({...experience, heroTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Hero Subtitle</label>
+              <input type="text" value={experience.heroSubtitle} onChange={e => setExperience({...experience, heroSubtitle: e.target.value})} style={inputStyle} />
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Dining Section</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Title</label>
+                <input type="text" value={experience.diningTitle} onChange={e => setExperience({...experience, diningTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Subtitle</label>
+                <input type="text" value={experience.diningSubtitle} onChange={e => setExperience({...experience, diningSubtitle: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Description</label>
+              <textarea value={experience.diningDescription} onChange={e => setExperience({...experience, diningDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Highlights (comma separated)</label>
+              <input type="text" value={experience.diningHighlights} onChange={e => setExperience({...experience, diningHighlights: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Image URL</label>
+              <input type="text" value={experience.diningImage} onChange={e => setExperience({...experience, diningImage: e.target.value})} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>CTA Button Text</label>
+                <input type="text" value={experience.diningCta} onChange={e => setExperience({...experience, diningCta: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>CTA Link</label>
+                <input type="text" value={experience.diningCtaLink} onChange={e => setExperience({...experience, diningCtaLink: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Bisou El Patrona Section</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Title</label>
+                <input type="text" value={experience.puffTitle} onChange={e => setExperience({...experience, puffTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Subtitle</label>
+                <input type="text" value={experience.puffSubtitle} onChange={e => setExperience({...experience, puffSubtitle: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Description</label>
+              <textarea value={experience.puffDescription} onChange={e => setExperience({...experience, puffDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Highlights (comma separated)</label>
+              <input type="text" value={experience.puffHighlights} onChange={e => setExperience({...experience, puffHighlights: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Image URL</label>
+              <input type="text" value={experience.puffImage} onChange={e => setExperience({...experience, puffImage: e.target.value})} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>CTA Button Text</label>
+                <input type="text" value={experience.puffCta} onChange={e => setExperience({...experience, puffCta: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>CTA Link</label>
+                <input type="text" value={experience.puffCtaLink} onChange={e => setExperience({...experience, puffCtaLink: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Family & Activities Section</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Title</label>
+                <input type="text" value={experience.familyTitle} onChange={e => setExperience({...experience, familyTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Subtitle</label>
+                <input type="text" value={experience.familySubtitle} onChange={e => setExperience({...experience, familySubtitle: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Description</label>
+              <textarea value={experience.familyDescription} onChange={e => setExperience({...experience, familyDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Highlights (comma separated)</label>
+              <input type="text" value={experience.familyHighlights} onChange={e => setExperience({...experience, familyHighlights: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Image URL</label>
+              <input type="text" value={experience.familyImage} onChange={e => setExperience({...experience, familyImage: e.target.value})} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>CTA Button Text</label>
+                <input type="text" value={experience.familyCta} onChange={e => setExperience({...experience, familyCta: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>CTA Link</label>
+                <input type="text" value={experience.familyCtaLink} onChange={e => setExperience({...experience, familyCtaLink: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Weekend Buffet Section</h3>
+            <div>
+              <label style={labelStyle}>Title</label>
+              <input type="text" value={experience.weekendTitle} onChange={e => setExperience({...experience, weekendTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Description</label>
+              <textarea value={experience.weekendDescription} onChange={e => setExperience({...experience, weekendDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>CTA Button Text</label>
+                <input type="text" value={experience.weekendCta} onChange={e => setExperience({...experience, weekendCta: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>CTA Link</label>
+                <input type="text" value={experience.weekendCtaLink} onChange={e => setExperience({...experience, weekendCtaLink: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--cream)', borderRadius: '8px' }}>
+              <h4 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Video Showcase</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Enable Video Section</label>
+                  <select value={experience.videoEnabled ? 'true' : 'false'} onChange={e => setExperience({...experience, videoEnabled: e.target.value === 'true'})} style={inputStyle}>
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Video Path</label>
+                  <input type="text" value={experience.videoPath || '/videos/gallery.mp4'} onChange={e => setExperience({...experience, videoPath: e.target.value})} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Video Title</label>
+                  <input type="text" value={experience.videoTitle || ''} onChange={e => setExperience({...experience, videoTitle: e.target.value})} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Video Subtitle</label>
+                  <input type="text" value={experience.videoSubtitle || ''} onChange={e => setExperience({...experience, videoSubtitle: e.target.value})} style={inputStyle} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => handleSave('experience')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
+            {isSaving ? 'Saving...' : 'Save Experience Settings'}
+          </button>
+        </div>
+      )}
+
+      {/* Entertainment Tab */}
+      {activeTab === 'entertainment' && (
+        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Entertainment Page Settings</h2>
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            <div>
+              <label style={labelStyle}>Hero Title</label>
+              <input type="text" value={entertainment.heroTitle} onChange={e => setEntertainment({...entertainment, heroTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Hero Subtitle</label>
+              <input type="text" value={entertainment.heroSubtitle} onChange={e => setEntertainment({...entertainment, heroSubtitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Intro Title</label>
+              <input type="text" value={entertainment.introTitle} onChange={e => setEntertainment({...entertainment, introTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Intro Description</label>
+              <textarea value={entertainment.introDescription} onChange={e => setEntertainment({...entertainment, introDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>DJ Card Title</label>
+                <input type="text" value={entertainment.djTitle} onChange={e => setEntertainment({...entertainment, djTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Karaoke Card Title</label>
+                <input type="text" value={entertainment.karaokeTitle} onChange={e => setEntertainment({...entertainment, karaokeTitle: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>DJ Description</label>
+              <textarea value={entertainment.djDescription} onChange={e => setEntertainment({...entertainment, djDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Karaoke Description</label>
+              <textarea value={entertainment.karaokeDescription} onChange={e => setEntertainment({...entertainment, karaokeDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Live Performance Title</label>
+              <input type="text" value={entertainment.liveTitle} onChange={e => setEntertainment({...entertainment, liveTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Live Performance Description</label>
+              <textarea value={entertainment.liveDescription} onChange={e => setEntertainment({...entertainment, liveDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Vibe Section Title</label>
+              <input type="text" value={entertainment.vibeTitle} onChange={e => setEntertainment({...entertainment, vibeTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Vibe Section Description</label>
+              <textarea value={entertainment.vibeDescription} onChange={e => setEntertainment({...entertainment, vibeDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Vibe Image URL</label>
+              <input type="text" value={entertainment.vibeImage} onChange={e => setEntertainment({...entertainment, vibeImage: e.target.value})} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>CTA: Book a Table</label>
+                <input type="text" value={entertainment.ctaBook} onChange={e => setEntertainment({...entertainment, ctaBook: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>CTA: Follow Us</label>
+                <input type="text" value={entertainment.ctaFollow} onChange={e => setEntertainment({...entertainment, ctaFollow: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+          </div>
+          <button onClick={() => handleSave('entertainment')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
+            {isSaving ? 'Saving...' : 'Save Entertainment Settings'}
+          </button>
+        </div>
+      )}
+
+      {/* Venue Hire Tab */}
+      {activeTab === 'venueHire' && (
+        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Events & Venue Hire Settings</h2>
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            <div>
+              <label style={labelStyle}>Hero Title</label>
+              <input type="text" value={venueHire.heroTitle} onChange={e => setVenueHire({...venueHire, heroTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Hero Subtitle</label>
+              <input type="text" value={venueHire.heroSubtitle} onChange={e => setVenueHire({...venueHire, heroSubtitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Intro Title</label>
+              <input type="text" value={venueHire.introTitle} onChange={e => setVenueHire({...venueHire, introTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Intro Description</label>
+              <textarea value={venueHire.introDescription} onChange={e => setVenueHire({...venueHire, introDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Meetings Title</label>
+                <input type="text" value={venueHire.meetingTitle} onChange={e => setVenueHire({...venueHire, meetingTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Meetings Description</label>
+                <input type="text" value={venueHire.meetingDesc} onChange={e => setVenueHire({...venueHire, meetingDesc: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Year-End Title</label>
+                <input type="text" value={venueHire.yearEndTitle} onChange={e => setVenueHire({...venueHire, yearEndTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Year-End Description</label>
+                <input type="text" value={venueHire.yearEndDesc} onChange={e => setVenueHire({...venueHire, yearEndDesc: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Weddings Title</label>
+                <input type="text" value={venueHire.weddingTitle} onChange={e => setVenueHire({...venueHire, weddingTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Weddings Description</label>
+                <input type="text" value={venueHire.weddingDesc} onChange={e => setVenueHire({...venueHire, weddingDesc: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Private Functions Title</label>
+                <input type="text" value={venueHire.privateTitle} onChange={e => setVenueHire({...venueHire, privateTitle: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Private Functions Description</label>
+                <input type="text" value={venueHire.privateDesc} onChange={e => setVenueHire({...venueHire, privateDesc: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <div>
+              <label style={labelStyle}>CTA Title</label>
+              <input type="text" value={venueHire.ctaTitle} onChange={e => setVenueHire({...venueHire, ctaTitle: e.target.value})} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>CTA Description</label>
+              <textarea value={venueHire.ctaDescription} onChange={e => setVenueHire({...venueHire, ctaDescription: e.target.value})} rows={2} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>CTA Button Text</label>
+                <input type="text" value={venueHire.cta} onChange={e => setVenueHire({...venueHire, cta: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>CTA Link</label>
+                <input type="text" value={venueHire.ctaLink} onChange={e => setVenueHire({...venueHire, ctaLink: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--cream)', borderRadius: '8px' }}>
+              <h4 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Events Slideshow</h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
+                The slideshow automatically uses images from the public/gallery/events/events-slideshow folder. 
+                Add or remove images from that folder to manage slideshow content.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Enable Slideshow</label>
+                  <select value={venueHire.slideshowEnabled ? 'true' : 'false'} onChange={e => setVenueHire({...venueHire, slideshowEnabled: e.target.value === 'true'})} style={inputStyle}>
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Note</label>
+                  <input type="text" value="Use folder: /gallery/events/events-slideshow" disabled style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => handleSave('venueHire')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
+            {isSaving ? 'Saving...' : 'Save Venue Hire Settings'}
           </button>
         </div>
       )}
