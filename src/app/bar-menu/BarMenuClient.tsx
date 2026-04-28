@@ -142,12 +142,11 @@ const categoryPlaceholders: Record<string, { gradient: string; text: string }> =
 const usedImagesPerCategory: Record<string, Set<string>> = {};
 
 function DrinkCard({ drink, categoryUsedImages, cardIndex }: { drink: DrinkItem; categoryUsedImages?: Record<string, Set<string>>; cardIndex: number }) {
-  const imageUrl = getBarImage(drink.name, drink.category || '', drink.image);
+  const rawImageUrl = getBarImage(drink.name, drink.category || '', drink.image);
   const category = drink.category || 'Other';
   const placeholder = categoryPlaceholders[category] || { gradient: 'linear-gradient(135deg, #E6D3B3 0%, #8D6E63 100%)', text: 'Drink' };
   
-  const alreadyUsed = categoryUsedImages?.[category]?.has(imageUrl) && cardIndex > 0;
-  const showPlaceholder = alreadyUsed;
+  const hasValidImage = rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.startsWith('/');
 
   return (
     <div style={{
@@ -163,7 +162,7 @@ function DrinkCard({ drink, categoryUsedImages, cardIndex }: { drink: DrinkItem;
         aspectRatio: '16/10',
         overflow: 'hidden'
       }}>
-        {showPlaceholder ? (
+        {!hasValidImage ? (
           <div
             style={{
               position: 'absolute',
@@ -187,7 +186,7 @@ function DrinkCard({ drink, categoryUsedImages, cardIndex }: { drink: DrinkItem;
           </div>
         ) : (
           <Image
-            src={imageUrl}
+            src={rawImageUrl}
             alt={drink.name}
             fill
             style={{ objectFit: 'cover' }}
@@ -263,8 +262,9 @@ export default function BarMenuClient() {
   for (const category of Object.keys(groupedDrinks)) {
     categoryUsedImages[category] = new Set();
     for (const drink of groupedDrinks[category]) {
-      const img = getBarImage(drink.name, drink.category || '', drink.image);
-      if (!categoryUsedImages[category]!.has(img)) {
+      const rawImg = getBarImage(drink.name, drink.category || '', drink.image);
+      const img = rawImg && rawImg.trim() !== '' ? rawImg : null;
+      if (img && typeof img === 'string') {
         categoryUsedImages[category]!.add(img);
       }
     }

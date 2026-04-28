@@ -26,21 +26,21 @@ function GallerySlider({ images, alt }: { images: string[]; alt: string }) {
       </div>
     );
   }
-  
+   
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
-  
+   
   const prevSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentIndex(currentIndex === 0 ? images.length - 1 : currentIndex - 1);
   };
-  
+   
   const nextSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentIndex(currentIndex === images.length - 1 ? 0 : currentIndex + 1);
   };
-  
+   
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div
@@ -138,7 +138,7 @@ function UpcomingEventCard({ event }: { event: any }) {
     : event.coverImage || event.image 
       ? [event.coverImage || event.image] 
       : [];
-  
+   
   return (
     <div style={{
       background: 'var(--white)',
@@ -265,7 +265,7 @@ function PastEventCard({ event }: { event: any }) {
     : event.coverImage || event.image 
       ? [event.coverImage || event.image] 
       : [];
-  
+   
   return (
     <div style={{
       background: 'var(--white)',
@@ -328,7 +328,7 @@ function PastEventCard({ event }: { event: any }) {
 
 function LastWeekHighlight({ highlight }: { highlight: any }) {
   if (!highlight?.visible) return null;
-  
+   
   return (
     <section style={{ 
       background: 'var(--beige)', 
@@ -339,10 +339,10 @@ function LastWeekHighlight({ highlight }: { highlight: any }) {
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: highlight.posterImage 
-          ? `url(${highlight.posterImage})`
-          : highlight.videoSrc
-            ? undefined
+        backgroundImage: highlight.videoSrc
+          ? undefined
+          : highlight.posterImage
+            ? `url(${highlight.posterImage})`
             : 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -473,8 +473,7 @@ export default function EventsPage() {
     <>
       <Header />
       <main style={{ paddingTop: 0 }}>
-        <div style={{ paddingTop: 80 }}>
-          <PremiumHero
+        <PremiumHero
           imageUrl="/hero/hero-events.jpg"
           badge="Celebrate"
           title="Events & Venue Hire"
@@ -507,7 +506,6 @@ export default function EventsPage() {
         </div>
 
         {/* SEO Content */}
-        </div>
         <div style={{ 
           background: 'var(--cream)', 
           padding: '1.5rem 5%', 

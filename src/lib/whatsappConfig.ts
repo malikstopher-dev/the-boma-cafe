@@ -1,5 +1,5 @@
 export const WHATSAPP_CONFIG = {
-  phoneNumber: '27729962212',
+  phoneNumber: '27715921190',
   businessName: 'The Boma Café',
   defaultMessage: 'Hello! I would like to place an order.',
 };
@@ -7,15 +7,15 @@ export const WHATSAPP_CONFIG = {
 export const BUSINESS_INFO = {
   name: 'The Boma Café',
   address: {
-    street: '127 Wroxham Road',
+    street: '127B Wroxham Road',
     suburb: 'Paulshof',
     city: 'Sandton',
     postalCode: '2191',
     country: 'South Africa',
-    full: '127 Wroxham Road, Paulshof, Sandton, 2191, South Africa',
+    full: '127B Wroxham Road, Paulshof, Sandton, 2191, South Africa',
   },
-  phone: '+27 72 996 2212',
-  phoneRaw: '27729962212',
+  phone: '+27 71 592 1190',
+  phoneRaw: '27715921190',
   email: 'info@thebomacafe.co.za',
   website: 'https://thebomacafe.co.za',
   coordinates: {

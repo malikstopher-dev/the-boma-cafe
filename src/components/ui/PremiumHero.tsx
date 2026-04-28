@@ -36,28 +36,10 @@ export default function PremiumHero({
     animation: 'heroZoom 20s ease-in-out infinite alternate',
   };
 
-  const overlayTop: CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '40%',
-    background: 'linear-gradient(to bottom, rgba(15, 8, 5, 0.5) 0%, transparent 100%)',
-  };
-
-  const overlayBottom: CSSProperties = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%',
-    background: 'linear-gradient(to top, rgba(10, 5, 3, 0.65) 0%, rgba(20, 12, 8, 0.3) 50%, transparent 100%)',
-  };
-
-  const overlayVignette: CSSProperties = {
+  const overlay: CSSProperties = {
     position: 'absolute',
     inset: 0,
-    background: 'radial-gradient(ellipse at center, transparent 30%, rgba(10, 5, 3, 0.35) 100%)',
+    background: 'linear-gradient(180deg, rgba(26, 15, 10, 0.4) 0%, rgba(26, 15, 10, 0.2) 40%, rgba(26, 15, 10, 0.55) 100%)',
   };
 
   const contentStyles: CSSProperties = {
@@ -82,9 +64,7 @@ export default function PremiumHero({
       `}</style>
       <section style={heroStyles}>
         <div style={backgroundStyles} />
-        <div style={overlayTop} />
-        <div style={overlayBottom} />
-        <div style={overlayVignette} />
+        <div style={overlay} />
         <div style={contentStyles}>
           {badge && (
             <div style={{

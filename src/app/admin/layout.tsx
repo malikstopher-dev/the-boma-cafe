@@ -49,20 +49,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     );
   }
-
+  
   // Allow login page to render without auth
   if (currentPath === '/admin/login') {
     return <>{children}</>;
   }
-
+  
   if (!isAuthenticated) {
     return null;
   }
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f5f2' }}>
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`} style={{
         width: '280px',
         background: 'linear-gradient(180deg, var(--dark-brown) 0%, #1a0f0a 100%)',
         padding: '1.5rem',
@@ -70,8 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         height: '100vh',
         overflowY: 'auto',
         zIndex: 100,
-        transform: sidebarOpen ? 'translateX(0)' : 'none',
-        transition: 'transform 0.3s ease'
+        transition: 'transform 0.3s ease',
       }}>
         <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', textDecoration: 'none' }}>
@@ -100,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 fontWeight: 500,
                 transition: 'all 0.2s ease'
               }}
-              onClick={() => setSidebarOpen(false)}
+              onClick={closeSidebar}
             >
               <span>{item.icon}</span>
               {item.label}
@@ -114,14 +115,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             View Website
           </Link>
           <button
-            onClick={logout}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '10px', textDecoration: 'none', color: '#f87171', fontSize: '0.95rem', background: 'none', width: '100%', cursor: 'pointer' }}
+            onClick={() => { closeSidebar(); logout(); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '10px', textDecoration: 'none', color: '#f87171', fontSize: '0.95rem', background: 'none', width: '100%', cursor: 'pointer', border: 'none', textAlign: 'left' }}
           >
             <span>🚪</span>
             Logout
           </button>
         </div>
       </aside>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 99,
+          }}
+          onClick={closeSidebar}
+        />
+      )}
 
       {/* Mobile Toggle */}
       <button
@@ -144,16 +158,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </button>
 
       {/* Main Content */}
-      <main style={{ flex: 1, marginLeft: '280px', padding: '2rem' }}>
+      <main className="admin-main" style={{ flex: 1, marginLeft: '280px', padding: '2rem' }}>
         {children}
       </main>
 
       <style>{`
-        @media (max-width: 1024px) {
-          aside { transform: translateX(-100%); }
-          aside.open { transform: translateX(0); }
-          button[onclick*="sidebarOpen"] { display: block !important; }
-          main { marginLeft: 0 !important; }
+        @media (max-width: 768px) {
+          aside.admin-sidebar {
+            transform: translateX(-100%) !important;
+            width: 260px !important;
+          }
+          aside.admin-sidebar.open {
+            transform: translateX(0) !important;
+          }
+          button[onclick*="setSidebarOpen"] {
+            display: block !important;
+          }
+          main.admin-main {
+            margin-left: 0 !important;
+            width: 100% !important;
+            overflow-x: hidden !important;
+          }
         }
       `}</style>
     </div>
