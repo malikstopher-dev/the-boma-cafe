@@ -100,26 +100,26 @@ export default function Footer({ settings, branding }: FooterProps) {
             <div className={styles.contactInfo}>
               <a href={`tel:${BUSINESS_INFO.phone}`} className={styles.contactItem}>
                 <span className={styles.icon}>📞</span>
-                <span>{BUSINESS_INFO.phone}</span>
+                <span className={styles.contactText}>{BUSINESS_INFO.phone}</span>
               </a>
               <a href={`mailto:${BUSINESS_INFO.email}`} className={styles.contactItem}>
                 <span className={styles.icon}>✉️</span>
-                <span>{BUSINESS_INFO.email}</span>
+                <span className={styles.contactText}>{BUSINESS_INFO.email}</span>
               </a>
               <div className={styles.contactItem}>
                 <span className={styles.icon}>📍</span>
-                <div>
-                  <div>{BUSINESS_INFO.address.street}</div>
-                  <div className={styles.addressDetail}>{BUSINESS_INFO.address.suburb}, {BUSINESS_INFO.address.city}, {BUSINESS_INFO.address.postalCode}</div>
-                </div>
+                <span className={styles.contactText}>
+                  {BUSINESS_INFO.address.street}
+                  <span className={styles.addressDetail}>{BUSINESS_INFO.address.suburb}, {BUSINESS_INFO.address.city}, {BUSINESS_INFO.address.postalCode}</span>
+                </span>
               </div>
               <div className={styles.contactItem}>
                 <span className={styles.icon}>🕐</span>
-                <span>Mon-Sun: 8:00 AM - 10:00 PM</span>
+                <span className={styles.contactText}>Mon-Sun: 8:00 AM - 10:00 PM</span>
               </div>
               <a href={`https://wa.me/${BUSINESS_INFO.phoneRaw}`} target="_blank" rel="noopener noreferrer" className={styles.contactItem}>
                 <span className={styles.icon}>💬</span>
-                <span>WhatsApp Order</span>
+                <span className={styles.contactText}>WhatsApp Order</span>
               </a>
             </div>
           </div>

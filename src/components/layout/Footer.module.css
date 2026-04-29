@@ -230,125 +230,68 @@
     width: 100%;
     max-width: 340px;
     margin: 0 auto;
-    text-align: center;
     padding: 0 !important;
+    text-align: center;
   }
 
-  .brand {
-    grid-column: span 1;
-    max-width: 100%;
-    margin: 0 auto;
-    max-width: 320px;
-  }
-
-  .logoText {
-    font-size: 24px;
-    line-height: 1.2;
-    margin: 0 0 8px;
-  }
-
-  .tagline {
-    font-size: 14px;
-    line-height: 1.5;
-    max-width: 290px;
-    margin: 0 auto;
-  }
-
-  .social {
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .socialLink {
-    width: 32px;
-    height: 32px;
-  }
-
-  .links h4,
   .contact h4 {
     font-size: 20px;
     line-height: 1.2;
     margin: 0 0 12px;
   }
 
-  .nav {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(120px, 1fr)) !important;
-    gap: 8px 12px !important;
+  .contactInfo {
     width: 100%;
-    max-width: 320px;
+    max-width: 340px;
     margin: 0 auto;
-    align-items: center;
-    justify-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .navLink {
-    display: block;
-    width: auto;
-    max-width: 150px;
+  .contactItem {
+    width: 100%;
+    max-width: 340px;
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 10px;
+    justify-content: unset !important;
+    text-align: left;
     font-size: 14px;
-    line-height: 1.3;
+    line-height: 1.35;
     padding: 0;
     margin: 0;
+  }
+
+  .icon {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .contactText {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     white-space: normal;
-    overflow-wrap: normal;
+    overflow-wrap: anywhere;
     word-break: normal;
     writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
     transform: none !important;
   }
 
-  .contactInfo {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-    width: 100%;
-  }
-
-  .contactItem {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    max-width: 320px;
-    width: 100%;
-    font-size: 14px;
-    line-height: 1.4;
-    text-align: left;
-
-    /* CRITICAL FIXES */
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    transform: none !important;
-
-    white-space: normal !important;
-    word-break: keep-all !important;
-    overflow-wrap: break-word !important;
-
-    direction: ltr;
-  }
-
-  .contactItem span,
-  .contactItem a,
-  .contactItem div {
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    transform: none !important;
-
-    white-space: normal !important;
-    word-break: keep-all !important;
-  }
-
-  .icon {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-  }
-
   .addressDetail {
+    display: block;
     font-size: 13px;
+    line-height: 1.35;
+    margin-top: 2px;
   }
 
   .bottom {
