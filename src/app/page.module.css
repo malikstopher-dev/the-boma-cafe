@@ -708,10 +708,145 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  z-index: 2;
+  background: linear-gradient(to top, rgba(26, 15, 10, 0.4) 0%, transparent 60%);
   pointer-events: none;
+  z-index: 1;
+}
+
+.aboutPageSection {
+  padding: 7rem 5%;
+  background: linear-gradient(180deg, var(--cream) 0%, var(--white) 100%);
+  position: relative;
+}
+
+/* ===== FOUNDER SECTION ===== */
+.founderSection {
+  padding: 7rem 5%;
+  background: var(--white);
+  position: relative;
+}
+
+.founderGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 5rem;
+  align-items: center;
+}
+
+.founderImageWrapper {
+  position: relative;
+}
+
+.founderImage {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(26, 15, 10, 0.15), 0 15px 30px rgba(26, 15, 10, 0.1);
+}
+
+.founderImage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(26, 15, 10, 0.3) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.founderImage img {
+  width: 100%;
+  height: 600px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.8s ease;
+}
+
+.founderImage:hover img {
+  transform: scale(1.03);
+}
+
+.founderContent {
+  padding: 1rem 0;
+}
+
+.founderName {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  color: var(--dark-brown);
+  font-family: var(--font-display);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.founderTitle {
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  letter-spacing: 0.5px;
+}
+
+.founderStory {
+  margin-bottom: 2.5rem;
+}
+
+.founderStory p {
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+  margin-bottom: 1.25rem;
+}
+
+.founderValues {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.founderValue {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.founderValueIcon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--warm), var(--warm-light));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.founderValue strong {
+  display: block;
+  color: var(--dark-brown);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.founderValue span {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .founderGrid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  
+  .founderImage img {
+    height: 400px;
+  }
+  
+  .founderContent {
+    padding: 0;
+  }
 }
 
 .aboutImage img {

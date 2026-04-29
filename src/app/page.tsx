@@ -11,6 +11,7 @@ import { cmsService } from '@/lib/client-cms';
 import Slideshow from '@/components/ui/Slideshow';
 import FadeInSection from '@/components/ui/FadeInSection';
 import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
+import AboutSection from '@/components/sections/AboutSection';
 import styles from './page.module.css';
 
 const PopupModal = dynamic(() => import('@/components/ui/PopupModal'), { ssr: false });
@@ -271,51 +272,12 @@ export default function Home() {
         </section>
 
         {/* About Section - Premium Design */}
-        <section className={styles.aboutSection}>
-          <div className="container">
-            <div className={styles.aboutGrid}>
-              <FadeInSection className={styles.aboutContent}>
-                <span className="section-badge">Welcome to The Boma Cafe</span>
-                <h3>{siteSettings?.about?.introTitle || 'Authentic Rustic Charm'}</h3>
-                <p>
-                  {siteSettings?.about?.introDescription || 'Escape the city hustle and step into a world of rustic charm at The Boma Cafe. Nestled in the heart of Sandton, our open-air restaurant is a hidden gem that will transport you to a different world.'}
-                </p>
-                <p>
-                  {siteSettings?.about?.fullDescription || 'Experience the perfect blend of rustic elegance and modern sophistication, designed to transport you away from the chaos of everyday life.'}
-                </p>
-                
-                <div className={styles.aboutFeatures}>
-                  {[
-                    { icon: '🔥', title: 'Cozy Firepits', desc: 'Warm glow for romantic evenings' },
-                    { icon: '🌿', title: 'Lush Greenery', desc: 'Surrounded by nature' },
-                    { icon: '🏠', title: 'Thatched Roof', desc: 'Authentic African architecture' }
-                  ].map((feature, index) => (
-                    <div key={index} className={styles.aboutFeature}>
-                      <div className={styles.aboutFeatureIcon}>{feature.icon}</div>
-                      <div>
-                        <strong>{feature.title}</strong>
-                        <span>{feature.desc}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <Link href="/about" className={styles.aboutLink}>
-                  Learn more about us <span>→</span>
-                </Link>
-              </FadeInSection>
-              
-              <FadeInSection delay={200} animationType="scale" className={styles.aboutImageWrapper}>
-                <div className={styles.aboutImage}>
-                  <img 
-                    src={siteSettings?.about?.heroImage || '/images/about.jpg'} 
-                    alt="Boma Cafe Interior"
-                  />
-                </div>
-              </FadeInSection>
-            </div>
-          </div>
-        </section>
+        <AboutSection 
+          introTitle={siteSettings?.about?.introTitle}
+          introDescription={siteSettings?.about?.introDescription}
+          fullDescription={siteSettings?.about?.fullDescription}
+          heroImage={siteSettings?.about?.heroImage}
+        />
 
         {/* Signature Dishes Section */}
         <section className={styles.signatureSection}>

@@ -6,7 +6,8 @@ import Footer from '@/components/layout/Footer';
 import { dataService } from '@/lib/data';
 import { siteSettingsService } from '@/lib/siteSettings';
 import PremiumHero from '@/components/ui/PremiumHero';
-import Image from 'next/image';
+import AboutSection from '@/components/sections/AboutSection';
+import FounderSection from '@/components/sections/FounderSection';
 
 export default function AboutPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -27,72 +28,19 @@ export default function AboutPage() {
           title={aboutSettings?.heroTitle || 'About The Boma Café'}
           subtitle={aboutSettings?.heroSubtitle || 'Discover the passion and tradition behind The Boma Café'}
         />
-
-        {/* Content - Premium Design */}
-        <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
-          <div className="container" style={{ maxWidth: '1100px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}>
-              <div>
-                <div style={{
-                  display: 'inline-block',
-                  background: 'linear-gradient(135deg, var(--warm), var(--warm-light))',
-                  padding: '0.4rem 1rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: 'var(--dark-brown)',
-                  marginBottom: '1.25rem',
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase'
-                }}>
-                  Welcome
-                </div>
-                <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', color: 'var(--dark-brown)', marginBottom: '1.75rem', fontFamily: 'var(--font-display)', lineHeight: 1.3 }}>
-                  {aboutSettings?.introTitle || 'Rustic Elegance in the Heart of Sandton'}
-                </h2>
-                <p style={{ color: 'var(--text)', marginBottom: '1.25rem', lineHeight: 1.85, fontSize: '1.05rem' }}>
-                  {aboutSettings?.introDescription || 'Welcome to The Boma Cafe, where we believe dining should be an experience, not just a meal.'}
-                </p>
-                <p style={{ color: 'var(--text)', marginBottom: '1.25rem', lineHeight: 1.85, fontSize: '1.05rem' }}>
-                  {aboutSettings?.fullDescription || 'Nestled in the vibrant area of Sandton, our open-air restaurant offers a unique escape from the hustle and bustle of city life. With our signature thatched roof, cozy firepits, and lush greenery, we have created an atmosphere that feels like a retreat to the countryside.'}
-                </p>
-                <p style={{ color: 'var(--text)', lineHeight: 1.85, fontSize: '1.05rem' }}>
-                  {aboutSettings?.missionDescription || 'Every dish we serve is crafted with care, using fresh, locally-sourced ingredients to bring you the authentic flavors of South Africa.'}
-                </p>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '-20px',
-                  left: '-20px',
-                  right: '20px',
-                  bottom: '20px',
-                  background: 'linear-gradient(135deg, var(--warm), var(--warm-light))',
-                  borderRadius: '24px',
-                  opacity: 0.4
-                }} />
-                <Image 
-                  src="/gallery/people/boma1-1152x864.jpeg"
-                  alt="The Boma Cafe Experience"
-                  width={1152}
-                  height={864}
-                  style={{ 
-                    width: '100%', 
-                    height: 'auto',
-                    maxHeight: '500px',
-                    objectFit: 'cover',
-                    aspectRatio: '4/3',
-                    borderRadius: '24px', 
-                    boxShadow: 'var(--shadow-lg)',
-                    position: 'relative',
-                    zIndex: 1
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
+        
+        {/* About Section - Replicated from Homepage */}
+        <AboutSection 
+          introTitle={aboutSettings?.introTitle}
+          introDescription={aboutSettings?.introDescription}
+          fullDescription={aboutSettings?.fullDescription}
+          heroImage={aboutSettings?.heroImage}
+          isPage={true}
+        />
+        
+        {/* Founder Section */}
+        <FounderSection />
+        
         {/* Values - Premium Design */}
         <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
@@ -147,7 +95,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
+        
         {/* CTA - Premium Design */}
         <section style={{ background: 'var(--beige)', padding: 'var(--space-3xl) 5%', textAlign: 'center', position: 'relative' }}>
           <div style={{

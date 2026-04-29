@@ -19,7 +19,7 @@ const defaultSiteSettings: SiteSettings = {
   about: {
     heroTitle: 'Our Story',
     heroSubtitle: 'Discover the passion and tradition behind The Boma Cafe',
-    heroImage: '/images/about.jpg',
+    heroImage: '/gallery/venue/slide1-1980x1080.jpeg',
     introTitle: 'Rustic Elegance in the Heart of Sandton',
     introDescription: 'Welcome to The Boma Cafe, where we believe dining should be an experience, not just a meal.',
     fullDescription: 'Nestled in the vibrant area of Sandton, our open-air restaurant offers a unique escape from the hustle and bustle of city life. With our signature thatched roof, cozy firepits, and lush greenery, we have created an atmosphere that feels like a retreat to the countryside.',
