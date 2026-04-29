@@ -356,39 +356,6 @@ export default function MenuPage() {
           </div>
         </nav>
 
-        <section className={styles.barShowcase}>
-          <div className={styles.barShowcaseInner}>
-            <div className={styles.barShowcaseText}>
-              <span className={styles.barShowcaseLabel}>FEATURED DRINKS</span>
-              <h2 className={styles.barShowcaseTitle}>Bar Menu Highlights</h2>
-              <p className={styles.barShowcaseSubtitle}>
-                Signature cocktails, refreshing mocktails, premium spirits, and relaxed Sandton evenings.
-              </p>
-              <a href="/bar-menu" className={styles.barShowcaseCta}>
-                Explore Bar Menu →
-              </a>
-            </div>
-
-            <div className={styles.barShowcaseCards}>
-              <a href="/bar-menu" className={styles.barShowcaseCard}>
-                <div className={styles.barCardIcon}>🍸</div>
-                <h3 className={styles.barCardTitle}>Classic Cocktails</h3>
-                <p className={styles.barCardDesc}>Elegant favourites crafted for every occasion</p>
-              </a>
-              <a href="/bar-menu" className={styles.barShowcaseCard}>
-                <div className={styles.barCardIcon}>🍹</div>
-                <h3 className={styles.barCardTitle}>Non-Alcoholic Cocktails</h3>
-                <p className={styles.barCardDesc}>Fresh, colourful, alcohol-free refreshers</p>
-              </a>
-              <a href="/bar-menu" className={styles.barShowcaseCard}>
-                <div className={styles.barCardIcon}>🥃</div>
-                <h3 className={styles.barCardTitle}>Premium Spirits</h3>
-                <p className={styles.barCardDesc}>Perfect pours for relaxed evenings</p>
-              </a>
-            </div>
-          </div>
-        </section>
-
         <div className={styles.menuContent}>
           <div className={styles.menuMain}>
             {filteredSections.map((section) => (
