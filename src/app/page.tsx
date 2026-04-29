@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import { cmsService } from '@/lib/client-cms';
+import Slideshow from '@/components/ui/Slideshow';
 import styles from './page.module.css';
 
 const PopupModal = dynamic(() => import('@/components/ui/PopupModal'), { ssr: false });
@@ -39,6 +40,18 @@ const heroSlides = [
     cta: 'View Events',
     ctaLink: '/events'
   }
+];
+
+const eventSlideshowImages = [
+  { src: '/gallery/events/events-slideshow/slide/eventslide1.jpeg', alt: 'Boma Café event celebration' },
+  { src: '/gallery/events/events-slideshow/slide/eventslide2.jpeg', alt: 'Live music at The Boma Café' },
+  { src: '/gallery/events/events-slideshow/slide/eventslide3.jpeg', alt: 'Corporate event venue' },
+  { src: '/gallery/events/events-slideshow/slide/eventslide4.jpeg', alt: 'Birthday celebration' },
+  { src: '/gallery/events/events-slideshow/slide/eventslide5.jpeg', alt: 'Buffet experience' },
+  { src: '/gallery/events/events-slideshow/slide/eventslide6.jpeg', alt: 'Private dining' },
+  { src: '/gallery/events/events-slideshow/slide/eventslide7.jpg', alt: 'Group booking' },
+  { src: '/gallery/events/events-slideshow/slide/WhatsApp Image 2026-04-29 at 08.10.57 (1).jpeg', alt: 'Event celebration' },
+  { src: '/gallery/events/events-slideshow/slide/WhatsApp Image 2026-04-29 at 08.10.58 (2).jpeg', alt: 'Special occasion' },
 ];
 
 const showcaseCategories = [
@@ -136,7 +149,7 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDearMamaModal, setShowDearMamaModal] = useState(false);
+  // showDearMamaModal removed - Dear Mama card no longer on homepage
 
   useEffect(() => {
     const loadData = async () => {
@@ -177,19 +190,7 @@ export default function Home() {
     return () => clearInterval(galleryTimer);
   }, []);
 
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowDearMamaModal(false);
-    };
-    if (showDearMamaModal) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
-    };
-  }, [showDearMamaModal]);
+  // Dear Mama modal effect removed
 
   const featuredMenuItems = menuItems.filter((item: any) => item.isFeatured && !item.isOutOfStock).slice(0, 4);
   const upcomingEvents = events.filter((event: any) => event.status === 'upcoming' && event.showOnHomepage).slice(0, 0);
@@ -415,56 +416,14 @@ export default function Home() {
               <h2>Upcoming Events</h2>
               <p>Join us for memorable experiences</p>
             </FadeInSection>
-            
+
+            {/* Premium Slideshow */}
+            <FadeInSection className={styles.eventSlideshowWrapper}>
+              <Slideshow images={eventSlideshowImages} autoPlayInterval={5000} aspectRatio="16/9" />
+            </FadeInSection>
+
+            {/* Event Cards Grid */}
             <div className={styles.eventsGrid}>
-              {upcomingEvents.map((event: any) => (
-                <FadeInSection key={event.id} delay={event.id * 100} className={styles.eventCardWrapper}>
-                  <Link href="/events" className={styles.eventCard}>
-                    <div className={styles.eventCardImage}>
-                      <img src={event.coverImage || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop'} alt={event.title} loading="lazy" decoding="async" />
-                      <div className={styles.eventOverlay} />
-                      <div className={styles.eventDate}>
-                        <span className={styles.eventDay}>{new Date(event.date).getDate()}</span>
-                        <span className={styles.eventMonth}>{new Date(event.date).toLocaleDateString('en-ZA', { month: 'short' })}</span>
-                      </div>
-                    </div>
-                    <div className={styles.eventCardContent}>
-                      <h4>{event.title}</h4>
-                      <p>{event.description}</p>
-                      <div className={styles.eventMeta}>
-                        <span>📍 {event.location}</span>
-                        <span>🕐 {event.time}</span>
-                      </div>
-                      <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
-                    </div>
-                  </Link>
-                </FadeInSection>
-              ))}
-              <FadeInSection delay={100} className={styles.eventCardWrapper}>
-                <div 
-                  className={styles.eventCard}
-                  onClick={() => setShowDearMamaModal(true)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className={styles.eventCardImage}>
-                    <img src="/gallery/events/mama-day.png" alt="Dear Mama Mother's Day" loading="lazy" decoding="async" />
-                    <div className={styles.eventOverlay} />
-                    <div className={styles.eventDate}>
-                      <span className={styles.eventDay}>10</span>
-                      <span className={styles.eventMonth}>MAY</span>
-                    </div>
-                  </div>
-                  <div className={styles.eventCardContent}>
-                    <h4>Dear Mama</h4>
-                    <p>A Mother's Day celebration by Just Like Sunday Social Club at The Boma Café.</p>
-                    <div className={styles.eventMeta}>
-                      <span>📍 The Boma Cafe</span>
-                      <span>🕐 1PM - 6PM</span>
-                    </div>
-                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>View Details</button>
-                  </div>
-                </div>
-              </FadeInSection>
               <FadeInSection delay={200} className={styles.eventCardWrapper}>
                 <Link href="/experience" className={styles.eventCard}>
                   <div className={styles.eventCardImage}>
@@ -478,11 +437,11 @@ export default function Home() {
                   <div className={styles.eventCardContent}>
                     <h4>Weekend Breakfast Buffet</h4>
                     <p>Start your weekend with our delicious all-you-can-eat breakfast spread</p>
-<div className={styles.eventMeta}>
+                    <div className={styles.eventMeta}>
                       <span>📍 The Boma Cafe</span>
                       <span>🕐 9h30 - 12h00pm Sat & Sun</span>
                     </div>
-                  <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
+                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
                   </div>
                 </Link>
               </FadeInSection>
@@ -503,7 +462,7 @@ export default function Home() {
                       <span>📍 The Boma Cafe</span>
                       <span>🕐 6pm - 10pm</span>
                     </div>
-<button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
+                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
                   </div>
                 </Link>
               </FadeInSection>
@@ -530,11 +489,11 @@ export default function Home() {
               </FadeInSection>
             </div>
 
-              <FadeInSection className={styles.sectionCta}>
-                <Link href="/events" className="btn btn-primary">View All Events</Link>
-              </FadeInSection>
-            </div>
-          </section>
+            <FadeInSection className={styles.sectionCta}>
+              <Link href="/events" className="btn btn-primary">View All Events</Link>
+            </FadeInSection>
+          </div>
+        </section>
 
         {/* Premium Gallery Preview Section */}
         <section className={styles.gallerySection}>
@@ -783,117 +742,7 @@ export default function Home() {
 
       <Footer settings={settings} branding={branding} />
 
-      {showDearMamaModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            zIndex: 2000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            animation: 'fadeIn 0.3s ease'
-          }}
-          onClick={() => setShowDearMamaModal(false)}
-        >
-          <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
-          <div 
-            style={{
-              background: 'var(--white)',
-              borderRadius: '24px',
-              maxWidth: '500px',
-              width: '100%',
-              overflow: 'hidden',
-              position: 'relative',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
-              animation: 'scaleUp 0.3s ease'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <style>{`@keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }`}</style>
-            <button
-              onClick={() => setShowDearMamaModal(false)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                zIndex: 10,
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.9)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.2rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-              }}
-            >
-              ✕
-            </button>
-            <img 
-              src="/gallery/events/mama-day.png" 
-              alt="Dear Mama" 
-              style={{
-                width: '100%',
-                height: '250px',
-                objectFit: 'cover'
-              }}
-            />
-            <div style={{ padding: '1.5rem' }}>
-              <div style={{
-                display: 'inline-block',
-                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                color: 'var(--white)',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '20px',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                marginBottom: '0.75rem'
-              }}>
-                Mother's Day Celebration
-              </div>
-              <h2 style={{ fontSize: '1.75rem', color: 'var(--dark-brown)', marginBottom: '0.25rem', fontFamily: 'var(--font-display)' }}>
-                Dear Mama
-              </h2>
-              <p style={{ fontSize: '1rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
-                by Just Like Sunday Social Club
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1.2rem' }}>📅</span>
-                  <span style={{ color: 'var(--text)' }}>Sunday 10 May</span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1.2rem' }}>🕐</span>
-                  <span style={{ color: 'var(--text)' }}>1PM - 6PM</span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1.2rem' }}>📍</span>
-                  <span style={{ color: 'var(--text)' }}>The Boma Café, 127 B Wroxham Rd, Paulshof, JHB</span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1.2rem' }}>🎟️</span>
-                  <span style={{ color: 'var(--text)' }}>Tickets available on Quicket</span>
-                </div>
-              </div>
-              <a 
-                href="https://www.quicket.co.za" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem 1.5rem', textDecoration: 'none' }}
-              >
-                Get Tickets
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      /* Dear Mama modal removed - event card removed from homepage */
     </>
   );
 }

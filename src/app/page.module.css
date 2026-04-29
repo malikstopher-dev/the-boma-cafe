@@ -933,6 +933,13 @@
   background: linear-gradient(90deg, transparent, var(--cream-dark), transparent);
 }
 
+.eventSlideshowWrapper {
+  margin-bottom: 3rem;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(26, 15, 10, 0.12);
+}
+
 .eventsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
