@@ -63,12 +63,17 @@ export default function PopupModal({ popup }: PopupProps) {
     const shouldShow = checkWeekendTiming();
     if (!shouldShow) return;
 
-    if (popup.showOncePerSession) {
-      const sessionKey = 'boma_weekend_popup_shown';
-      if (sessionStorage.getItem(sessionKey)) return;
-      sessionStorage.setItem(sessionKey, 'true');
-    }
+    // Check if mobile/tablet (width < 1024px)
+    const checkMobile = () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        return true;
+      }
+      return false;
+    };
 
+    if (checkMobile()) return;
+
+    // Show on every desktop visit (no sessionStorage limit)
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 2000);
