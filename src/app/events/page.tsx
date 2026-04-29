@@ -14,35 +14,35 @@ const events = [
     days: ["Saturday", "Sunday"],
     time: "09:30 - 12:00",
     date: null,
-    image: "/gallery/events/events-slideshow/slide/eventslide1.jpeg",
+    image: "/gallery/events/events-slideshow/slide/eventslide2.jpeg",
     description: "Enjoy our signature weekend buffet with great food, music, and atmosphere."
   },
   {
     title: "Comedy Night is Back",
     date: "2026-04-30",
     time: "19:30",
-    image: "/gallery/events/events-slideshow/slide/eventslide2.jpeg",
+    image: "/gallery/events/events-slideshow/slide/eventslide3.jpeg",
     description: "Stand-up comedy + DJ Dazz on decks."
   },
   {
     title: "Friday Groove Garden",
     date: "2026-05-01",
     time: "17:00",
-    image: "/gallery/events/events-slideshow/slide/eventslide3.jpeg",
+    image: "/gallery/events/events-slideshow/slide/eventslide4.jpeg",
     description: "DJ Shadzo, Prezo & DJ K Smackz live."
   },
   {
     title: "Saturday Groove Garden",
     date: "2026-05-02",
     time: "12:00",
-    image: "/gallery/events/events-slideshow/slide/eventslide4.jpeg",
+    image: "/gallery/events/events-slideshow/slide/eventslide5.jpeg",
     description: "Featuring DJ Mauzah."
   },
   {
     title: "Mother's Day Sip & Paint",
     date: "2026-05-10",
     time: "All Day",
-    image: "/gallery/events/events-slideshow/slide/eventslide5.jpeg",
+    image: "/gallery/events/events-slideshow/slide/eventslide1.jpeg",
     description: "Old school classics with Dawnay live."
   },
   {
