@@ -25,10 +25,16 @@ export default function AboutSection({
             <span className="section-badge">Welcome to The Boma Cafe</span>
             <h3>{introTitle || 'Rustic Elegance in the Heart of Sandton'}</h3>
             <p>
-              {introDescription || 'Welcome to The Boma Cafe, where we believe dining should be an experience, not just a meal.'}
+              {introDescription || 'Welcome to The Boma Café, where dining is not simply a meal, but a carefully crafted experience.'}
             </p>
             <p>
-              {fullDescription || 'Nestled in the vibrant area of Sandton, our open-air restaurant offers a unique escape from the hustle and bustle of city life. With our signature thatched roof, cozy firepits, and lush greenery, we have created an atmosphere that feels like a retreat to the countryside.'}
+              {fullDescription || 'Set within the vibrant energy of Sandton, The Boma Café offers a refined escape from the pace of city life. Here, the atmosphere shifts, inviting guests into a space where time slows and every moment is meant to be savored.'}
+            </p>
+            <p>
+              Defined by its signature thatched architecture, warm firepit corners, and layered greenery, the space is intentionally designed to evoke the calm and authenticity of a countryside retreat, without ever leaving the city. Natural textures, open air flow, and intimate lighting come together to create an environment that feels both grounded and elevated.
+            </p>
+            <p>
+              It is a setting where rustic charm meets modern sophistication, where conversations linger, and where every visit unfolds into something memorable.
             </p>
             
             <div className={styles.aboutFeatures}>

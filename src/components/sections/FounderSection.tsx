@@ -31,17 +31,42 @@ export default function FounderSection() {
             
             <div className={styles.founderStory}>
               <p>
-                Mahendra Singh is the visionary behind The Boma Cafe Sandton, bringing a refined approach 
-                to hospitality shaped by years of experience in retail and restaurant operations.
+                At the heart of The Boma Café Sandton is the vision of Mahendra Singh, a hospitality-driven 
+                entrepreneur whose journey is defined by precision, passion, and a deep understanding of what 
+                transforms a space into an experience.
               </p>
               <p>
-                Having built his foundation with Pick n Pay and later creating ventures such as 101 on Fraser, 
-                he combines business insight with a passion for exceptional guest experiences.
+                With a professional foundation shaped at Pick n Pay, Mahendra developed a sharp operational 
+                mindset rooted in consistency, quality control, and customer-centric thinking. This early exposure 
+                to large-scale retail excellence laid the groundwork for his transition into the more intimate, 
+                experience-driven world of restaurants.
               </p>
               <p>
-                His vision: "A place where food, atmosphere, and people come together." Every detail at 
-                The Boma Cafe reflects his commitment to creating unforgettable experiences that blend rustic 
-                charm with modern sophistication.
+                His entrepreneurial path evolved with ventures such as 101 on Fraser, where he began refining 
+                his signature approach, blending structure with creativity, efficiency with atmosphere. It is here 
+                that his philosophy started to take form: that true hospitality lies not only in service, but in 
+                how a space makes people feel.
+              </p>
+              <p>
+                At The Boma Café Sandton, that philosophy is fully realized.
+              </p>
+              <p>
+                Mahendra's vision is clear and intentional:
+                <strong> A place where food, atmosphere, and people come together.</strong>
+              </p>
+              <p>
+                This is not simply a statement, it is a design principle embedded into every layer of the café. 
+                From the warmth of the interiors to the rhythm of the service, from the curation of the menu to 
+                the energy of the space, every detail is considered, deliberate, and aligned.
+              </p>
+              <p>
+                The result is an environment that feels both grounded and elevated. Rustic textures meet modern 
+                refinement. Comfort meets sophistication. Familiarity meets discovery.
+              </p>
+              <p>
+                Under Mahendra Singh's direction, The Boma Café is not just a restaurant, it is a destination 
+                shaped by experience, driven by intention, and remembered for how it makes people feel long after 
+                they leave.
               </p>
             </div>
 

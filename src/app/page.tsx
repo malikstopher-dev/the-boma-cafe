@@ -8,13 +8,14 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import { cmsService } from '@/lib/client-cms';
+import PopupModal from '@/components/ui/PopupModal';
+import WeekendBuffetPopup from '@/components/ui/WeekendBuffetPopup';
 import Slideshow from '@/components/ui/Slideshow';
 import FadeInSection from '@/components/ui/FadeInSection';
 import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
 import AboutSection from '@/components/sections/AboutSection';
+import FounderSection from '@/components/sections/FounderSection';
 import styles from './page.module.css';
-
-const PopupModal = dynamic(() => import('@/components/ui/PopupModal'), { ssr: false });
 
 const heroSlides = [
   {
@@ -162,7 +163,8 @@ export default function Home() {
       )}
       <Header />
       <PopupModal popup={popup} />
-
+      <WeekendBuffetPopup />
+      
       <main>
         {/* Hero Section - Premium Design */}
         <section className={styles.heroSection}>
