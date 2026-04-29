@@ -2,273 +2,138 @@
   paddingTop: 80px;
 }
 
-/* Section Common Styles */
+/* ========== COMMON STYLES ========== */
 .section {
-  padding: 5rem 5%;
+  padding: 80px 5%;
   position: relative;
 }
 
 .sectionHeader {
   text-align: center;
-  margin-bottom: 3.5rem;
+  margin-bottom: 3rem;
 }
 
-.sectionBadge {
+.label {
   display: inline-block;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: var(--white);
-  padding: 0.4rem 1.2rem;
+  background: linear-gradient(135deg, #C56A2D, #D4AF37);
+  color: #FFF9F0;
+  padding: 0.35rem 1rem;
   border-radius: 50px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
-.sectionTitle {
+.heading {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  color: var(--dark-brown);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  color: #2C1E1A;
   margin-bottom: 0.75rem;
   line-height: 1.2;
 }
 
-.sectionSubtitle {
-  color: var(--text-light);
-  font-size: 1.05rem;
+.subtitle {
+  color: #5A4A42;
+  font-size: 1rem;
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.6;
 }
 
-/* Welcome/Hero Section */
-.welcomeSection {
-  background: linear-gradient(135deg, var(--cream) 0%, #f5ebe0 100%);
-  padding: 5rem 5%;
+.bodyText {
+  color: #3A1F16;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin-bottom: 1rem;
 }
 
+/* ========== SECTION 1: WELCOME ========== */
 .welcomeGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  gap: 60px;
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.welcomeContent {
-  padding: 1rem 0;
+.textContent {
+  padding: 0.5rem 0;
 }
 
-.welcomeContent h2 {
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  color: var(--dark-brown);
-  margin-bottom: 1.5rem;
-  line-height: 1.2;
+.featureCards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
-.welcomeContent p {
-  color: var(--text);
-  font-size: 1.05rem;
-  line-height: 1.8;
-  margin-bottom: 1.25rem;
+.featureCard {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #F8F5F0;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-.welcomeImageWrapper {
-  position: relative;
+.featureIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
-.welcomeImageCard {
-  position: relative;
+.featureCard strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #2C1E1A;
+  font-weight: 600;
+}
+
+.featureCard span {
+  font-size: 0.8rem;
+  color: #5A4A42;
+}
+
+.imageWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.imageCard {
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(26, 15, 10, 0.15);
-  background: var(--white);
-  padding: 12px;
+  box-shadow: 0 20px 60px rgba(44, 30, 26, 0.15), 0 0 0 1px rgba(212, 175, 55, 0.3);
+  background: #FFF9F0;
+  padding: 10px;
 }
 
-.welcomeImage {
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-}
-
-.welcomeImage img {
+.imageCard img {
   width: 100%;
-  height: 500px;
+  height: 480px;
   object-fit: cover;
+  border-radius: 16px;
   display: block;
   transition: transform 0.6s ease;
 }
 
-.welcomeImage:hover img {
-  transform: scale(1.03);
+.imageCard:hover img {
+  transform: scale(1.02);
 }
 
-/* Story Section */
-.storySection {
-  background: var(--white);
-  padding: 5rem 5%;
-}
-
-.storyGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.storyContent h3 {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  color: var(--dark-brown);
-  margin-bottom: 1.5rem;
-}
-
-.storyContent p {
-  color: var(--text);
-  font-size: 1rem;
-  line-height: 1.8;
-  margin-bottom: 1.25rem;
-}
-
-.storyImage {
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 15px 45px rgba(26, 15, 10, 0.12);
-}
-
-.storyImage img {
-  width: 100%;
-  height: 450px;
-  object-fit: cover;
-  display: block;
-}
-
-/* Experience Section */
-.experienceSection {
-  background: linear-gradient(135deg, #faf5f0 0%, var(--cream) 100%);
-  padding: 5rem 5%;
-}
-
-.experienceGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.experienceImage {
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 15px 45px rgba(26, 15, 10, 0.12);
-  order: -1;
-}
-
-.experienceImage img {
-  width: 100%;
-  height: 450px;
-  object-fit: cover;
-  display: block;
-}
-
-.experienceContent h3 {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  color: var(--dark-brown);
-  margin-bottom: 1.5rem;
-}
-
-.experienceContent p {
-  color: var(--text);
-  font-size: 1rem;
-  line-height: 1.8;
-  margin-bottom: 1.25rem;
-}
-
-/* Vision Section */
-.visionSection {
-  background: var(--dark-brown);
-  padding: 5rem 5%;
-  position: relative;
-  overflow: hidden;
-}
-
-.visionSection::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 30% 50%, rgba(244, 164, 96, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 70% 50%, rgba(244, 164, 96, 0.08) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.visionContent {
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-.visionContent h3 {
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  color: var(--cream);
-  margin-bottom: 2rem;
-}
-
-.visionQuote {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(244, 164, 96, 0.3);
-  border-radius: 20px;
-  padding: 2.5rem 3rem;
-  margin: 2rem 0;
-  position: relative;
-}
-
-.visionQuote::before {
-  content: '"';
-  position: absolute;
-  top: -10px;
-  left: 30px;
-  font-size: 4rem;
-  color: var(--primary);
-  font-family: var(--font-display);
-  line-height: 1;
-}
-
-.visionQuote p {
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
-  color: var(--cream);
-  line-height: 1.8;
-  font-style: italic;
-}
-
-.visionContent > p {
-  color: rgba(232, 213, 196, 0.8);
-  font-size: 1.05rem;
-  line-height: 1.8;
-  margin-top: 1.5rem;
-}
-
-/* Founder Section */
+/* ========== SECTION 2: FOUNDER ========== */
 .founderSection {
-  padding: 5rem 5%;
-  background: var(--white);
+  background: #F8F5F0;
+  padding: 80px 5%;
 }
 
 .founderGrid {
   display: grid;
   grid-template-columns: 400px 1fr;
-  gap: 4rem;
+  gap: 60px;
   max-width: 1200px;
   margin: 0 auto;
   align-items: start;
@@ -280,142 +145,160 @@
 }
 
 .founderImageCard {
-  background: var(--cream);
   border-radius: 24px;
-  padding: 16px;
-  box-shadow: 0 20px 60px rgba(26, 15, 10, 0.12);
-}
-
-.founderImage {
-  border-radius: 16px;
   overflow: hidden;
-  position: relative;
+  box-shadow: 0 20px 60px rgba(44, 30, 26, 0.12), 0 0 0 1px rgba(212, 175, 55, 0.25);
+  background: #FFF9F0;
+  padding: 10px;
 }
 
-.founderImage img {
+.founderImageCard img {
   width: 100%;
   height: 500px;
   object-fit: cover;
+  border-radius: 16px;
   display: block;
 }
 
 .founderContent {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
-.founderLabel {
+.founderRole {
   display: inline-block;
-  background: var(--primary);
-  color: var(--white);
-  padding: 0.35rem 1rem;
+  background: #C56A2D;
+  color: #FFF9F0;
+  padding: 0.3rem 0.8rem;
   border-radius: 50px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .founderName {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 3vw, 2.25rem);
-  color: var(--dark-brown);
-  margin-bottom: 0.5rem;
-}
-
-.founderTitle {
-  color: var(--text-light);
-  font-size: 1rem;
-  margin-bottom: 2rem;
-  font-weight: 400;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #2C1E1A;
+  margin-bottom: 0.25rem;
 }
 
 .founderStory {
-  margin-bottom: 2rem;
+  margin: 1.5rem 0;
 }
 
-.founderStory p {
-  color: var(--text);
-  font-size: 1rem;
-  line-height: 1.8;
-  margin-bottom: 1.25rem;
-}
-
-.founderQuote {
-  background: linear-gradient(135deg, var(--cream) 0%, #f5ebe0 100%);
-  border-left: 4px solid var(--primary);
+.quoteCard {
+  background: linear-gradient(135deg, #FFF9F0 0%, #F8F5F0 100%);
+  border-left: 4px solid #D4AF37;
   border-radius: 0 16px 16px 0;
-  padding: 1.5rem 2rem;
-  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 16px rgba(44, 30, 26, 0.06);
 }
 
-.founderQuote p {
+.quoteCard p {
   font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--dark-brown);
+  font-size: 1.05rem;
+  color: #2C1E1A;
   line-height: 1.6;
   font-style: italic;
   margin: 0;
 }
 
-/* Values Section */
+.highlightCards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.highlightCard {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #FFF9F0;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(197, 106, 45, 0.15);
+}
+
+.highlightIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.highlightCard strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #2C1E1A;
+  font-weight: 600;
+}
+
+.highlightCard span {
+  font-size: 0.8rem;
+  color: #5A4A42;
+}
+
+/* ========== SECTION 3: VALUES ========== */
 .valuesSection {
-  background: var(--cream);
-  padding: 5rem 5%;
+  background: #FFF9F0;
+  padding: 80px 5%;
 }
 
 .valuesGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .valueCard {
-  background: var(--white);
-  border-radius: 20px;
-  padding: 2rem 1.5rem;
+  background: #F8F5F0;
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
   text-align: center;
-  box-shadow: 0 8px 24px rgba(26, 15, 10, 0.06);
+  box-shadow: 0 4px 16px rgba(44, 30, 26, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.15);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .valueCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(26, 15, 10, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(44, 30, 26, 0.1);
 }
 
 .valueIcon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #C56A2D, #D4AF37);
+  border-radius: 14px;
   display: flex;
   alignItems: center;
   justifyContent: center;
-  margin: 0 auto 1rem;
-  font-size: 1.75rem;
+  margin: 0 auto 0.75rem;
+  font-size: 1.5rem;
 }
 
 .valueCard h4 {
-  font-size: 1.1rem;
-  color: var(--dark-brown);
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #2C1E1A;
+  margin-bottom: 0.4rem;
   font-weight: 600;
 }
 
 .valueCard p {
-  font-size: 0.875rem;
-  color: var(--text-light);
+  font-size: 0.825rem;
+  color: #5A4A42;
   line-height: 1.5;
+  margin: 0;
 }
 
-/* CTA Section */
+/* ========== SECTION 4: CTA ========== */
 .ctaSection {
-  background: var(--dark-brown);
-  padding: 5rem 5%;
-  text-align: center;
+  background: #2C1E1A;
+  padding: 72px 5%;
   position: relative;
   overflow: hidden;
 }
@@ -424,39 +307,42 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.1) 0%, transparent 50%);
+  background: radial-gradient(circle at 30% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(197, 106, 45, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
 
 .ctaContent {
   position: relative;
   z-index: 1;
-  max-width: 600px;
+  text-align: center;
+  max-width: 700px;
   margin: 0 auto;
 }
 
-.ctaContent h2 {
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  color: var(--white);
+.ctaContent .label {
+  background: #C56A2D;
+}
+
+.ctaContent .heading {
+  color: #FFF9F0;
   margin-bottom: 1rem;
 }
 
 .ctaContent p {
-  color: var(--cream);
-  margin-bottom: 2.5rem;
-  font-size: 1.05rem;
+  color: rgba(248, 245, 240, 0.8);
+  font-size: 1rem;
   line-height: 1.6;
+  margin-bottom: 2rem;
 }
 
 .ctaButton {
   display: inline-block;
-  background: var(--primary);
-  color: var(--white);
-  padding: 1rem 2.5rem;
+  background: #C56A2D;
+  color: #FFF9F0;
+  padding: 0.85rem 2.5rem;
   border-radius: 50px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -465,22 +351,16 @@
 }
 
 .ctaButton:hover {
-  background: var(--secondary);
+  background: #A85524;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(244, 164, 96, 0.3);
+  box-shadow: 0 8px 24px rgba(197, 106, 45, 0.3);
 }
 
-/* Mobile Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
-  .welcomeGrid,
-  .storyGrid,
-  .experienceGrid {
+  .welcomeGrid {
     grid-template-columns: 1fr;
     gap: 2.5rem;
-  }
-
-  .experienceImage {
-    order: 0;
   }
 
   .founderGrid {
@@ -501,26 +381,28 @@
 
 @media (max-width: 768px) {
   .section {
-    padding: 3rem 5%;
+    padding: 56px 5%;
   }
 
-  .welcomeSection,
-  .storySection,
-  .experienceSection,
-  .visionSection,
   .founderSection,
-  .valuesSection,
+  .valuesSection {
+    padding: 56px 5%;
+  }
+
   .ctaSection {
-    padding: 3rem 5%;
+    padding: 56px 5%;
   }
 
-  .welcomeImage img,
-  .storyImage img,
-  .experienceImage img {
-    height: 300px;
+  .welcomeGrid,
+  .founderGrid {
+    gap: 2rem;
   }
 
-  .founderImage img {
+  .imageCard img {
+    height: 320px;
+  }
+
+  .founderImageCard img {
     height: 400px;
   }
 
@@ -529,11 +411,17 @@
     gap: 1rem;
   }
 
-  .visionQuote {
-    padding: 2rem 1.5rem;
+  .featureCards,
+  .highlightCards {
+    gap: 0.5rem;
   }
 
-  .sectionTitle {
-    font-size: 1.75rem;
+  .featureCard,
+  .highlightCard {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .quoteCard {
+    padding: 1rem 1.25rem;
   }
 }
