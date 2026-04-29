@@ -34,7 +34,7 @@ export default function AboutPage() {
           introTitle={aboutSettings?.introTitle}
           introDescription={aboutSettings?.introDescription}
           fullDescription={aboutSettings?.fullDescription}
-          heroImage={aboutSettings?.heroImage}
+          heroImage="/gallery/venue/slide1-1980x1080.jpeg"
           isPage={true}
         />
         
