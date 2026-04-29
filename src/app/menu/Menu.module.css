@@ -211,6 +211,36 @@
   box-shadow: 0 4px 12px rgba(201, 106, 27, 0.25);
 }
 
+.barMenuTab {
+  background: linear-gradient(135deg, var(--primary), #C56A2D);
+  color: var(--white);
+  border-color: rgba(212, 175, 55, 0.4);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(201, 106, 27, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.barMenuTab:hover {
+  background: linear-gradient(135deg, #A85524, #C56A2D);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(201, 106, 27, 0.4);
+}
+
+.barMenuIcon {
+  font-size: 0.9rem;
+}
+
+.barMenuBadge {
+  font-size: 0.6rem;
+  background: rgba(212, 175, 55, 0.3);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
 /* Main Content */
 .menuContent {
   max-width: 1400px;

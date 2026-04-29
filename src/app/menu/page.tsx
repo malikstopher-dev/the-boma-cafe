@@ -346,10 +346,12 @@ export default function MenuPage() {
             ))}
             <a
               href="/bar-menu"
-              className={`${styles.categoryTab} ${activeCategory === 'BAR MENU' ? styles.active : ''}`}
+              className={`${styles.categoryTab} ${styles.barMenuTab}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
+              <span className={styles.barMenuIcon}>🍸</span>
               BAR MENU
+              <span className={styles.barMenuBadge}>Featured</span>
             </a>
           </div>
         </nav>
