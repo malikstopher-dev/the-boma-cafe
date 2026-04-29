@@ -3,7 +3,7 @@
   padding: 2rem 5% 1rem;
   color: var(--brown-secondary);
   position: relative;
- overflow: hidden;
+  overflow: hidden;
 }
 
 .footer::before {
@@ -206,21 +206,36 @@
 
 @media (max-width: 768px) {
   .footer {
+    width: 100%;
+    max-width: 100%;
     padding: 28px 20px 20px;
-    overflow-x: hidden;
+    overflow-x: clip;
     text-align: center;
   }
 
   .grid {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 22px !important;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
     padding-bottom: 18px;
+  }
+
+  .brand,
+  .links,
+  .contact {
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 0 !important;
   }
 
   .brand {
     grid-column: span 1;
-    text-align: center;
     max-width: 100%;
     margin: 0 auto;
     max-width: 320px;
@@ -229,13 +244,13 @@
   .logoText {
     font-size: 24px;
     line-height: 1.2;
-    margin-bottom: 8px;
+    margin: 0 0 8px;
   }
 
   .tagline {
     font-size: 14px;
     line-height: 1.5;
-    max-width: 280px;
+    max-width: 290px;
     margin: 0 auto;
   }
 
@@ -250,60 +265,63 @@
     height: 32px;
   }
 
-  .links {
-    text-align: center;
-    max-width: 320px;
-    margin: 0 auto;
-  }
-
-  .links h4 {
+  .links h4,
+  .contact h4 {
     font-size: 20px;
-    margin-bottom: 12px;
+    line-height: 1.2;
+    margin: 0 0 12px;
   }
 
   .nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px 14px;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(120px, 1fr)) !important;
+    gap: 8px 12px !important;
+    width: 100%;
     max-width: 320px;
     margin: 0 auto;
+    align-items: center;
+    justify-items: center;
   }
 
   .navLink {
+    display: block;
+    width: auto;
+    max-width: 150px;
     font-size: 14px;
     line-height: 1.3;
     padding: 0;
     margin: 0;
     white-space: normal;
-    text-align: center;
-  }
-
-  .contact {
-    text-align: center;
-    max-width: 320px;
-    margin: 0 auto;
-  }
-
-  .contact h4 {
-    font-size: 20px;
-    margin-bottom: 12px;
+    overflow-wrap: normal;
+    word-break: normal;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    transform: none !important;
   }
 
   .contactInfo {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
     align-items: center;
+    width: 100%;
   }
 
   .contactItem {
+    display: flex;
+    align-items: center;
     justify-content: center;
-    font-size: 14px;
     gap: 10px;
+    max-width: 320px;
+    width: 100%;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
   }
 
   .icon {
     width: 32px;
     height: 32px;
-    font-size: 0.75rem;
     flex-shrink: 0;
   }
 
@@ -312,22 +330,27 @@
   }
 
   .bottom {
+    width: 100%;
+    max-width: 340px;
+    margin: 18px auto 0;
     padding-top: 12px;
+    padding-bottom: 96px;
     border-top: 1px solid rgba(107,94,74,0.2);
-    margin-top: 18px;
+    text-align: center;
   }
 
   .divider {
     display: none;
   }
 
-  .copyright {
+  .copyright,
+  .powered {
     font-size: 12px;
     line-height: 1.4;
+    margin: 0;
   }
 
   .powered {
-    font-size: 12px !important;
     margin-top: 4px;
   }
 }

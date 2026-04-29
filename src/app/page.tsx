@@ -101,8 +101,7 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  // showDearMamaModal removed - Dear Mama card no longer on homepage
-
+  
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -141,9 +140,7 @@ export default function Home() {
     }, 4000);
     return () => clearInterval(galleryTimer);
   }, []);
-
-  // Dear Mama modal effect removed
-
+  
   const featuredMenuItems = menuItems.filter((item: any) => item.isFeatured && !item.isOutOfStock).slice(0, 4);
   const upcomingEvents = events.filter((event: any) => event.status === 'upcoming' && event.showOnHomepage).slice(0, 0);
   const activePromotions = promotions.filter((promo: any) => promo.isActive && promo.displayOnHomepage).slice(0, 2);
@@ -571,8 +568,6 @@ export default function Home() {
       </main>
 
       <Footer settings={settings} branding={branding} />
-
-      /* Dear Mama modal removed - event card removed from homepage */
     </>
   );
 }
