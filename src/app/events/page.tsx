@@ -639,39 +639,6 @@ export default function EventsPage() {
           </div>
         </section>
 
-        {/* Past Events */}
-        {pastEvents.length > 0 && (
-          <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
-            <div className="container">
-              <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-                <div style={{
-                  display: 'inline-block',
-                  background: 'var(--beige)',
-                  padding: '0.4rem 1rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: 'var(--white)',
-                  marginBottom: '0.75rem',
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase'
-                }}>
-                  Memories
-                </div>
-                <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>
-                  Past Events
-                </h2>
-                <p style={{ color: 'var(--text-light)', marginTop: '0.5rem' }}>Relive the good times</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
-                {pastEvents.map((event: any) => (
-                  <PastEventCard key={event.id} event={event} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* Venue Hire CTA */}
         <section style={{ 
           background: 'var(--beige)', 
