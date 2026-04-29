@@ -185,7 +185,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
 }
 
 export default function MenuPage() {
-  const [activeCategory, setActiveCategory] = useState('BAR MENU');
+  const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [categories, setCategories] = useState<any[]>(defaultCategories);
