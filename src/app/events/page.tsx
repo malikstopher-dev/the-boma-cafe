@@ -7,6 +7,7 @@ import { cmsService } from '@/lib/client-cms';
 import { defaultEvents, defaultLastWeekHighlight } from '@/lib/cms/defaults';
 import PremiumHero from '@/components/ui/PremiumHero';
 import Slideshow from '@/components/ui/Slideshow';
+import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
 
 function GallerySlider({ images, alt }: { images: string[]; alt: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -480,51 +481,8 @@ export default function EventsPage() {
           subtitle="Host unforgettable celebrations at The Boma Café — from live music nights and buffet experiences to private functions and corporate events in Sandton."
         />
 
-        {/* Events Slideshow */}
-        <div style={{ 
-          maxWidth: '900px', 
-          margin: '0 auto', 
-          padding: '0 5%' 
-        }}>
-          <Slideshow
-             images={[
-               { src: '/gallery/venue/134-2000x1125.jpeg', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/2023-09-10.webp', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/2023-09-27.webp', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/2023-10-30 (1).webp', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/2023-10-30 (2).webp', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/2023-10-30.webp', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/2025-04-14.webp', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/2025-04-23.jpg', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/2025-04-23.webp', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/2025-05-09.webp', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/2025-05-13 (1).webp', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/2025-05-13.webp', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/2025-05-19.webp', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/2025-07-20.webp', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/2025-11-29.webp', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/2025-12-25.webp', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/586695496_18542032552027334_196345222483858604_n.jpg', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/587298253_18541742503027334_426466464687217115_n.jpg', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/bomacafe2_large.jpg', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/bomacafe3.jpg', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/bomacafe4-large-1.jpg', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/bomacafe6_large.jpg', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/download.jpg', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/gallery-3-800x600.jpeg', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/gallery-5-800x600.jpeg', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/gallery-8-800x600.jpeg', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/heroslide-1800x1013.jpeg', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/slide1-1980x1080.jpeg', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/slide3-1800x982.jpeg', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/unnamed (1).webp', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/unnamed (2).webp', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/unnamed (3).webp', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/unnamed.webp', alt: 'Boma Café venue space' },
-             ]}
-             autoPlayInterval={6000}
-           />
-        </div>
+        {/* Upcoming Events Section - Replicated from Homepage */}
+        <UpcomingEventsSection />
 
         {/* SEO Content */}
         <div style={{ 

@@ -9,6 +9,8 @@ import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import { cmsService } from '@/lib/client-cms';
 import Slideshow from '@/components/ui/Slideshow';
+import FadeInSection from '@/components/ui/FadeInSection';
+import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
 import styles from './page.module.css';
 
 const PopupModal = dynamic(() => import('@/components/ui/PopupModal'), { ssr: false });
@@ -42,17 +44,7 @@ const heroSlides = [
   }
 ];
 
-const eventSlideshowImages = [
-  { src: '/gallery/events/events-slideshow/slide/eventslide1.jpeg', alt: 'Boma Café event celebration' },
-  { src: '/gallery/events/events-slideshow/slide/eventslide2.jpeg', alt: 'Live music at The Boma Café' },
-  { src: '/gallery/events/events-slideshow/slide/eventslide3.jpeg', alt: 'Corporate event venue' },
-  { src: '/gallery/events/events-slideshow/slide/eventslide4.jpeg', alt: 'Birthday celebration' },
-  { src: '/gallery/events/events-slideshow/slide/eventslide5.jpeg', alt: 'Buffet experience' },
-  { src: '/gallery/events/events-slideshow/slide/eventslide6.jpeg', alt: 'Private dining' },
-  { src: '/gallery/events/events-slideshow/slide/eventslide7.jpg', alt: 'Group booking' },
-  { src: '/gallery/events/events-slideshow/slide/whatsapp-2026-04-29-081057-1.jpeg', alt: 'Event celebration' },
-  { src: '/gallery/events/events-slideshow/slide/whatsapp-2026-04-29-081058-2.jpeg', alt: 'Special occasion' },
-];
+// eventSlideshowImages moved to UpcomingEventsSection component
 
 const showcaseCategories = [
   { title: 'Signature Meals', desc: 'Chef-crafted masterpieces', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=450&fit=crop', link: '/menu?category=Signature', badge: 'Chef Pick' },
@@ -85,48 +77,6 @@ const galleryPreview = [
   { url: '/gallery/gallery/gallery-7-800x600.jpeg', alt: 'Food Spread' },
   { url: '/gallery/people/boma1-1152x864.jpeg', alt: 'The Experience' },
 ];
-
-function FadeInSection({ children, className = '', delay = 0, animationType = 'default' }: { children: React.ReactNode; className?: string; delay?: number; animationType?: 'default' | 'left' | 'right' | 'scale' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              setIsVisible(true);
-            }, delay);
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-      }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, [delay]);
-
-  const animationClass = animationType === 'left' ? styles.revealLeft :
-                         animationType === 'right' ? styles.revealRight :
-                         animationType === 'scale' ? styles.revealScale : '';
-
-  return (
-    <div
-      ref={ref}
-      className={`${styles.fadeInSection} ${animationClass} ${isVisible ? styles.visible : ''} ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -409,91 +359,7 @@ export default function Home() {
         </section>
 
         {/* Premium Events Section */}
-        <section className={styles.eventsSection}>
-          <div className="container">
-            <FadeInSection className={styles.sectionHeader}>
-              <span className="section-badge primary">What's Happening</span>
-              <h2>Upcoming Events</h2>
-              <p>Join us for memorable experiences</p>
-            </FadeInSection>
-
-            {/* Premium Slideshow */}
-            <FadeInSection className={styles.eventSlideshowWrapper}>
-              <Slideshow images={eventSlideshowImages} autoPlayInterval={5000} aspectRatio="16/9" />
-            </FadeInSection>
-
-            {/* Event Cards Grid */}
-            <div className={styles.eventsGrid}>
-              <FadeInSection delay={200} className={styles.eventCardWrapper}>
-                <Link href="/experience" className={styles.eventCard}>
-                  <div className={styles.eventCardImage}>
-                    <img src="/gallery/weekend-buffet.jpg" alt="Weekend Breakfast Buffet" loading="lazy" decoding="async" />
-                    <div className={styles.eventOverlay} />
-                    <div className={styles.eventDate}>
-                      <span className={styles.eventDay}>SAT</span>
-                      <span className={styles.eventMonth}>SUN</span>
-                    </div>
-                  </div>
-                  <div className={styles.eventCardContent}>
-                    <h4>Weekend Breakfast Buffet</h4>
-                    <p>Start your weekend with our delicious all-you-can-eat breakfast spread</p>
-                    <div className={styles.eventMeta}>
-                      <span>📍 The Boma Cafe</span>
-                      <span>🕐 9h30 - 12h00pm Sat & Sun</span>
-                    </div>
-                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
-                  </div>
-                </Link>
-              </FadeInSection>
-              <FadeInSection delay={300} className={styles.eventCardWrapper}>
-                <Link href="/events" className={styles.eventCard}>
-                  <div className={styles.eventCardImage}>
-                    <img src="/gallery/events/friday-braai.jpg" alt="Friday Braai Evening" loading="lazy" decoding="async" />
-                    <div className={styles.eventOverlay} />
-                    <div className={styles.eventDate}>
-                      <span className={styles.eventDay}>FRI</span>
-                      <span className={styles.eventMonth}>EVE</span>
-                    </div>
-                  </div>
-                  <div className={styles.eventCardContent}>
-                    <h4>Friday Braai Evening</h4>
-                    <p>Join us for sizzling braai and live music every Friday night</p>
-                    <div className={styles.eventMeta}>
-                      <span>📍 The Boma Cafe</span>
-                      <span>🕐 6pm - 10pm</span>
-                    </div>
-                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
-                  </div>
-                </Link>
-              </FadeInSection>
-              <FadeInSection delay={400} className={styles.eventCardWrapper}>
-                <Link href="/entertainment" className={styles.eventCard}>
-                  <div className={styles.eventCardImage}>
-                    <img src="/gallery/events/live-music.jpg" alt="Live Music Night" loading="lazy" decoding="async" />
-                    <div className={styles.eventOverlay} />
-                    <div className={styles.eventDate}>
-                      <span className={styles.eventDay}>SAT</span>
-                      <span className={styles.eventMonth}>NIGHT</span>
-                    </div>
-                  </div>
-                  <div className={styles.eventCardContent}>
-                    <h4>Live Music Nights</h4>
-                    <p>Enjoy soulful live performances every Saturday night</p>
-                    <div className={styles.eventMeta}>
-                      <span>📍 The Boma Cafe</span>
-                      <span>🕐 7pm - 11pm</span>
-                    </div>
-                    <button className={`btn btn-primary ${styles.eventCardBtn}`}>Book Now</button>
-                  </div>
-                </Link>
-              </FadeInSection>
-            </div>
-
-            <FadeInSection className={styles.sectionCta}>
-              <Link href="/events" className="btn btn-primary">View All Events</Link>
-            </FadeInSection>
-          </div>
-        </section>
+        <UpcomingEventsSection />
 
         {/* Premium Gallery Preview Section */}
         <section className={styles.gallerySection}>
