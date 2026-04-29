@@ -317,6 +317,28 @@
     font-size: 14px;
     line-height: 1.4;
     text-align: left;
+
+    /* CRITICAL FIXES */
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    transform: none !important;
+
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+
+    direction: ltr;
+  }
+
+  .contactItem span,
+  .contactItem a,
+  .contactItem div {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    transform: none !important;
+
+    white-space: normal !important;
+    word-break: keep-all !important;
   }
 
   .icon {
