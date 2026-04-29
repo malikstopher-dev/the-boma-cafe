@@ -185,7 +185,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
 }
 
 export default function MenuPage() {
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('BAR MENU');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [categories, setCategories] = useState<any[]>(defaultCategories);
@@ -326,6 +326,15 @@ export default function MenuPage() {
 
         <nav className={styles.categoryTabs}>
           <div className={styles.categoryTabsInner}>
+            <a
+              href="/bar-menu"
+              className={`${styles.categoryTab} ${styles.barMenuTab}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <span className={styles.barMenuIcon}>🍸</span>
+              BAR MENU
+              <span className={styles.barMenuBadge}>Featured</span>
+            </a>
             <button
               className={`${styles.categoryTab} ${activeCategory === 'All' ? styles.active : ''}`}
               onClick={() => setActiveCategory('All')}
@@ -344,15 +353,6 @@ export default function MenuPage() {
                 {cat.name}
               </button>
             ))}
-            <a
-              href="/bar-menu"
-              className={`${styles.categoryTab} ${styles.barMenuTab}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              <span className={styles.barMenuIcon}>🍸</span>
-              BAR MENU
-              <span className={styles.barMenuBadge}>Featured</span>
-            </a>
           </div>
         </nav>
 
