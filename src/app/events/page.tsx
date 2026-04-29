@@ -487,22 +487,43 @@ export default function EventsPage() {
           padding: '0 5%' 
         }}>
           <Slideshow
-            images={[
-              { src: '/gallery/events/events-slideshow/slide1.webp', alt: 'Boma Café event celebration' },
-              { src: '/gallery/events/events-slideshow/slide2.webp', alt: 'Live music at The Boma Café' },
-              { src: '/gallery/events/events-slideshow/slide3.webp', alt: 'Corporate event venue' },
-              { src: '/gallery/events/events-slideshow/slide4.webp', alt: 'Birthday celebration' },
-              { src: '/gallery/events/events-slideshow/slide5.webp', alt: 'Buffet experience' },
-              { src: '/gallery/events/events-slideshow/slide6.webp', alt: 'Private dining' },
-              { src: '/gallery/events/events-slideshow/slide7.jpg', alt: 'Group booking' },
-              { src: '/gallery/events/events-slideshow/slide.webp', alt: 'Event hosting' },
-              { src: '/gallery/events/events-slideshow/2024-09-15.webp', alt: 'Garden celebration' },
-              { src: '/gallery/events/events-slideshow/2025-04-23.webp', alt: 'Special occasion' },
-              { src: '/gallery/events/events-slideshow/2026-03-27.webp', alt: 'Anniversary event' },
-              { src: '/gallery/events/events-slideshow/2026-04-19 (1).webp', alt: 'Team gathering' },
-            ]}
-            autoPlayInterval={6000}
-          />
+             images={[
+               { src: '/gallery/venue/134-2000x1125.jpeg', alt: 'Boma Café venue' },
+               { src: '/gallery/venue/2023-09-10.webp', alt: 'Boma Café venue view' },
+               { src: '/gallery/venue/2023-09-27.webp', alt: 'Boma Café venue space' },
+               { src: '/gallery/venue/2023-10-30 (1).webp', alt: 'Boma Café venue area' },
+               { src: '/gallery/venue/2023-10-30 (2).webp', alt: 'Boma Café venue interior' },
+               { src: '/gallery/venue/2023-10-30.webp', alt: 'Boma Café venue layout' },
+               { src: '/gallery/venue/2025-04-14.webp', alt: 'Boma Café venue' },
+               { src: '/gallery/venue/2025-04-23.jpg', alt: 'Boma Café venue view' },
+               { src: '/gallery/venue/2025-04-23.webp', alt: 'Boma Café venue space' },
+               { src: '/gallery/venue/2025-05-09.webp', alt: 'Boma Café venue area' },
+               { src: '/gallery/venue/2025-05-13 (1).webp', alt: 'Boma Café venue interior' },
+               { src: '/gallery/venue/2025-05-13.webp', alt: 'Boma Café venue layout' },
+               { src: '/gallery/venue/2025-05-19.webp', alt: 'Boma Café venue' },
+               { src: '/gallery/venue/2025-07-20.webp', alt: 'Boma Café venue view' },
+               { src: '/gallery/venue/2025-11-29.webp', alt: 'Boma Café venue space' },
+               { src: '/gallery/venue/2025-12-25.webp', alt: 'Boma Café venue area' },
+               { src: '/gallery/venue/586695496_18542032552027334_196345222483858604_n.jpg', alt: 'Boma Café venue interior' },
+               { src: '/gallery/venue/587298253_18541742503027334_426466464687217115_n.jpg', alt: 'Boma Café venue layout' },
+               { src: '/gallery/venue/bomacafe2_large.jpg', alt: 'Boma Café venue' },
+               { src: '/gallery/venue/bomacafe3.jpg', alt: 'Boma Café venue view' },
+               { src: '/gallery/venue/bomacafe4-large-1.jpg', alt: 'Boma Café venue space' },
+               { src: '/gallery/venue/bomacafe6_large.jpg', alt: 'Boma Café venue area' },
+               { src: '/gallery/venue/download.jpg', alt: 'Boma Café venue interior' },
+               { src: '/gallery/venue/gallery-3-800x600.jpeg', alt: 'Boma Café venue layout' },
+               { src: '/gallery/venue/gallery-5-800x600.jpeg', alt: 'Boma Café venue' },
+               { src: '/gallery/venue/gallery-8-800x600.jpeg', alt: 'Boma Café venue view' },
+               { src: '/gallery/venue/heroslide-1800x1013.jpeg', alt: 'Boma Café venue space' },
+               { src: '/gallery/venue/slide1-1980x1080.jpeg', alt: 'Boma Café venue area' },
+               { src: '/gallery/venue/slide3-1800x982.jpeg', alt: 'Boma Café venue interior' },
+               { src: '/gallery/venue/unnamed (1).webp', alt: 'Boma Café venue layout' },
+               { src: '/gallery/venue/unnamed (2).webp', alt: 'Boma Café venue' },
+               { src: '/gallery/venue/unnamed (3).webp', alt: 'Boma Café venue view' },
+               { src: '/gallery/venue/unnamed.webp', alt: 'Boma Café venue space' },
+             ]}
+             autoPlayInterval={6000}
+           />
         </div>
 
         {/* SEO Content */}
