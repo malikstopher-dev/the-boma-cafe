@@ -88,6 +88,14 @@ function EventCard({ event }: { event: any }) {
     return days.map(d => d.substring(0, 3).toUpperCase()).join(' & ');
   };
 
+  const getWhatsAppLink = () => {
+    const eventName = event.title;
+    const eventDate = event.date ? new Date(event.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }) : (event.days ? event.days.join(' & ') : 'TBA');
+    const eventTime = event.time || 'TBA';
+    const message = `Hi The Boma Café, I would like to book for ${eventName} on ${eventDate} at ${eventTime}. Please confirm availability.`;
+    return `https://wa.me/27715921190?text=${encodeURIComponent(message)}`;
+  };
+
   return (
     <div style={{
       background: 'var(--white)',
@@ -213,30 +221,37 @@ function EventCard({ event }: { event: any }) {
         <div style={{ display: 'flex', gap: '1.25rem', color: 'var(--text-light)', fontSize: '0.8rem', marginBottom: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--cream)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>🕐 {event.time}</span>
         </div>
-        <button style={{
-          width: '100%',
-          marginTop: 'auto',
-          padding: '0.85rem 1.5rem',
-          fontSize: '0.9rem',
-          background: 'var(--primary)',
-          color: 'white',
-          border: 'none',
-          borderRadius: 'var(--radius-md)',
-          cursor: 'pointer',
-          fontWeight: 600,
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--secondary)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--primary)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
+        <a 
+          href={getWhatsAppLink()}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'block',
+            width: '100%',
+            marginTop: 'auto',
+            padding: '0.85rem 1.5rem',
+            fontSize: '0.9rem',
+            background: 'var(--primary)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer',
+            fontWeight: 600,
+            textDecoration: 'none',
+            textAlign: 'center',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--secondary)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--primary)';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
         >
           Book Now
-        </button>
+        </a>
       </div>
     </div>
   );
