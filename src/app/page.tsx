@@ -50,8 +50,8 @@ const eventSlideshowImages = [
   { src: '/gallery/events/events-slideshow/slide/eventslide5.jpeg', alt: 'Buffet experience' },
   { src: '/gallery/events/events-slideshow/slide/eventslide6.jpeg', alt: 'Private dining' },
   { src: '/gallery/events/events-slideshow/slide/eventslide7.jpg', alt: 'Group booking' },
-  { src: '/gallery/events/events-slideshow/slide/WhatsApp Image 2026-04-29 at 08.10.57 (1).jpeg', alt: 'Event celebration' },
-  { src: '/gallery/events/events-slideshow/slide/WhatsApp Image 2026-04-29 at 08.10.58 (2).jpeg', alt: 'Special occasion' },
+  { src: '/gallery/events/events-slideshow/slide/whatsapp-2026-04-29-081057-1.jpeg', alt: 'Event celebration' },
+  { src: '/gallery/events/events-slideshow/slide/whatsapp-2026-04-29-081058-2.jpeg', alt: 'Special occasion' },
 ];
 
 const showcaseCategories = [
