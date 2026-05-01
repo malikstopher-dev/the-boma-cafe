@@ -433,10 +433,7 @@
   color: var(--text-light);
   word-break: break-word;
   overflow-wrap: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: none;
 }
 
 .itemTags {
@@ -1193,10 +1190,8 @@
     overflow-wrap: normal;
     hyphens: none;
     white-space: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    overflow: visible;
+    display: block;
   }
 
   .itemDescription,

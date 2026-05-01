@@ -991,7 +991,7 @@ input, textarea, select {
   
   .card p {
     font-size: 0.8rem !important;
-    -webkit-line-clamp: 2 !important;
+    overflow: visible !important;
   }
   
   /* Promotions grid - homepage - 2 columns to 1 */
@@ -1036,10 +1036,7 @@ input, textarea, select {
   .section > div > div[style*="gridTemplateColumns: 1.5fr"] > div:last-child p {
     font-size: 0.8rem !important;
     line-height: 1.5 !important;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    overflow: visible !important;
   }
   
   /* Featured event on Events page - date/time/location wrapper */
@@ -1142,7 +1139,7 @@ input, textarea, select {
   
   [style*="padding: 2rem"] p {
     font-size: 0.8rem !important;
-    -webkit-line-clamp: 2 !important;
+    overflow: visible !important;
   }
   
   /* Event card date badge - move from absolute position to flow */
@@ -1585,10 +1582,8 @@ input, textarea, select {
   font-size: 0.9rem;
   margin-bottom: 1rem;
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow: visible;
+  display: block;
 }
 
 .event-meta {
