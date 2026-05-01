@@ -230,9 +230,9 @@
     display: flex !important;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     text-align: center;
-    padding: 2rem 1.5rem 6rem;
+    padding: 1.25rem 1.5rem 6rem;
   }
 
   .footer {
@@ -249,16 +249,18 @@
 
   .mobileBrand {
     font-family: var(--font-display);
-    font-size: clamp(1.1rem, 4vw, 1.25rem);
+    font-size: clamp(1rem, 3.8vw, 1.15rem);
     line-height: 1.2;
     color: var(--brown-heading);
     margin: 0;
   }
 
   .footerLogo {
-    width: 56px;
+    width: 44px;
     height: auto;
-    margin-bottom: 6px;
+    margin: 0 auto 4px;
+    display: block;
+    object-fit: contain;
   }
 
   .mobileTagline {
