@@ -85,7 +85,6 @@ export default function Footer({ settings, branding }: FooterProps) {
                   { label: 'Home', href: '/' },
                   { label: 'Menu', href: '/menu' },
                   { label: 'Experience', href: '/experience' },
-                  { label: 'Entertainment', href: '/entertainment' },
                   { label: 'Events & Venue Hire', href: '/events' },
                   { label: 'Gallery', href: '/gallery' },
                   { label: 'Contact', href: '/contact' },

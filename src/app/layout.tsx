@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/cart";
 import CartButton from "@/components/ui/CartButton";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton";
 import { BUSINESS_INFO } from "@/lib/whatsappConfig";
+import MobileBottomBar from "@/components/ui/MobileBottomBar";
 
 const localBusinessSchema = {
   "@context": "https://schema.org",
@@ -137,6 +138,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
             <ScrollToTopButton />
             <CartButton />
+            <MobileBottomBar />
           </CartProvider>
         </AuthProvider>
       </body>

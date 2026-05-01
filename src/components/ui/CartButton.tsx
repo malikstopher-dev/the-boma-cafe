@@ -60,75 +60,29 @@ export default function CartButton() {
 
   return (
     <>
-      {/* Sticky WhatsApp Button - Mobile */}
+{/* Sticky WhatsApp Button - Mobile */}
        <a
-         href={`https://wa.me/${BUSINESS_INFO.phoneRaw}?text=${encodeURIComponent(BUSINESS_INFO.name + ' - I would like to place an order')}`}
-         target="_blank"
-         rel="noopener noreferrer"
-         style={{
-           position: 'fixed',
-           bottom: '88px',
-           right: '24px',
-           width: '56px',
-           height: '56px',
-           borderRadius: '50%',
-           background: 'linear-gradient(135deg, #25D366, #128C7E)',
-           display: 'flex',
-           alignItems: 'center',
-           justifyContent: 'center',
-           boxShadow: '0 4px 16px rgba(37, 211, 102, 0.4)',
-           zIndex: 998,
-           textDecoration: 'none',
-         }}
-         title="Order via WhatsApp"
-       >
-         <i className="fab fa-whatsapp" style={{ color: '#fff', fontSize: '1.75rem' }} />
+          href={`https://wa.me/${BUSINESS_INFO.phoneRaw}?text=${encodeURIComponent(BUSINESS_INFO.name + ' - I would like to place an order')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mobile-cta-button"
+          title="Order via WhatsApp"
+        >
+          <i className="fab fa-whatsapp" style={{ color: '#fff', fontSize: '1.75rem' }} />
        </a>
 
       {/* Cart Button */}
        <button
-         onClick={() => setIsOpen(true)}
-         style={{
-           position: 'fixed',
-           bottom: '24px',
-           right: '24px',
-           width: '56px',
-           height: '56px',
-           borderRadius: '50%',
-           background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-           border: 'none',
-           boxShadow: '0 4px 20px rgba(139, 69, 19, 0.4)',
-           cursor: 'pointer',
-           zIndex: 999,
-           display: 'flex',
-           alignItems: 'center',
-           justifyContent: 'center',
-           overflow: 'visible',
-         }}
-       >
-         <i className="fas fa-shopping-cart" style={{ color: '#fff', fontSize: '1.2rem' }} />
-         {itemCount > 0 && (
-           <span style={{
-             position: 'absolute',
-             top: '-6px',
-             right: '-4px',
-             background: '#dc3545',
-             color: '#fff',
-             minWidth: '22px',
-             height: '22px',
-             borderRadius: '999px',
-             fontSize: '12px',
-             fontWeight: 700,
-             display: 'flex',
-             alignItems: 'center',
-             justifyContent: 'center',
-             padding: '0 4px',
-             zIndex: 1001,
-           }}>
-             {itemCount}
-           </span>
-         )}
-       </button>
+          onClick={() => setIsOpen(true)}
+          className="mobile-cart-button"
+        >
+          <i className="fas fa-shopping-cart" style={{ color: '#fff', fontSize: '1.2rem' }} />
+          {itemCount > 0 && (
+            <span className="mobile-cart-badge">
+              {itemCount}
+            </span>
+          )}
+        </button>
 
       {/* Cart Modal */}
       {isOpen && (

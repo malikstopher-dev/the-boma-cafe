@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -21,6 +21,9 @@ import UpsellModal from '@/components/ui/UpsellModal';
 import PremiumHero from '@/components/ui/PremiumHero';
 import { getMenuItemImage } from '@/lib/menuImage';
 import styles from './Menu.module.css';
+
+const INITIAL_COUNT = 24;
+const LOAD_MORE_COUNT = 24;
 
 const DRINK_CATEGORIES = [
   'Cold Beverages',
@@ -192,6 +195,7 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<any[]>(defaultMenuItems);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState<MenuItem | null>(null);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const { addItem, items: cartItems, total } = useCart();
 
   // Use default data directly - skip CMS for now since field mapping issues exist
@@ -224,6 +228,24 @@ export default function MenuPage() {
     
     return filtered;
   }, [sections, activeCategory, searchQuery]);
+
+  // Reset visible count when category or search changes
+  const handleCategoryChange = useCallback((category: string) => {
+    setActiveCategory(category);
+    setVisibleCount(INITIAL_COUNT);
+  }, []);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    setVisibleCount(INITIAL_COUNT);
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount(prev => prev + LOAD_MORE_COUNT);
+  }, []);
+
+  const totalItems = filteredSections.reduce((sum, s) => sum + s.items.length, 0);
+  const hasMoreItems = visibleCount < totalItems;
 
   const handleAddToCart = (item: MenuItem, selectedSize?: string, selectedAddOns?: string[], notes?: string) => {
     const finalPrice = calculateItemTotal(item, selectedSize, selectedAddOns);
@@ -312,7 +334,7 @@ export default function MenuPage() {
                 className={styles.searchInput}
                 placeholder="Search menu..."
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={e => handleSearchChange(e.target.value)}
               />
             </div>
             {total > 0 && (
@@ -337,7 +359,7 @@ export default function MenuPage() {
             </a>
             <button
               className={`${styles.categoryTab} ${activeCategory === 'All' ? styles.active : ''}`}
-              onClick={() => setActiveCategory('All')}
+              onClick={() => handleCategoryChange('All')}
             >
               All
             </button>
@@ -345,10 +367,7 @@ export default function MenuPage() {
               <button
                 key={cat.id}
                 className={`${styles.categoryTab} ${activeCategory === cat.name ? styles.active : ''}`}
-                onClick={() => {
-                  setActiveCategory(cat.name);
-                  scrollToCategory(cat.id);
-                }}
+                onClick={() => handleCategoryChange(cat.name)}
               >
                 {cat.name}
               </button>
@@ -367,7 +386,7 @@ export default function MenuPage() {
                   )}
                 </div>
                 <div className={styles.itemsGrid}>
-                  {section.items.map((item: MenuItem) => {
+                  {section.items.slice(0, visibleCount).map((item: MenuItem) => {
                     const itemImage = getMenuItemImage(item.name);
                     return (
                     <div key={item.id} className={styles.itemCard} onClick={() => setSelectedItem(item)}>
@@ -376,6 +395,8 @@ export default function MenuPage() {
                           src={itemImage}
                           alt={item.name}
                           className={styles.itemImage}
+                          loading="lazy"
+                          decoding="async"
                         />
                         <div className={styles.itemBadges}>
                           {item.isOnPromo && item.promoBadge && (
@@ -413,6 +434,12 @@ export default function MenuPage() {
                 </div>
               </section>
             ))}
+            
+            {hasMoreItems && (
+              <button className={styles.loadMoreButton} onClick={handleLoadMore}>
+                Load More ({totalItems - visibleCount} more)
+              </button>
+            )}
           </div>
         </div>
 
