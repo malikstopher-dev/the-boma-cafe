@@ -2070,20 +2070,7 @@ input, textarea, select {
 
 @media (max-width: 768px) {
   .mobile-cta-button {
-    display: flex;
-    position: fixed;
-    bottom: 100px;
-    right: 16px;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #25D366, #128C7E);
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
-    z-index: 9998;
-    text-decoration: none;
-    overflow: visible;
+    display: none !important;
   }
 
   .mobile-cart-button {
@@ -2120,6 +2107,33 @@ input, textarea, select {
     justify-content: center;
     padding: 0 4px;
     z-index: 9999;
+  }
+
+  /* Bar menu: 2-column grid on mobile */
+  .barMenuGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    max-width: 100% !important;
+  }
+
+  .barMenuCard > div,
+  .barMenuCard > [style] {
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .barMenuCard [style*="aspectRatio"] {
+    height: 130px !important;
+  }
+
+  .barMenuCard h3 {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  .barMenuCard p {
+    font-size: 10.5px !important;
+    line-height: 1.3 !important;
   }
 
   /* Safe padding for page content above bottom bar */

@@ -381,7 +381,7 @@ export default function BarMenuClient() {
                     {category}
                   </h2>
                 </div>
-                <div style={{ 
+                <div className="barMenuGrid" style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                   gap: '1rem',
@@ -389,7 +389,9 @@ export default function BarMenuClient() {
                   margin: '0 auto'
                 }}>
                   {items.map((drink, idx) => (
-                    <DrinkCard key={drink.id} drink={drink} categoryUsedImages={categoryUsedImages} cardIndex={idx} />
+                    <div key={drink.id} className="barMenuCard">
+                    <DrinkCard drink={drink} categoryUsedImages={categoryUsedImages} cardIndex={idx} />
+                    </div>
                   ))}
                 </div>
               </div>

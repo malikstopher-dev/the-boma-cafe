@@ -274,6 +274,15 @@
     line-height: 1.2;
     color: var(--brown-heading);
     margin: 0;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .mobileBrand::before,
+  .mobileBrand::after {
+    display: none !important;
+    content: none !important;
   }
 
   .mobileTagline {
