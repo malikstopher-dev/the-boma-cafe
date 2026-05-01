@@ -225,13 +225,18 @@
   /* Fully hide desktop footer blocks */
   .desktopFooterContent {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .grid {
-    display: none !important;
-  }
-
-  .bottom {
+  .grid,
+  .bottom,
+  .brand,
+  .links,
+  .contact {
     display: none !important;
   }
 
@@ -258,14 +263,14 @@
   }
 
   /* Target ONLY the mobile footer logo */
-  .mobileFooterContent .footerLogo {
-    height: 32px !important;
-    width: auto !important;
+  .mobileFooterContent img {
+    width: 32px !important;
     max-width: 32px !important;
+    height: auto !important;
     max-height: 32px !important;
+    object-fit: contain !important;
     margin: 0 auto 4px !important;
     display: block !important;
-    object-fit: contain !important;
   }
 
   .mobileBrand {
@@ -277,10 +282,24 @@
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    position: relative;
   }
 
   .mobileBrand::before,
   .mobileBrand::after {
+    display: none !important;
+    content: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    position: absolute;
+  }
+
+  .mobileFooterContent .mobileBrand::before,
+  .mobileFooterContent .mobileBrand::after {
     display: none !important;
     content: none !important;
   }

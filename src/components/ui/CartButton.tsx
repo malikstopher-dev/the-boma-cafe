@@ -85,25 +85,26 @@ export default function CartButton() {
         </button>
 
       {/* Cart Modal */}
-      {isOpen && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-        }} onClick={() => setIsOpen(false)}>
-          <div style={{
-            background: '#fff',
-            width: '100%',
-            maxWidth: '500px',
-            borderRadius: '20px 20px 0 0',
-            padding: '1.5rem',
-            maxHeight: '90vh',
-            overflow: 'auto',
-          }} onClick={e => e.stopPropagation()}>
+       {isOpen && (
+         <div style={{
+           position: 'fixed',
+           inset: 0,
+           background: 'rgba(0,0,0,0.5)',
+           zIndex: 10000,
+           display: 'flex',
+           alignItems: 'flex-end',
+           justifyContent: 'center',
+         }} onClick={() => setIsOpen(false)}>
+           <div style={{
+             background: '#fff',
+             width: '100%',
+             maxWidth: '500px',
+             borderRadius: '20px 20px 0 0',
+             padding: '1.5rem',
+             maxHeight: '90vh',
+             overflow: 'auto',
+             paddingBottom: '80px',
+           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ fontSize: '1.35rem', color: 'var(--dark-brown)' }}>🛒 Your Order</h2>
               <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem' }}>✕</button>
