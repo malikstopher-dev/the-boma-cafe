@@ -256,8 +256,9 @@
   }
 
   .footerLogo {
-    width: 44px;
-    height: auto;
+    height: 40px;
+    width: auto;
+    max-width: 130px;
     margin: 0 auto 4px;
     display: block;
     object-fit: contain;

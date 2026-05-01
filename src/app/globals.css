@@ -1976,22 +1976,64 @@ input, textarea, select {
   }
 }
 
-/* Founder Section Mobile */
+/* Founder Section Mobile - Identity-first premium layout */
 @media (max-width: 768px) {
   .founder-section {
     padding: var(--space-2xl) 4%;
   }
   
-  .founder-image {
-    order: 2;
-  }
-  
-  .founder-content {
-    order: 1;
-  }
-  
   .founder-image img {
     height: 400px;
+  }
+
+  /* Homepage founder card: flatten DOM so badge/image/text reorder cleanly */
+  .founder-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 2rem 1.5rem !important;
+  }
+
+  .founder-card > div:not(.founder-image) {
+    display: contents !important;
+  }
+
+  .founder-image {
+    order: 2 !important;
+    width: 86px !important;
+    height: 86px !important;
+    margin: 14px auto 16px !important;
+    border-radius: 50% !important;
+    border: 3px solid var(--primary) !important;
+  }
+
+  .founder-image img,
+  .founder-image > div,
+  .founder-image > div > img,
+  .founder-image span {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  /* Name heading inside content */
+  .founder-card h3 {
+    order: 3 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.6rem !important;
+  }
+
+  /* Paragraphs (bio + quote) */
+  .founder-card p {
+    order: 4 !important;
+  }
+
+  /* Credibility badges row */
+  .founder-card > div:not(.founder-image) > div:last-child {
+    order: 6 !important;
+    justify-content: center !important;
   }
 }
 
