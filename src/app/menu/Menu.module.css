@@ -1023,8 +1023,8 @@
   .categoryDescription {
     font-size: 0.8rem;
   }
-  
-.itemsGrid {
+
+  .itemsGrid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
@@ -1036,7 +1036,7 @@
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    height: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
     border-radius: 14px;
@@ -1088,8 +1088,8 @@
   }
 
   .itemName {
-    font-size: 10.5px;
-    line-height: 1.15;
+    font-size: 11px;
+    line-height: 1.2;
     font-weight: 700;
     margin: 0;
     display: block;
@@ -1097,7 +1097,7 @@
     overflow: visible;
     text-overflow: unset;
     word-break: normal;
-    overflow-wrap: normal;
+    overflow-wrap: break-word;
     hyphens: none;
     max-height: none;
     height: auto;
@@ -1112,7 +1112,6 @@
     font-weight: 800;
     color: #c76b2a;
     margin-top: 4px;
-    white-space: nowrap;
   }
 
   .itemPriceFrom {
@@ -1122,11 +1121,6 @@
   .itemDescription,
   .description {
     display: none;
-    visibility: hidden;
-    height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
   }
 
   .itemTags,
@@ -1147,188 +1141,8 @@
     padding: 5px 3px;
     min-height: 26px;
     border-radius: 8px;
-    white-space: nowrap;
   }
 
-  .itemCard {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    border-radius: 12px;
-  }
-
-  .imageWrapper {
-    height: 82px;
-    min-height: 82px;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .itemImage {
-    height: 82px;
-    width: 100%;
-    object-fit: cover;
-  }
-
-  .itemImagePlaceholder {
-    height: 82px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-  }
-
-  .itemContent {
-    padding: 5px 6px;
-    min-height: auto;
-  }
-
-  .itemName {
-    font-size: 11px;
-    line-height: 1.15;
-    font-weight: 700;
-    margin: 0;
-    word-break: normal;
-    overflow-wrap: normal;
-    hyphens: none;
-    white-space: normal;
-    overflow: visible;
-    display: block;
-  }
-
-  .itemDescription,
-  .description {
-    display: none;
-    visibility: hidden;
-    height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .itemHeader {
-    display: block;
-  }
-
-  .itemPrice {
-    display: block;
-    font-size: 11px;
-    font-weight: 800;
-    margin-top: 2px;
-    white-space: nowrap;
-  }
-
-  .itemPriceFrom {
-    display: none;
-  }
-
-  .itemTags {
-    display: none;
-  }
-
-  .itemOptions {
-    margin-top: 4px;
-    padding-top: 0;
-    display: flex;
-    justify-content: center;
-  }
-
-  .optionButton {
-    width: 100%;
-    font-size: 9px;
-    padding: 4px 5px;
-    border-radius: 8px;
-    min-height: 24px;
-  }
-
-  .itemBadges {
-    display: none;
-  }
-
-  .categoryTabsInner {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-  }
-  
-  .categoryTabsInner::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .categoryTab {
-    padding: var(--space-xs) var(--space-md);
-    font-size: 0.8rem;
-    flex-shrink: 0;
-  }
-  
-  .menuContent {
-    padding: var(--space-lg) 4%;
-    position: relative;
-    top: 40px;
-  }
-  
-  .categorySection {
-    padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-  }
-  
-  .categoryTitle {
-    font-size: 1.5rem;
-  }
-  
-  .categoryDescription {
-    font-size: 0.9rem;
-  }
-  
-  .itemsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  
-.itemImage {
-    height: 85px;
-    width: 100%;
-    object-fit: cover;
-  }
-
-  .itemImagePlaceholder {
-    height: 85px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .itemContent {
-    padding: var(--space-md);
-  }
-  
-  .itemName {
-    font-size: 1rem;
-  }
-  
-  .itemPrice {
-    font-size: 1.1rem;
-  }
-  
-  .itemDescription {
-    font-size: 0.85rem;
-  }
-  
-  .itemOptions {
-    flex-direction: column;
-    gap: var(--space-sm);
-    align-items: stretch;
-  }
-  
-  .optionButton {
-    width: 100%;
-    text-align: center;
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.85rem;
-  }
-  
   .modalContent {
     max-width: calc(100% - 32px);
     margin: var(--space-md);

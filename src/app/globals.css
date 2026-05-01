@@ -108,29 +108,17 @@ body {
   max-width: 100vw;
 }
 
-/* Mobile safe area - prevent bottom nav from covering content */
+/* Mobile safe area + overflow prevention */
 @media (max-width: 768px) {
   main {
     padding-bottom: 96px !important;
   }
   
-  /* Also apply to body for pages without main */
-  body {
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
-  }
-}
-
-/* Global overflow prevention */
-* {
-  max-width: 100%;
-}
-
-/* Global Mobile Overflow Fix */
-@media (max-width: 768px) {
   body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
   
   * {
@@ -157,7 +145,6 @@ body {
     font-size: 1rem;
   }
   
-  /* Fix all flex containers on mobile */
   .flex-container,
   [style*="display: flex"],
   [style*="display:grid"] {
@@ -165,12 +152,11 @@ body {
     overflow-x: hidden;
   }
   
-  /* Fix buttons on mobile */
   .btn {
     max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow: visible;
+    white-space: normal;
+    text-overflow: unset;
   }
 }
 
@@ -907,7 +893,7 @@ input, textarea, select {
   h1, h2, h3, h4, h5, h6 {
     font-size: clamp(1.25rem, 4vw, 2rem) !important;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
   
   /* Buttons */
@@ -915,9 +901,9 @@ input, textarea, select {
     padding: 0.75rem 1.25rem;
     font-size: 0.85rem;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    white-space: normal;
   }
   
   /* All sections with specific backgrounds */
