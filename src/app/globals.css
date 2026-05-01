@@ -108,7 +108,7 @@ body {
   max-width: 100vw;
 }
 
-/* Mobile safe area + overflow prevention */
+/* Mobile safe area + overflow prevention + text readability */
 @media (max-width: 768px) {
   main {
     padding-bottom: 96px !important;
@@ -157,6 +157,24 @@ body {
     overflow: visible;
     white-space: normal;
     text-overflow: unset;
+  }
+
+  /* Global text readability reset */
+  h1, h2, h3, h4, h5, h6, p, span {
+    overflow: visible !important;
+    text-overflow: unset !important;
+    white-space: normal !important;
+    word-break: normal !important;
+  }
+
+  /* Card height reset */
+  .card,
+  .eventCard,
+  .itemCard,
+  .testimonialCard,
+  .featureCard {
+    height: auto !important;
+    min-height: unset !important;
   }
 }
 
@@ -570,13 +588,6 @@ input, textarea, select {
   h3 { font-size: 1.5rem; }
 }
 
-@media (max-width: 480px) {
-  .btn {
-    padding: var(--space-sm) var(--space-lg);
-    font-size: 0.9rem;
-  }
-}
-
 /* Grid utilities */
 .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
 .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
@@ -939,14 +950,12 @@ input, textarea, select {
     font-size: 0.85rem;
   }
   
-  .hero-cta .btn {
-    max-width: 180px;
-    padding: 0.625rem 1rem;
-    font-size: 0.8rem;
+  .showcase-grid {
+    grid-template-columns: 1fr;
   }
   
-  .section {
-    padding: var(--space-xl) 4% !important;
+  .showcase-card-image {
+    height: 180px;
   }
 }
 
@@ -1774,16 +1783,14 @@ input, textarea, select {
 }
 
 @media (max-width: 768px) {
-  .premium-showcase,
-  .about-section,
-  .signature-section,
-  .events-section,
-  .testimonials-section {
+  .section {
     padding: var(--space-2xl) 4%;
   }
   
-  .section-header {
-    margin-bottom: var(--space-xl);
+  .container {
+    padding: 0 4%;
+    width: 100%;
+    max-width: 100%;
   }
   
   .section-header h2 {
@@ -1798,10 +1805,6 @@ input, textarea, select {
   .section-header h2::after {
     bottom: -8px;
     width: 50px;
-  }
-  
-  .section-cta {
-    margin-top: var(--space-xl);
   }
   
   .showcase-grid {
@@ -1828,11 +1831,6 @@ input, textarea, select {
   
   .showcase-cta {
     font-size: 0.8rem;
-  }
-  
-  .showcase-badge {
-    font-size: 0.6rem;
-    padding: 0.25rem 0.5rem;
   }
   
   .about-features {
@@ -1898,21 +1896,6 @@ input, textarea, select {
     grid-template-columns: 1fr;
   }
   
-  .cta-info {
-    flex-direction: column;
-    gap: var(--space-lg);
-  }
-  
-  .cta-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .cta-buttons .btn {
-    width: 100%;
-    max-width: 280px;
-  }
-  
   .welcome-banner {
     padding: var(--space-2xl) 4%;
   }
@@ -1923,14 +1906,6 @@ input, textarea, select {
   
   .welcome-banner p {
     font-size: 1rem;
-  }
-  
-  .promotions-section {
-    padding: var(--space-2xl) 4%;
-  }
-  
-  .cta-section {
-    padding: var(--space-2xl) 4%;
   }
 }
 
@@ -1960,6 +1935,20 @@ input, textarea, select {
     padding: var(--space-2xl) 4%;
   }
   
+  .founder-image {
+    order: 2;
+  }
+  
+  .founder-content {
+    order: 1;
+  }
+  
+  .founder-image img {
+    height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
   .founder-card {
     padding: 1.5rem;
     grid-template-columns: 1fr !important;
