@@ -1769,24 +1769,26 @@
   .testimonialsSection,
   .promotionsSection,
   .reservationSection {
-    padding: 4.5rem 4%;
+    padding: 3.5rem 4%;
   }
   
   .sectionHeader {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
   
   .sectionHeader h2 {
-    font-size: 1.65rem;
+    font-size: clamp(1.35rem, 5.5vw, 1.65rem);
+    line-height: 1.25;
   }
   
   .sectionHeader p {
-    font-size: 0.95rem;
-    margin-top: 1.25rem;
+    font-size: clamp(0.88rem, 3.2vw, 0.95rem);
+    margin-top: 1rem;
+    line-height: 1.5;
   }
   
   .sectionCta {
-    margin-top: 2.5rem;
+    margin-top: 2rem;
   }
   
   .showcaseGrid {
@@ -1830,17 +1832,17 @@
   }
 
   .cocktailsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .cocktailCard {
-    border-radius: 12px;
+    border-radius: var(--mobile-card-radius);
     overflow: hidden;
   }
 
   .cocktailImageWrapper {
-    height: 85px;
+    height: 120px;
     overflow: hidden;
   }
 
@@ -1850,15 +1852,17 @@
   }
 
   .cocktailContent {
-    padding: 6px 8px;
+    padding: 10px 12px;
   }
 
   .cocktailContent h4 {
-    font-size: 12px;
-    line-height: 1.2;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
+    line-height: 1.25;
     overflow: visible;
     display: block;
     margin: 0;
+    font-weight: 600;
+    color: #2C1E1A;
   }
 
   .cocktailContent p {
@@ -1866,24 +1870,24 @@
   }
 
   .cocktailPrice {
-    font-size: 12px;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
     font-weight: 700;
     display: block;
     margin-top: 4px;
   }
 
   .signatureGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .signatureCard {
-    border-radius: 12px;
+    border-radius: var(--mobile-card-radius);
     overflow: hidden;
   }
 
   .signatureCardImage {
-    height: 85px;
+    height: 120px;
     overflow: hidden;
     position: relative;
   }
@@ -1898,15 +1902,17 @@
   }
 
   .signatureCardContent {
-    padding: 6px 8px;
+    padding: 10px 12px;
   }
 
   .signatureCardContent h4 {
-    font-size: 12px;
-    line-height: 1.2;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
+    line-height: 1.25;
     overflow: visible;
     display: block;
     margin: 0 0 4px;
+    font-weight: 600;
+    color: #2C1E1A;
   }
 
   .signatureCardContent p {
@@ -1920,7 +1926,7 @@
   }
 
   .signaturePrice {
-    font-size: 12px;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
     font-weight: 700;
     color: var(--primary);
   }
@@ -1930,18 +1936,18 @@
   }
   
   .eventsGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
-.eventCard {
+  .eventCard {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
     min-width: 0;
     width: 100%;
-    border-radius: 14px;
+    border-radius: var(--mobile-card-radius);
     overflow: hidden;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid rgba(130, 82, 45, 0.12);
@@ -1955,10 +1961,10 @@
   }
 
   .eventCardImage {
-    height: 78px;
-    min-height: 78px;
+    height: 110px;
+    min-height: 110px;
     overflow: hidden;
-    border-radius: 14px 14px 0 0;
+    border-radius: var(--mobile-card-radius) var(--mobile-card-radius) 0 0;
     background: linear-gradient(135deg, #f7efe7, #efe2d6);
   }
 
@@ -1970,98 +1976,28 @@
   }
 
   .eventCardContent {
-    padding: 6px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
   }
 
   .eventTitle,
   .eventCard h3,
   .eventCard h4 {
-    font-size: 10.5px;
-    line-height: 1.15;
-    margin-bottom: 3px;
-    overflow: visible;
-    display: block;
-    font-weight: 700;
-    color: #2f1f17;
-    letter-spacing: -0.01em;
-  }
-
-  .eventDescription,
-  .eventCard p {
-    font-size: 9.2px;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
     line-height: 1.25;
-    margin-top: 2px;
-    overflow: visible;
-    display: block;
-    opacity: 0.8;
-  }
-
-  .eventMeta,
-  .eventDetails {
-    font-size: 8.5px;
-    opacity: 0.75;
-  }
-
-  .eventDate,
-  .eventBadge,
-  .dateBadge {
-    background: linear-gradient(135deg, #d64a1c, #b93712);
-    color: #fff;
-    box-shadow: 0 6px 14px rgba(180, 55, 18, 0.25);
-    border: 1px solid rgba(255,255,255,0.22);
-    width: 46px;
-    height: 46px;
-    padding: 4px;
-    border-radius: 10px;
-    font-size: 10px;
-    line-height: 1;
-  }
-
-  .eventDate strong,
-  .eventBadge strong {
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  .eventDate span,
-  .eventBadge span {
-    font-size: 8px;
-  }
-
-  .eventButton,
-  .eventCard a,
-  .eventCard button {
-    margin-top: auto;
-    font-size: 9px;
-    padding: 5px;
-  }
-
-  .eventCardContent {
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .eventTitle,
-  .eventCard h3,
-  .eventCard h4 {
-    font-size: 11px;
-    line-height: 1.2;
     margin-bottom: 3px;
     overflow: visible;
     display: block;
-    font-weight: 700;
+    font-weight: 600;
     color: #2f1f17;
     letter-spacing: -0.01em;
   }
 
   .eventDescription,
   .eventCard p {
-    font-size: 10px;
+    font-size: clamp(0.68rem, 2.4vw, 0.78rem);
     line-height: 1.35;
     margin-top: 2px;
     overflow: visible;
@@ -2071,7 +2007,7 @@
 
   .eventMeta,
   .eventDetails {
-    font-size: 8.5px;
+    font-size: clamp(0.62rem, 2.2vw, 0.72rem);
     opacity: 0.75;
   }
 
@@ -2082,31 +2018,32 @@
     color: #fff;
     box-shadow: 0 6px 14px rgba(180, 55, 18, 0.25);
     border: 1px solid rgba(255,255,255,0.22);
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     padding: 4px;
     border-radius: 10px;
-    font-size: 10px;
+    font-size: 9px;
     line-height: 1;
   }
 
   .eventDate strong,
   .eventBadge strong {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
   }
 
   .eventDate span,
   .eventBadge span {
-    font-size: 8px;
+    font-size: 7px;
   }
 
   .eventButton,
   .eventCard a,
   .eventCard button {
     margin-top: auto;
-    font-size: 9px;
-    padding: 5px;
+    font-size: clamp(0.68rem, 2.4vw, 0.78rem);
+    padding: 8px;
+    min-height: 36px;
   }
   
   .galleryMainImage {
@@ -2129,24 +2066,59 @@
   }
   
   .testimonialsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    margin-left: -4%;
+    margin-right: -4%;
+    padding-left: 4%;
+    padding-right: 4%;
+  }
+
+  .testimonialsGrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .testimonialCardWrapper {
+    flex: 0 0 min(300px, 80vw);
+    scroll-snap-align: start;
+    height: auto;
   }
   
   .testimonialCard {
-    padding: 12px;
-    border-radius: 16px;
+    padding: 1.25rem;
+    border-radius: var(--mobile-card-radius);
   }
   
   .testimonialQuote {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    top: 0.75rem;
+    left: 0.75rem;
   }
   
   .testimonialText {
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: clamp(0.82rem, 3vw, 0.92rem);
+    line-height: 1.55;
     overflow: visible;
     display: block;
+  }
+
+  .testimonialAvatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+
+  .testimonialAuthor strong {
+    font-size: clamp(0.82rem, 3vw, 0.92rem);
+  }
+
+  .testimonialAuthor span {
+    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
   }
   
   .promotionsGrid {
@@ -2177,32 +2149,36 @@
   }
   
 .aboutFeatures {
-    grid-template-columns: repeat(3, minmax(80px, 1fr));
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .aboutFeature {
-    padding: 10px 6px;
-    text-align: center;
-    flex-direction: column;
-    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    flex-direction: row;
+    align-items: center;
+    border-radius: var(--mobile-card-radius);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(232, 213, 196, 0.5);
   }
 
   .aboutFeatureIcon {
-    font-size: 18px;
-    margin-bottom: 4px;
-    margin-right: 0;
+    font-size: 1.5rem;
+    margin-bottom: 0;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
   }
 
   .aboutFeature strong {
-    font-size: 11px;
-    line-height: 1.15;
+    font-size: clamp(0.82rem, 3vw, 0.92rem);
+    line-height: 1.25;
     margin-bottom: 2px;
   }
 
   .aboutFeature span {
-    font-size: 9px;
-    line-height: 1.2;
+    font-size: clamp(0.72rem, 2.6vw, 0.82rem);
+    line-height: 1.4;
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
@@ -2210,62 +2186,83 @@
   }
   
   .heroSection {
-    height: 60vh;
-    min-height: 420px;
-    max-height: 520px;
+    height: 65vh;
+    min-height: 440px;
+    max-height: 560px;
   }
   
   .heroContent {
-    padding: 0 4%;
-    top: 45%;
+    padding: 0 5%;
+    top: 48%;
   }
   
   .heroSubtitle {
-    font-size: 0.8rem;
-    letter-spacing: 3px;
+    font-size: clamp(0.68rem, 2.5vw, 0.8rem);
+    letter-spacing: 2.5px;
     margin-bottom: 0.6rem;
   }
   
   .heroTitle {
-    font-size: 2rem;
+    font-size: clamp(1.6rem, 7vw, 2.2rem);
     margin-bottom: 0.75rem;
+    line-height: 1.15;
   }
   
   .heroTagline {
-    font-size: 1rem;
-    margin-bottom: 1.75rem;
+    font-size: clamp(0.88rem, 3.2vw, 1rem);
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
   }
   
   .heroCta {
     flex-direction: column;
     align-items: center;
-    gap: 0.85rem;
+    gap: 0.75rem;
   }
   
   .heroCta .btn {
     width: 100%;
-    max-width: 240px;
+    max-width: 260px;
     padding: 0.85rem 1.5rem;
+    min-height: 48px;
+    font-size: clamp(0.88rem, 3.2vw, 0.95rem);
   }
   
   .heroDots {
-    bottom: 25px;
+    bottom: 20px;
+  }
+
+  .heroDot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .heroDot.active {
+    width: 28px;
   }
 }
 
 @media (max-width: 480px) {
   .showcaseGrid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   
   .showcaseCardImage {
-    height: 200px;
+    height: 120px;
+  }
+
+  .showcaseCardContent {
+    padding: 10px 12px;
+  }
+
+  .showcaseCardContent h3 {
+    font-size: clamp(0.78rem, 2.8vw, 0.88rem);
   }
   
   .section-badge {
-    font-size: 0.65rem;
-    padding: 0.35rem 0.85rem;
+    font-size: clamp(0.62rem, 2.2vw, 0.68rem);
+    padding: 0.3rem 0.7rem;
   }
   
   .btn-lg {
@@ -2274,73 +2271,77 @@
   }
   
   .heroSection {
-    height: 55vh;
+    height: 58vh;
     min-height: 380px;
-    max-height: 420px;
+    max-height: 440px;
   }
   
   .heroContent {
-    top: 42%;
+    top: 46%;
   }
   
   .heroTitle {
-    font-size: 1.75rem;
+    font-size: clamp(1.4rem, 7vw, 1.8rem);
   }
   
   .heroTagline {
-    font-size: 0.9rem;
+    font-size: clamp(0.82rem, 3vw, 0.9rem);
   }
   
   .heroCta .btn {
-    max-width: 200px;
+    max-width: 240px;
     padding: 0.75rem 1.25rem;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
   }
   
   .cocktailsGrid {
-    gap: 1.5rem;
+    gap: 12px;
   }
   
   .cocktailImageWrapper {
-    height: 180px;
+    height: 100px;
   }
   
   .signatureGrid {
-    gap: 1.25rem;
+    gap: 12px;
   }
   
   .signatureCardImage {
-    height: 160px;
+    height: 100px;
   }
   
   .eventsGrid {
-    gap: 1.5rem;
+    gap: 12px;
   }
   
   .eventCardImage {
-    height: 180px;
+    height: 100px;
   }
   
   .galleryMainImage {
-    height: 280px;
+    height: 260px;
   }
   
   .galleryNavPrev,
   .galleryNavNext {
     width: 38px;
     height: 38px;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
   
   .testimonialsGrid {
-    gap: 1.5rem;
+    gap: 12px;
   }
   
   .testimonialCard {
-    padding: 1.5rem;
+    padding: 1rem;
   }
   
   .testimonialQuote {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
+  }
+
+  .testimonialCardWrapper {
+    flex: 0 0 min(260px, 78vw);
   }
 }

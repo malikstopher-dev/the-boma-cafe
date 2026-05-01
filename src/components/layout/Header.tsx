@@ -101,10 +101,17 @@ export default function Header() {
                 </Link>
               ))}
             </nav>
-            <div className={styles.mobileIcons}>
-              <a href="tel:0729962212" className={styles.mobileIcon} title="Call">
+            <div className={styles.mobileCtaRow}>
+              <a href={`tel:0729962212`} className={styles.mobileCtaBtn}>
                 <i className="fas fa-phone" />
+                <span>Call</span>
               </a>
+              <a href="https://wa.me/27729962212" target="_blank" rel="noopener noreferrer" className={styles.mobileCtaBtn}>
+                <i className="fab fa-whatsapp" />
+                <span>WhatsApp</span>
+              </a>
+            </div>
+            <div className={styles.mobileIcons}>
               <a href="mailto:info@thebomacafe.co.za" className={styles.mobileIcon} title="Email">
                 <i className="fas fa-envelope" />
               </a>

@@ -968,13 +968,16 @@
   }
   
   .categoryTabs {
-    padding: var(--space-xs) 4%;
-    position: relative;
-    top: 0;
+    padding: 8px 4%;
+    position: sticky;
+    top: 60px;
     z-index: 80;
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
+    background: rgba(245, 230, 211, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   
   .categoryTabsInner {
@@ -985,6 +988,7 @@
     scrollbar-width: none;
     padding-bottom: 4px;
     max-width: 100%;
+    gap: 8px;
   }
   
   .categoryTabsInner::-webkit-scrollbar {
@@ -992,9 +996,14 @@
   }
   
   .categoryTab {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.7rem;
+    padding: 0.5rem 0.85rem;
+    font-size: clamp(0.72rem, 2.6vw, 0.82rem);
     flex-shrink: 0;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    border-radius: 999px;
+    font-weight: 500;
   }
   
   .menuContent {
@@ -1026,8 +1035,8 @@
 
   .itemsGrid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
     align-items: stretch;
     width: 100%;
   }
@@ -1039,7 +1048,7 @@
     height: auto;
     display: flex;
     flex-direction: column;
-    border-radius: 14px;
+    border-radius: var(--mobile-card-radius);
     overflow: hidden;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid rgba(130, 82, 45, 0.12);
@@ -1053,33 +1062,33 @@
   }
 
   .imageWrapper {
-    height: 76px;
-    min-height: 76px;
+    height: 110px;
+    min-height: 110px;
     width: 100%;
     overflow: hidden;
-    border-radius: 14px 14px 0 0;
+    border-radius: var(--mobile-card-radius) var(--mobile-card-radius) 0 0;
     background: linear-gradient(135deg, #f7efe7, #efe2d6);
   }
 
   .itemImage {
-    height: 76px;
+    height: 110px;
     width: 100%;
     object-fit: cover;
   }
 
   .itemImagePlaceholder {
-    height: 76px;
-    min-height: 76px;
+    height: 110px;
+    min-height: 110px;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
   }
 
   .itemContent {
-    padding: 6px;
+    padding: 10px 12px;
     overflow: visible;
     height: auto;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     flex: 1;
   }
 
@@ -1088,9 +1097,9 @@
   }
 
   .itemName {
-    font-size: 11px;
-    line-height: 1.2;
-    font-weight: 700;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
+    line-height: 1.25;
+    font-weight: 600;
     margin: 0;
     display: block;
     white-space: normal;
@@ -1107,7 +1116,7 @@
 
   .itemPrice {
     display: block;
-    font-size: 11px;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
     line-height: 1.1;
     font-weight: 800;
     color: #c76b2a;
@@ -1137,10 +1146,10 @@
 
   .optionButton {
     width: 100%;
-    font-size: 9px;
-    padding: 5px 3px;
-    min-height: 26px;
-    border-radius: 8px;
+    font-size: clamp(0.72rem, 2.6vw, 0.82rem);
+    padding: 8px 10px;
+    min-height: 40px;
+    border-radius: 10px;
   }
 
   .modalContent {

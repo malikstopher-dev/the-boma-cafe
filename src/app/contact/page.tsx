@@ -49,9 +49,15 @@ export default function ContactPage() {
             .contact-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
             .contact-form-card { padding: 1.5rem !important; border-radius: 16px !important; }
             .contact-form-inputs { grid-template-columns: 1fr !important; }
-            .contact-map-container { height: 200px !important; margin-top: 1.5rem !important; }
-            .contact-section { padding: var(--space-xl) 4% !important; }
-            .contact-form-card input, .contact-form-card textarea { width: 100% !important; box-sizing: border-box !important; }
+            .contact-map-container { height: 220px !important; margin-top: 1.5rem !important; }
+            .contact-section { padding: 3rem 4% !important; }
+            .contact-form-card input, .contact-form-card textarea, .contact-form-card select { width: 100% !important; box-sizing: border-box !important; font-size: 16px !important; }
+            .contact-info-item { flex-direction: row !important; align-items: flex-start !important; }
+            .contact-info-icon { width: 44px !important; height: 44px !important; border-radius: 12px !important; font-size: 1.25rem !important; }
+            .contact-info-title { font-size: 0.95rem !important; }
+            .contact-info-text { font-size: clamp(0.82rem, 3vw, 0.9rem) !important; }
+            .contact-section h2 { font-size: clamp(1.3rem, 5vw, 1.5rem) !important; }
+            .contact-cta-btn { padding: 0.85rem 1.25rem !important; font-size: clamp(0.85rem, 3vw, 0.95rem) !important; min-height: 48px !important; }
           }
         `}</style>
         <section className="contact-section" style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
