@@ -131,7 +131,7 @@ export default function Footer({ settings, branding }: FooterProps) {
             <div className={styles.divider}></div>
             <p className={styles.copyright}>{footerText}</p>
             <p className={styles.powered}>
-              Designed with ♥ by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" className={styles.poweredLink}>Stopher Malik</a>
+              Website by <a href="https://stopher-malik.co.za" target="_blank" rel="noopener noreferrer" className={styles.poweredLink}>Stopher Malik</a>
             </p>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function Footer({ settings, branding }: FooterProps) {
 
           <p className={styles.mobileCopyright}>{footerText}</p>
           <p className={styles.mobileCredit}>
-            Designed with ♥ by <a href="https://www.stopher-malik.co.za" target="_blank" rel="noopener noreferrer" className={styles.mobileFooterLink}>Stopher Malik</a>
+            Website by <a href="https://stopher-malik.co.za" target="_blank" rel="noopener noreferrer" className={styles.mobileFooterLink}>Stopher Malik</a>
           </p>
         </div>
       </div>
