@@ -18,32 +18,11 @@ interface DrinkItem {
 }
 
 const defaultDrinks: DrinkItem[] = [
+  // Signature Cocktails
   { id: '1', name: 'Boma Sunset', description: 'Aged rum, passion fruit, lime, hint of chilli', price: '125', category: 'Signature Cocktails', isFeatured: true },
   { id: '2', name: 'Safari Sour', description: 'Amarula, honey, citrus, vanilla bean', price: '115', category: 'Signature Cocktails', isFeatured: true },
   { id: '3', name: 'Thatched Toddy', description: 'Spiced rum, warm spices, fresh ginger', price: '135', category: 'Signature Cocktails', isFeatured: false },
   { id: '4', name: 'Garden Spritz', description: 'Gin, elderflower, cucumber, prosecco', price: '110', category: 'Signature Cocktails', isFeatured: false },
-  
-  // Hot Beverages
-  { id: 'hb1', name: 'Rbos Cappuccino', price: '35', category: 'Hot Beverages' },
-  { id: 'hb2', name: 'Vanilla Latte', price: '42', category: 'Hot Beverages' },
-  { id: 'hb3', name: 'Brown Butter Latte', price: '45', category: 'Hot Beverages' },
-  { id: 'hb4', name: 'Hazelnut Latte', price: '42', category: 'Hot Beverages' },
-  
-  // Freezos
-  { id: 'fz1', name: 'Coffee Freezo', description: 'Frozen coffee with milk', price: '45', category: 'Freezos' },
-  { id: 'fz2', name: 'Spiced Chai Freezo', description: 'Spiced chai frozen drink', price: '45', category: 'Freezos' },
-  { id: 'fz3', name: 'Decadent Chocolate Freezo', description: 'Rich chocolate frozen drink', price: '40', category: 'Freezos' },
-  { id: 'fz4', name: 'White Chocolate Freezo', description: 'Creamy white chocolate frozen drink', price: '45', category: 'Freezos' },
-  { id: '11', name: 'Mango Freezo', description: 'Frozen mango, ice, vanilla', price: '65', category: 'Freezos' },
-  { id: '12', name: 'Chocolate Freezo', description: 'Chocolate, ice, milk', price: '65', category: 'Freezos' },
-  
-  // Milkshakes
-  { id: 'ms1', name: 'Chocolate Shake', description: 'Rich chocolate shake', price: '46', category: 'Milkshakes' },
-  { id: 'ms2', name: 'Strawberry Shake', description: 'Fresh strawberry shake', price: '51', category: 'Milkshakes' },
-  { id: 'ms3', name: 'Bubblegum Shake', description: 'Bubblegum flavoured shake', price: '46', category: 'Milkshakes' },
-  { id: 'ms4', name: 'Oreo Shake', description: 'Oreo cookie shake', price: '46', category: 'Milkshakes' },
-  { id: '13', name: 'Strawberry Milkshake', description: 'Fresh strawberries, vanilla ice cream', price: '75', category: 'Milkshakes' },
-  { id: '14', name: 'Chocolate Milkshake', description: 'Rich chocolate, ice cream', price: '75', category: 'Milkshakes' },
   
   // Classic Cocktails
   { id: '5', name: 'Classic Mojito', description: 'White rum, fresh mint, lime, soda', price: '85', category: 'Classic Cocktails', isFeatured: true },
@@ -72,71 +51,148 @@ const defaultDrinks: DrinkItem[] = [
   { id: 'na4', name: 'Virgin Pina Colada', description: 'Coconut, pineapple', price: '58', category: 'Non-Alcoholic Cocktails' },
   { id: 'na5', name: 'Virgin Strawberry Daiquiri', description: 'Strawberry, lime', price: '65', category: 'Non-Alcoholic Cocktails' },
   { id: 'na6', name: 'Cherry Blossom Martini', description: 'Cherry, vanilla', price: '52', category: 'Non-Alcoholic Cocktails' },
-  { id: '9', name: 'Virgin Mojito', description: 'Fresh mint, lime, soda water', price: '55', category: 'Non-Alcoholic' },
-  { id: '10', name: 'Shirley Temple', description: 'Ginger ale, grenadine, fresh lime', price: '50', category: 'Non-Alcoholic' },
+  { id: '9', name: 'Virgin Mojito', description: 'Fresh mint, lime, soda water', price: '55', category: 'Non-Alcoholic Cocktails' },
+  { id: '10', name: 'Shirley Temple', description: 'Ginger ale, grenadine, fresh lime', price: '50', category: 'Non-Alcoholic Cocktails' },
+  
+  // Freezos
+  { id: 'fz1', name: 'Coffee Freezo', description: 'Frozen coffee with milk', price: '45', category: 'Freezos' },
+  { id: 'fz2', name: 'Spiced Chai Freezo', description: 'Spiced chai frozen drink', price: '45', category: 'Freezos' },
+  { id: 'fz3', name: 'Decadent Chocolate Freezo', description: 'Rich chocolate frozen drink', price: '40', category: 'Freezos' },
+  { id: 'fz4', name: 'White Chocolate Freezo', description: 'Creamy white chocolate frozen drink', price: '45', category: 'Freezos' },
+  { id: '11', name: 'Mango Freezo', description: 'Frozen mango, ice, vanilla', price: '65', category: 'Freezos' },
+  { id: '12', name: 'Chocolate Freezo', description: 'Chocolate, ice, milk', price: '65', category: 'Freezos' },
+  
+  // Milkshakes
+  { id: 'ms1', name: 'Chocolate Shake', description: 'Rich chocolate shake', price: '46', category: 'Milkshakes' },
+  { id: 'ms2', name: 'Strawberry Shake', description: 'Fresh strawberry shake', price: '51', category: 'Milkshakes' },
+  { id: 'ms3', name: 'Bubblegum Shake', description: 'Bubblegum flavoured shake', price: '46', category: 'Milkshakes' },
+  { id: 'ms4', name: 'Oreo Shake', description: 'Oreo cookie shake', price: '46', category: 'Milkshakes' },
+  { id: '13', name: 'Strawberry Milkshake', description: 'Fresh strawberries, vanilla ice cream', price: '75', category: 'Milkshakes' },
+  { id: '14', name: 'Chocolate Milkshake', description: 'Rich chocolate, ice cream', price: '75', category: 'Milkshakes' },
   
   // Special Board
-  { id: 'sb1', name: 'Richelieu + Mixer', price: '70', category: 'Special Board' },
-  { id: 'sb2', name: 'Klipdrift + Mixer', price: '70', category: 'Special Board' },
-  { id: 'sb3', name: 'KWV 3yr + Mixer', price: '70', category: 'Special Board' },
-  { id: 'sb4', name: 'Captain Morgan + Mixer', price: '80', category: 'Special Board' },
+  { id: 'sb1', name: 'Richelieu + Mixer', price: 'Ask server', category: 'Special Board' },
+  { id: 'sb2', name: 'Klipdrift + Mixer', price: 'Ask server', category: 'Special Board' },
+  { id: 'sb3', name: 'KWV 3yr + Mixer', price: 'Ask server', category: 'Special Board' },
+  { id: 'sb4', name: 'Captain Morgan + Mixer', price: 'Ask server', category: 'Special Board' },
   
   // Beers
-  { id: '15', name: 'Castle Lager', price: '45', category: 'Beers' },
-  { id: '16', name: 'Heineken', price: '50', category: 'Beers' },
-  { id: '17', name: 'Savanna Light', price: '45', category: 'Beers' },
-  { id: '18', name: 'Redds', price: '40', category: 'Beers' },
+  { id: 'beer1', name: 'Corona Extra', price: 'Ask server', category: 'Beers' },
+  { id: 'beer2', name: 'Heineken 0.0', price: 'Ask server', category: 'Beers' },
+  { id: 'beer3', name: 'Amstel Lager', price: 'Ask server', category: 'Beers' },
+  { id: 'beer4', name: 'Castle Lager', price: 'Ask server', category: 'Beers' },
+  { id: 'beer5', name: 'Castle Milk Stout', price: 'Ask server', category: 'Beers' },
+  { id: 'beer6', name: 'Windhoek Lager', price: 'Ask server', category: 'Beers' },
+  { id: 'beer7', name: 'Hansa Pilsener', price: 'Ask server', category: 'Beers' },
+  { id: 'beer8', name: 'Black Label', price: 'Ask server', category: 'Beers' },
+  { id: 'beer9', name: 'Guinness Draught', price: 'Ask server', category: 'Beers' },
+  { id: 'beer10', name: 'Miller Genuine Draft', price: 'Ask server', category: 'Beers' },
   
-  // Ciders
-  { id: '19', name: 'Strongbow', price: '55', category: 'Ciders' },
-  { id: '20', name: 'Savanna Dry', price: '55', category: 'Ciders' },
+  // Ciders & Coolers
+  { id: 'cider1', name: 'Bernini Classic', price: 'Ask server', category: 'Ciders & Coolers' },
+  { id: 'cider2', name: 'Bernini Blush', price: 'Ask server', category: 'Ciders & Coolers' },
+  { id: 'cider3', name: 'Brutal Fruit Spritzer', price: 'Ask server', category: 'Ciders & Coolers' },
+  { id: 'cider4', name: 'Bacardi Breezer Blueberry', price: 'Ask server', category: 'Ciders & Coolers' },
+  { id: 'cider5', name: 'Bacardi Breezer Blackberry', price: 'Ask server', category: 'Ciders & Coolers' },
+  { id: 'cider6', name: 'Savanna', price: 'Ask server', category: 'Ciders & Coolers' },
+  { id: 'cider7', name: 'Hunters Gold', price: 'Ask server', category: 'Ciders & Coolers' },
   
-  // Wine
-  { id: '21', name: 'House Red', description: 'Glass of our selection', price: '55', category: 'Wine' },
-  { id: '22', name: 'House White', description: 'Glass of our selection', price: '55', category: 'Wine' },
-  { id: '23', name: 'Prosecco', description: 'Glass of bubbly', price: '75', category: 'Wine' },
+  // Gin & Ready-To-Drink
+  { id: 'gin1', name: 'Belgravia Gin & Pink Tonic', price: 'Ask server', category: 'Gin & Ready-To-Drink' },
+  { id: 'gin2', name: 'Belgravia Gin & Dark Cherry', price: 'Ask server', category: 'Gin & Ready-To-Drink' },
+  { id: 'gin3', name: 'Belgravia Gin & Tonic', price: 'Ask server', category: 'Gin & Ready-To-Drink' },
+  { id: 'gin4', name: 'Belgravia Gin & Passion', price: 'Ask server', category: 'Gin & Ready-To-Drink' },
+  { id: 'gin5', name: "Gordon's Gin", price: 'Ask server', category: 'Gin & Ready-To-Drink' },
+  { id: 'gin6', name: 'Beefeater London Pink Strawberry Gin', price: 'Ask server', category: 'Gin & Ready-To-Drink' },
+  { id: 'gin7', name: 'Beefeater London Dry Gin', price: 'Ask server', category: 'Gin & Ready-To-Drink' },
   
-  // Soft Drinks
-  { id: '24', name: 'Coca Cola', price: '30', category: 'Soft Drinks' },
-  { id: '25', name: 'Sprite', price: '30', category: 'Soft Drinks' },
+  // Spirits
+  { id: 'spirit1', name: "Jack Daniel's Tennessee Whiskey", price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit2', name: 'J&B Whisky', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit3', name: 'Klipdrift', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit4', name: 'Richelieu', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit5', name: 'KWV 3 Year', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit6', name: 'KWV 5 Year', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit7', name: 'KWV 10', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit8', name: 'Bacardi Carta Blanca', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit9', name: 'Captain Morgan', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit10', name: 'Skyy Vodka', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit11', name: 'Smirnoff', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit12', name: 'Amarula', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit13', name: 'Kahlúa Coffee Liqueur', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit14', name: 'Aperol', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit15', name: 'Malibu', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit16', name: 'Monate', price: 'Ask server', category: 'Spirits' },
+  { id: 'spirit17', name: 'Tipo Tinto Spiced', price: 'Ask server', category: 'Spirits' },
   
-  // Mixers
-  { id: '26', name: 'Tonic Water', price: '25', category: 'Mixers' },
-  { id: '27', name: 'Ginger Ale', price: '25', category: 'Mixers' },
+  // Wines
+  { id: 'wine1', name: 'Spier', price: 'Ask server', category: 'Wines' },
+  { id: 'wine2', name: 'Alto Rouge', price: 'Ask server', category: 'Wines' },
+  { id: 'wine3', name: 'Guardian Peak', price: 'Ask server', category: 'Wines' },
+  { id: 'wine4', name: 'VRL / Van Loveren', price: 'Ask server', category: 'Wines' },
+  { id: 'wine5', name: 'Merlot', price: 'Ask server', category: 'Wines' },
+  { id: 'wine6', name: 'Pinotage', price: 'Ask server', category: 'Wines' },
+  { id: 'wine7', name: 'Sauvignon Blanc', price: 'Ask server', category: 'Wines' },
+  { id: 'wine8', name: 'Chenin Blanc', price: 'Ask server', category: 'Wines' },
+  { id: 'wine9', name: 'Chardonnay', price: 'Ask server', category: 'Wines' },
+  { id: 'wine10', name: 'Rosé', price: 'Ask server', category: 'Wines' },
+  { id: 'wine11', name: 'Nederburg', price: 'Ask server', category: 'Wines' },
+  { id: 'wine12', name: 'The Beach House', price: 'Ask server', category: 'Wines' },
+  { id: 'wine13', name: 'Optima', price: 'Ask server', category: 'Wines' },
+  { id: 'wine14', name: 'PepperWind Syrah', price: 'Ask server', category: 'Wines' },
+  
+  // Sparkling & MCC
+  { id: 'spark1', name: 'Krone', price: 'Ask server', category: 'Sparkling & MCC' },
+  { id: 'spark2', name: 'Moët & Chandon', price: 'Ask server', category: 'Sparkling & MCC' },
+  { id: 'spark3', name: 'Graham Beck', price: 'Ask server', category: 'Sparkling & MCC' },
+  { id: 'spark4', name: 'Sparkling Rosé', price: 'Ask server', category: 'Sparkling & MCC' },
+  { id: 'spark5', name: 'Assorted MCC / Sparkling Wine', price: 'Ask server', category: 'Sparkling & MCC' },
+  
+  // Soft Drinks & Mixers
+  { id: 'soft1', name: 'Sprite', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft2', name: 'Sparletta Creme Soda', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft3', name: 'Schweppes / Mixers', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft4', name: 'Valpré Water', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft5', name: 'Still Water', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft6', name: 'Liqui Fruit', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft7', name: 'Tropika', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft8', name: 'Appletiser', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft9', name: 'Red Bull / Energy Drinks', price: 'Ask server', category: 'Soft Drinks & Mixers' },
+  { id: 'soft10', name: 'Juice Dispensers / House Juice', price: 'Ask server', category: 'Soft Drinks & Mixers' },
 ];
 
 const categoryOrder = [
   'Signature Cocktails',
-  'Hot Beverages',
-  'Freezos',
-  'Milkshakes',
   'Classic Cocktails',
   'Cocktails',
   'Non-Alcoholic Cocktails',
-  'Non-Alcoholic',
-  'Special Board',
+  'Freezos',
+  'Milkshakes',
   'Beers',
-  'Ciders',
-  'Wine',
-  'Soft Drinks',
-  'Mixers'
+  'Ciders & Coolers',
+  'Gin & Ready-To-Drink',
+  'Spirits',
+  'Wines',
+  'Sparkling & MCC',
+  'Soft Drinks & Mixers',
+  'Special Board'
 ];
 
 const categoryPlaceholders: Record<string, { gradient: string; text: string }> = {
   'Signature Cocktails': { gradient: 'linear-gradient(135deg, #C26A2D 0%, #8B4513 100%)', text: 'Signature' },
-  'Hot Beverages': { gradient: 'linear-gradient(135deg, #6F4E37 0%, #3E2723 100%)', text: 'Coffee' },
-  'Freezos': { gradient: 'linear-gradient(135deg, #90CAF9 0%, #1565C0 100%)', text: 'Freezo' },
-  'Milkshakes': { gradient: 'linear-gradient(135deg, #F48FB1 0%, #AD1457 100%)', text: 'Milkshake' },
   'Classic Cocktails': { gradient: 'linear-gradient(135deg, #AED581 0%, #558B2F 100%)', text: 'Classic' },
   'Cocktails': { gradient: 'linear-gradient(135deg, #CE93D8 0%, #6A1B9A 100%)', text: 'Cocktail' },
   'Non-Alcoholic Cocktails': { gradient: 'linear-gradient(135deg, #80DEEA 0%, #00838F 100%)', text: 'Mocktail' },
-  'Non-Alcoholic': { gradient: 'linear-gradient(135deg, #80DEEA 0%, #00838F 100%)', text: 'Mocktail' },
+  'Freezos': { gradient: 'linear-gradient(135deg, #90CAF9 0%, #1565C0 100%)', text: 'Freezo' },
+  'Milkshakes': { gradient: 'linear-gradient(135deg, #F48FB1 0%, #AD1457 100%)', text: 'Milkshake' },
   'Special Board': { gradient: 'linear-gradient(135deg, #FFD54F 0%, #FF6F00 100%)', text: 'Special' },
   'Beers': { gradient: 'linear-gradient(135deg, #FFB74D 0%, #E65100 100%)', text: 'Beer' },
-  'Ciders': { gradient: 'linear-gradient(135deg, #A5D6A7 0%, #2E7D32 100%)', text: 'Cider' },
-  'Wine': { gradient: 'linear-gradient(135deg, #880E4F 0%, #4A148C 100%)', text: 'Wine' },
-  'Soft Drinks': { gradient: 'linear-gradient(135deg, #4FC3F7 0%, #0277BD 100%)', text: 'Soft Drink' },
-  'Mixers': { gradient: 'linear-gradient(135deg, #B2DFDB 0%, #00695C 100%)', text: 'Mixer' },
+  'Ciders & Coolers': { gradient: 'linear-gradient(135deg, #A5D6A7 0%, #2E7D32 100%)', text: 'Cider' },
+  'Gin & Ready-To-Drink': { gradient: 'linear-gradient(135deg, #B39DDB 0%, #512DA8 100%)', text: 'Gin' },
+  'Spirits': { gradient: 'linear-gradient(135deg, #BCAAA4 0%, #5D4037 100%)', text: 'Spirit' },
+  'Wines': { gradient: 'linear-gradient(135deg, #880E4F 0%, #4A148C 100%)', text: 'Wine' },
+  'Sparkling & MCC': { gradient: 'linear-gradient(135deg, #FFF9C4 0%, #F57F17 100%)', text: 'Sparkling' },
+  'Soft Drinks & Mixers': { gradient: 'linear-gradient(135deg, #4FC3F7 0%, #0277BD 100%)', text: 'Soft Drink' },
 };
 
 const usedImagesPerCategory: Record<string, Set<string>> = {};
@@ -204,7 +260,7 @@ function DrinkCard({ drink, categoryUsedImages, cardIndex }: { drink: DrinkItem;
             fontWeight: 700, 
             color: 'var(--primary)' 
           }}>
-            R{drink.price}
+            {drink.price === 'Ask server' ? 'Ask server' : `R${drink.price}`}
           </span>
         </div>
         {drink.description && (

@@ -28,19 +28,83 @@ const defaultDrinks: BarDrink[] = [
   { id: '12', name: 'Chocolate Freezo', description: 'Chocolate, ice, milk', price: '65', category: 'Freezos', isFeatured: false, image: '' },
   { id: '13', name: 'Strawberry Milkshake', description: 'Fresh strawberries, vanilla ice cream', price: '75', category: 'Milkshakes', isFeatured: true, image: '' },
   { id: '14', name: 'Chocolate Milkshake', description: 'Rich chocolate, ice cream', price: '75', category: 'Milkshakes', isFeatured: false, image: '' },
-  { id: '15', name: 'Castle Lager', price: '45', category: 'Beers', description: '', isFeatured: false, image: '' },
-  { id: '16', name: 'Heineken', price: '50', category: 'Beers', description: '', isFeatured: false, image: '' },
-  { id: '17', name: 'Savanna Light', price: '45', category: 'Beers', description: '', isFeatured: false, image: '' },
-  { id: '18', name: 'Redds', price: '40', category: 'Beers', description: '', isFeatured: false, image: '' },
-  { id: '19', name: 'Strongbow', price: '55', category: 'Ciders', description: '', isFeatured: false, image: '' },
-  { id: '20', name: 'Savanna Dry', price: '55', category: 'Ciders', description: '', isFeatured: false, image: '' },
-  { id: '21', name: 'House Red', description: 'Glass of our selection', price: '55', category: 'Wine', isFeatured: false, image: '' },
-  { id: '22', name: 'House White', description: 'Glass of our selection', price: '55', category: 'Wine', isFeatured: false, image: '' },
-  { id: '23', name: 'Prosecco', description: 'Glass of bubbly', price: '75', category: 'Wine', isFeatured: false, image: '' },
-  { id: '24', name: 'Coca Cola', price: '30', category: 'Soft Drinks', description: '', isFeatured: false, image: '' },
-  { id: '25', name: 'Sprite', price: '30', category: 'Soft Drinks', description: '', isFeatured: false, image: '' },
-  { id: '26', name: 'Tonic Water', price: '25', category: 'Mixers', description: '', isFeatured: false, image: '' },
-  { id: '27', name: 'Ginger Ale', price: '25', category: 'Mixers', description: '', isFeatured: false, image: '' },
+  // Beers
+  { id: 'beer1', name: 'Corona Extra', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer2', name: 'Heineken 0.0', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer3', name: 'Amstel Lager', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer4', name: 'Castle Lager', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer5', name: 'Castle Milk Stout', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer6', name: 'Windhoek Lager', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer7', name: 'Hansa Pilsener', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer8', name: 'Black Label', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer9', name: 'Guinness Draught', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  { id: 'beer10', name: 'Miller Genuine Draft', price: 'Ask server', category: 'Beers', description: '', isFeatured: false, image: '' },
+  // Ciders & Coolers
+  { id: 'cider1', name: 'Bernini Classic', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  { id: 'cider2', name: 'Bernini Blush', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  { id: 'cider3', name: 'Brutal Fruit Spritzer', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  { id: 'cider4', name: 'Bacardi Breezer Blueberry', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  { id: 'cider5', name: 'Bacardi Breezer Blackberry', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  { id: 'cider6', name: 'Savanna', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  { id: 'cider7', name: 'Hunters Gold', price: 'Ask server', category: 'Ciders & Coolers', description: '', isFeatured: false, image: '' },
+  // Gin & Ready-To-Drink
+  { id: 'gin1', name: 'Belgravia Gin & Pink Tonic', price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  { id: 'gin2', name: 'Belgravia Gin & Dark Cherry', price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  { id: 'gin3', name: 'Belgravia Gin & Tonic', price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  { id: 'gin4', name: 'Belgravia Gin & Passion', price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  { id: 'gin5', name: "Gordon's Gin", price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  { id: 'gin6', name: 'Beefeater London Pink Strawberry Gin', price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  { id: 'gin7', name: 'Beefeater London Dry Gin', price: 'Ask server', category: 'Gin & Ready-To-Drink', description: '', isFeatured: false, image: '' },
+  // Spirits
+  { id: 'spirit1', name: "Jack Daniel's Tennessee Whiskey", price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit2', name: 'J&B Whisky', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit3', name: 'Klipdrift', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit4', name: 'Richelieu', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit5', name: 'KWV 3 Year', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit6', name: 'KWV 5 Year', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit7', name: 'KWV 10', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit8', name: 'Bacardi Carta Blanca', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit9', name: 'Captain Morgan', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit10', name: 'Skyy Vodka', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit11', name: 'Smirnoff', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit12', name: 'Amarula', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit13', name: 'Kahlúa Coffee Liqueur', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit14', name: 'Aperol', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit15', name: 'Malibu', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit16', name: 'Monate', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  { id: 'spirit17', name: 'Tipo Tinto Spiced', price: 'Ask server', category: 'Spirits', description: '', isFeatured: false, image: '' },
+  // Wines
+  { id: 'wine1', name: 'Spier', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine2', name: 'Alto Rouge', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine3', name: 'Guardian Peak', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine4', name: 'VRL / Van Loveren', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine5', name: 'Merlot', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine6', name: 'Pinotage', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine7', name: 'Sauvignon Blanc', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine8', name: 'Chenin Blanc', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine9', name: 'Chardonnay', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine10', name: 'Rosé', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine11', name: 'Nederburg', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine12', name: 'The Beach House', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine13', name: 'Optima', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  { id: 'wine14', name: 'PepperWind Syrah', price: 'Ask server', category: 'Wines', description: '', isFeatured: false, image: '' },
+  // Sparkling & MCC
+  { id: 'spark1', name: 'Krone', price: 'Ask server', category: 'Sparkling & MCC', description: '', isFeatured: false, image: '' },
+  { id: 'spark2', name: 'Moët & Chandon', price: 'Ask server', category: 'Sparkling & MCC', description: '', isFeatured: false, image: '' },
+  { id: 'spark3', name: 'Graham Beck', price: 'Ask server', category: 'Sparkling & MCC', description: '', isFeatured: false, image: '' },
+  { id: 'spark4', name: 'Sparkling Rosé', price: 'Ask server', category: 'Sparkling & MCC', description: '', isFeatured: false, image: '' },
+  { id: 'spark5', name: 'Assorted MCC / Sparkling Wine', price: 'Ask server', category: 'Sparkling & MCC', description: '', isFeatured: false, image: '' },
+  // Soft Drinks & Mixers
+  { id: 'soft1', name: 'Sprite', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft2', name: 'Sparletta Creme Soda', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft3', name: 'Schweppes / Mixers', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft4', name: 'Valpré Water', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft5', name: 'Still Water', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft6', name: 'Liqui Fruit', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft7', name: 'Tropika', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft8', name: 'Appletiser', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft9', name: 'Red Bull / Energy Drinks', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
+  { id: 'soft10', name: 'Juice Dispensers / House Juice', price: 'Ask server', category: 'Soft Drinks & Mixers', description: '', isFeatured: false, image: '' },
 ];
 
 export default function AdminBarMenu() {
@@ -63,10 +127,12 @@ export default function AdminBarMenu() {
     'Freezos',
     'Milkshakes',
     'Beers',
-    'Ciders',
-    'Wine',
-    'Soft Drinks',
-    'Mixers'
+    'Ciders & Coolers',
+    'Gin & Ready-To-Drink',
+    'Spirits',
+    'Wines',
+    'Sparkling & MCC',
+    'Soft Drinks & Mixers'
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -182,7 +248,7 @@ export default function AdminBarMenu() {
                 <h4 style={{ fontSize: '1rem', color: 'var(--dark-brown)', fontWeight: 600, margin: 0 }}>{drink.name}</h4>
                 {drink.isFeatured && <span style={{ background: 'var(--gold)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 600 }}>★ Featured</span>}
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', margin: 0 }}>{drink.category} • R{drink.price}</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', margin: 0 }}>{drink.category} • {drink.price === 'Ask server' ? 'Ask server' : `R${drink.price}`}</p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={() => handleEdit(drink)} style={{ padding: '0.4rem 0.8rem', background: 'var(--cream)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>

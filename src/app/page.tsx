@@ -15,6 +15,7 @@ import FadeInSection from '@/components/ui/FadeInSection';
 import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
 import AboutSection from '@/components/sections/AboutSection';
 import FounderSection from '@/components/sections/FounderSection';
+import { getReservationLink, getEventEnquiryLink } from '@/data/businessInfo';
 import styles from './page.module.css';
 
 const heroSlides = [
@@ -62,7 +63,7 @@ const showcaseCategories = [
 const signatureCocktails = [
   { name: 'Boma Sunset', desc: 'Aged rum, passion fruit, lime, hint of chilli', price: 125, image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=500&fit=crop' },
   { name: 'Safari Sour', desc: 'Amarula, honey, citrus, vanilla bean', price: 115, image: 'https://images.unsplash.com/photo-1556855810-ac404aa91e85?w=400&h=500&fit=crop' },
-  { name: 'Thatched Toddy', desc: 'Spiced rum, warm spices, fresh ginger', price: 135, image: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?w=400&h=500&fit=crop' },
+  { name: 'Thatched Toddy', desc: 'Spiced rum, warm spices, fresh ginger', price: 135, image: '/bar-menu/Thatched-Toddy.jpg' },
   { name: 'Garden Spritz', desc: 'Gin, elderflower, cucumber, prosecco', price: 110, image: 'https://images.unsplash.com/photo-1560508180-03f285f67ded?w=400&h=500&fit=crop' },
 ];
 
@@ -184,7 +185,7 @@ export default function Home() {
             <p className={styles.heroTagline}>{heroSlides[currentSlide].tagline}</p>
             <div className={styles.heroCta}>
               <Link href="/menu" className="btn btn-primary">View Menu</Link>
-              <Link href="/contact" className="btn btn-ghost">Book a Table</Link>
+              <a href={getReservationLink()} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">Book a Table</a>
             </div>
           </div>
 
@@ -198,6 +199,14 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        {/* About Section - Premium Design - Moved after Hero */}
+        <AboutSection 
+          introTitle={siteSettings?.about?.introTitle}
+          introDescription={siteSettings?.about?.introDescription}
+          fullDescription={siteSettings?.about?.fullDescription}
+          heroImage={siteSettings?.about?.heroImage}
+        />
 
         {/* Premium Food & Drinks Showcase */}
         <section className={styles.premiumShowcase}>
@@ -269,14 +278,6 @@ export default function Home() {
             </FadeInSection>
           </div>
         </section>
-
-        {/* About Section - Premium Design */}
-        <AboutSection 
-          introTitle={siteSettings?.about?.introTitle}
-          introDescription={siteSettings?.about?.introDescription}
-          fullDescription={siteSettings?.about?.fullDescription}
-          heroImage={siteSettings?.about?.heroImage}
-        />
 
         {/* Signature Dishes Section */}
         <section className={styles.signatureSection}>
@@ -426,8 +427,8 @@ export default function Home() {
               <h2>Reserve Your Table</h2>
               <p>Plan your perfect Boma experience. Whether it's a romantic dinner, family gathering, or celebration with friends, we're ready to welcome you.</p>
               <div className={styles.reservationButtons}>
-                <Link href="/contact" className="btn btn-primary btn-lg">Book a Table</Link>
-                <Link href="/events" className="btn btn-secondary btn-lg">Plan an Event</Link>
+                <a href={getReservationLink()} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">Book a Table</a>
+                <a href={getEventEnquiryLink()} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-lg">Plan an Event</a>
               </div>
               
               <div className={styles.reservationInfo}>
