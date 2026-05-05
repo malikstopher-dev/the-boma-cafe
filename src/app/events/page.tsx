@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import PremiumHero from '@/components/ui/PremiumHero';
 import Slideshow from '@/components/ui/Slideshow';
 import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
+import { getEventEnquiryLink } from '@/data/businessInfo';
 
 const events = [
   {
@@ -416,11 +417,11 @@ export default function EventsPage() {
             <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--white)', marginBottom: '1rem' }}>Host Your Event With Us</h2>
             <p style={{ color: 'var(--cream)', marginBottom: '2.5rem', maxWidth: '550px', margin: '0 auto', lineHeight: 1.6 }}>From corporate functions to private celebrations, we make it memorable</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
-              <a href="/contact" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
+              <a href={getEventEnquiryLink()} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
                 Plan Your Event
               </a>
               <a 
-                href="https://wa.me/27729961190"
+                href={getEventEnquiryLink()}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

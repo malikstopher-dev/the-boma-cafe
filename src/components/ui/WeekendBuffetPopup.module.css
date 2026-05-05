@@ -1,114 +1,66 @@
 .overlay {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 1000;
-  animation: slideUp 0.4s ease-out;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.popup {
+  position: fixed;
+  right: 56px;
+  top: 54%;
+  transform: translateY(-50%);
+  width: 260px;
+  border-radius: 18px;
+  overflow: visible;
+  pointer-events: auto;
+  filter: drop-shadow(0 22px 55px rgba(0, 0, 0, 0.34));
 }
 
-.modal {
-  background: var(--cream);
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(26, 15, 10, 0.2), 0 8px 24px rgba(26, 15, 10, 0.1);
-  width: 380px;
+.imageLink {
+  display: block;
+  width: 260px;
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(232, 213, 196, 0.5);
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.closeBtn {
+.imageLink:hover {
+  transform: translateY(-3px) scale(1.015);
+  filter: brightness(1.03);
+}
+
+.flyerImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 18px;
+}
+
+.closeButton {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  top: -12px;
+  right: -12px;
+  z-index: 20;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
   border: none;
+  background: rgba(255, 255, 255, 0.96);
+  color: #2b1a10;
+  font-size: 20px;
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
-  color: var(--dark-brown);
-  z-index: 10;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.closeBtn:hover {
+.closeButton:hover {
   background: white;
   transform: scale(1.1);
-}
-
-.content {
-  padding: 2rem;
-}
-
-.icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.title {
-  font-size: 1.5rem;
-  color: var(--dark-brown);
-  font-family: var(--font-display);
-  margin-bottom: 1rem;
-  line-height: 1.3;
-}
-
-.details {
-  display: flex;
-  gap: 1.25rem;
-  margin-bottom: 1.25rem;
-  color: var(--text-light);
-  font-size: 0.9rem;
-}
-
-.details span {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.description {
-  color: var(--text);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-}
-
-.whatsappBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.85rem 1.5rem;
-  background: #25d366;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.whatsappBtn:hover {
-  background: #1faa50;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
 }

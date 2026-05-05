@@ -676,8 +676,8 @@ export const defaultMenuItems: MenuItem[] = [
   // HOT BEVERAGES
   {
     id: 'hb1',
-    name: 'Rbos Cappuccino',
-    description: 'Freshly brewed Rbos espresso infused with Monin vanilla syrup and perfectly steamed milk. Topped with velvety foam.',
+    name: 'Rooibos Cappuccino',
+    description: 'Freshly brewed Rooibos espresso infused with Monin vanilla syrup and perfectly steamed milk. Topped with velvety foam.',
     price: 35,
     category: 'Hot Beverages',
     order: 1,
@@ -1183,7 +1183,7 @@ export const defaultMenuItems: MenuItem[] = [
   },
   {
     id: 'cc9',
-    name: 'Sex on the beach',
+    name: 'Sex on the Beach',
     description: 'Vodka infused with peach syrup and cranberry juice. Served tall over cracked ice and charged with pressed orange juice.',
     price: 66,
     category: 'Classic Cocktails',
@@ -1209,7 +1209,7 @@ export const defaultMenuItems: MenuItem[] = [
   },
   {
     id: 'cc11',
-    name: 'Cherry blossom ginger G&T',
+    name: 'Cherry Blossom Ginger G&T',
     description: 'Premium Gin shaken with cherry extract, ginger slices and pressed lemon. Served over ice and charged with chilled Indian tonic water.',
     price: 104,
     category: 'Classic Cocktails',
@@ -1222,7 +1222,7 @@ export const defaultMenuItems: MenuItem[] = [
   },
   {
     id: 'cc12',
-    name: 'Yuzu whiskey Sours',
+    name: 'Yuzu Whiskey Sours',
     description: 'Kentucky Straight Bourbon shaken with Yuzu extract, fresh lemon and bitters. Served on the rocks with a cellulose foam.',
     price: 103,
     category: 'Classic Cocktails',
@@ -1235,7 +1235,7 @@ export const defaultMenuItems: MenuItem[] = [
   },
   {
     id: 'cc13',
-    name: 'Brown butter Old Fashioned',
+    name: 'Brown Butter Old Fashioned',
     description: 'Kentucky Straight Bourbon gently stirred with brown butter sugar, orange zest and bitters. Served on the rocks with a orange zest.',
     price: 77,
     category: 'Classic Cocktails',
@@ -1315,7 +1315,7 @@ export const defaultMenuItems: MenuItem[] = [
   },
   {
     id: 'nc6',
-    name: 'Cherry blossom martini',
+    name: 'Cherry Blossom Martini',
     description: 'Monin cherry blossom syrup. Cranberry juice. Lime juice. Served in a chilled coupe with edible flowers.',
     price: 52,
     category: 'Non-Alcoholic Cocktails',
