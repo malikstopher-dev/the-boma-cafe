@@ -178,7 +178,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'beefeater-london-dry-gin': '/bar-menu/beefeater-london-dry-gin.jpg',
   
   // Spirits - use exact bar-menu images
-  'jack-daniels-tennessee-whiskey': '/bar-menu/jack-daniel-s-tennessee-whiskey.jpg',
+  'jack-daniels-tennessee-whiskey': '/bar-menu/jack-daniels.jpg',
   'j-b-whisky': '/bar-menu/j-and-b-whisky.jpg',
   'klipdrift': '/bar-menu/klipdrift.jpg',
   'richelieu': '/bar-menu/richelieu.jpg',
@@ -190,7 +190,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'skyy-vodka': '/bar-menu/skyy-vodka.jpg',
   'smirnoff': '/bar-menu/smirnoff.jpg',
   'amarula': '/bar-menu/amarula.jpg',
-  'kahlua-coffee-liqueur': '/bar-menu/kahlua-coffee-liqueur.jpg',
+  'kahlua-coffee-liqueur': '/bar-menu/kahlua.jpg',
   'aperol': '/bar-menu/aperol.jpg',
   'malibu': '/bar-menu/malibu.jpg',
   'monate': '/bar-menu/monate.jpg',
