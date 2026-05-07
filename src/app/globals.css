@@ -2122,8 +2122,12 @@ input, textarea, select {
     overflow: hidden !important;
   }
 
-  .barMenuCard [style*="aspectRatio"] {
+  .barMenuCard [style*="height: 180px"] {
     height: 130px !important;
+    background: #fff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .barMenuCard h3 {

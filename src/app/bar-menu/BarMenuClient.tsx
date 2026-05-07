@@ -222,7 +222,11 @@ function DrinkCard({ drink, categoryUsedImages, cardIndex }: { drink: DrinkItem;
       <div style={{ 
         position: 'relative', 
         width: '100%', 
-        aspectRatio: '16/10',
+        height: '180px',
+        background: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden'
       }}>
         {!rawImageUrl ? (
@@ -252,20 +256,22 @@ function DrinkCard({ drink, categoryUsedImages, cardIndex }: { drink: DrinkItem;
             src={rawImageUrl!}
             alt={drink.name}
             fill
-            style={{ objectFit: 'cover' }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+            style={{ objectFit: 'contain' }}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 280px"
           />
         )}
       </div>
-      <div style={{ padding: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--dark-brown)', fontWeight: 600, margin: 0 }}>
+      <div style={{ padding: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+          <h3 style={{ fontSize: '0.95rem', color: 'var(--dark-brown)', fontWeight: 600, margin: 0, flexShrink: 1 }}>
             {drink.name}
           </h3>
           <span style={{ 
-            fontSize: '1rem', 
+            fontSize: '0.9rem', 
             fontWeight: 700, 
-            color: 'var(--primary)' 
+            color: 'var(--primary)',
+            whiteSpace: 'nowrap',
+            marginLeft: '0.5rem'
           }}>
             {drink.price === 'Ask server' ? 'Ask server' : `R${drink.price}`}
           </span>
