@@ -146,7 +146,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   // Beers - use exact bar-menu images
   'corona-extra': '/bar-menu/corona-extra.jpg',
   'heineken-0.0': '/bar-menu/Heineken.avif',
-  'heineken': '/bar-menu/heineken.jpg',
+  'heineken': '/bar-menu/heineken-2.jpg',
   'amstel-lager': '/bar-menu/amstel-lager.jpg',
   'castle-lager': '/bar-menu/Castle-Lager.jpg',
   'castle-milk-stout': '/bar-menu/castle-milkstout.jpg',
@@ -173,12 +173,12 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'belgravia-gin-dark-cherry': '/bar-menu/belgravia-gin-and-dark-cherry.jpg',
   'belgravia-gin-tonic': '/bar-menu/belgravia-gin-and-tonic.jpg',
   'belgravia-gin-passion': '/bar-menu/belgravia-gin-and-passion.png',
-  'gordons-gin': '/bar-menu/gordons-gin.jpg',
+  'gordons-gin': '/bar-menu/gordons.jpg',
   'beefeater-london-pink-strawberry-gin': '/bar-menu/beefeater-london-pink-strawberry-gin.jpg',
   'beefeater-london-dry-gin': '/bar-menu/beefeater-london-dry-gin.jpg',
   
   // Spirits - use exact bar-menu images
-  'jack-daniels-tennessee-whiskey': '/bar-menu/jack-daniels.jpg',
+  'jack-daniels-tennessee-whiskey': '/bar-menu/jack.jpg',
   'j-b-whisky': '/bar-menu/j-and-b-whisky.jpg',
   'klipdrift': '/bar-menu/klipdrift.jpg',
   'richelieu': '/bar-menu/richelieu.jpg',
@@ -190,7 +190,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'skyy-vodka': '/bar-menu/skyy-vodka.jpg',
   'smirnoff': '/bar-menu/smirnoff.jpg',
   'amarula': '/bar-menu/amarula.jpg',
-  'kahlua-coffee-liqueur': '/bar-menu/kahlua.jpg',
+  'kahlua-coffee-liqueur': '/bar-menu/kahlua-2.jpg',
   'aperol': '/bar-menu/aperol.jpg',
   'malibu': '/bar-menu/malibu.jpg',
   'monate': '/bar-menu/monate.jpg',
@@ -226,10 +226,10 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'assorted-mcc-sparkling-wine': '/bar-menu/assorted-mcc-sparkling-wine.jpg',
   
   // Soft Drinks & Mixers - use exact bar-menu images
-  'sprite': '/bar-menu/sprite.jpg',
+  'sprite': '/bar-menu/sprite-2.jpg',
   'sparletta-creme-soda': '/bar-menu/sparletta-creme-soda.jpg',
   'schweppes-mixers': '/bar-menu/schweppes-and-mixers.jpg',
-  'valpre-water': '/bar-menu/valpre-water.jpg',
+  'valpre-water': '/bar-menu/valpre.jpg',
   'still-water': '/bar-menu/Still-Sparkling-Water.jpg',
   'liqui-fruit': '/bar-menu/liqui-fruit.jpg',
   'tropika': '/bar-menu/tropika.jpg',
