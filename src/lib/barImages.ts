@@ -8,7 +8,7 @@ const drinkSlugMap: Record<string, string> = {
   'safari-sour': '/cocktails-and-drinks/Safari-sour.png',
   'thatched-toddy': '/cocktails-and-drinks/Thatched-Toddy.jpg',
   'garden-spritz': '/cocktails-and-drinks/Garden-Spritz.jpg',
-  'boma-sunset': '/cocktails-and-drinks/Safari-sour.png',
+  'boma-sunset': '/bar-menu/boma.jpg',
 
   // Hot Beverages
   'rbos-cappuccino': '/cocktails-and-drinks/Rbos-Cappuccino.jpg',
@@ -141,11 +141,11 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   // Non-Alcoholic - use bar-menu images
   'virgin-pina-colada': '/bar-menu/Pina-Colada.jpg',
   'virgin-strawberry-daiquiri': '/bar-menu/Strawberry-Daiquiri.jpg',
-  'virgin-mojito': '/menu/our-bar-menu/Virgin-Mojito.webp',
+  'virgin-mojito': '/bar-menu/virgin-mojito.jpg',
   
   // Beers - use exact bar-menu images
   'corona-extra': '/bar-menu/corona-extra.jpg',
-  'heineken-0.0': '/bar-menu/Heineken.avif',
+  'heineken-0-0': '/bar-menu/Heineken.avif',
   'heineken': '/bar-menu/heineken-2.jpg',
   'amstel-lager': '/bar-menu/amstel-lager.jpg',
   'castle-lager': '/bar-menu/Castle-Lager.jpg',
@@ -174,11 +174,13 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'belgravia-gin-tonic': '/bar-menu/belgravia-gin-and-tonic.jpg',
   'belgravia-gin-passion': '/bar-menu/belgravia-gin-and-passion.png',
   'gordons-gin': '/bar-menu/gordons.jpg',
+  'gordon-s-gin': '/bar-menu/gordons.jpg',
   'beefeater-london-pink-strawberry-gin': '/bar-menu/beefeater-london-pink-strawberry-gin.jpg',
   'beefeater-london-dry-gin': '/bar-menu/beefeater-london-dry-gin.jpg',
   
   // Spirits - use exact bar-menu images
   'jack-daniels-tennessee-whiskey': '/bar-menu/jack.jpg',
+  'jack-daniel-s-tennessee-whiskey': '/bar-menu/jack.jpg',
   'j-b-whisky': '/bar-menu/j-and-b-whisky.jpg',
   'klipdrift': '/bar-menu/klipdrift.jpg',
   'richelieu': '/bar-menu/richelieu.jpg',
@@ -191,6 +193,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'smirnoff': '/bar-menu/smirnoff.jpg',
   'amarula': '/bar-menu/amarula.jpg',
   'kahlua-coffee-liqueur': '/bar-menu/kahlua-2.jpg',
+  'kahl-a-coffee-liqueur': '/bar-menu/kahlua-2.jpg',
   'aperol': '/bar-menu/aperol.jpg',
   'malibu': '/bar-menu/malibu.jpg',
   'monate': '/bar-menu/monate.jpg',
@@ -230,6 +233,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'sparletta-creme-soda': '/bar-menu/sparletta-creme-soda.jpg',
   'schweppes-mixers': '/bar-menu/schweppes-and-mixers.jpg',
   'valpre-water': '/bar-menu/valpre.jpg',
+  'valpr-water': '/bar-menu/valpre.jpg',
   'still-water': '/bar-menu/Still-Sparkling-Water.jpg',
   'liqui-fruit': '/bar-menu/liqui-fruit.jpg',
   'tropika': '/bar-menu/tropika.jpg',
