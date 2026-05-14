@@ -5,8 +5,7 @@ import { useCart } from '@/lib/cart';
 import { formatWhatsAppUrl, generateOrderMessage, BUSINESS_INFO } from '@/lib/whatsappConfig';
 
 export default function CartButton() {
-  const { items, total, addItem, removeItem, updateQuantity, clearCart } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
+  const { items, total, addItem, removeItem, updateQuantity, clearCart, isCartOpen, openCart, closeCart } = useCart();
   const [isClient, setIsClient] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -54,12 +53,31 @@ export default function CartButton() {
     const url = formatWhatsAppUrl(message);
     window.open(url, '_blank');
     clearCart();
-    setIsOpen(false);
+    closeCart();
     setCustomerInfo({ name: '', phone: '', orderType: 'Pickup', requestedTime: '', notes: '' });
   };
 
   return (
     <>
+      <style>{`
+        @media (min-width: 769px) {
+          .cartModalDesktop {
+            width: min(520px, 90vw) !important;
+            max-height: 85vh !important;
+            border-radius: 20px !important;
+            align-items: center !important;
+            padding-bottom: 1.5rem !important;
+            z-index: 2000 !important;
+          }
+          .cartOverlayDesktop {
+            z-index: 1999 !important;
+            align-items: center !important;
+          }
+          .cartItemsDesktop {
+            max-height: 50vh !important;
+          }
+        }
+      `}</style>
 {/* Sticky WhatsApp Button - Mobile */}
        <a
           href={`https://wa.me/${BUSINESS_INFO.phoneRaw}?text=${encodeURIComponent(BUSINESS_INFO.name + ' - I would like to place an order')}`}
@@ -73,7 +91,7 @@ export default function CartButton() {
 
       {/* Cart Button */}
        <button
-          onClick={() => setIsOpen(true)}
+          onClick={openCart}
           className="mobile-cart-button"
         >
           <i className="fas fa-shopping-cart" style={{ color: '#fff', fontSize: '1.2rem' }} />
@@ -84,18 +102,18 @@ export default function CartButton() {
           )}
         </button>
 
-      {/* Cart Modal */}
-       {isOpen && (
-         <div style={{
-           position: 'fixed',
-           inset: 0,
-           background: 'rgba(0,0,0,0.5)',
-           zIndex: 10000,
-           display: 'flex',
-           alignItems: 'flex-end',
-           justifyContent: 'center',
-         }} onClick={() => setIsOpen(false)}>
-           <div style={{
+{/* Cart Modal */}
+      {isCartOpen && (
+        <div className="cartOverlayDesktop" style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+        }} onClick={closeCart}>
+           <div className="cartModalDesktop" style={{
              background: '#fff',
              width: '100%',
              maxWidth: '500px',
@@ -107,7 +125,7 @@ export default function CartButton() {
            }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ fontSize: '1.35rem', color: 'var(--dark-brown)' }}>🛒 Your Order</h2>
-              <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem' }}>✕</button>
+              <button onClick={closeCart} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem' }}>✕</button>
             </div>
 
             {items.length === 0 ? (
@@ -119,7 +137,7 @@ export default function CartButton() {
             ) : (
               <>
                 {/* Cart Items */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', maxHeight: '35vh', overflowY: 'auto' }}>
+                <div className="cartItemsDesktop" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', maxHeight: '35vh', overflowY: 'auto' }}>
                   {items.map(item => (
                     <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0.75rem', background: 'var(--cream)', borderRadius: '10px', position: 'relative' }}>
                       <div style={{ flex: 1 }}>

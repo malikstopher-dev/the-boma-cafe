@@ -11,6 +11,7 @@ interface UpsellModalProps {
   addedItem: MenuItem | null;
   allMenuItems: MenuItem[];
   onAddToCart: (item: MenuItem, selectedSize?: string, selectedAddOns?: string[]) => void;
+  onOpenCart?: () => void;
 }
 
 export default function UpsellModal({
@@ -18,7 +19,8 @@ export default function UpsellModal({
   onClose,
   addedItem,
   allMenuItems,
-  onAddToCart
+  onAddToCart,
+  onOpenCart
 }: UpsellModalProps) {
   const [suggestedItems, setSuggestedItems] = useState<MenuItem[]>([]);
   const [addedItems, setAddedItems] = useState<string[]>([]);
@@ -204,7 +206,7 @@ export default function UpsellModal({
             </div>
 
             <div className={styles.footer}>
-              <button className={styles.continueBtn} onClick={onClose}>
+              <button className={styles.continueBtn} onClick={onOpenCart || onClose}>
                 Continue to Cart
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -218,7 +220,7 @@ export default function UpsellModal({
         ) : (
           <div className={styles.emptyState}>
             <p>No suggestions available for this item.</p>
-            <button className={styles.continueBtn} onClick={onClose}>
+            <button className={styles.continueBtn} onClick={onOpenCart || onClose}>
               Continue to Cart
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />

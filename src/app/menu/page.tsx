@@ -196,7 +196,7 @@ export default function MenuPage() {
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState<MenuItem | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
-  const { addItem, items: cartItems, total } = useCart();
+  const { addItem, items: cartItems, total, openCart } = useCart();
 
   // Use default data directly - skip CMS for now since field mapping issues exist
   // The admin can still edit via admin panel which saves to CMS
@@ -281,6 +281,13 @@ export default function MenuPage() {
       selectedSize,
       selectedAddOns
     });
+  };
+
+  const handleContinueToCart = () => {
+    setShowUpsellModal(false);
+    setTimeout(() => {
+      openCart();
+    }, 50);
   };
 
   const scrollToCategory = (categoryId: string) => {
@@ -466,6 +473,7 @@ export default function MenuPage() {
         addedItem={lastAddedItem}
         allMenuItems={menuItems}
         onAddToCart={handleUpsellAddToCart}
+        onOpenCart={handleContinueToCart}
       />
     </>
   );

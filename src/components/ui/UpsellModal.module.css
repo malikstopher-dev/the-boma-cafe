@@ -346,15 +346,18 @@
   margin-bottom: 20px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   .overlay {
     align-items: center;
     padding: 20px;
+    z-index: 1500;
   }
 
   .modal {
+    width: min(600px, 90vw);
+    max-height: 82vh;
+    overflow-y: auto;
     border-radius: 24px;
-    max-height: 80vh;
   }
 
   .suggestionCard {
