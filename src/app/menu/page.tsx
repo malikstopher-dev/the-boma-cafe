@@ -196,7 +196,7 @@ export default function MenuPage() {
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState<MenuItem | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
-  const { addItem, items: cartItems, total, openCart } = useCart();
+  const { addItem, items: cartItems, total, openCart, isCartOpen } = useCart();
 
   // Use default data directly - skip CMS for now since field mapping issues exist
   // The admin can still edit via admin panel which saves to CMS
@@ -475,6 +475,18 @@ export default function MenuPage() {
         onAddToCart={handleUpsellAddToCart}
         onOpenCart={handleContinueToCart}
       />
+
+      {cartItems.length > 0 && (
+        <button
+          className={styles.desktopFloatingCart}
+          onClick={openCart}
+          aria-label="Open cart"
+        >
+          <span className={styles.floatingCartIcon}>🛒</span>
+          <span className={styles.floatingCartCount}>{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
+          <span className={styles.floatingCartTotal}>R{total}</span>
+        </button>
+      )}
     </>
   );
 }
