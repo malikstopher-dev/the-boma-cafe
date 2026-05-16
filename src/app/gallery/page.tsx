@@ -221,7 +221,7 @@ export default function GalleryPage() {
         </section>
 
         {/* Gallery Boards Section */}
-        <GalleryBoards onImageClick={openLightbox} />
+        <GalleryBoards onImageClick={openLightbox} onCategoryClick={(cat) => setActiveCategory(cat)} />
 
         {/* Lightbox */}
         {lightboxImage && (

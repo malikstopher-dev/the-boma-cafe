@@ -197,8 +197,8 @@ function initializeDefaults(database: Database.Database) {
       logo: '/logo.png',
       favicon: '/favicon.ico',
       footerText: '© {year} The Boma Cafe. All rights reserved.',
-      phone: '072 996 2212',
-      phone2: '072 996 2212',
+      phone: '071 592 1190',
+      phone2: '071 592 1190',
       email: 'info@thebomacafe.co.za',
       address: 'Sandton, Johannesburg, South Africa',
       openingHours: 'Mon-Sun: 8:00 AM - 10:00 PM',
@@ -733,10 +733,8 @@ export function saveGalleryItem(item: any): any {
 
 export function deleteGalleryItem(id: string): boolean {
   try {
-    console.log('Deleting gallery item with id:', id);
     const database = getDb();
-    const result = database.prepare('DELETE FROM gallery WHERE id = ?').run(id);
-    console.log('Delete result:', result.changes, 'rows affected');
+    database.prepare('DELETE FROM gallery WHERE id = ?').run(id);
     return true;
   } catch (error) {
     console.error('Error deleting gallery item:', error);

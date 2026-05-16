@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Contact & Reservations | The Boma Café · Paulshof, Sandton',
-  description: 'Book a table or enquire about events at The Boma Café. 127 Wroxham Rd, Paulshof, Sandton. Call 072 996 2212.',
+  description: 'Book a table or enquire about events at The Boma Café. 127B Wroxham Rd, Paulshof, Sandton. Call 071 592 1190.',
   alternates: {
     canonical: 'https://www.thebomacafe.co.za/contact',
   },

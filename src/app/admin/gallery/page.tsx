@@ -73,16 +73,13 @@ export default function AdminGallery() {
     
     const folder = categoryFolders[localCategory];
     const url = `/api/gallery/${folder}/${imageName}`;
-    console.log('Deleting:', url);
     try {
       const response = await fetch(url, {
         method: 'DELETE',
       });
-      console.log('Delete response:', response.status, response.statusText);
       if (response.ok) {
         loadLocalImages(localCategory);
       } else {
-        // On Vercel, public folder is read-only, so delete will fail
         alert('Note: Image deletion is not available in production (Vercel read-only filesystem). The file will remain but you can remove it from the gallery list below.');
       }
     } catch (error) {

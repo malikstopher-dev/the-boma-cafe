@@ -1,14 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PremiumHero from '@/components/ui/PremiumHero';
 import Slideshow from '@/components/ui/Slideshow';
-import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
-import { getEventEnquiryLink } from '@/data/businessInfo';
+import { getEventEnquiryLink, getReservationLink } from '@/data/businessInfo';
 
-const events = [
+const featuredEvents = [
+  {
+    title: 'Weekend Breakfast Buffet',
+    description: 'Saturday & Sunday — 9:30 AM to 12:30 PM. Fresh spreads, hot dishes, and relaxed weekend vibes.',
+    price: 'R89 Adults · R45 Kids',
+    image: '/gallery/events/images (12).jpg',
+    cta: 'Book via WhatsApp',
+    ctaLink: ''
+  },
+  {
+    title: 'Live Music Nights',
+    description: 'Friday & Saturday evenings — resident DJs and live entertainment. Check schedule for upcoming acts.',
+    price: 'Free Entry',
+    image: '/gallery/events/events-slideshow/slide/eventslide3.jpeg',
+    cta: 'View Events',
+    ctaLink: ''
+  },
+  {
+    title: 'Venue Hire',
+    description: 'Birthdays, corporate events, private celebrations. Our outdoor venue accommodates groups of all sizes.',
+    price: 'Enquire for pricing',
+    image: '/gallery/venue/2025-04-14.webp',
+    cta: 'Enquire Now',
+    ctaLink: ''
+  }
+];
+
+const upcomingEvents = [
   {
     title: "Mother's Day Sip & Paint",
     date: "2026-05-10",
@@ -50,23 +77,14 @@ const events = [
     time: "19:30",
     image: "/gallery/events/events-slideshow/slide/eventslide6.jpeg",
     description: "Stand-up comedy + DJ Dazz on decks."
-  },
-  {
-    title: "Saturday with Earl B",
-    date: "2026-04-25",
-    time: "12:00",
-    image: "/gallery/events/events-slideshow/slide/eventslide7.jpg",
-    description: "Saturday session with Earl B."
-  },
-  {
-    title: "Weekend Buffet Experience",
-    type: "Recurring",
-    days: ["Saturday", "Sunday"],
-    time: "09:30 - 12:00",
-    date: null,
-    image: "/gallery/events/images (12).jpg",
-    description: "Enjoy our signature weekend buffet with great food, music, and atmosphere."
   }
+];
+
+const eventGalleryImages = [
+  '/gallery/events/2025-04-23.webp',
+  '/gallery/venue/2025-04-14.webp',
+  '/gallery/venue/2025-05-09.webp',
+  '/gallery/events/2024-09-15.webp'
 ];
 
 function EventCard({ event }: { event: any }) {
@@ -121,7 +139,7 @@ function EventCard({ event }: { event: any }) {
       e.currentTarget.style.borderColor = 'rgba(232, 213, 196, 0.5)';
     }}
     >
-      <div style={{ position: 'relative', height: '220px', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'relative', height: '200px', overflow: 'hidden', flexShrink: 0 }}>
         {!imgError ? (
           <img 
             src={event.image} 
@@ -212,15 +230,15 @@ function EventCard({ event }: { event: any }) {
           </div>
         )}
       </div>
-      <div style={{ padding: '1.75rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <h4 style={{ fontSize: '1.25rem', marginBottom: '0.6rem', color: 'var(--dark-brown)', fontWeight: 600, letterSpacing: '-0.01em' }}>
+      <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <h4 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--dark-brown)', fontWeight: 600 }}>
           {event.title}
         </h4>
-        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.7, flex: 1 }}>
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1rem', lineHeight: 1.6, flex: 1 }}>
           {event.description}
         </p>
-        <div style={{ display: 'flex', gap: '1.25rem', color: 'var(--text-light)', fontSize: '0.8rem', marginBottom: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--cream)' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>🕐 {event.time}</span>
+        <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-light)', fontSize: '0.8rem', marginBottom: '1rem' }}>
+          <span>🕐 {event.time}</span>
         </div>
         <a 
           href={getWhatsAppLink()}
@@ -242,14 +260,6 @@ function EventCard({ event }: { event: any }) {
             textAlign: 'center',
             transition: 'all 0.3s ease'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--secondary)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--primary)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
         >
           Book Now
         </a>
@@ -266,13 +276,16 @@ export default function EventsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const filtered = events.filter(event => {
-      if (!event.date) return true; // Recurring events
+    const filtered = upcomingEvents.filter(event => {
+      if (!event.date) return true;
       return new Date(event.date) >= today;
     });
     
     setVisibleEvents(filtered);
   }, []);
+
+  const reservationLink = getReservationLink();
+  const eventEnquiryLink = getEventEnquiryLink();
 
   return (
     <>
@@ -282,15 +295,103 @@ export default function EventsPage() {
           imageUrl="/hero/hero-events.jpg"
           badge="Celebrate"
           title="Events & Venue Hire"
-          subtitle="Host unforgettable celebrations at The Boma Café — from live music nights and buffet experiences to private functions and corporate events in Sandton."
+          subtitle="Live music, private celebrations, firepit evenings, and unforgettable gatherings in Sandton."
         />
         
-        {/* Events Slideshow */}
-        <div style={{ 
-          maxWidth: '900px', 
-          margin: '0 auto', 
-          padding: '0 5%' 
-        }}>
+        {/* Featured Event Cards */}
+        <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
+          <div className="container">
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+              gap: '1.5rem',
+              maxWidth: '1200px',
+              margin: '0 auto'
+            }}>
+              {featuredEvents.map((event, idx) => (
+                <div key={idx} style={{
+                  background: 'var(--white)',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 20px rgba(26, 15, 10, 0.08)'
+                }}>
+                  <div style={{ height: '180px', overflow: 'hidden' }}>
+                    <img 
+                      src={event.image} 
+                      alt={event.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div style={{ padding: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)', marginBottom: '0.75rem', fontWeight: 600 }}>
+                      {event.title}
+                    </h3>
+                    <p style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1rem' }}>
+                      {event.description}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>{event.price}</span>
+                      {event.title === 'Weekend Breakfast Buffet' ? (
+                        <a 
+                          href={reservationLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '0.6rem 1.25rem',
+                            background: 'var(--primary)',
+                            color: 'var(--white)',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          {event.cta}
+                        </a>
+                      ) : event.title === 'Venue Hire' ? (
+                        <a 
+                          href={eventEnquiryLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '0.6rem 1.25rem',
+                            background: 'var(--primary)',
+                            color: 'var(--white)',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          {event.cta}
+                        </a>
+                      ) : (
+                        <Link 
+                          href="/events"
+                          style={{
+                            padding: '0.6rem 1.25rem',
+                            background: 'var(--primary)',
+                            color: 'var(--white)',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          {event.cta}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Venue Slideshow */}
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 5%' }}>
           <Slideshow
              images={[
                { src: '/gallery/venue/134-2000x1125.jpeg', alt: 'Boma Café venue' },
@@ -301,31 +402,6 @@ export default function EventsPage() {
                { src: '/gallery/venue/2023-10-30.webp', alt: 'Boma Café venue layout' },
                { src: '/gallery/venue/2025-04-14.webp', alt: 'Boma Café venue' },
                { src: '/gallery/venue/2025-04-23.jpg', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/2025-04-23.webp', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/2025-05-09.webp', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/2025-05-13 (1).webp', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/2025-05-13.webp', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/2025-05-19.webp', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/2025-07-20.webp', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/2025-11-29.webp', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/2025-12-25.webp', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/586695496_18542032552027334_196345222483858604_n.jpg', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/587298253_18541742503027334_426466464687217115_n.jpg', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/bomacafe2_large.jpg', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/bomacafe3.jpg', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/bomacafe4-large-1.jpg', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/bomacafe6_large.jpg', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/download.jpg', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/gallery-3-800x600.jpeg', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/gallery-5-800x600.jpeg', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/gallery-8-800x600.jpeg', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/heroslide-1800x1013.jpeg', alt: 'Boma Café venue space' },
-               { src: '/gallery/venue/slide1-1980x1080.jpeg', alt: 'Boma Café venue area' },
-               { src: '/gallery/venue/slide3-1800x982.jpeg', alt: 'Boma Café venue interior' },
-               { src: '/gallery/venue/unnamed (1).webp', alt: 'Boma Café venue layout' },
-               { src: '/gallery/venue/unnamed (2).webp', alt: 'Boma Café venue' },
-               { src: '/gallery/venue/unnamed (3).webp', alt: 'Boma Café venue view' },
-               { src: '/gallery/venue/unnamed.webp', alt: 'Boma Café venue space' },
              ]}
              autoPlayInterval={6000}
            />
@@ -348,11 +424,8 @@ export default function EventsPage() {
             <strong style={{ color: 'var(--dark-brown)' }}>Live music in Paulshof</strong> • <strong style={{ color: 'var(--dark-brown)' }}>Weekend buffet Sandton</strong> • <strong style={{ color: 'var(--dark-brown)' }}>Venue hire Johannesburg</strong> • <strong style={{ color: 'var(--dark-brown)' }}>Restaurant events Sandton</strong>
           </p>
         </div>
-        
-        {/* Upcoming Events Section from Homepage */}
-        <UpcomingEventsSection />
-        
-        {/* Events Page Specific Upcoming Events */}
+
+        {/* Single Upcoming Events Section */}
         <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
@@ -368,10 +441,9 @@ export default function EventsPage() {
                 letterSpacing: '1px',
                 textTransform: 'uppercase'
               }}>
-                Calendar
+                Coming Up
               </div>
               <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--dark-brown)', marginTop: '0.5rem' }}>Upcoming Events</h2>
-              <p style={{ color: 'var(--text-light)', marginTop: '0.5rem' }}>Mark your calendar for these unmissable experiences</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
               {visibleEvents.map((event: any, idx: number) => (
@@ -380,26 +452,16 @@ export default function EventsPage() {
             </div>
             {visibleEvents.length === 0 && (
               <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)' }}>
-                <p>No upcoming events scheduled. Check back soon!</p>
+                <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>No scheduled public events right now.</p>
+                <p>Contact us for private venue hire.</p>
               </div>
             )}
           </div>
         </section>
-        
-        {/* Venue Hire CTA */}
-        <section style={{ 
-          background: 'var(--beige)', 
-          padding: 'var(--space-3xl) 5%', 
-          textAlign: 'center',
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(244, 164, 96, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(244, 164, 96, 0.1) 0%, transparent 50%)',
-            pointerEvents: 'none'
-          }} />
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+
+        {/* Venue Hire Details */}
+        <section style={{ background: 'var(--beige)', padding: 'var(--space-3xl) 5%', textAlign: 'center' }}>
+          <div className="container">
             <div style={{
               display: 'inline-block',
               background: 'var(--warm)',
@@ -414,30 +476,73 @@ export default function EventsPage() {
             }}>
               Private Events
             </div>
-            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--white)', marginBottom: '1rem' }}>Host Your Event With Us</h2>
-            <p style={{ color: 'var(--cream)', marginBottom: '2.5rem', maxWidth: '550px', margin: '0 auto', lineHeight: 1.6 }}>From corporate functions to private celebrations, we make it memorable</p>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--white)', marginBottom: '1rem' }}>Celebrate at The Boma</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+              {['Birthdays', 'Corporate Events', 'Family Celebrations', 'Private Gatherings'].map((item, idx) => (
+                <div key={idx} style={{
+                  background: 'var(--cream)',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.9rem',
+                  color: 'var(--dark-brown)'
+                }}>
+                  {item}
+                </div>
+              ))}
+            </div>
+            <p style={{ color: 'var(--cream)', marginBottom: '2rem', maxWidth: '550px', margin: '0 auto 2rem', lineHeight: 1.6 }}>
+              Our outdoor venue with thatched roof and firepits creates the perfect atmosphere for celebrations of all sizes.
+            </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
-              <a href={getEventEnquiryLink()} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
+              <a href={eventEnquiryLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
                 Plan Your Event
               </a>
-              <a 
-                href={getEventEnquiryLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '1rem 2.5rem',
-                  background: 'transparent',
-                  border: '2px solid var(--warm)',
-                  color: 'var(--warm)',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  display: 'inline-block'
-                }}
-              >
+              <a href={eventEnquiryLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '1rem 2.5rem' }}>
                 WhatsApp Us
               </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Event Gallery Teaser */}
+        <section style={{ background: 'var(--cream)', padding: 'var(--space-2xl) 5%' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+              <h3 style={{ fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--dark-brown)', fontFamily: 'var(--font-display)' }}>
+                Moments from past events
+              </h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', maxWidth: '1000px', margin: '0 auto' }}>
+              {eventGalleryImages.map((img, idx) => (
+                <div key={idx} style={{ aspectRatio: '1', borderRadius: '12px', overflow: 'hidden' }}>
+                  <img src={img} alt={`Event moment ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                </div>
+              ))}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
+              <Link href="/gallery" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+                View Full Gallery →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section style={{ background: 'var(--white)', padding: 'var(--space-3xl) 5%', textAlign: 'center' }}>
+          <div className="container">
+            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--dark-brown)', marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>
+              Ready to book or enquire?
+            </h2>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <a href="tel:0715921190" className="btn btn-primary" style={{ padding: '1rem 2rem' }}>
+                Call Us
+              </a>
+              <a href={eventEnquiryLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '1rem 2rem' }}>
+                WhatsApp Us
+              </a>
+              <Link href="/gallery" className="btn btn-ghost" style={{ padding: '1rem 2rem' }}>
+                View Gallery
+              </Link>
             </div>
           </div>
         </section>

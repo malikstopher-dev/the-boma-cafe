@@ -123,8 +123,8 @@ export default function AdminSiteSettings() {
 
   const [contact, setContact] = useState({
     address: 'Sandton, Johannesburg, South Africa',
-    phone: '072 996 2212',
-    phone2: '072 996 2212',
+    phone: '071 592 1190',
+    phone2: '071 592 1190',
     email: 'info@thebomacafe.co.za',
     whatsapp: '',
     openingHours: 'Mon-Sun: 8:00 AM - 10:00 PM',

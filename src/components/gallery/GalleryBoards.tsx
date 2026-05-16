@@ -7,9 +7,10 @@ import { galleryCategories, galleryImages, getGalleryImages } from '@/data/galle
 interface GalleryBoardsProps {
   onManageClick?: () => void;
   onImageClick?: (images: string[], index: number) => void;
+  onCategoryClick?: (category: string) => void;
 }
 
-export default function GalleryBoards({ onManageClick, onImageClick }: GalleryBoardsProps) {
+export default function GalleryBoards({ onManageClick, onImageClick, onCategoryClick }: GalleryBoardsProps) {
   const [activeSlide, setActiveSlide] = useState<Record<string, number>>({});
   const intervalRefs = useRef<Record<string, NodeJS.Timeout>>({});
 
@@ -75,7 +76,7 @@ export default function GalleryBoards({ onManageClick, onImageClick }: GalleryBo
           
           return (
             <div key={cat.id} className={styles.boardCard}>
-              <div className={styles.boardHeader}>
+              <div className={styles.boardHeader} onClick={() => onCategoryClick && onCategoryClick(cat.name)} style={{ cursor: onCategoryClick ? 'pointer' : 'default' }}>
                 <span className={styles.boardIcon}>{cat.icon}</span>
                 <h3 className={styles.boardTitle}>{cat.name}</h3>
               </div>

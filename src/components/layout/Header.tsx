@@ -65,7 +65,7 @@ export default function Header() {
               </Link>
             ))}
             <div className={styles.icons}>
-              <a href="tel:0729962212" className={styles.icon} title="Call Us">
+              <a href="tel:0715921190" className={styles.icon} title="Call Us">
                 <i className="fas fa-phone" style={{ fontSize: '0.8rem' }} />
               </a>
               <a href="mailto:info@thebomacafe.co.za" className={styles.icon} title="Email Us">
@@ -102,7 +102,7 @@ export default function Header() {
               ))}
             </nav>
             <div className={styles.mobileCtaRow}>
-              <a href={`tel:0729962212`} className={styles.mobileCtaBtn}>
+              <a href={`tel:0715921190`} className={styles.mobileCtaBtn}>
                 <i className="fas fa-phone" />
                 <span>Call</span>
               </a>

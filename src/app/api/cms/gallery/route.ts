@@ -52,11 +52,9 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    console.log('DELETE gallery item, id:', id);
     
     if (id) {
       const result = deleteGalleryItem(id);
-      console.log('Delete result:', result);
       return NextResponse.json({ success: result });
     }
     

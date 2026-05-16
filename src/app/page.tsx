@@ -241,39 +241,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Premium Signature Cocktails Section */}
-        <section className={styles.cocktailsSection}>
-          <div className="container">
-            <FadeInSection className={styles.sectionHeader}>
-              <span className="section-badge gold">Libations</span>
-              <h2>Signature Cocktails</h2>
-              <p>Artisan-crafted cocktails that capture the spirit of Africa</p>
-            </FadeInSection>
-
-            <div className={styles.cocktailsGrid}>
-              {signatureCocktails.map((cocktail, idx) => (
-                <FadeInSection key={idx} delay={idx * 100} className={styles.cocktailCardWrapper}>
-                  <div className={styles.cocktailCard}>
-                    <div className={styles.cocktailImageWrapper}>
-                      <img src={cocktail.image} alt={cocktail.name} className={styles.cocktailImage} loading="lazy" decoding="async" />
-                      <div className={styles.cocktailOverlay} />
-                    </div>
-                    <div className={styles.cocktailContent}>
-                      <h4>{cocktail.name}</h4>
-                      <p>{cocktail.desc}</p>
-                      <span className={styles.cocktailPrice}>R{cocktail.price}</span>
-                    </div>
-                  </div>
-                </FadeInSection>
-              ))}
-            </div>
-
-            <FadeInSection className={styles.sectionCta}>
-              <Link href="/bar-menu" className="btn btn-secondary btn-lg">Explore Our Bar</Link>
-            </FadeInSection>
-          </div>
-        </section>
-
         {/* Signature Dishes Section */}
         <section className={styles.signatureSection}>
           <div className="container">
@@ -311,6 +278,39 @@ export default function Home() {
 
             <FadeInSection className={styles.sectionCta}>
               <Link href="/menu" className="btn btn-primary">View Full Menu</Link>
+            </FadeInSection>
+          </div>
+        </section>
+
+        {/* Premium Signature Cocktails Section */}
+        <section className={styles.cocktailsSection}>
+          <div className="container">
+            <FadeInSection className={styles.sectionHeader}>
+              <span className="section-badge gold">Libations</span>
+              <h2>Signature Cocktails</h2>
+              <p>Artisan-crafted cocktails that capture the spirit of Africa</p>
+            </FadeInSection>
+
+            <div className={styles.cocktailsGrid}>
+              {signatureCocktails.map((cocktail, idx) => (
+                <FadeInSection key={idx} delay={idx * 100} className={styles.cocktailCardWrapper}>
+                  <div className={styles.cocktailCard}>
+                    <div className={styles.cocktailImageWrapper}>
+                      <img src={cocktail.image} alt={cocktail.name} className={styles.cocktailImage} loading="lazy" decoding="async" />
+                      <div className={styles.cocktailOverlay} />
+                    </div>
+                    <div className={styles.cocktailContent}>
+                      <h4>{cocktail.name}</h4>
+                      <p>{cocktail.desc}</p>
+                      <span className={styles.cocktailPrice}>R{cocktail.price}</span>
+                    </div>
+                  </div>
+                </FadeInSection>
+              ))}
+            </div>
+
+            <FadeInSection className={styles.sectionCta}>
+              <Link href="/bar-menu" className="btn btn-secondary btn-lg">Explore Our Bar</Link>
             </FadeInSection>
           </div>
         </section>
