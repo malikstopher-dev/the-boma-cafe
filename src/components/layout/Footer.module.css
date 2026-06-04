@@ -254,7 +254,7 @@
     width: 100%;
     max-width: 100%;
     padding: 0;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   .container {
@@ -271,6 +271,7 @@
     object-fit: contain !important;
     margin: 0 auto 4px !important;
     display: block !important;
+    filter: none !important;
   }
 
   .mobileBrand {
@@ -289,17 +290,6 @@
 
   .mobileBrand::before,
   .mobileBrand::after {
-    display: none !important;
-    content: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: transparent !important;
-    border: 0 !important;
-    position: absolute;
-  }
-
-  .mobileFooterContent .mobileBrand::before,
-  .mobileFooterContent .mobileBrand::after {
     display: none !important;
     content: none !important;
   }
