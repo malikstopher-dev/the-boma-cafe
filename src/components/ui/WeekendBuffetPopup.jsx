@@ -117,24 +117,17 @@ export default function WeekendBuffetPopup() {
           ×
         </button>
         <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
-          <a
-            href={activeSlide.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={activeSlide.ariaLabel}
-          >
-            <Image
-              src={activeSlide.src}
-              alt={activeSlide.alt}
-              className={styles.lightboxImage}
-              width={600}
-              height={900}
-              quality={95}
-              priority
-              sizes="(max-width: 768px) 100vw, 600px"
-              onError={() => handleImageError(SLIDES.indexOf(activeSlide))}
-            />
-          </a>
+          <Image
+            src={activeSlide.src}
+            alt={activeSlide.alt}
+            className={styles.lightboxImage}
+            width={600}
+            height={900}
+            quality={95}
+            priority
+            sizes="(max-width: 768px) 100vw, 600px"
+            onError={() => handleImageError(SLIDES.indexOf(activeSlide))}
+          />
         </div>
       </div>
     );

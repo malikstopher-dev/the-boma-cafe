@@ -91,9 +91,9 @@
   height: 100%;
   background: linear-gradient(
     180deg,
-    rgba(26, 15, 10, 0.4) 0%,
-    rgba(26, 15, 10, 0.2) 40%,
-    rgba(26, 15, 10, 0.55) 100%
+    rgba(26, 15, 10, 0.5) 0%,
+    rgba(26, 15, 10, 0.3) 40%,
+    rgba(26, 15, 10, 0.65) 100%
   );
 }
 
@@ -115,8 +115,9 @@
   letter-spacing: 5px;
   text-transform: uppercase;
   margin-bottom: 1.25rem;
-  color: var(--warm);
+  color: #FFFFFF;
   font-weight: 500;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .heroTitle {
@@ -130,17 +131,18 @@
 }
 
 .heroAccent {
-  color: var(--warm);
+  color: #FFFFFF;
   display: block;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .heroTagline {
   font-size: clamp(1.2rem, 2.2vw, 1.6rem);
   font-style: italic;
-  color: var(--cream);
+  color: #FFFFFF;
   margin-bottom: 3rem;
   font-weight: 400;
-  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .heroCta {

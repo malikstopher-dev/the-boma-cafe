@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { ReactNode } from 'react';
 
 type AnimationType = 'default' | 'left' | 'right' | 'scale';
@@ -12,23 +12,18 @@ interface FadeInSectionProps {
   animationType?: AnimationType;
 }
 
-const variants: Record<AnimationType, Variants> = {
-  default: {
-    hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0 },
-  },
-  left: {
-    hidden: { opacity: 0, x: -50 },
-    visible: { opacity: 1, x: 0 },
-  },
-  right: {
-    hidden: { opacity: 0, x: 50 },
-    visible: { opacity: 1, x: 0 },
-  },
-  scale: {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1 },
-  },
+const transformMap: Record<AnimationType, string> = {
+  default: 'translateY(40px)',
+  left: 'translateX(-50px)',
+  right: 'translateX(50px)',
+  scale: 'scale(0.95)',
+};
+
+const revealedTransform: Record<AnimationType, string> = {
+  default: 'translateY(0)',
+  left: 'translateX(0)',
+  right: 'translateX(0)',
+  scale: 'scale(1)',
 };
 
 export default function FadeInSection({
@@ -37,27 +32,51 @@ export default function FadeInSection({
   delay = 0,
   animationType = 'default',
 }: FadeInSectionProps) {
-  const shouldReduce = useReducedMotion();
-  const v = variants[animationType];
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [reduced, setReduced] = useState(false);
 
-  if (shouldReduce) {
-    return <div className={className} style={{ opacity: 1 }}>{children}</div>;
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    if (mq.matches) {
+      setVisible(true);
+      return;
+    }
+
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  if (reduced) {
+    return <div className={className}>{children}</div>;
   }
 
   return (
-    <motion.div
+    <div
+      ref={ref}
       className={className}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-50px' }}
-      variants={v}
-      transition={{
-        duration: 0.8,
-        delay: delay / 1000,
-        ease: [0.25, 0.1, 0.25, 1],
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? revealedTransform[animationType] : transformMap[animationType],
+        transition: `opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)`,
+        transitionDelay: visible ? `${delay}ms` : '0ms',
       }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
