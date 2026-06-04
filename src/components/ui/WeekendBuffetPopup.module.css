@@ -25,6 +25,7 @@
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s ease, filter 0.2s ease;
+  position: relative;
 }
 
 .imageLink:hover {
@@ -32,9 +33,31 @@
   filter: brightness(1.03);
 }
 
+.slideContainer {
+  position: relative;
+  width: 260px;
+  height: 390px;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.activeSlide {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .flyerImage {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
   border-radius: 18px;
 }
@@ -63,4 +86,60 @@
 .closeButton:hover {
   background: white;
   transform: scale(1.1);
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0 4px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.activeDot {
+  background: white;
+  width: 20px;
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 1023px) {
+  .popup {
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: min(260px, calc(100vw - 48px));
+  }
+
+  .imageLink {
+    width: 100%;
+  }
+
+  .slideContainer {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 260 / 390;
+  }
+
+  .flyerImage {
+    border-radius: 18px;
+  }
 }
