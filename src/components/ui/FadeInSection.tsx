@@ -1,56 +1,63 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import styles from '@/app/page.module.css';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { ReactNode } from 'react';
 
-export default function FadeInSection({ 
-  children, 
-  className = '', 
-  delay = 0, 
-  animationType = 'default' 
-}: { 
-  children: React.ReactNode; 
-  className?: string; 
-  delay?: number; 
-  animationType?: 'default' | 'left' | 'right' | 'scale' 
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+type AnimationType = 'default' | 'left' | 'right' | 'scale';
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              setIsVisible(true);
-            }, delay);
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-      }
-    );
+interface FadeInSectionProps {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  animationType?: AnimationType;
+}
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
+const variants: Record<AnimationType, Variants> = {
+  default: {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0 },
+  },
+  left: {
+    hidden: { opacity: 0, x: -50 },
+    visible: { opacity: 1, x: 0 },
+  },
+  right: {
+    hidden: { opacity: 0, x: 50 },
+    visible: { opacity: 1, x: 0 },
+  },
+  scale: {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1 },
+  },
+};
 
-    return () => observer.disconnect();
-  }, [delay]);
+export default function FadeInSection({
+  children,
+  className = '',
+  delay = 0,
+  animationType = 'default',
+}: FadeInSectionProps) {
+  const shouldReduce = useReducedMotion();
+  const v = variants[animationType];
 
-  const animationClass = animationType === 'left' ? styles.revealLeft :
-                         animationType === 'right' ? styles.revealRight :
-                         animationType === 'scale' ? styles.revealScale : '';
+  if (shouldReduce) {
+    return <div className={className} style={{ opacity: 1 }}>{children}</div>;
+  }
 
   return (
-    <div
-      ref={ref}
-      className={`${styles.fadeInSection} ${animationClass} ${isVisible ? styles.visible : ''} ${className}`}
+    <motion.div
+      className={className}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-50px' }}
+      variants={v}
+      transition={{
+        duration: 0.8,
+        delay: delay / 1000,
+        ease: [0.25, 0.1, 0.25, 1],
+      }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

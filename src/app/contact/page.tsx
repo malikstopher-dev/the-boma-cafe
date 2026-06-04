@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { dataService, generateId } from '@/lib/data';
@@ -53,10 +54,12 @@ export default function ContactPage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
               gap: '1rem' 
             }}>
-              <a 
+              <motion.a 
                 href={getReservationLink()}
                 target="_blank"
                 rel="noopener noreferrer"
+                whileHover={{ y: -4, boxShadow: '0 8px 25px rgba(139, 69, 19, 0.35)' }}
+                whileTap={{ scale: 0.98 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -66,7 +69,6 @@ export default function ContactPage() {
                   borderRadius: '16px',
                   textDecoration: 'none',
                   boxShadow: '0 4px 15px rgba(139, 69, 19, 0.25)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 }}
               >
                 <span style={{ fontSize: '2rem' }}>🍽️</span>
@@ -74,12 +76,14 @@ export default function ContactPage() {
                   <strong style={{ color: 'var(--white)', display: 'block', fontSize: '1.1rem' }}>Reserve a Table</strong>
                   <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem' }}>Book your spot via WhatsApp</span>
                 </div>
-              </a>
+              </motion.a>
               
-              <a 
+              <motion.a 
                 href={getEventEnquiryLink()}
                 target="_blank"
                 rel="noopener noreferrer"
+                whileHover={{ y: -4, boxShadow: '0 8px 25px rgba(26, 15, 10, 0.15)' }}
+                whileTap={{ scale: 0.98 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -90,7 +94,6 @@ export default function ContactPage() {
                   textDecoration: 'none',
                   boxShadow: '0 4px 15px rgba(26, 15, 10, 0.08)',
                   border: '2px solid var(--beige-dark)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 }}
               >
                 <span style={{ fontSize: '2rem' }}>🎉</span>
@@ -98,12 +101,14 @@ export default function ContactPage() {
                   <strong style={{ color: 'var(--dark-brown)', display: 'block', fontSize: '1.1rem' }}>Plan an Event</strong>
                   <span style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Private functions & parties</span>
                 </div>
-              </a>
+              </motion.a>
               
-              <a 
+              <motion.a 
                 href={`https://wa.me/${businessInfo.phoneRaw}?text=${encodeURIComponent('Hello! I would like to order from The Boma Café')}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                whileHover={{ y: -4, boxShadow: '0 8px 25px rgba(37, 211, 102, 0.35)' }}
+                whileTap={{ scale: 0.98 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -113,7 +118,6 @@ export default function ContactPage() {
                   borderRadius: '16px',
                   textDecoration: 'none',
                   boxShadow: '0 4px 15px rgba(37, 211, 102, 0.25)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 }}
               >
                 <span style={{ fontSize: '2rem' }}>💬</span>
@@ -121,7 +125,7 @@ export default function ContactPage() {
                   <strong style={{ color: 'var(--white)', display: 'block', fontSize: '1.1rem' }}>Order / Chat</strong>
                   <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem' }}>Start an order via WhatsApp</span>
                 </div>
-              </a>
+              </motion.a>
             </div>
           </div>
         </section>

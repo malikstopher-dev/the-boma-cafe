@@ -36,7 +36,7 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
     observer.observe(element);
 
     return () => {
-      observer.unobserve(element);
+      observer.disconnect();
     };
   }, [threshold, rootMargin, once]);
 
@@ -45,26 +45,39 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
 
 export function useParallax(speed: number = 0.5) {
   const ref = useRef<HTMLDivElement>(null);
-  const [offset, setOffset] = useState(0);
+  const offsetRef = useRef(0);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      const scrolled = window.pageYOffset;
-      const elementTop = rect.top + scrolled;
-      const elementHeight = rect.height;
-      const viewportHeight = window.innerHeight;
+    const element = ref.current;
+    if (!element) return;
 
-      if (scrolled + viewportHeight > elementTop && scrolled < elementTop + elementHeight) {
-        const progress = (scrolled + viewportHeight - elementTop) / (viewportHeight + elementHeight);
-        setOffset((progress - 0.5) * speed * 100);
-      }
+    const handleScroll = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const rect = element.getBoundingClientRect();
+        const scrolled = window.pageYOffset;
+        const elementTop = rect.top + scrolled;
+        const elementHeight = rect.height;
+        const viewportHeight = window.innerHeight;
+
+        if (scrolled + viewportHeight > elementTop && scrolled < elementTop + elementHeight) {
+          const progress = (scrolled + viewportHeight - elementTop) / (viewportHeight + elementHeight);
+          const newOffset = (progress - 0.5) * speed * 100;
+          if (Math.abs(newOffset - offsetRef.current) > 0.1) {
+            offsetRef.current = newOffset;
+            element.style.transform = `translateY(${newOffset}px)`;
+          }
+        }
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [speed]);
 
-  return { ref, offset };
+  return { ref, offset: offsetRef.current };
 }

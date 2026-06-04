@@ -389,7 +389,6 @@ input, textarea, select {
 
 .btn-ghost {
   background: rgba(31, 31, 31, 0.06);
-  backdrop-filter: blur(10px);
   color: var(--heading);
   border: 1.5px solid rgba(31, 31, 31, 0.15);
 }
@@ -419,7 +418,6 @@ input, textarea, select {
 /* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -429,7 +427,7 @@ input, textarea, select {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  transition: all var(--transition-smooth);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -1178,7 +1176,6 @@ input, textarea, select {
 .section-badge.light {
   color: var(--cream);
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
 }
 
 .section-cta {
@@ -2144,4 +2141,38 @@ input, textarea, select {
   body {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== BUTTON MICRO-INTERACTIONS ===== */
+.btn {
+  will-change: transform;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-ghost:active {
+  transform: scale(0.98);
 }

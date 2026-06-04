@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
@@ -255,7 +257,7 @@ export default function MenuPage() {
     setVisibleCount(prev => prev + LOAD_MORE_COUNT);
   }, []);
 
-  const totalItems = filteredSections.reduce((sum, s) => sum + s.items.length, 0);
+  const totalItems = useMemo(() => filteredSections.reduce((sum, s) => sum + s.items.length, 0), [filteredSections]);
   const hasMoreItems = visibleCount < totalItems;
 
   const handleAddToCart = (item: MenuItem, selectedSize?: string, selectedAddOns?: string[], notes?: string) => {
@@ -407,14 +409,22 @@ export default function MenuPage() {
                   {section.items.slice(0, visibleCount).map((item: MenuItem) => {
                     const itemImage = getMenuItemImage(item.name);
                     return (
-                    <div key={item.id} className={styles.itemCard} onClick={() => setSelectedItem(item)}>
+                    <motion.div
+                      key={item.id}
+                      className={styles.itemCard}
+                      onClick={() => setSelectedItem(item)}
+                      whileHover={{ y: -4, boxShadow: '0 12px 28px rgba(26, 15, 10, 0.12)' }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    >
                       <div className={styles.imageWrapper}>
-                        <img
+                        <Image
                           src={itemImage}
                           alt={item.name}
-                          className={styles.itemImage}
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                          style={{ objectFit: 'cover' }}
                           loading="lazy"
-                          decoding="async"
                         />
                         <div className={styles.itemBadges}>
                           {item.isOnPromo && item.promoBadge && (
@@ -446,7 +456,7 @@ export default function MenuPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                     );
                   })}
                 </div>

@@ -6,6 +6,7 @@ import CartButton from "@/components/ui/CartButton";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton";
 import { BUSINESS_INFO } from "@/lib/whatsappConfig";
 import MobileBottomBar from "@/components/ui/MobileBottomBar";
+import SmoothScroll from "@/components/providers/SmoothScroll";
 
 const localBusinessSchema = {
   "@context": "https://schema.org",
@@ -133,14 +134,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen">
-        <AuthProvider>
-          <CartProvider>
-            {children}
-            <ScrollToTopButton />
-            <CartButton />
-            <MobileBottomBar />
-          </CartProvider>
-        </AuthProvider>
+        <SmoothScroll>
+          <AuthProvider>
+            <CartProvider>
+              {children}
+              <ScrollToTopButton />
+              <CartButton />
+              <MobileBottomBar />
+            </CartProvider>
+          </AuthProvider>
+        </SmoothScroll>
       </body>
     </html>
   );

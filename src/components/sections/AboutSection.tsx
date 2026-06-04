@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import FadeInSection from '@/components/ui/FadeInSection';
 import styles from '@/app/page.module.css';
 
@@ -62,9 +63,14 @@ export default function AboutSection({
           
           <FadeInSection delay={200} animationType="scale" className={styles.aboutImageWrapper}>
             <div className={styles.aboutImage}>
-              <img 
+              <Image 
                 src={heroImage || '/gallery/venue/slide1-1980x1080.jpeg'} 
                 alt="Boma Cafe Interior"
+                width={800}
+                height={550}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                loading="lazy"
               />
             </div>
           </FadeInSection>

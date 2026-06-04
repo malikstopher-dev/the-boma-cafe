@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import FadeInSection from '@/components/ui/FadeInSection';
 import styles from '@/app/page.module.css';
 
@@ -16,11 +17,14 @@ export default function FounderSection() {
         <FadeInSection delay={200} className={styles.founderGrid}>
           <div className={styles.founderImageWrapper}>
             <div className={styles.founderImage}>
-              <img 
+              <Image 
                 src="/gallery/people/mahendra.jpg" 
                 alt="Mahendra Singh - Founder of The Boma Cafe"
+                width={600}
+                height={600}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
                 loading="lazy"
-                decoding="async"
               />
             </div>
           </div>

@@ -1,23 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export default function ScrollIndicator() {
   const [isVisible, setIsVisible] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
 
   const handleScroll = useCallback(() => {
-    const winScroll = document.documentElement.scrollTop;
-    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
-    setScrollProgress(scrolled);
-    setIsVisible(winScroll > 400);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      const winScroll = document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+      setIsVisible(winScroll > 400);
+      if (barRef.current) {
+        barRef.current.style.top = `max(0%, min(${scrolled}%, 76%))`;
+      }
+    });
   }, []);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [handleScroll]);
 
   if (!isVisible) return null;
@@ -48,15 +57,16 @@ export default function ScrollIndicator() {
         }}
       >
         <div
+          ref={barRef}
           style={{
             position: 'absolute',
             left: '0',
-            top: `max(0%, min(${scrollProgress}%, 100%))`,
+            top: '0%',
             width: '4px',
             height: '24px',
             background: 'rgba(139, 90, 43, 0.6)',
             borderRadius: '2px',
-            transition: 'top 0.1s ease-out',
+            willChange: 'top',
           }}
         />
       </div>

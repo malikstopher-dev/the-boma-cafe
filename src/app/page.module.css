@@ -63,6 +63,7 @@
   height: 100%;
   opacity: 0;
   transition: opacity 1.2s ease;
+  will-change: opacity;
 }
 
 .heroSlide.active {
@@ -75,6 +76,7 @@
   background-size: cover;
   background-position: center;
   transition: transform 8s ease;
+  will-change: transform;
 }
 
 .heroSlide.active .heroSlideBg {
@@ -106,24 +108,6 @@
   text-align: center;
   color: var(--white);
   z-index: 10;
-}
-
-.heroContent > * {
-  opacity: 0;
-  transform: translateY(30px);
-  animation: fadeUp 0.8s ease forwards;
-}
-
-.heroContent > *:nth-child(1) { animation-delay: 0.2s; }
-.heroContent > *:nth-child(2) { animation-delay: 0.4s; }
-.heroContent > *:nth-child(3) { animation-delay: 0.6s; }
-.heroContent > *:nth-child(4) { animation-delay: 0.8s; }
-
-@keyframes fadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .heroSubtitle {
@@ -281,11 +265,12 @@
   overflow: hidden;
   background: var(--white);
   box-shadow: 0 4px 20px rgba(26, 15, 10, 0.08), 0 1px 3px rgba(26, 15, 10, 0.05);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   height: 100%;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(232, 213, 196, 0.5);
+  contain: layout style;
 }
 
 .showcaseCard::after {
@@ -461,13 +446,13 @@
 
 .cocktailCard {
   background: linear-gradient(180deg, #FFFFFF 0%, #FDF8F3 100%);
-  backdrop-filter: blur(20px);
   border: 1px solid rgba(107,94,74,0.1);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s ease;
   height: 100%;
   position: relative;
+  contain: layout style;
 }
 
 .cocktailCard::before {
@@ -948,11 +933,12 @@
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(26, 15, 10, 0.06), 0 1px 3px rgba(26, 15, 10, 0.04);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(232, 213, 196, 0.5);
+  contain: layout style;
 }
 
 .signatureCard:hover {
@@ -1092,12 +1078,13 @@
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(26, 15, 10, 0.06), 0 1px 3px rgba(26, 15, 10, 0.04);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(232, 213, 196, 0.5);
   cursor: pointer;
+  contain: layout style;
 }
 
 .eventCard:hover {
@@ -1409,14 +1396,14 @@
 
 .promoCard {
   background: linear-gradient(180deg, #FFFFFF 0%, #FDF8F3 100%);
-  backdrop-filter: blur(20px);
   border: 1px solid rgba(107,94,74,0.1);
   border-radius: var(--radius-xl);
   padding: 3rem 2.5rem;
   text-align: center;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
   position: relative;
   overflow: hidden;
+  contain: layout style;
 }
 
 .promoCard::before {
@@ -1490,10 +1477,11 @@
   padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(26, 15, 10, 0.06), 0 1px 3px rgba(26, 15, 10, 0.04);
   position: relative;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s ease;
   height: 100%;
   border: 1px solid rgba(232, 213, 196, 0.4);
   overflow: hidden;
+  contain: layout style;
 }
 
 .testimonialCard::before {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import FadeInSection from '@/components/ui/FadeInSection';
 import Slideshow from '@/components/ui/Slideshow';
 import styles from '@/app/page.module.css';
@@ -37,7 +38,7 @@ export default function UpcomingEventsSection() {
           <FadeInSection delay={200} className={styles.eventCardWrapper}>
             <Link href="/experience" className={styles.eventCard}>
               <div className={styles.eventCardImage}>
-                <img src="/gallery/weekend-buffet.jpg" alt="Weekend Breakfast Buffet" loading="lazy" decoding="async" />
+                <Image src="/gallery/weekend-buffet.jpg" alt="Weekend Breakfast Buffet" fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} loading="lazy" />
                 <div className={styles.eventOverlay} />
                 <div className={styles.eventDate}>
                   <span className={styles.eventDay}>SAT</span>
@@ -58,7 +59,7 @@ export default function UpcomingEventsSection() {
           <FadeInSection delay={300} className={styles.eventCardWrapper}>
             <Link href="/events" className={styles.eventCard}>
               <div className={styles.eventCardImage}>
-                <img src="/gallery/events/friday-braai.jpg" alt="Friday Braai Evening" loading="lazy" decoding="async" />
+                <Image src="/gallery/events/friday-braai.jpg" alt="Friday Braai Evening" fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} loading="lazy" />
                 <div className={styles.eventOverlay} />
                 <div className={styles.eventDate}>
                   <span className={styles.eventDay}>FRI</span>
@@ -79,7 +80,7 @@ export default function UpcomingEventsSection() {
           <FadeInSection delay={400} className={styles.eventCardWrapper}>
             <Link href="/entertainment" className={styles.eventCard}>
               <div className={styles.eventCardImage}>
-                <img src="/gallery/events/live-music.jpg" alt="Live Music Night" loading="lazy" decoding="async" />
+                <Image src="/gallery/events/live-music.jpg" alt="Live Music Night" fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} loading="lazy" />
                 <div className={styles.eventOverlay} />
                 <div className={styles.eventDate}>
                   <span className={styles.eventDay}>SAT</span>

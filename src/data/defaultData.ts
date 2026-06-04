@@ -175,7 +175,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 2,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
+    image: '/menu/chicken-mayo.jpg',
     addOns: [
       { name: 'Extra Chicken', price: 20 },
       { name: 'Bacon', price: 20 },
@@ -214,7 +214,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 4,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
+    image: '/menu/lamb-russian-cheese.jpg',
     addOns: [
       { name: 'Extra Russian', price: 25 },
       { name: 'Extra Cheese', price: 10 },
@@ -234,7 +234,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 5,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
+    image: '/menu/lamb-patty-cheese.jpg',
     addOns: [
       { name: 'Extra Patty', price: 35 },
       { name: 'Extra Cheese', price: 10 },
@@ -495,7 +495,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 1,
     isOutOfStock: false,
     isFeatured: true,
-    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop',
+    image: '/menu/lamb-bunny-chow.jpg',
     addOns: [
       { name: 'Extra Roti', price: 15 },
       { name: 'Extra Poppadum', price: 10 },
@@ -663,7 +663,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 9,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
+    image: '/menu/butter-chicken-roti-roll.jpg',
     addOns: [
       { name: 'Extra Roti', price: 15 },
       { name: 'Extra Poppadum', price: 10 },
@@ -1656,7 +1656,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 7,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+    image: '/menu/regina-pizza.jpg',
     addOns: [
       { name: 'Extra Mushrooms', price: 15 },
       { name: 'Extra Ham', price: 20 },
@@ -1681,7 +1681,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 8,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+    image: '/menu/hawaiian-pizza.jpg',
     addOns: [
       { name: 'Extra Pineapple', price: 12 },
       { name: 'Extra Ham', price: 20 },
@@ -1749,7 +1749,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 13,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+    image: '/menu/pizza-extra-cheese.jpg',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
