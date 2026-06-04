@@ -12,7 +12,9 @@ interface GalleryBoardsProps {
 
 export default function GalleryBoards({ onManageClick, onImageClick, onCategoryClick }: GalleryBoardsProps) {
   const [activeSlide, setActiveSlide] = useState<Record<string, number>>({});
-  const intervalRefs = useRef<Record<string, NodeJS.Timeout>>({});
+  const intervalRefs = useRef<Record<string, ReturnType<typeof setInterval>>>({});
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const initialSlides: Record<string, number> = {};
@@ -23,14 +25,26 @@ export default function GalleryBoards({ onManageClick, onImageClick, onCategoryC
   }, []);
 
   useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { setIsVisible(entry.isIntersecting); },
+      { threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) {
+      Object.values(intervalRefs.current).forEach(clearInterval);
+      intervalRefs.current = {};
+      return;
+    }
+
     galleryCategories.forEach(cat => {
       const images = getGalleryImages(cat.id);
       if (images.length <= 1) return;
-
-      if (intervalRefs.current[cat.id]) {
-        clearInterval(intervalRefs.current[cat.id]);
-      }
-
       intervalRefs.current[cat.id] = setInterval(() => {
         setActiveSlide(prev => ({
           ...prev,
@@ -41,15 +55,16 @@ export default function GalleryBoards({ onManageClick, onImageClick, onCategoryC
 
     return () => {
       Object.values(intervalRefs.current).forEach(clearInterval);
+      intervalRefs.current = {};
     };
-  }, []);
+  }, [isVisible]);
 
   const handleDotClick = useCallback((boardId: string, index: number) => {
     setActiveSlide(prev => ({ ...prev, [boardId]: index }));
   }, []);
 
   return (
-    <section className={styles.boardsSection}>
+    <section className={styles.boardsSection} ref={sectionRef}>
       <div className={styles.boardsHeader}>
         <h2 className={styles.boardsTitle}>Gallery Highlights</h2>
         <p className={styles.boardsSubtitle}>A glimpse into The Boma Cafe experience</p>

@@ -3,7 +3,7 @@
   inset: 0;
   z-index: 9999;
   background: rgba(0, 0, 0, 0.28);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .popup {
@@ -88,6 +88,29 @@
   transform: scale(1.1);
 }
 
+.popupWhatsAppRow {
+  text-align: center;
+  padding: 8px 0 0;
+}
+
+.whatsAppButton {
+  display: inline-block;
+  background: #25D366;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.3);
+}
+
+.whatsAppButton:hover {
+  background: #1ebe5d;
+  transform: translateY(-1px);
+}
+
 .dots {
   display: flex;
   justify-content: center;
@@ -119,6 +142,65 @@
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
 }
 
+/* Lightbox */
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.lightboxContent {
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.lightboxImage {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightboxClose {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100000;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2b1a10;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s;
+}
+
+.lightboxClose:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
 @media (max-width: 1023px) {
   .popup {
     right: auto;
@@ -141,5 +223,13 @@
 
   .flyerImage {
     border-radius: 18px;
+  }
+
+  .closeButton {
+    top: -10px;
+    right: -10px;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
   }
 }

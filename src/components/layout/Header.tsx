@@ -1,9 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Header.module.css';
+
+const NAV_LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/menu', label: 'Menu' },
+  { href: '/experience', label: 'Experience' },
+  { href: '/events', label: 'Events & Venue Hire' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/contact', label: 'Contact' },
+];
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,18 +40,9 @@ export default function Header() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/about', label: 'About' },
-    { href: '/menu', label: 'Menu' },
-    { href: '/experience', label: 'Experience' },
-    { href: '/events', label: 'Events & Venue Hire' },
-    { href: '/gallery', label: 'Gallery' },
-    { href: '/contact', label: 'Contact' },
-  ];
-
-  const leftLinks = navLinks.slice(0, 4);
-  const rightLinks = navLinks.slice(4);
+  const navLinks = useMemo(() => NAV_LINKS, []);
+  const leftLinks = useMemo(() => NAV_LINKS.slice(0, 4), []);
+  const rightLinks = useMemo(() => NAV_LINKS.slice(4), []);
 
   return (
     <>
@@ -54,14 +56,15 @@ export default function Header() {
             ))}
           </nav>
 
-          <Link href="/" className={styles.logo}>
-            <img 
-              src="/logo.png" 
-              alt="The Boma Cafe" 
+          <Link href="/" className={styles.logo} prefetch={false}>
+            <Image
+              src="/logo.png"
+              alt="The Boma Cafe"
               className={styles.logoImg}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              width={120}
+              height={72}
+              priority
+              style={{ height: '72px', width: 'auto' }}
             />
           </Link>
 

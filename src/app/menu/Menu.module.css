@@ -442,12 +442,11 @@
 }
 
 .itemDescription {
-  font-size: 0.875rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--text-light);
   word-break: break-word;
   overflow-wrap: break-word;
-  display: none;
 }
 
 .itemTags {
@@ -1139,7 +1138,17 @@
     display: none;
   }
 
-  .itemDescription,
+  .itemDescription {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: var(--text-light);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 2px;
+  }
+
   .description {
     display: none;
   }

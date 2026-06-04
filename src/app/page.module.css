@@ -150,6 +150,18 @@
   flex-wrap: wrap;
 }
 
+.heroCta .btn-ghost {
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.heroCta .btn-ghost:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .heroDots {
   position: absolute;
   bottom: 50px;

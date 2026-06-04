@@ -27,24 +27,15 @@ const ROTATION_INTERVAL = 5000;
 const SESSION_KEY = "boma_popup_seen";
 
 export default function WeekendBuffetPopup() {
-  const [isDesktop, setIsDesktop] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [failedImages, setFailedImages] = useState({});
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-    checkDesktop();
-    window.addEventListener("resize", checkDesktop);
-    return () => window.removeEventListener("resize", checkDesktop);
-  }, []);
-
-  useEffect(() => {
-    if (isClosed || !isDesktop) return;
+    if (isClosed) return;
 
     const alreadySeen = sessionStorage.getItem(SESSION_KEY);
     if (alreadySeen) return;
@@ -55,7 +46,7 @@ export default function WeekendBuffetPopup() {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [isClosed, isDesktop]);
+  }, [isClosed]);
 
   const stopRotation = useCallback(() => {
     if (intervalRef.current) {
@@ -89,6 +80,7 @@ export default function WeekendBuffetPopup() {
   );
 
   const handleImageError = useCallback((index) => {
+    console.error(`Failed to load popup image: ${SLIDES[index].src}`);
     setFailedImages((prev) => ({ ...prev, [index]: true }));
   }, []);
 
@@ -98,24 +90,55 @@ export default function WeekendBuffetPopup() {
     stopRotation();
   };
 
-  if (!isDesktop) return null;
+  const openLightbox = () => {
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
+
   if (!isVisible) return null;
 
   const visibleSlides = SLIDES.filter((_, i) => !failedImages[i]);
   if (visibleSlides.length === 0) return null;
 
-  const activeIndex = failedImages[currentSlide]
-    ? Math.min(currentSlide, visibleSlides.length - 1)
-    : visibleSlides.findIndex((_, i) => {
-        let count = 0;
-        for (let j = 0; j <= i; j++) {
-          if (!failedImages[j]) count++;
-        }
-        return currentSlide === j;
-      });
-
   const activeSlide =
-    visibleSlides[activeIndex !== -1 ? activeIndex : 0];
+    visibleSlides[0];
+
+  if (lightboxOpen) {
+    return (
+      <div className={styles.lightboxOverlay} onClick={closeLightbox}>
+        <button
+          className={styles.lightboxClose}
+          onClick={closeLightbox}
+          aria-label="Close lightbox"
+        >
+          ×
+        </button>
+        <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
+          <a
+            href={activeSlide.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={activeSlide.ariaLabel}
+          >
+            <Image
+              src={activeSlide.src}
+              alt={activeSlide.alt}
+              className={styles.lightboxImage}
+              width={600}
+              height={900}
+              quality={95}
+              priority
+              sizes="(max-width: 768px) 100vw, 600px"
+              onError={() => handleImageError(SLIDES.indexOf(activeSlide))}
+            />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.overlay} onClick={handleClose}>
@@ -128,12 +151,13 @@ export default function WeekendBuffetPopup() {
           ×
         </button>
 
-        <a
-          href={activeSlide.href}
-          target="_blank"
-          rel="noopener noreferrer"
+        <div
           className={styles.imageLink}
-          aria-label={activeSlide.ariaLabel}
+          onClick={openLightbox}
+          role="button"
+          tabIndex={0}
+          aria-label="Enlarge image"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openLightbox(); }}
         >
           <div className={styles.slideContainer}>
             {SLIDES.map((slide, i) => (
@@ -160,7 +184,19 @@ export default function WeekendBuffetPopup() {
               </div>
             ))}
           </div>
-        </a>
+        </div>
+
+        <div className={styles.popupWhatsAppRow}>
+          <a
+            href={activeSlide.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.whatsAppButton}
+            aria-label={activeSlide.ariaLabel}
+          >
+            Book Now via WhatsApp
+          </a>
+        </div>
 
         {visibleSlides.length > 1 && (
           <div className={styles.dots}>

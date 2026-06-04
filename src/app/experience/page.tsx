@@ -1,12 +1,63 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cmsService } from '@/lib/client-cms';
 import PremiumHero from '@/components/ui/PremiumHero';
 import { getReservationLink } from '@/data/businessInfo';
+
+function VideoSection() {
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) observerRef.current.disconnect();
+    if (!node) return;
+    observerRef.current = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observerRef.current?.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observerRef.current.observe(node);
+  }, []);
+
+  return (
+    <section id="video-section" ref={containerRef} style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
+      <div style={{ maxWidth: '950px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+          <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem' }}>
+            Experience The Boma Café
+          </h2>
+          <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>
+            Watch the atmosphere, energy, and experience of The Boma Café
+          </p>
+        </div>
+        <div style={{
+          background: 'var(--white)',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          boxShadow: '0 10px 40px rgba(26, 15, 10, 0.12)'
+        }}>
+          <video
+            controls
+            preload="metadata"
+            poster="/images/about.jpg"
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          >
+            {shouldLoad && <source src="/videos/gallery.mp4" type="video/mp4" />}
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function ExperiencePage() {
   const [settings, setSettings] = useState<any>(null);
@@ -280,62 +331,7 @@ export default function ExperiencePage() {
           </div>
         </section>
 
-        {/* 6. VIDEO EXPERIENCE */}
-        <section id="video-section" style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>
-          <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-              <button 
-                onClick={() => {
-                  const videoSection = document.getElementById('video-section');
-                  if (videoSection) {
-                    videoSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    setTimeout(() => {
-                      const video = videoSection.querySelector('video');
-                      if (video) video.play().catch(() => {});
-                    }, 500);
-                  }
-                }}
-                style={{
-                  display: 'inline-block',
-                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                  padding: '0.4rem 1rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: 'var(--white)',
-                  marginBottom: '0.75rem',
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  border: 'none'
-                }}>
-                Watch Now
-              </button>
-              <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', color: 'var(--dark-brown)', marginBottom: '0.75rem', marginTop: '0.5rem' }}>
-                Experience The Boma Café
-              </h2>
-              <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>
-                Watch the atmosphere, energy, and experience of The Boma Café
-              </p>
-            </div>
-            <div style={{
-              background: 'var(--white)',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              boxShadow: '0 10px 40px rgba(26, 15, 10, 0.12)'
-            }}>
-              <video 
-                controls
-                preload="metadata"
-                poster="/images/about.jpg"
-                style={{ width: '100%', height: 'auto', display: 'block' }}
-              >
-                <source src="/videos/gallery.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-        </section>
+        <VideoSection />
 
         {/* 7. GALLERY TEASER */}
         <section style={{ background: 'var(--cream)', padding: 'var(--space-2xl) 5%' }}>
