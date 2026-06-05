@@ -16,7 +16,6 @@
   height: 80%;
   background: radial-gradient(ellipse at center top, rgba(201,169,98,0.15) 0%, transparent 60%);
   pointer-events: none;
-  display: none;
 }
 
 .container {

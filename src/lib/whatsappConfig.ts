@@ -32,8 +32,8 @@ export const BUSINESS_INFO = {
     { day: 'Sunday', hours: '10:00 - 22:00' },
   ],
   social: {
-    facebook: 'https://www.facebook.com/people/The-Boma-Cafe/61552775920918/',
-    instagram: 'https://www.instagram.com/the_boma_cafe',
+    facebook: 'https://www.facebook.com/thebomacafe/',
+    instagram: 'https://www.instagram.com/the_boma_cafe/',
     tiktok: 'https://www.tiktok.com/@thebomacafe',
   },
   priceRange: 'R50–R250',

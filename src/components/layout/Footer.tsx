@@ -18,7 +18,7 @@ export default function Footer({ settings, branding }: FooterProps) {
     instagram: branding?.instagram || BUSINESS_INFO.social.instagram,
   };
   if (!b.tiktok) {
-    b.tiktok = 'https://www.tiktok.com/@thebomacafe';
+    b.tiktok = BUSINESS_INFO.social.tiktok;
   }
   const c = settings || {};
   const siteName = b.siteName || 'The Boma Cafe';

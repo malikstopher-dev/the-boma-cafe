@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
@@ -81,6 +80,17 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>(defaultSize);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modalOpen');
+    } else {
+      document.body.classList.remove('modalOpen');
+    }
+    return () => {
+      document.body.classList.remove('modalOpen');
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -257,7 +267,7 @@ export default function MenuPage() {
     setVisibleCount(prev => prev + LOAD_MORE_COUNT);
   }, []);
 
-  const totalItems = useMemo(() => filteredSections.reduce((sum, s) => sum + s.items.length, 0), [filteredSections]);
+  const totalItems = filteredSections.reduce((sum, s) => sum + s.items.length, 0);
   const hasMoreItems = visibleCount < totalItems;
 
   const handleAddToCart = (item: MenuItem, selectedSize?: string, selectedAddOns?: string[], notes?: string) => {
@@ -409,22 +419,14 @@ export default function MenuPage() {
                   {section.items.slice(0, visibleCount).map((item: MenuItem) => {
                     const itemImage = getMenuItemImage(item.name);
                     return (
-                    <motion.div
-                      key={item.id}
-                      className={styles.itemCard}
-                      onClick={() => setSelectedItem(item)}
-                      whileHover={{ y: -4, boxShadow: '0 12px 28px rgba(26, 15, 10, 0.12)' }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    >
+                    <div key={item.id} className={styles.itemCard} onClick={() => setSelectedItem(item)}>
                       <div className={styles.imageWrapper}>
                         <Image
                           src={itemImage}
                           alt={item.name}
                           fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                          style={{ objectFit: 'cover' }}
-                          loading="lazy"
+                          sizes="(max-width: 768px) 50vw, 300px"
+                          className={styles.itemImage}
                         />
                         <div className={styles.itemBadges}>
                           {item.isOnPromo && item.promoBadge && (
@@ -456,7 +458,7 @@ export default function MenuPage() {
                           </button>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                     );
                   })}
                 </div>
@@ -497,7 +499,7 @@ export default function MenuPage() {
         onOpenCart={handleContinueToCart}
       />
 
-      {cartItems.length > 0 && (
+      {cartItems.length > 0 && !selectedItem && !showUpsellModal && (
         <button
           className={styles.desktopFloatingCart}
           onClick={openCart}

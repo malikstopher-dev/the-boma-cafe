@@ -1,48 +1,41 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Header.module.css';
-
-const NAV_LINKS = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/menu', label: 'Menu' },
-  { href: '/experience', label: 'Experience' },
-  { href: '/events', label: 'Events & Venue Hire' },
-  { href: '/gallery', label: 'Gallery' },
-  { href: '/contact', label: 'Contact' },
-];
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
+import { BUSINESS_INFO } from '@/lib/whatsappConfig';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const rafRef = useRef<number>(0);
   const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => {
-        setIsScrolled(window.scrollY > 50);
-      });
+      setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const navLinks = useMemo(() => NAV_LINKS, []);
-  const leftLinks = useMemo(() => NAV_LINKS.slice(0, 4), []);
-  const rightLinks = useMemo(() => NAV_LINKS.slice(4), []);
+  const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/about', label: 'About' },
+    { href: '/menu', label: 'Menu' },
+    { href: '/experience', label: 'Experience' },
+    { href: '/events', label: 'Events & Venue Hire' },
+    { href: '/gallery', label: 'Gallery' },
+    { href: '/contact', label: 'Contact' },
+  ];
+
+  const leftLinks = navLinks.slice(0, 4);
+  const rightLinks = navLinks.slice(4);
 
   return (
     <>
@@ -56,15 +49,14 @@ export default function Header() {
             ))}
           </nav>
 
-          <Link href="/" className={styles.logo} prefetch={false}>
-            <Image
-              src="/logo.png"
-              alt="The Boma Cafe"
+          <Link href="/" className={styles.logo}>
+            <img 
+              src="/logo.png" 
+              alt="The Boma Cafe" 
               className={styles.logoImg}
-              width={120}
-              height={72}
-              priority
-              style={{ height: '72px', width: 'auto' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
           </Link>
 
@@ -75,7 +67,7 @@ export default function Header() {
               </Link>
             ))}
             <div className={styles.icons}>
-              <a href="tel:0715921190" className={styles.icon} title="Call Us">
+              <a href={`tel:${BUSINESS_INFO.phoneRaw}`} className={styles.icon} title="Call Us">
                 <i className="fas fa-phone" style={{ fontSize: '0.8rem' }} />
               </a>
               <a href="mailto:info@thebomacafe.co.za" className={styles.icon} title="Email Us">
@@ -112,12 +104,12 @@ export default function Header() {
               ))}
             </nav>
             <div className={styles.mobileCtaRow}>
-              <a href={`tel:0715921190`} className={styles.mobileCtaBtn}>
+              <a href={`tel:${BUSINESS_INFO.phoneRaw}`} className={styles.mobileCtaBtn}>
                 <i className="fas fa-phone" />
                 <span>Call</span>
               </a>
-              <a href="https://wa.me/27729962212" target="_blank" rel="noopener noreferrer" className={styles.mobileCtaBtn}>
-                <i className="fab fa-whatsapp" />
+              <a href={`https://wa.me/${BUSINESS_INFO.phoneRaw}`} target="_blank" rel="noopener noreferrer" className={styles.mobileCtaBtn}>
+                <WhatsAppIcon size={20} ariaLabel="Chat on WhatsApp" />
                 <span>WhatsApp</span>
               </a>
             </div>

@@ -254,7 +254,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 6,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop',
+    image: '/menu/Beef-Patty-Cheese.jpg',
     addOns: [
       { name: 'Extra Patty', price: 30 },
       { name: 'Extra Cheese', price: 10 },
@@ -1761,7 +1761,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 14,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+    image: '/menu/black-olive-pizza-gourmet-restaurant.jpg',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -1773,7 +1773,7 @@ export const defaultMenuItems: MenuItem[] = [
     order: 15,
     isOutOfStock: false,
     isFeatured: false,
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+    image: '/menu/beacon.jpg',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
