@@ -34,7 +34,7 @@ export default function Footer({ settings, branding }: FooterProps) {
           {/* Brand Column */}
           <div className={styles.brand}>
             <img src="/logo.png" alt="The Boma Cafe" className={styles.footerLogo} />
-            <h3 className={styles.logoText}>The Boma Cafe</h3>
+            <h3 className={styles.logoText}>TEST TEXT</h3>
               <p className={styles.tagline}>
                 Where rustic charm meets soulful dining in the heart of Sandton.
               </p>
@@ -128,7 +128,7 @@ export default function Footer({ settings, branding }: FooterProps) {
         {/* Mobile Footer - Shown Only on Mobile */}
         <div className={styles.mobileFooterContent}>
           <img src="/logo.png" alt="The Boma Cafe" className={styles.footerLogo} />
-          <h3 className={styles.mobileBrand}>The Boma Cafe</h3>
+          <h3 className={styles.mobileBrand}>TEST TEXT</h3>
           <p className={styles.mobileTagline}>Where rustic charm meets soulful dining in Sandton.</p>
 
           <div className={styles.mobileContactRow}>

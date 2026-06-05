@@ -6,6 +6,12 @@
   overflow: hidden;
 }
 
+/* FORENSIC TEST - RED OUTLINES */
+.footer * {
+  outline: 2px solid red !important;
+  outline-offset: -1px !important;
+}
+
 .footer::before {
   content: '';
   position: absolute;
