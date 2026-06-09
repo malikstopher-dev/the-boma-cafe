@@ -33,7 +33,7 @@ export default function PremiumHero({
     backgroundImage: `url(${imageUrl})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    animation: 'heroZoom 20s ease-in-out infinite alternate',
+    animation: 'heroZoom 25s ease-in-out infinite alternate',
   };
 
   const overlay: CSSProperties = {
@@ -58,7 +58,7 @@ export default function PremiumHero({
             transform: scale(1);
           }
           100% {
-            transform: scale(1.06);
+            transform: scale(1.08);
           }
         }
       `}</style>

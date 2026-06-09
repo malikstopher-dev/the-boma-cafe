@@ -356,12 +356,12 @@ export default function BarMenuClient() {
 
   return (
     <>
+      <style>{`@keyframes heroZoom{0%{transform:scale(1)}100%{transform:scale(1.08)}}`}</style>
       <Header />
       <main style={{ paddingTop: 0 }}>
         {/* Hero Section */}
         <div style={{ paddingTop: 80 }}>
         <section style={{
-          background: 'url(/cocktails-and-drinks/2026-02-11-1.webp) center/cover no-repeat',
           padding: '4rem 5%',
           textAlign: 'center',
           position: 'relative',
@@ -371,6 +371,12 @@ export default function BarMenuClient() {
           alignItems: 'center',
           justifyContent: 'center'
         }}>
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'url(/cocktails-and-drinks/2026-02-11-1.webp) center/cover no-repeat',
+            animation: 'heroZoom 25s ease-in-out infinite alternate',
+          }} />
           <div style={{
             position: 'absolute',
             inset: 0,
