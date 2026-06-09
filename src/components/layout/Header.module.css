@@ -256,6 +256,7 @@
   }
 
   .header.scrolled {
+    transform: none;
     background: rgba(244, 244, 244, 0.85);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border-bottom: none;

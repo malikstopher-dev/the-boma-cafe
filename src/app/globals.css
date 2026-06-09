@@ -277,6 +277,7 @@ input, textarea, select {
   }
   
   main {
+    padding-top: 60px !important;
     padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
   }
 }
