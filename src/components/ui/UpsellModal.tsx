@@ -26,6 +26,8 @@ export default function UpsellModal({
   const [addedItems, setAddedItems] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
   const [selectedAddOns, setSelectedAddOns] = useState<Record<string, string[]>>({});
+  const [selectedFlavours, setSelectedFlavours] = useState<Record<string, string>>({});
+  const [selectedChoices, setSelectedChoices] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (addedItem && isOpen) {
@@ -34,6 +36,8 @@ export default function UpsellModal({
       
       const initialSizes: Record<string, string> = {};
       const initialAddOns: Record<string, string[]> = {};
+      const initialFlavours: Record<string, string> = {};
+      const initialChoices: Record<string, string[]> = {};
       suggestions.forEach(item => {
         if (item.variants && item.variants.length > 0) {
           initialSizes[item.id] = item.variants[0].name;
@@ -41,9 +45,17 @@ export default function UpsellModal({
         if (item.addOns && item.addOns.length > 0) {
           initialAddOns[item.id] = [];
         }
+        if (item.flavours && item.flavours.length > 0) {
+          initialFlavours[item.id] = item.flavours[0];
+        }
+        if (item.choices && item.choices.length > 0) {
+          initialChoices[item.id] = [];
+        }
       });
       setSelectedSizes(initialSizes);
       setSelectedAddOns(initialAddOns);
+      setSelectedFlavours(initialFlavours);
+      setSelectedChoices(initialChoices);
       setAddedItems([]);
     }
   }, [addedItem, isOpen, allMenuItems]);
@@ -72,6 +84,17 @@ export default function UpsellModal({
     });
   };
 
+  const toggleChoice = (itemId: string, choiceName: string) => {
+    setSelectedChoices(prev => {
+      const current = prev[itemId] || [];
+      if (current.includes(choiceName)) {
+        return { ...prev, [itemId]: current.filter(c => c !== choiceName) };
+      } else {
+        return { ...prev, [itemId]: [...current, choiceName] };
+      }
+    });
+  };
+
   const calculateItemPrice = (item: MenuItem): number => {
     let price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
     
@@ -88,6 +111,18 @@ export default function UpsellModal({
         const addOn = item.addOns?.find(a => a.name === addOnName);
         if (addOn) {
           price += typeof addOn.price === 'string' ? parseFloat(addOn.price) : (addOn.price || 0);
+        }
+      });
+    }
+
+    if (item.choices) {
+      const choices = selectedChoices[item.id] || [];
+      choices.forEach(choiceName => {
+        for (const group of item.choices || []) {
+          const option = group.options?.find(o => o.name === choiceName);
+          if (option?.price) {
+            price += typeof option.price === 'string' ? parseFloat(option.price) : option.price;
+          }
         }
       });
     }
@@ -145,6 +180,20 @@ export default function UpsellModal({
                       <h4>{item.name}</h4>
                       <p>{item.description}</p>
                       
+                      {item.flavours && item.flavours.length > 0 && (
+                        <div className={styles.flavourOptions}>
+                          {item.flavours.map(flavour => (
+                            <button
+                              key={flavour}
+                              className={`${styles.flavourBtn} ${selectedFlavours[item.id] === flavour ? styles.active : ''}`}
+                              onClick={() => setSelectedFlavours(prev => ({ ...prev, [item.id]: flavour }))}
+                            >
+                              {flavour}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
                       {item.variants && item.variants.length > 0 && (
                         <div className={styles.sizeOptions}>
                           {item.variants.map(variant => (
@@ -155,6 +204,32 @@ export default function UpsellModal({
                             >
                               {variant.name}
                             </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {item.choices && item.choices.length > 0 && item.choices.map(group => (
+                        <div key={group.groupName} className={styles.choiceGroup}>
+                          {group.options && group.options.map(option => (
+                            <label key={option.name} className={styles.choiceLabel}>
+                              <input
+                                type="checkbox"
+                                checked={(selectedChoices[item.id] || []).includes(option.name)}
+                                onChange={() => toggleChoice(item.id, option.name)}
+                              />
+                              <span className={styles.choiceLabelText}>{option.name}</span>
+                              {option.price && (
+                                <span className={styles.choicePrice}>+R{option.price}</span>
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      ))}
+                      
+                      {item.notes && item.notes.length > 0 && (
+                        <div className={styles.notes}>
+                          {item.notes.map(note => (
+                            <span key={note} className={styles.note}>{note}</span>
                           ))}
                         </div>
                       )}
