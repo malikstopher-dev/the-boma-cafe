@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import Hero from '@/components/home/Hero';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import { cmsService } from '@/lib/client-cms';
 import PopupModal from '@/components/ui/PopupModal';
@@ -17,33 +18,6 @@ import AboutSection from '@/components/sections/AboutSection';
 import FounderSection from '@/components/sections/FounderSection';
 import { getReservationLink, getEventEnquiryLink } from '@/data/businessInfo';
 import styles from './page.module.css';
-
-const heroSlides = [
-  {
-    image: '/hero/slide1.jpg',
-    subtitle: 'Welcome to',
-    title: 'The Boma Cafe',
-    tagline: 'Where the Rustic Meets the Soulful!',
-    cta: 'Book a Table',
-    ctaLink: '/contact'
-  },
-  {
-    image: '/hero/slide2.jpg',
-    subtitle: 'Escape the City',
-    title: 'Rustic Ambiance',
-    tagline: 'Savor your meal beneath a thatched roof',
-    cta: 'Discover More',
-    ctaLink: '/about'
-  },
-  {
-    image: '/hero/slide3.jpg',
-    subtitle: 'More Than Just a Cafe',
-    title: 'An Experience',
-    tagline: 'Where nature meets the warmth of home',
-    cta: 'View Events',
-    ctaLink: '/events'
-  }
-];
 
 // eventSlideshowImages moved to UpcomingEventsSection component
 
@@ -97,7 +71,6 @@ export default function Home() {
   const [events, setEvents] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [siteSettings, setSiteSettings] = useState<any>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -126,11 +99,6 @@ export default function Home() {
       }
     };
     loadData();
-    
-    const slideTimer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 6000);
-    return () => clearInterval(slideTimer);
   }, []);
 
   useEffect(() => {
@@ -162,38 +130,7 @@ export default function Home() {
       <WeekendBuffetPopup />
       
       <main>
-        {/* Hero Section - Premium Design */}
-        <section className={styles.heroSection}>
-          {heroSlides.map((slide, index) => (
-            <div
-              key={index}
-              className={`${styles.heroSlide} ${index === currentSlide ? styles.active : ''}`}
-            >
-              <div className={styles.heroSlideBg} style={{ backgroundImage: `url(${slide.image})` }} />
-            </div>
-          ))}
-          <div className={styles.heroOverlay} />
-          
-          <div className={styles.heroContent}>
-            <p className={styles.heroSubtitle}>{heroSlides[currentSlide].subtitle}</p>
-            <h1 className={styles.heroTitle}>{heroSlides[currentSlide].title}</h1>
-            <p className={styles.heroTagline}>{heroSlides[currentSlide].tagline}</p>
-            <div className={styles.heroCta}>
-              <Link href="/menu" className="btn btn-primary">View Menu</Link>
-              <a href={getReservationLink()} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">Book a Table</a>
-            </div>
-          </div>
-
-          <div className={styles.heroDots}>
-            {heroSlides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`${styles.heroDot} ${index === currentSlide ? styles.active : ''}`}
-              />
-            ))}
-          </div>
-        </section>
+        <Hero />
 
         {/* About Section - Premium Design - Moved after Hero */}
         <AboutSection 
