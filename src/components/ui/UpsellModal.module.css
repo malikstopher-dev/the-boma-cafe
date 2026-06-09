@@ -120,6 +120,8 @@
   transition: all 0.2s ease;
   border: 2px solid transparent;
   min-height: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .suggestionCard:hover {

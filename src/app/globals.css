@@ -613,6 +613,21 @@ input, textarea, select {
   background: var(--secondary);
 }
 
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary-soft);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-soft) transparent;
+  }
+}
+
 /* Selection */
 ::selection {
   background: var(--primary);
