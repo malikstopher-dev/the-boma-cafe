@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:menu-prices": "tsx scripts/seed-menu-prices.ts"
+    "seed:menu-prices": "tsx scripts/seed-menu-prices.ts",
+    "seed:supabase-menu": "tsx scripts/seed-supabase-menu.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

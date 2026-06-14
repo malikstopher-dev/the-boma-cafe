@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createBrowserClient } from '@/lib/supabase'
 
 interface Order {
   id: string
@@ -22,7 +23,6 @@ const COLUMNS = [
 ]
 
 const READY_CLEANUP_MS = 5 * 60 * 1000
-const POLL_INTERVAL = 5000
 
 function playDing() {
   try {
@@ -214,7 +214,6 @@ export default function KitchenDisplay() {
       const currentIds = new Set(data.map((o) => o.id))
       const prevIds = prevIdsRef.current
 
-      // Detect new orders for sound
       if (prevIds.size > 0 && soundOn) {
         for (const id of Array.from(currentIds)) {
           if (!prevIds.has(id)) {
@@ -226,7 +225,6 @@ export default function KitchenDisplay() {
         }
       }
 
-      // Track when orders enter ready state
       for (const order of data) {
         if (order.status === 'ready' && !readyTimesRef.current.has(order.id)) {
           readyTimesRef.current.set(order.id, Date.now())
@@ -244,12 +242,52 @@ export default function KitchenDisplay() {
     }
   }, [soundOn])
 
+  // Initial load + Supabase realtime subscription
   useEffect(() => {
     if (!authed || authExpired) return
+
     loadOrders()
-    const interval = setInterval(loadOrders, POLL_INTERVAL)
-    return () => clearInterval(interval)
-  }, [authed, authExpired, loadOrders])
+
+    let supabase: ReturnType<typeof createBrowserClient> | null = null
+    let channel: ReturnType<ReturnType<typeof createBrowserClient>['channel']> | null = null
+
+    try {
+      supabase = createBrowserClient()
+      channel = supabase
+        .channel('kitchen-orders')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'orders' },
+          (payload) => {
+            const newOrder = payload.new as Order
+            if (newOrder && newOrder.status === 'pending') {
+              setOrders(prev => [...prev, newOrder])
+              if (soundOn) playDing()
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'orders' },
+          (payload) => {
+            const updated = payload.new as Order
+            if (updated) {
+              setOrders(prev => prev.map(o => o.id === updated.id ? updated : o))
+              if (updated.status === 'ready' && soundOn) playReadyChime()
+            }
+          }
+        )
+        .subscribe()
+    } catch {
+      // Fallback to polling if client creation fails
+      const fallback = setInterval(loadOrders, 5000)
+      return () => clearInterval(fallback)
+    }
+
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+    }
+  }, [authed, authExpired, loadOrders, soundOn])
 
   // Auto-cleanup ready orders
   useEffect(() => {

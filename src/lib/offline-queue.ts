@@ -1,15 +1,13 @@
-const QUEUE_KEY = 'boma_offline_queue'
+const QUEUE_KEY = 'boma_pending_orders'
 
-export interface QueueItem {
-  id: string
-  type: 'CREATE_ORDER' | 'UPDATE_ORDER' | 'PAYMENT' | 'ASSIGN_TABLE'
-  payload: any
-  timestamp: number
-  synced: boolean
+interface PendingOrder {
+  idempotency_key: string
+  payload: Record<string, any>
+  created_at: number
   retries: number
 }
 
-function getQueue(): QueueItem[] {
+function getQueue(): PendingOrder[] {
   try {
     const raw = localStorage.getItem(QUEUE_KEY)
     return raw ? JSON.parse(raw) : []
@@ -18,104 +16,71 @@ function getQueue(): QueueItem[] {
   }
 }
 
-function saveQueue(queue: QueueItem[]) {
+function saveQueue(queue: PendingOrder[]): void {
   try {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue))
-  } catch { /* storage full - clear oldest */ }
+  } catch { /* storage full — discard */ }
 }
 
-export function enqueueAction(type: QueueItem['type'], payload: any) {
+export function enqueueOrder(payload: Record<string, any>): string {
   const queue = getQueue()
+  const idempotencyKey = payload.idempotency_key || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   queue.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    type,
-    payload,
-    timestamp: Date.now(),
-    synced: false,
+    idempotency_key: idempotencyKey,
+    payload: { ...payload, idempotency_key: idempotencyKey },
+    created_at: Date.now(),
     retries: 0,
   })
   saveQueue(queue)
+  return idempotencyKey
 }
 
-export function getPendingActions(): QueueItem[] {
-  return getQueue().filter((q) => !q.synced)
-}
-
-export function markSynced(id: string) {
-  const queue = getQueue().map((q) => q.id === id ? { ...q, synced: true } : q)
+export function dequeueOrder(idempotencyKey: string): void {
+  const queue = getQueue().filter(o => o.idempotency_key !== idempotencyKey)
   saveQueue(queue)
 }
 
-export function clearSynced() {
-  saveQueue(getQueue().filter((q) => !q.synced))
-}
-
 export function getQueueLength(): number {
-  return getQueue().filter((q) => !q.synced).length
+  return getQueue().length
 }
 
-export async function processQueue(): Promise<{ synced: number; failed: number }> {
-  const pending = getPendingActions()
+async function syncInternal(): Promise<{ synced: number; failed: number }> {
+  const queue = getQueue()
+  if (queue.length === 0) return { synced: 0, failed: 0 }
+
   let synced = 0
   let failed = 0
 
-  for (const item of pending) {
-    // Exponential backoff: skip if not enough time has passed since last retry
-    const backoffMs = Math.min(1000 * Math.pow(2, item.retries), 60000)
-    if (item.retries > 0 && Date.now() - item.timestamp < backoffMs) {
-      continue
-    }
-
+  for (const order of queue) {
     try {
-      let res: Response | null = null
+      const res = await fetch('/api/supabase/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order.payload),
+      })
 
-      if (item.type === 'CREATE_ORDER') {
-        res = await fetch('/api/supabase/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item.payload),
-        })
-      } else if (item.type === 'UPDATE_ORDER' || item.type === 'PAYMENT') {
-        const { id, ...body } = item.payload
-        if (!id) { markSynced(item.id); failed++; continue }
-        res = await fetch(`/api/supabase/orders?id=${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-      } else if (item.type === 'ASSIGN_TABLE') {
-        const { id, ...body } = item.payload
-        if (!id) { markSynced(item.id); failed++; continue }
-        res = await fetch(`/api/supabase/orders?id=${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-      }
-
-      if (res && res.ok) {
-        markSynced(item.id)
+      if (res.ok) {
+        dequeueOrder(order.idempotency_key)
         synced++
       } else {
-        // Increment retry count
-        const queue = getQueue().map((q) => q.id === item.id ? { ...q, retries: q.retries + 1 } : q)
-        saveQueue(queue)
-        failed++
+        order.retries++
+        if (order.retries >= 5) {
+          dequeueOrder(order.idempotency_key)
+          failed++
+        }
       }
     } catch {
-      const queue = getQueue().map((q) => q.id === item.id ? { ...q, retries: q.retries + 1 } : q)
-      saveQueue(queue)
-      failed++
+      order.retries++
+      if (order.retries >= 5) {
+        dequeueOrder(order.idempotency_key)
+        failed++
+      }
     }
   }
 
-  clearSynced()
+  saveQueue(getQueue())
   return { synced, failed }
 }
 
-export function useOfflineStatus(interval = 5000) {
-  if (typeof window === 'undefined') return { online: true, pendingCount: 0 }
-  const online = navigator.onLine
-  const pendingCount = getQueueLength()
-  return { online, pendingCount }
-}
+export const syncPendingOrders = syncInternal
+export const processQueue = syncInternal

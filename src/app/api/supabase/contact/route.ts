@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getAdminClient } from '@/lib/supabase'
 import { requireAnyRole } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -7,7 +7,7 @@ export async function GET() {
   const authError = await requireAnyRole(['admin', 'kitchen'])
   if (authError) return authError
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getAdminClient()
     .from('contact_messages')
     .select('*')
     .order('created_at', { ascending: false })
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getAdminClient()
       .from('contact_messages')
       .insert([{ name, phone, email, message }])
       .select()
@@ -64,7 +64,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Contact message ID required' }, { status: 400 })
   }
 
-  const { error } = await supabaseAdmin
+  const { error } = await getAdminClient()
     .from('contact_messages')
     .delete()
     .eq('id', id)

@@ -200,10 +200,10 @@ export default function WaiterPage() {
     setSubmitError(null)
     setSubmitting(true)
     try {
+      const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-t${tableNumber}-${Math.random().toString(36).slice(2, 10)}`
       const items = cart.map((c) => ({
-        id: c.id,
+        menu_item_id: c.id,
         quantity: c.quantity,
-        notes: itemNotes[c.id] || '',
       }))
       const res = await fetch('/api/supabase/orders', {
         method: 'POST',
@@ -215,7 +215,7 @@ export default function WaiterPage() {
           requested_time: 'ASAP',
           items,
           table_number: String(tableNumber),
-          metadata: { tableNumber, paymentStatus: 'unpaid', orderNotes },
+          idempotency_key: idempotencyKey,
         }),
       })
       if (!res.ok) {

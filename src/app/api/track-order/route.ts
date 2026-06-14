@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getAdminClient } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Order reference required' }, { status: 400 })
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getAdminClient()
     .from('orders')
     .select('order_ref, customer_name, total, status, created_at')
     .eq('order_ref', ref)
