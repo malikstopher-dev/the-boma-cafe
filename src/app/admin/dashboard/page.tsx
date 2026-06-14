@@ -3,6 +3,34 @@
 import { useState, useEffect } from 'react';
 import { cmsService } from '@/lib/client-cms';
 
+function ScrollToTop() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 300)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  if (!visible) return null
+
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      title="Scroll to top"
+      style={{
+        position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 999,
+        width: 48, height: 48, borderRadius: '50%', border: 'none',
+        background: 'var(--warm)', color: '#fff', fontSize: '1.3rem',
+        cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >
+      ↑
+    </button>
+  )
+}
+
 export default function AdminDashboard() {
   const [menuItems, setMenuItems] = useState(0);
   const [events, setEvents] = useState(0);
@@ -88,6 +116,8 @@ export default function AdminDashboard() {
           gallery, and more. The popup and announcement bar can be configured to show special offers or messages on your website.
         </p>
       </div>
+
+      <ScrollToTop />
     </div>
   );
 }

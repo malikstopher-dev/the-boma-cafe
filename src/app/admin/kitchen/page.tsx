@@ -555,21 +555,47 @@ export default function KitchenDisplay() {
                 }}>
                   {col.icon} {col.label}
                 </h2>
-                <span style={{
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '999px',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  background: `${col.color}20`,
-                  color: col.color,
-                }}>
-                  {col.items.length}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById(`col-scroll-${col.key}`)
+                      if (el) el.scrollBy({ top: -200, behavior: 'smooth' })
+                    }}
+                    title="Scroll up"
+                    style={{
+                      padding: '0.25rem 0.5rem', borderRadius: '6px', border: `1px solid ${col.color}40`,
+                      background: 'transparent', color: col.color, fontSize: '0.85rem', cursor: 'pointer', lineHeight: 1,
+                    }}
+                  >▲</button>
+                  <span style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '999px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    background: `${col.color}20`,
+                    color: col.color,
+                  }}>
+                    {col.items.length}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById(`col-scroll-${col.key}`)
+                      if (el) el.scrollBy({ top: 200, behavior: 'smooth' })
+                    }}
+                    title="Scroll down"
+                    style={{
+                      padding: '0.25rem 0.5rem', borderRadius: '6px', border: `1px solid ${col.color}40`,
+                      background: 'transparent', color: col.color, fontSize: '0.85rem', cursor: 'pointer', lineHeight: 1,
+                    }}
+                  >▼</button>
+                </div>
               </div>
             </div>
 
             {/* Cards */}
-            <div style={{
+            <div
+              id={`col-scroll-${col.key}`}
+              style={{
               flex: 1,
               overflowY: 'auto',
               padding: '0.75rem',
