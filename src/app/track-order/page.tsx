@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, useRef, FormEvent } from 'react'
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'New',
@@ -34,6 +34,43 @@ export default function TrackOrderPage() {
   const [result, setResult] = useState<TrackResult | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const activeRef = useRef('')
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [])
+
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
+  }
+
+  const startPolling = (orderRef: string) => {
+    stopPolling()
+    activeRef.current = orderRef
+    pollingRef.current = setInterval(async () => {
+      const currentRef = activeRef.current
+      if (!currentRef) return
+      try {
+        const res = await fetch(`/api/track-order?ref=${encodeURIComponent(currentRef)}`)
+        if (!res.ok) return
+        const data: TrackResult = await res.json()
+        setResult(data)
+        setLastUpdated(new Date())
+        if (data.status === 'completed' || data.status === 'cancelled') {
+          stopPolling()
+        }
+      } catch {
+        // silently retry on next interval
+      }
+    }, 10000)
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -43,6 +80,7 @@ export default function TrackOrderPage() {
     setLoading(true)
     setError('')
     setResult(null)
+    stopPolling()
 
     try {
       const res = await fetch(`/api/track-order?ref=${encodeURIComponent(trimmed)}`)
@@ -56,6 +94,10 @@ export default function TrackOrderPage() {
       }
       const data = await res.json()
       setResult(data)
+      setLastUpdated(new Date())
+      if (data.status !== 'completed' && data.status !== 'cancelled') {
+        startPolling(trimmed)
+      }
     } catch {
       setError('Unable to look up order. Please try again.')
     } finally {
@@ -116,6 +158,7 @@ export default function TrackOrderPage() {
 
         {/* Result */}
         {result && (
+          <div>
           <div style={{ background: 'var(--white)', borderRadius: '16px', boxShadow: 'var(--shadow-md)', padding: '2rem' }}>
             {/* Order ref */}
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -191,6 +234,14 @@ export default function TrackOrderPage() {
               </div>
             </div>
           </div>
+          {lastUpdated && (
+            <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'rgba(0,0,0,0.35)' }}>
+                Auto-refreshing every 10s
+              </span>
+            </div>
+          )}
+        </div>
         )}
       </div>
 
