@@ -31,7 +31,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-  console.log('[AdminLayout] render path=%s isLoading=%s isAuthenticated=%s', currentPath, isLoading, isAuthenticated);
 
   // Kitchen: full-width, no sidebar, no auth redirect (has own password gate)
   if (currentPath === '/admin/kitchen') {

@@ -31,49 +31,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkAuth = async () => {
-    console.log('[checkAuth] entering');
     if (typeof window === 'undefined') {
-      console.log('[checkAuth] SSR — bailing out, setting isLoading=false');
       setIsLoading(false);
       return;
     }
     
     try {
-      console.log('[checkAuth] calling cmsService.verifyAuth()...');
       const result = await cmsService.verifyAuth();
-      console.log('[checkAuth] verifyAuth() returned:', JSON.stringify(result));
-      console.log('[checkAuth] result.authenticated ===', result?.authenticated);
-      console.log('[checkAuth] result.user ===', result?.user);
       if (result.authenticated && result.user) {
-        console.log('[checkAuth] BRANCH A: server says authenticated=true');
         setUser(result.user);
         setIsAuthenticated(true);
         localStorage.setItem(USER_KEY, JSON.stringify(result.user));
       } else {
-        console.log('[checkAuth] BRANCH B: server says NOT authenticated — clearing localStorage');
         localStorage.removeItem(USER_KEY);
       }
-    } catch (err) {
-      console.log('[checkAuth] BRANCH C: catch block EXECUTED');
-      console.log('[checkAuth] error message:', err instanceof Error ? err.message : String(err));
-      console.log('[checkAuth] error stack:', err instanceof Error ? err.stack : '(none)');
-      const userData = localStorage.getItem(USER_KEY);
-      console.log('[checkAuth] localStorage USER_KEY data:', userData ? 'FOUND' : 'NOT FOUND');
-      if (userData) {
-        try {
-          console.log('[checkAuth] Falling back to localStorage — setting isAuthenticated=true');
-          setUser(JSON.parse(userData));
-          setIsAuthenticated(true);
-        } catch {
-          console.log('[checkAuth] localStorage parse failed — clearing');
-          localStorage.removeItem(USER_KEY);
-        }
-      }
+    } catch {
+      // Server is the sole authority — never authenticate from localStorage
+      localStorage.removeItem(USER_KEY);
     } finally {
-      console.log('[checkAuth] finally — setting isLoading=false');
       setIsLoading(false);
     }
-    console.log('[checkAuth] exiting, isAuthenticated will be re-evaluated on next render');
   };
 
   const login = async (password: string): Promise<boolean> => {
