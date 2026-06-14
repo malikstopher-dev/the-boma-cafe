@@ -228,7 +228,6 @@ export default function CartButton() {
       window.open(url, '_blank')
 
       clearCart()
-      closeCart()
       setCustomerInfo({ name: '', phone: '', orderType: 'pickup', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save order'
@@ -252,7 +251,6 @@ export default function CartButton() {
       setOrderRef(ref)
 
       clearCart()
-      closeCart()
       setCustomerInfo({ name: '', phone: '', orderType: 'pickup', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save order'
