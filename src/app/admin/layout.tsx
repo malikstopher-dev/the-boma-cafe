@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import dynamic from 'next/dynamic';
 
@@ -29,59 +29,55 @@ const menuItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, logout, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  // ── Auth redirect: runs before any conditional return ──────
+  useEffect(() => {
+    if (pathname === '/admin/login' || pathname === '/admin/kitchen') return
+    if (!isLoading && !isAuthenticated) {
+      router.replace(`/admin/login?redirect=${encodeURIComponent(pathname)}`)
+    }
+  }, [isAuthenticated, isLoading, pathname, router])
 
-  // Kitchen: full-width, no sidebar, no auth redirect (has own password gate)
-  if (currentPath === '/admin/kitchen') {
+  // Kitchen: full-width, no sidebar (has own password gate)
+  if (pathname === '/admin/kitchen') {
     return (
       <div style={{ minHeight: '100vh', background: '#0f0f1a' }}>
         {children}
         <ConnectionStatus />
       </div>
-    );
+    )
   }
 
-  useEffect(() => {
-    const pathname = window?.location?.pathname || '';
-    if (pathname === '/admin/login') {
-      return;
-    }
-    if (!isLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-  
-  // Show loading on any page while checking auth (but not for login page)
-  if (isLoading && currentPath !== '/admin/login') {
+  // Login page: no sidebar, no auth required
+  if (pathname === '/admin/login') {
+    return <>{children}</>
+  }
+
+  // Show loading while auth is being checked
+  if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f1a', color: '#fff' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
           <p>Loading...</p>
         </div>
       </div>
-    );
-  }
-  
-  // Allow login page to render without auth
-  if (currentPath === '/admin/login') {
-    return <>{children}</>;
-  }
-  
-  if (!isAuthenticated) {
-    return null;
+    )
   }
 
-  // Orders POS: full-width, no sidebar, but still uses admin auth
-  if (currentPath === '/admin/orders') {
+  // Not authenticated → render null (redirect handled by useEffect)
+  if (!isAuthenticated) return null
+
+  // Orders POS: full-width, no sidebar (still requires admin auth)
+  if (pathname === '/admin/orders') {
     return (
       <div style={{ minHeight: '100vh', background: '#0f0f1a' }}>
         {children}
         <ConnectionStatus />
       </div>
-    );
+    )
   }
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -118,9 +114,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 padding: '0.875rem 1rem',
                 borderRadius: '10px',
                 textDecoration: 'none',
-                color: currentPath === item.href ? 'var(--white)' : 'rgba(255,255,255,0.7)',
-                background: currentPath === item.href ? 'rgba(244,164,96,0.25)' : 'transparent',
-                borderLeft: currentPath === item.href ? '3px solid var(--warm)' : '3px solid transparent',
+                color: pathname === item.href ? 'var(--white)' : 'rgba(255,255,255,0.7)',
+                background: pathname === item.href ? 'rgba(244,164,96,0.25)' : 'transparent',
+                borderLeft: pathname === item.href ? '3px solid var(--warm)' : '3px solid transparent',
                 fontSize: '0.95rem',
                 fontWeight: 500,
                 transition: 'all 0.2s ease'

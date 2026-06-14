@@ -21,8 +21,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // In dev mode with no password set, allow through
-  if (!ADMIN_PASSWORD) return NextResponse.next()
+  // DEVELOPMENT ONLY: skip auth check so local dev works without env vars
+  if (process.env.NODE_ENV === 'development') return NextResponse.next()
 
   const expected = await hashCookieValue('admin', ADMIN_PASSWORD)
   const adminCookie = request.cookies.get(ADMIN_COOKIE)
