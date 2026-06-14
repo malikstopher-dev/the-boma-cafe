@@ -31,6 +31,13 @@ interface CartItem {
   notes: string
 }
 
+const STEPS = [
+  { key: 'tables', label: 'Select Table', short: 'Table' },
+  { key: 'menu', label: 'Add Items', short: 'Items' },
+  { key: 'review', label: 'Review Order', short: 'Review' },
+  { key: 'done', label: 'Send', short: 'Send' },
+]
+
 function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -92,6 +99,45 @@ function loadSavedCart() {
   }
 }
 
+function StepIndicator({ steps, current }: { steps: typeof STEPS; current: string }) {
+  const currentIdx = steps.findIndex((s) => s.key === current)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 1rem', background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+      {steps.map((step, i) => {
+        const isActive = i === currentIdx
+        const isDone = i < currentIdx
+        return (
+          <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
+              padding: '0.3rem 0.4rem', borderRadius: '6px', flex: 1,
+              background: isActive ? 'rgba(16,185,129,0.15)' : 'transparent',
+            }}>
+              <span style={{
+                width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.6rem', fontWeight: 700, flexShrink: 0,
+                background: isActive ? '#10b981' : isDone ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)',
+                color: isActive ? '#000' : isDone ? '#10b981' : 'rgba(255,255,255,0.3)',
+              }}>
+                {isDone ? '✓' : i + 1}
+              </span>
+              <span style={{
+                fontSize: '0.65rem', fontWeight: isActive ? 700 : 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                color: isActive ? '#10b981' : isDone ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)',
+              }}>
+                {step.short}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <span style={{ color: i < currentIdx ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)', fontSize: '0.6rem' }}>▶</span>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function WaiterPage() {
   const saved = loadSavedCart()
   const [authed, setAuthed] = useState(false)
@@ -107,6 +153,7 @@ export default function WaiterPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [orderRef, setOrderRef] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -142,7 +189,6 @@ export default function WaiterPage() {
       .catch(() => {})
   }, [authed])
 
-  // Persist cart to localStorage for crash recovery
   useEffect(() => {
     if (!authed) return
     try {
@@ -150,7 +196,10 @@ export default function WaiterPage() {
     } catch { /* quota exceeded */ }
   }, [authed, tableNumber, cart, itemNotes, orderNotes])
 
-  const filteredItems = menuItems.filter((m) => m.categoryId === activeCategory)
+  const filteredByCategory = menuItems.filter((m) => m.categoryId === activeCategory)
+  const searchedItems = searchQuery
+    ? filteredByCategory.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : filteredByCategory
 
   const addItem = (item: MenuItem, price?: number) => {
     setCart((prev) => {
@@ -167,7 +216,7 @@ export default function WaiterPage() {
   }
 
   const total = cart.reduce((s, i) => s + i.price * i.quantity, 0)
-  const activeCat = categories.find((c) => c.id === activeCategory)
+  const itemCount = cart.reduce((s, i) => s + i.quantity, 0)
 
   const submitOrder = async () => {
     if (cart.length === 0 || !tableNumber) return
@@ -222,8 +271,8 @@ export default function WaiterPage() {
         <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Order Sent!</h1>
         <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem' }}>Order for Table {tableNumber}</p>
         <p style={{ color: '#f59e0b', fontFamily: 'monospace', fontSize: '1.2rem', marginBottom: '2rem' }}>{orderRef}</p>
-        <button onClick={() => { setDone(false); setTableNumber(null); setStep('tables') }}
-          style={{ padding: '1rem 2rem', border: 'none', borderRadius: '12px', background: '#f59e0b', color: '#000', fontSize: '1rem', fontWeight: 700, cursor: 'pointer' }}
+        <button onClick={() => { setDone(false); setTableNumber(null); setStep('tables'); setSearchQuery('') }}
+          style={{ padding: '1rem 2rem', border: 'none', borderRadius: '12px', background: '#10b981', color: '#000', fontSize: '1rem', fontWeight: 700, cursor: 'pointer' }}
         >
           New Order
         </button>
@@ -233,50 +282,79 @@ export default function WaiterPage() {
 
   return (
     <div style={{ minHeight: '100dvh', background: '#0f0f1a', color: '#fff', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', sans-serif", maxWidth: '500px', margin: 'auto' }}>
-      {/* Header */}
-      <div style={{ padding: '0.75rem 1rem', background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 700 }}>📋 Waiter</span>
-        {cart.length > 0 && (
-          <button onClick={() => setStep('review')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#f59e0b', color: '#000', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
-            Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
-          </button>
-        )}
-      </div>
+      {/* Step Indicator */}
+      <StepIndicator steps={STEPS} current={step} />
+
+      {/* Table Card */}
+      {tableNumber && step !== 'tables' && (
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '0.6rem 1rem', background: 'rgba(16,185,129,0.1)', borderBottom: '1px solid rgba(16,185,129,0.15)', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.1rem' }}>🍽️</span>
+            <div>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>Currently Serving</span>
+              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#10b981' }}>Table {tableNumber}</span>
+            </div>
+          </div>
+          {step === 'menu' && (
+            <button onClick={() => setStep('review')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#10b981', color: '#000', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+              🛒 {itemCount}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Step: Table Selection */}
       {step === 'tables' && (
-        <div style={{ flex: 1, padding: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Select Table</h2>
+        <div style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 0.25rem' }}>
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>
+                STEP 1
+              </span>
+              Select Customer Table
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>Choose the table you are serving.</p>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
             {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
               <button key={n} onClick={() => { setTableNumber(n); setStep('menu') }}
                 style={{
-                  padding: '0.75rem 0.5rem', borderRadius: '10px', border: tableNumber === n ? '2px solid #f59e0b' : '2px solid rgba(255,255,255,0.08)',
-                  background: tableNumber === n ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
+                  padding: '0.9rem 0.5rem', borderRadius: '12px', border: tableNumber === n ? '2px solid #10b981' : '2px solid rgba(255,255,255,0.08)',
+                  background: tableNumber === n ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '1.1rem', fontWeight: 700, cursor: 'pointer',
                 }}
               >
                 {n}
               </button>
             ))}
           </div>
-          {tableNumber && (
-            <button onClick={() => setStep('menu')} style={{ width: '100%', marginTop: '1rem', padding: '1rem', border: 'none', borderRadius: '12px', background: '#10b981', color: '#000', fontSize: '1.1rem', fontWeight: 700, cursor: 'pointer' }}>
-              Table {tableNumber} — Add Items
-            </button>
-          )}
         </div>
       )}
 
       {/* Step: Menu */}
       {step === 'menu' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Category tabs */}
-          <div style={{ display: 'flex', gap: '0.25rem', padding: '0.5rem', overflowX: 'auto', flexShrink: 0 }}>
+          {/* Search */}
+          <div style={{ padding: '0.5rem', flexShrink: 0 }}>
+            <input
+              type="text" placeholder="🔍 Search menu items..." value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%', padding: '0.65rem 0.75rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '0.9rem', boxSizing: 'border-box', outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Category chips */}
+          <div style={{ display: 'flex', gap: '0.35rem', padding: '0 0.5rem 0.5rem', overflowX: 'auto', flexShrink: 0 }}>
             {categories.map((cat) => (
-              <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+              <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setSearchQuery('') }}
                 style={{
-                  padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                  background: activeCategory === cat.id ? '#f59e0b' : 'rgba(255,255,255,0.06)',
+                  padding: '0.4rem 0.8rem', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                  background: activeCategory === cat.id ? '#10b981' : 'rgba(255,255,255,0.07)',
                   color: activeCategory === cat.id ? '#000' : 'rgba(255,255,255,0.7)',
                 }}
               >
@@ -286,59 +364,60 @@ export default function WaiterPage() {
           </div>
 
           {/* Items grid */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {filteredItems.map((item) => (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {searchedItems.map((item) => (
               <button key={item.id} onClick={() => addItem(item)}
                 style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
+                  padding: '0.7rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
                   background: 'rgba(255,255,255,0.03)', color: '#fff', cursor: 'pointer', textAlign: 'left', width: '100%',
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: 600 }}>{item.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{item.description?.slice(0, 60)}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{item.name}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.description?.slice(0, 50)}</div>
                 </div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#10b981', flexShrink: 0, marginLeft: '0.5rem' }}>
-                  R{parseFloat(item.price).toFixed(2)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: '0.5rem' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#10b981' }}>
+                    R{parseFloat(item.price).toFixed(2)}
+                  </span>
                 </div>
               </button>
             ))}
-            {filteredItems.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.9rem' }}>No items</div>
+            {searchedItems.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.9rem' }}>No items found</div>
             )}
           </div>
-
-          {/* Bottom cart bar */}
-          {cart.length > 0 && (
-            <div style={{ padding: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a' }}>
-              <button onClick={() => setStep('review')} style={{ width: '100%', padding: '0.875rem', border: 'none', borderRadius: '10px', background: '#f59e0b', color: '#000', fontSize: '1rem', fontWeight: 700, cursor: 'pointer' }}>
-                Review Order — R{total.toFixed(2)}
-              </button>
-            </div>
-          )}
         </div>
       )}
 
       {/* Step: Review */}
       {step === 'review' && (
         <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Table {tableNumber} — Order</h2>
+          <div style={{ marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 0.25rem' }}>
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>
+                STEP 3
+              </span>
+              Review Order
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>Table {tableNumber} — {itemCount} item{itemCount !== 1 ? 's' : ''}</p>
+          </div>
           {cart.map((item) => (
             <div key={item.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ fontWeight: 600 }}>{item.name}</span>
-                <span style={{ color: '#10b981', fontWeight: 600 }}>R{(item.price * item.quantity).toFixed(2)}</span>
+                <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{item.name}</span>
+                <span style={{ color: '#10b981', fontWeight: 600, fontSize: '0.95rem' }}>R{(item.price * item.quantity).toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button onClick={() => updateQty(item.id, -1)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>−</button>
-                <span style={{ fontWeight: 700, fontSize: '1.1rem', minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
-                <button onClick={() => updateQty(item.id, 1)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>+</button>
+                <button onClick={() => updateQty(item.id, -1)} style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                <span style={{ fontWeight: 700, fontSize: '1.05rem', minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
+                <button onClick={() => updateQty(item.id, 1)} style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                 <input
                   placeholder="Notes"
                   value={itemNotes[item.id] || ''}
                   onChange={(e) => setItemNotes((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                  style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.8rem' }}
+                  style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '0.8rem', outline: 'none' }}
                 />
               </div>
             </div>
@@ -347,9 +426,9 @@ export default function WaiterPage() {
           {cart.length > 0 && (
             <>
               <div style={{ marginTop: '1rem' }}>
-                <label style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '0.3rem' }}>Order notes</label>
+                <label style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '0.3rem', fontWeight: 500 }}>Order notes (optional)</label>
                 <input value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="e.g. Extra napkins"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.9rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '0.9rem', boxSizing: 'border-box', outline: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 700, marginTop: '1rem', paddingTop: '1rem', borderTop: '2px solid rgba(255,255,255,0.1)' }}>
@@ -366,11 +445,36 @@ export default function WaiterPage() {
               >
                 {submitting ? 'Sending...' : submitError ? 'Retry Order' : `Send to Kitchen — R${total.toFixed(2)}`}
               </button>
-              <button onClick={() => setStep('menu')} style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', cursor: 'pointer' }}>
+              <button onClick={() => setStep('menu')} style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' }}>
                 ← Add more items
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Sticky Footer (menu step only) */}
+      {step === 'menu' && tableNumber && cart.length > 0 && (
+        <div style={{
+          padding: '0.75rem 1rem', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', flexShrink: 0,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
+            <div style={{ fontWeight: 600, color: '#10b981', fontSize: '0.9rem' }}>Table {tableNumber}</div>
+            <div>{itemCount} item{itemCount !== 1 ? 's' : ''} • R{total.toFixed(2)}</div>
+          </div>
+          <button onClick={() => setStep('review')} style={{ padding: '0.75rem 1.25rem', border: 'none', borderRadius: '10px', background: '#10b981', color: '#000', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer' }}>
+            Review Order
+          </button>
+        </div>
+      )}
+
+      {/* Back to tables from menu when no items */}
+      {step === 'menu' && !tableNumber && (
+        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', flexShrink: 0 }}>
+          <button onClick={() => setStep('tables')} style={{ width: '100%', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' }}>
+            ← Select a table first
+          </button>
         </div>
       )}
     </div>
