@@ -13,9 +13,11 @@ export default function CartButton() {
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     phone: '',
-    orderType: 'Pickup' as 'Pickup' | 'Delivery',
+    orderType: 'Pickup' as 'Pickup' | 'Delivery' | 'Dine-in',
     requestedTime: '',
     notes: '',
+    tableNumber: '',
+    deliveryAddress: '',
   });
   const [orderRef, setOrderRef] = useState('');
 
@@ -38,6 +40,7 @@ export default function CartButton() {
   const handleIncrease = (item: typeof items[0]) => {
     addItem({ 
       id: item.id, 
+      menuItemId: item.menuItemId,
       name: item.name, 
       price: item.price, 
       quantity: 1, 
@@ -54,7 +57,7 @@ export default function CartButton() {
 
   const submitOrderToSupabase = async () => {
     const itemsPayload = items.map(item => ({
-      id: item.id,
+      id: item.menuItemId || item.id,
       quantity: item.quantity,
       notes: item.notes,
       ...(item.selectedSize ? { selectedSize: { name: item.selectedSize } } : {}),
@@ -72,6 +75,8 @@ export default function CartButton() {
         order_type: customerInfo.orderType.toLowerCase(),
         requested_time: customerInfo.requestedTime || 'ASAP',
         items: itemsPayload,
+        ...(customerInfo.orderType === 'Dine-in' && customerInfo.tableNumber ? { table_number: customerInfo.tableNumber } : {}),
+        ...(customerInfo.orderType === 'Delivery' && customerInfo.deliveryAddress ? { delivery_address: customerInfo.deliveryAddress } : {}),
       }),
     });
 
@@ -104,7 +109,7 @@ export default function CartButton() {
     window.open(url, '_blank');
     clearCart();
     closeCart();
-    setCustomerInfo({ name: '', phone: '', orderType: 'Pickup', requestedTime: '', notes: '' });
+    setCustomerInfo({ name: '', phone: '', orderType: 'Pickup', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' });
     setIsOrderSubmitting(false);
   };
 
@@ -193,7 +198,7 @@ export default function CartButton() {
                     Track Order
                   </a>
                   <button
-                    onClick={() => { clearCart(); closeCart(); setOrderRef(''); setCustomerInfo({ name: '', phone: '', orderType: 'Pickup', requestedTime: '', notes: '' }); }}
+                    onClick={() => { clearCart(); closeCart(); setOrderRef(''); setCustomerInfo({ name: '', phone: '', orderType: 'Pickup', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' }); }}
                     style={{
                       padding: '0.85rem', borderRadius: '12px',
                       border: '2px solid var(--beige-dark)', background: 'transparent',
@@ -292,7 +297,32 @@ export default function CartButton() {
                       >
                         🚚 Delivery
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'Dine-in' }))}
+                        className={`${styles.toggleBtn} ${customerInfo.orderType === 'Dine-in' ? styles.toggleBtnActive : ''}`}
+                      >
+                        🍽️ Dine-in
+                      </button>
                     </div>
+                    {customerInfo.orderType === 'Delivery' && (
+                      <input
+                        type="text"
+                        placeholder="Delivery address *"
+                        value={customerInfo.deliveryAddress}
+                        onChange={e => setCustomerInfo(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                        className={styles.input}
+                      />
+                    )}
+                    {customerInfo.orderType === 'Dine-in' && (
+                      <input
+                        type="text"
+                        placeholder="Table number *"
+                        value={customerInfo.tableNumber}
+                        onChange={e => setCustomerInfo(prev => ({ ...prev, tableNumber: e.target.value }))}
+                        className={styles.input}
+                      />
+                    )}
                     <input
                       type="text"
                       placeholder="Requested time (e.g. 7:30 PM)"

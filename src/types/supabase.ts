@@ -15,12 +15,14 @@ export interface Order {
   id: string
   customer_name: string
   phone: string
-  order_type: 'pickup' | 'delivery'
+  order_type: 'pickup' | 'delivery' | 'dine-in'
   requested_time: string
   items_json: string
   total: number
   status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled'
   created_at: string
+  table_number: string | null
+  delivery_address: string | null
 }
 
 export interface ContactMessage {

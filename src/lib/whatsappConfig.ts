@@ -63,10 +63,12 @@ export function generateOrderMessage(
   customerInfo?: {
     name?: string;
     phone?: string;
-    orderType?: 'Pickup' | 'Delivery';
+    orderType?: 'Pickup' | 'Delivery' | 'Dine-in';
     requestedTime?: string;
     address?: string;
     notes?: string;
+    tableNumber?: string;
+    deliveryAddress?: string;
   }
 ): string {
   let message = `Hello ${BUSINESS_INFO.name}, I would like to place an order:\n\n`;
@@ -119,13 +121,25 @@ export function generateOrderMessage(
       message += `• Phone: ${customerInfo.phone}\n`;
     }
     if (customerInfo.orderType) {
-      message += `• ${customerInfo.orderType === 'Delivery' ? '🚚 Delivery' : '🏪 Pickup'}: ${customerInfo.orderType}\n`;
+      if (customerInfo.orderType === 'Delivery') {
+        message += `• 🚚 Delivery\n`;
+      } else if (customerInfo.orderType === 'Dine-in') {
+        message += `• 🍽️ Dine-in\n`;
+      } else {
+        message += `• 🏪 Pickup\n`;
+      }
     }
     if (customerInfo.requestedTime) {
       message += `• Requested Time: ${customerInfo.requestedTime}\n`;
     }
     if (customerInfo.address && customerInfo.orderType === 'Delivery') {
       message += `• Delivery Address: ${customerInfo.address}\n`;
+    }
+    if (customerInfo.deliveryAddress && customerInfo.orderType === 'Delivery') {
+      message += `• Delivery Address: ${customerInfo.deliveryAddress}\n`;
+    }
+    if (customerInfo.tableNumber && customerInfo.orderType === 'Dine-in') {
+      message += `• Table Number: ${customerInfo.tableNumber}\n`;
     }
     if (customerInfo.notes) {
       message += `• Notes: ${customerInfo.notes}\n`;

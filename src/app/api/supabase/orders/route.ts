@@ -3,13 +3,13 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAnyRole } from '@/lib/auth'
 import { canTransition } from '@/lib/order-state-machine'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { getDb } from '@/lib/db'
+import { getMenuItemsByIds, extractBaseItemId, type DbMenuItem } from '@/lib/menu-prices'
 
 const VALID_ORDER_TYPES = ['pickup', 'delivery', 'dine-in']
 
 const ALLOWED_PATCH_FIELDS = new Set([
   'customer_name', 'phone', 'order_type', 'requested_time', 'status',
-  'items_json',
+  'items_json', 'table_number', 'delivery_address',
 ])
 
 const MAX_TOTAL = 99999
@@ -18,7 +18,9 @@ const MIN_TOTAL = 1
 async function generateOrderRef(): Promise<string> {
   const now = new Date()
   const yymmdd = now.toISOString().slice(2, 10).replace(/-/g, '')
-  const random = crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()
+  const buf = new Uint8Array(4)
+  crypto.getRandomValues(buf)
+  const random = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase()
   return `BOMA-${yymmdd}-${random}`
 }
 
@@ -39,15 +41,6 @@ interface EnrichedItem {
   notes: string
   selectedSize?: { name: string; price: number }
   selectedAddOns?: { name: string; price: number }[]
-}
-
-interface DbMenuItem {
-  id: string
-  name: string
-  description: string | null
-  price: string | null
-  sizes: string | null
-  add_ons: string | null
 }
 
 function resolveSizePrice(dbItem: DbMenuItem, selectedSize?: { name: string }): { price: number; matched: boolean } {
@@ -81,25 +74,20 @@ function resolveAddOnPrices(dbItem: DbMenuItem, selectedAddOns?: { name: string 
   }
 }
 
-function enrichItems(items: OrderItemInput[]): {
+async function enrichItems(items: OrderItemInput[]): Promise<{
   enriched: EnrichedItem[]
   total: number
   error: string | null
-} {
-  let db: ReturnType<typeof getDb>
-  try {
-    db = getDb()
-  } catch (dbErr) {
-    console.error('enrichItems getDb failed:', (dbErr as Error)?.message ?? dbErr)
-    return { enriched: [], total: 0, error: 'Menu database unavailable' }
-  }
+}> {
   const enriched: EnrichedItem[] = []
   let total = 0
 
+  const itemIds = Array.from(new Set(items.map(i => i.id)))
+  const menuMap = await getMenuItemsByIds(itemIds)
+
   for (const item of items) {
-    const row = db.prepare(
-      'SELECT id, name, description, price, sizes, add_ons FROM menu_items WHERE id = ?'
-    ).get(item.id) as DbMenuItem | undefined
+    const baseId = extractBaseItemId(item.id)
+    const row = baseId ? menuMap.get(baseId) : undefined
 
     if (!row) {
       return { enriched: [], total: 0, error: `Menu item not found: ${item.id}` }
@@ -172,7 +160,7 @@ export async function POST(request: NextRequest) {
     const bodyKeys = Object.keys(body)
     console.error(`order body keys: [${bodyKeys.join(', ')}]`)
 
-    const { customer_name, phone, order_type, requested_time, items, metadata } = body
+    const { customer_name, phone, order_type, requested_time, items, metadata, table_number, delivery_address } = body
     const rawItems = items ?? body.items_json
 
     if (!customer_name || !phone || !order_type || !rawItems) {
@@ -189,6 +177,14 @@ export async function POST(request: NextRequest) {
     if (!VALID_ORDER_TYPES.includes(order_type)) {
       console.error('order invalid type:', order_type)
       return NextResponse.json({ error: 'Invalid order type' }, { status: 400 })
+    }
+
+    // Order-type-specific validation
+    if (order_type === 'dine-in' && !table_number) {
+      return NextResponse.json({ error: 'Table number required for dine-in orders' }, { status: 400 })
+    }
+    if (order_type === 'delivery' && !delivery_address) {
+      return NextResponse.json({ error: 'Delivery address required for delivery orders' }, { status: 400 })
     }
 
     // Parse items from either new format (items[]) or legacy (items_json string)
@@ -235,7 +231,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('order enrichItems start')
-    const { enriched, total, error: enrichError } = enrichItems(parsedItems)
+    const { enriched, total, error: enrichError } = await enrichItems(parsedItems)
     if (enrichError) {
       console.error('order enrichItems error:', enrichError)
       return NextResponse.json({ error: enrichError }, { status: 400 })
@@ -257,8 +253,10 @@ export async function POST(request: NextRequest) {
       .from('orders')
       .insert([{
         customer_name, phone, order_type, requested_time,
-        items_json, total, server_computed_total: total,
+        items_json, total,
         status: 'pending', order_ref,
+        table_number: table_number || null,
+        delivery_address: delivery_address || null,
       }])
       .select()
       .single()
@@ -270,8 +268,10 @@ export async function POST(request: NextRequest) {
           .from('orders')
           .insert([{
             customer_name, phone, order_type, requested_time,
-            items_json, total, server_computed_total: total,
+            items_json, total,
             status: 'pending', order_ref: ref,
+            table_number: table_number || null,
+            delivery_address: delivery_address || null,
           }])
           .select()
           .single()
@@ -283,8 +283,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, order: data }, { status: 201 })
   } catch (err) {
-    console.error('order POST error:', (err as Error)?.message ?? err)
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    const msg = (err as Error)?.message ?? String(err)
+    console.error('order POST error:', msg, (err as Error)?.stack ?? '')
+    return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
 

@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 interface CartItem {
   id: string;
+  menuItemId?: string;
   name: string;
   price: number;
   quantity: number;

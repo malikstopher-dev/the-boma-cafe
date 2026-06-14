@@ -277,6 +277,7 @@ export default function MenuPage() {
     
     addItem({
       id: `${item.id}${selectedSize ? `-${selectedSize.replace(/\s/g, '')}` : ''}${(selectedAddOns?.length || 0) > 0 ? `-${selectedAddOns.length}extras` : ''}-${Date.now()}`,
+      menuItemId: item.id,
       name: `${item.name}${sizeDisplay}${addOnsDisplay}`,
       price: finalPrice,
       quantity: 1,
@@ -297,6 +298,7 @@ export default function MenuPage() {
     
     addItem({
       id: `${item.id}${selectedSize ? `-${selectedSize.replace(/\s/g, '')}` : ''}${(selectedAddOns?.length || 0) > 0 ? `-${selectedAddOns.length}extras` : ''}-${Date.now()}`,
+      menuItemId: item.id,
       name: `${item.name}${sizeDisplay}${addOnsDisplay}`,
       price: finalPrice,
       quantity: 1,

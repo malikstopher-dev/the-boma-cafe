@@ -13,10 +13,21 @@ export function getDb(): Database.Database {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    initializeTables();
+
+    try {
+      db = new Database(DB_PATH);
+      db.pragma('journal_mode = WAL');
+      initializeTables();
+    } catch (writeErr) {
+      console.error('getDb write-mode failed, trying read-only:', (writeErr as Error)?.message ?? writeErr)
+      try {
+        db = new Database(DB_PATH, { readonly: true, fileMustExist: true })
+        console.error('getDb read-only mode succeeded at:', DB_PATH)
+      } catch (readErr) {
+        console.error('getDb read-only also failed:', (readErr as Error)?.message ?? readErr)
+        throw new Error(`Menu database unavailable at ${DB_PATH}: ${(readErr as Error)?.message}`)
+      }
+    }
   }
   return db;
 }
