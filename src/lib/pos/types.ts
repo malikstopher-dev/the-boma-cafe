@@ -1,5 +1,12 @@
 export type OrderType = 'pickup' | 'delivery' | 'dine-in'
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+export type OrderEventType =
+  | 'ORDER_CREATED'
+  | 'ORDER_CONFIRMED'
+  | 'ORDER_PREPARING'
+  | 'ORDER_READY'
+  | 'ORDER_COMPLETED'
+  | 'ORDER_CANCELLED'
 
 export interface OrderItemInput {
   menu_item_id: string

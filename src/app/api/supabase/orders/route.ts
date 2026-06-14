@@ -4,7 +4,8 @@ import { requireAnyRole } from '@/lib/auth'
 import { canTransition } from '@/lib/order-state-machine'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validateOrder, sanitizeOrderInput } from '@/lib/pos/validateOrder'
-import { createOrder } from '@/lib/pos/orderService'
+import { createOrder, logOrderEvent } from '@/lib/pos/orderService'
+import type { OrderEventType } from '@/lib/pos/types'
 
 const ALLOWED_PATCH_FIELDS = new Set([
   'customer_name', 'phone', 'order_type', 'requested_time', 'status',
@@ -167,6 +168,25 @@ export async function PATCH(request: NextRequest) {
     if (updateBody.status && !updated) {
       return NextResponse.json({ error: 'Conflict' }, { status: 409 })
     }
+
+    // ── Log event on status change ────────────────────────────
+    if (updated && updateBody.status && currentStatus && currentStatus !== updateBody.status) {
+      const eventTypeMap: Record<string, OrderEventType> = {
+        confirmed: 'ORDER_CONFIRMED',
+        preparing: 'ORDER_PREPARING',
+        ready: 'ORDER_READY',
+        completed: 'ORDER_COMPLETED',
+        cancelled: 'ORDER_CANCELLED',
+      }
+      logOrderEvent({
+        order_id: updated.id,
+        event_type: eventTypeMap[updateBody.status] || 'ORDER_CREATED',
+        from_status: currentStatus,
+        to_status: updateBody.status,
+        created_by: 'admin',
+      })
+    }
+
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
