@@ -7,6 +7,8 @@ export type AllowedAction =
   | 'pay'
   | 'cancel'
   | 'archive'
+  | 'confirm_payment'
+  | 'refund'
 
 export interface Transition {
   from: OrderStatus
@@ -17,14 +19,16 @@ export interface Transition {
 }
 
 const TRANSITIONS: Transition[] = [
-  { from: 'pending',    to: 'confirmed',  action: 'accept',     label: 'Accept',       role: 'kitchen' },
-  { from: 'confirmed',  to: 'preparing',  action: 'start_prep', label: 'Start Prep',   role: 'kitchen' },
-  { from: 'preparing',  to: 'ready',      action: 'mark_ready', label: 'Mark Ready',   role: 'kitchen' },
-  { from: 'pending',    to: 'cancelled',  action: 'cancel',     label: 'Cancel',       role: 'either'  },
-  { from: 'confirmed',  to: 'cancelled',  action: 'cancel',     label: 'Cancel',       role: 'either'  },
-  { from: 'preparing',  to: 'cancelled',  action: 'cancel',     label: 'Cancel',       role: 'either'  },
-  { from: 'ready',      to: 'completed',  action: 'pay',        label: 'Mark Paid',    role: 'foh'     },
-  { from: 'completed',  to: 'completed',  action: 'archive',    label: 'Archive',      role: 'foh'     },
+  { from: 'pending',    to: 'confirmed',  action: 'accept',          label: 'Accept',          role: 'kitchen' },
+  { from: 'confirmed',  to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'kitchen' },
+  { from: 'preparing',  to: 'ready',      action: 'mark_ready',      label: 'Mark Ready',      role: 'kitchen' },
+  { from: 'pending',    to: 'cancelled',  action: 'cancel',          label: 'Cancel',          role: 'either'  },
+  { from: 'confirmed',  to: 'cancelled',  action: 'cancel',          label: 'Cancel',          role: 'either'  },
+  { from: 'preparing',  to: 'cancelled',  action: 'cancel',          label: 'Cancel',          role: 'either'  },
+  { from: 'ready',      to: 'completed',  action: 'pay',             label: 'Mark Paid',       role: 'foh'     },
+  { from: 'completed',  to: 'completed',  action: 'archive',         label: 'Archive',         role: 'foh'     },
+  { from: 'pending',    to: 'confirmed',  action: 'confirm_payment', label: 'Confirm Payment', role: 'foh'     },
+  { from: 'confirmed',  to: 'confirmed',  action: 'confirm_payment', label: 'Confirm Payment', role: 'foh'     },
 ]
 
 export function getAvailableTransitions(currentStatus: OrderStatus, role: 'foh' | 'kitchen' | 'either' = 'either'): Transition[] {
@@ -45,6 +49,16 @@ export function getNextStatus(currentStatus: OrderStatus, action: AllowedAction)
 export function getTransitionLabel(currentStatus: OrderStatus, action: AllowedAction): string | null {
   const t = TRANSITIONS.find((t) => t.from === currentStatus && t.action === action)
   return t?.label ?? null
+}
+
+/** Order types that require payment confirmation before processing */
+export function requiresPaymentConfirmation(orderType: string): boolean {
+  return orderType !== 'dine-in'
+}
+
+/** Status transitions that require payment confirmation */
+export function paymentRequiredForTransition(toStatus: string): boolean {
+  return ['confirmed', 'preparing', 'ready', 'completed'].includes(toStatus)
 }
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {

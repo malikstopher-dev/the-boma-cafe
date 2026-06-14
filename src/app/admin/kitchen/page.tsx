@@ -13,6 +13,7 @@ interface Order {
   items_json: string
   total: number
   status: string
+  payment_status: string
   created_at: string
 }
 
@@ -368,8 +369,9 @@ export default function KitchenDisplay() {
       const order = col[focusedIdx]
       if (!order || updating === order.id) return
 
-      // 1 = Accept (pending → confirmed)
+      // 1 = Accept (pending → confirmed; skip if awaiting payment)
       if (e.key === '1' && order.status === 'pending') {
+        if (order.order_type !== 'dine-in' && order.payment_status !== 'paid') return
         updateStatus(order.id, 'confirmed')
         return
       }
@@ -665,6 +667,19 @@ export default function KitchenDisplay() {
                       }}>
                         {order.order_type === 'pickup' ? '📦 Pickup' : order.order_type === 'delivery' ? '🚚 Delivery' : '🍽️ Dine-in'}
                       </span>
+                      {/* Payment status badge */}
+                      {order.order_type !== 'dine-in' && (
+                        <span style={{
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          background: order.payment_status === 'paid' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)',
+                          color: order.payment_status === 'paid' ? '#10b981' : '#f59e0b',
+                        }}>
+                          {order.payment_status === 'paid' ? '🟢 Paid' : '🟠 Awaiting Payment'}
+                        </span>
+                      )}
                       <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
                         <span style={{ color: 'rgba(255,255,255,0.3)' }}>⏱</span> {timeSince(order.created_at)}
                       </span>
@@ -754,25 +769,36 @@ export default function KitchenDisplay() {
 
                     {/* Actions */}
                     {order.status === 'pending' && (
-                      <button
-                        onClick={() => updateStatus(order.id, 'confirmed')}
-                        disabled={updating === order.id}
-                        style={{
-                          width: '100%',
-                          padding: '0.875rem',
-                          border: 'none',
-                          borderRadius: '10px',
-                          background: '#f59e0b',
-                          color: '#000',
-                          fontSize: '1.1rem',
-                          fontWeight: 800,
-                          cursor: updating === order.id ? 'not-allowed' : 'pointer',
-                          opacity: updating === order.id ? 0.5 : 1,
-                          touchAction: 'manipulation',
-                        }}
-                      >
-                        {updating === order.id ? '...' : 'ACCEPT'}
-                      </button>
+                      (order.order_type !== 'dine-in' && order.payment_status !== 'paid') ? (
+                        <div style={{
+                          width: '100%', padding: '0.875rem',
+                          borderRadius: '10px', background: 'rgba(245,158,11,0.1)',
+                          color: '#f59e0b', fontSize: '1rem', fontWeight: 700,
+                          textAlign: 'center', border: '1px solid rgba(245,158,11,0.3)',
+                        }}>
+                          🟠 Awaiting Payment
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => updateStatus(order.id, 'confirmed')}
+                          disabled={updating === order.id}
+                          style={{
+                            width: '100%',
+                            padding: '0.875rem',
+                            border: 'none',
+                            borderRadius: '10px',
+                            background: '#f59e0b',
+                            color: '#000',
+                            fontSize: '1.1rem',
+                            fontWeight: 800,
+                            cursor: updating === order.id ? 'not-allowed' : 'pointer',
+                            opacity: updating === order.id ? 0.5 : 1,
+                            touchAction: 'manipulation',
+                          }}
+                        >
+                          {updating === order.id ? '...' : 'ACCEPT'}
+                        </button>
+                      )
                     )}
                     {order.status === 'confirmed' && (
                       <button

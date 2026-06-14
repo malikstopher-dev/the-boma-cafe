@@ -2,6 +2,8 @@ export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'com
 
 export type PaymentMethod = 'cash' | 'card' | 'mobile'
 
+export type PaymentStatus = 'pending' | 'paid' | 'refunded'
+
 export type OrderType = 'pickup' | 'delivery' | 'dine-in'
 
 export type TableStatus = 'empty' | 'occupied' | 'billing'
@@ -41,6 +43,9 @@ export interface SupabaseOrder {
   items_json: string
   total: number
   status: string
+  payment_status: string
+  payment_confirmed_at: string | null
+  payment_confirmed_by: string | null
   created_at: string
 }
 
@@ -76,9 +81,10 @@ export function getOrderTableNumber(order: SupabaseOrder): number | undefined {
   return parseOrderMeta(order.items_json).tableNumber
 }
 
-export function getPaymentStatus(order: SupabaseOrder): 'unpaid' | 'paid' {
-  if (order.status === 'completed') return 'paid'
-  return parseOrderMeta(order.items_json).paymentStatus || 'unpaid'
+export function getPaymentStatus(order: SupabaseOrder): 'unpaid' | 'paid' | 'refunded' {
+  if (order.payment_status === 'paid') return 'paid'
+  if (order.payment_status === 'refunded') return 'refunded'
+  return 'unpaid'
 }
 
 export function getPaymentMethod(order: SupabaseOrder): PaymentMethod | undefined {

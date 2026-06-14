@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAnyRole } from '@/lib/auth'
-import { canTransition } from '@/lib/order-state-machine'
+import { requireAnyRole, getSession } from '@/lib/auth'
+import { canTransition, requiresPaymentConfirmation, paymentRequiredForTransition } from '@/lib/order-state-machine'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validateOrder, sanitizeOrderInput } from '@/lib/pos/validateOrder'
 import { createOrder, logOrderEvent } from '@/lib/pos/orderService'
@@ -10,6 +10,7 @@ import type { OrderEventType } from '@/lib/pos/types'
 const ALLOWED_PATCH_FIELDS = new Set([
   'customer_name', 'phone', 'order_type', 'requested_time', 'status',
   'items_json', 'table_number', 'delivery_address',
+  'payment_status', 'payment_confirmed_at', 'payment_confirmed_by',
 ])
 
 export async function GET(request: NextRequest) {
@@ -131,10 +132,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     let currentStatus: string | null = null
+    let currentOrderType: string | null = null
+    let currentPaymentStatus: string | null = null
     if (updateBody.status) {
       const { data: fetched, error: fetchError } = await getAdminClient()
         .from('orders')
-        .select('status')
+        .select('status, order_type, payment_status')
         .eq('id', id)
         .single()
 
@@ -142,6 +145,8 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 })
       }
       currentStatus = fetched.status
+      currentOrderType = fetched.order_type
+      currentPaymentStatus = fetched.payment_status
 
       if (['completed', 'cancelled'].includes(currentStatus)) {
         return NextResponse.json({ error: `Cannot update a ${currentStatus} order` }, { status: 400 })
@@ -156,6 +161,23 @@ export async function PATCH(request: NextRequest) {
       if (updateBody.status === 'completed' && currentStatus === 'completed') {
         return NextResponse.json({ error: 'Order already completed' }, { status: 400 })
       }
+
+      // ── Payment verification check ──────────────────────────────
+      if (
+        updateBody.status !== 'cancelled' &&
+        currentPaymentStatus !== 'paid' &&
+        requiresPaymentConfirmation(currentOrderType ?? '') &&
+        paymentRequiredForTransition(updateBody.status)
+      ) {
+        return NextResponse.json({ error: 'Payment must be confirmed before dispatching this order.' }, { status: 400 })
+      }
+    }
+
+    // ── Handle payment confirmation action ──────────────────────
+    if (updateBody.payment_status === 'paid') {
+      updateBody.payment_confirmed_at = new Date().toISOString()
+      const session = await getSession()
+      updateBody.payment_confirmed_by = session?.role ?? 'admin'
     }
 
     let query = getAdminClient().from('orders').update(updateBody).eq('id', id)

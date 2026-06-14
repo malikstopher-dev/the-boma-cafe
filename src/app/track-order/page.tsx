@@ -25,6 +25,7 @@ interface TrackResult {
   customer_name: string
   total: number
   status: string
+  payment_status: string
   status_label: string
   created_at: string
 }
@@ -213,6 +214,35 @@ export default function TrackOrderPage() {
                 <p style={{ color: '#dc2626', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>
                   This order has been cancelled.
                 </p>
+              </div>
+            )}
+
+            {/* Payment section */}
+            {result.payment_status && (
+              <div style={{
+                background: result.payment_status === 'paid' ? '#f0fdf4' : '#fffbeb',
+                borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.5rem',
+                border: `1px solid ${result.payment_status === 'paid' ? '#bbf7d0' : '#fde68a'}`,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Payment Status</span>
+                  <span style={{
+                    fontSize: '0.9rem', fontWeight: 700,
+                    color: result.payment_status === 'paid' ? '#16a34a' : result.payment_status === 'refunded' ? '#dc2626' : '#d97706',
+                  }}>
+                    {result.payment_status === 'paid' ? '✅ Paid' : result.payment_status === 'refunded' ? '🔴 Refunded' : '🟠 Pending Payment'}
+                  </span>
+                </div>
+                {result.payment_status === 'pending' && (
+                  <p style={{ fontSize: '0.85rem', color: '#92400e', margin: '0.5rem 0 0' }}>
+                    Your order is awaiting payment confirmation.
+                  </p>
+                )}
+                {result.payment_status === 'paid' && (
+                  <p style={{ fontSize: '0.85rem', color: '#166534', margin: '0.5rem 0 0' }}>
+                    Payment received. Your order is being processed.
+                  </p>
+                )}
               </div>
             )}
 
