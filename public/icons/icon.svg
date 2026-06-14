@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0f0a"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <!-- Plate -->
+  <circle cx="256" cy="280" r="120" fill="#f8f5f2" stroke="#e8ddd0" stroke-width="4"/>
+  <circle cx="256" cy="280" r="80" fill="#f0ebe3" stroke="#e0d5c8" stroke-width="2"/>
+  <!-- Fork -->
+  <g transform="translate(180,180) rotate(-30)" stroke="#d4a574" stroke-width="8" fill="none" stroke-linecap="round">
+    <line x1="40" y1="0" x2="40" y2="120"/>
+    <line x1="20" y1="0" x2="20" y2="40"/>
+    <line x1="60" y1="0" x2="60" y2="40"/>
+    <line x1="20" y1="0" x2="60" y2="0"/>
+  </g>
+  <!-- Knife -->
+  <g transform="translate(280,180) rotate(30)" stroke="#d4a574" stroke-width="8" fill="none" stroke-linecap="round">
+    <line x1="40" y1="0" x2="40" y2="120"/>
+    <path d="M20,40 Q20,0 40,0 Q60,0 60,40" fill="#d4a574" stroke="none"/>
+  </g>
+  <!-- Star -->
+  <text x="256" y="260" text-anchor="middle" font-size="40" fill="#f59e0b" font-family="serif">✦</text>
+</svg>
