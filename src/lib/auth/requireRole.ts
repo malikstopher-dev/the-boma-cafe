@@ -40,6 +40,20 @@ export async function requireAdminOrKitchen(request: NextRequest): Promise<NextR
   return null
 }
 
+export async function requireWaiter(request: NextRequest): Promise<NextResponse | null> {
+  const role = await getRequestRole(request)
+  if (!role) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
+  if (role !== 'waiter') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  return null
+}
+
+export async function requireAnyRole(request: NextRequest, roles: Role[]): Promise<NextResponse | null> {
+  const role = await getRequestRole(request)
+  if (!role) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
+  if (!roles.includes(role)) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  return null
+}
+
 export async function requireAuthenticated(request: NextRequest): Promise<NextResponse | null> {
   const role = await getRequestRole(request)
   if (!role) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })

@@ -166,11 +166,11 @@ export default function WaiterPage() {
 
   useEffect(() => {
     if (!authed) return
-    fetch('/api/cms/menu')
+    fetch('/api/menu/public')
       .then((r) => r.json())
       .then((data) => {
-        setCategories(data.categories?.filter((c: MenuCategory) => c.isActive) || [])
-        setMenuItems(data.menuItems?.filter((m: MenuItem) => m.isAvailable) || [])
+        setCategories(data.categories || [])
+        setMenuItems(data.menuItems || [])
         if (data.categories?.length > 0) setActiveCategory(data.categories[0].id)
       })
       .catch(() => {})

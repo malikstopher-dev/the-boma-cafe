@@ -3,8 +3,10 @@ import type { NextRequest } from 'next/server'
 
 const ADMIN_COOKIE = 'boma_admin_auth'
 const KITCHEN_COOKIE = 'boma_kitchen_auth'
+const WAITER_COOKIE = 'boma_waiter_auth'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD
+const WAITER_PASSWORD = process.env.WAITER_PASSWORD
 
 async function hashSHA256(input: string): Promise<string> {
   const data = new TextEncoder().encode(input)
@@ -12,13 +14,14 @@ async function hashSHA256(input: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-type AuthResult = { role: 'admin' | 'kitchen' } | null
+type AuthResult = { role: 'admin' | 'kitchen' | 'waiter' } | null
 
 async function verifyRole(request: NextRequest): Promise<AuthResult> {
-  if (!ADMIN_PASSWORD || !KITCHEN_PASSWORD) return null
+  if (!ADMIN_PASSWORD || !KITCHEN_PASSWORD || !WAITER_PASSWORD) return null
 
   const adminCookie = request.cookies.get(ADMIN_COOKIE)
   const kitchenCookie = request.cookies.get(KITCHEN_COOKIE)
+  const waiterCookie = request.cookies.get(WAITER_COOKIE)
 
   if (adminCookie?.value) {
     const expected = await hashSHA256(`admin:${ADMIN_PASSWORD}`)
@@ -30,7 +33,18 @@ async function verifyRole(request: NextRequest): Promise<AuthResult> {
     if (kitchenCookie.value === expected) return { role: 'kitchen' }
   }
 
+  if (waiterCookie?.value) {
+    const expected = await hashSHA256(`waiter:${WAITER_PASSWORD}`)
+    if (waiterCookie.value === expected) return { role: 'waiter' }
+  }
+
   return null
+}
+
+function roleScope(role: string): string {
+  if (role === 'admin') return 'admin:full'
+  if (role === 'kitchen') return 'kitchen:orders'
+  return 'waiter:orders'
 }
 
 const PROTECTED_API_PREFIXES = ['/api/admin/', '/api/cms/', '/api/waiters/', '/api/gallery/', '/api/upload/']
@@ -45,37 +59,54 @@ function isPublicApiException(pathname: string): boolean {
   return PUBLIC_API_EXCEPTIONS.some(p => pathname.startsWith(p))
 }
 
+function setAuthHeaders(headers: Headers, role: string): Headers {
+  const h = new Headers(headers)
+  h.set('x-user-role', role)
+  h.set('x-auth-valid', 'true')
+  h.set('x-user-scope', roleScope(role))
+  return h
+}
+
+function redirectToLogin(request: NextRequest) {
+  const loginUrl = new URL('/admin/login', request.url)
+  loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+  return NextResponse.redirect(loginUrl)
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isApi = pathname.startsWith('/api/')
 
-  // ── Page routes (admin) ──────────────────────────────────
+  // ── Page routes ─────────────────────────────────────────
   if (!isApi) {
+    // Waiter page: waiter or admin
+    if (pathname.startsWith('/waiter')) {
+      const auth = await verifyRole(request)
+      if (!auth) return redirectToLogin(request)
+      if (auth.role === 'admin' || auth.role === 'waiter') {
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+      }
+      return redirectToLogin(request)
+    }
+
+    // Admin pages
     if (!pathname.startsWith('/admin/')) return NextResponse.next()
     if (pathname === '/admin/login') return NextResponse.next()
 
     const auth = await verifyRole(request)
-    if (!auth) {
-      const loginUrl = new URL('/admin/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
+    if (!auth) return redirectToLogin(request)
 
     if (pathname === '/admin/kitchen') {
-      const headers = new Headers(request.headers)
-      headers.set('x-user-role', auth.role)
-      headers.set('x-auth-valid', 'true')
-      return NextResponse.next({ request: { headers } })
+      if (auth.role === 'admin' || auth.role === 'kitchen') {
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+      }
+      return redirectToLogin(request)
     }
 
-    if (auth.role !== 'admin') {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
-    }
+    // All other /admin/* routes: admin ONLY
+    if (auth.role !== 'admin') return redirectToLogin(request)
 
-    const headers = new Headers(request.headers)
-    headers.set('x-user-role', 'admin')
-    headers.set('x-auth-valid', 'true')
-    return NextResponse.next({ request: { headers } })
+    return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, 'admin') } })
   }
 
   // ── API routes ──────────────────────────────────────────
@@ -90,15 +121,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
   }
 
-  const headers = new Headers(request.headers)
-  headers.set('x-user-role', auth.role)
-  headers.set('x-auth-valid', 'true')
-  return NextResponse.next({ request: { headers } })
+  return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
 }
 
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/waiter/:path*',
     '/api/admin/:path*',
     '/api/cms/:path*',
     '/api/waiters/:path*',
