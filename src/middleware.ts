@@ -3,51 +3,70 @@ import type { NextRequest } from 'next/server'
 
 const ADMIN_COOKIE = 'boma_admin_auth'
 const KITCHEN_COOKIE = 'boma_kitchen_auth'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''
-const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD || ''
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD
 
-async function hashCookieValue(role: string, secret: string): Promise<string> {
-  const data = new TextEncoder().encode(`${role}:${secret}`)
+async function hashSHA256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input)
   const buf = await crypto.subtle.digest('SHA-256', data)
-  const arr = Array.from(new Uint8Array(buf))
-  return arr.map(b => b.toString(16).padStart(2, '0')).join('')
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+type AuthResult = { role: 'admin' | 'kitchen' } | null
+
+async function verifyRole(request: NextRequest): Promise<AuthResult> {
+  if (!ADMIN_PASSWORD || !KITCHEN_PASSWORD) return null
+
+  const adminCookie = request.cookies.get(ADMIN_COOKIE)
+  const kitchenCookie = request.cookies.get(KITCHEN_COOKIE)
+
+  if (adminCookie?.value) {
+    const expected = await hashSHA256(`admin:${ADMIN_PASSWORD}`)
+    if (adminCookie.value === expected) return { role: 'admin' }
+  }
+
+  if (kitchenCookie?.value) {
+    const expected = await hashSHA256(`kitchen:${KITCHEN_PASSWORD}`)
+    if (kitchenCookie.value === expected) return { role: 'kitchen' }
+  }
+
+  return null
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Non-admin routes pass through
   if (!pathname.startsWith('/admin/')) return NextResponse.next()
 
-  // Allow login page (unauthenticated)
+  // Login page is always public
   if (pathname === '/admin/login') return NextResponse.next()
 
-  // Protect /admin/kitchen with kitchen (or admin) cookie
-  if (pathname === '/admin/kitchen') {
-    const kitchenExpected = await hashCookieValue('kitchen', KITCHEN_PASSWORD)
-    const adminExpected = await hashCookieValue('admin', ADMIN_PASSWORD)
-    const kitchenCookie = request.cookies.get(KITCHEN_COOKIE)
-    const adminCookie = request.cookies.get(ADMIN_COOKIE)
-
-    const isKitchen = kitchenCookie?.value === kitchenExpected
-    const isAdmin = adminCookie?.value === adminExpected
-
-    if (!isKitchen && !isAdmin) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
-    }
-    return NextResponse.next()
-  }
-
-  // All other /admin/* routes require admin cookie
-  const expected = await hashCookieValue('admin', ADMIN_PASSWORD)
-  const adminCookie = request.cookies.get(ADMIN_COOKIE)
-
-  if (!adminCookie?.value || adminCookie.value !== expected) {
+  // Verify authentication — fail closed on any missing/invalid input
+  const auth = await verifyRole(request)
+  if (!auth) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  return NextResponse.next()
+  // /admin/kitchen: admin or kitchen allowed
+  if (pathname === '/admin/kitchen') {
+    const headers = new Headers(request.headers)
+    headers.set('x-user-role', auth.role)
+    headers.set('x-auth-valid', 'true')
+    return NextResponse.next({ request: { headers } })
+  }
+
+  // All other /admin/* routes: admin ONLY
+  if (auth.role !== 'admin') {
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  const headers = new Headers(request.headers)
+  headers.set('x-user-role', 'admin')
+  headers.set('x-auth-valid', 'true')
+  return NextResponse.next({ request: { headers } })
 }
 
 export const config = {
