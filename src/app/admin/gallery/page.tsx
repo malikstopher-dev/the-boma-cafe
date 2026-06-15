@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService, generateId } from '@/lib/client-cms';
 
 const categories = ['Events', 'Food', 'Venue', 'People', 'Promotions'];
@@ -179,6 +180,7 @@ export default function AdminGallery() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
+          <BackButton />
           <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Gallery</h1>
           <p style={{ color: 'var(--text-light)' }}>{gallery.length} items</p>
         </div>

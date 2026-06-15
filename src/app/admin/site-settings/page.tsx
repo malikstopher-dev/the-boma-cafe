@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService } from '@/lib/client-cms';
 
 export default function AdminSiteSettings() {
@@ -236,6 +237,7 @@ export default function AdminSiteSettings() {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
+        <BackButton />
         <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Site Settings</h1>
         <p style={{ color: 'var(--text-light)' }}>Manage all website content from here</p>
       </div>

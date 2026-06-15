@@ -1,5 +1,6 @@
 'use client'
 
+import BackButton from '@/components/admin/BackButton'
 import { useState, useEffect, useMemo } from 'react'
 
 interface Booking {
@@ -97,6 +98,7 @@ export default function AdminBookings() {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
+        <BackButton />
         <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Table Bookings</h1>
         <p style={{ color: 'var(--text-light)' }}>{filtered.length} booking{filtered.length !== 1 ? 's' : ''}</p>
       </div>

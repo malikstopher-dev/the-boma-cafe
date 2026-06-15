@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService } from '@/lib/client-cms';
 
 interface BarDrink {
@@ -174,6 +175,7 @@ export default function AdminBarMenu() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
+          <BackButton />
           <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Bar Menu</h1>
           <p style={{ color: 'var(--text-light)' }}>{drinks.length} drinks</p>
         </div>

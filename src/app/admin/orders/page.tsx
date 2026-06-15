@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { SupabaseOrder, TableInfo, parseOrderItems, getOrderTableNumber, PaymentMethod } from '@/types/pos'
+import BackButton from '@/components/admin/BackButton'
 import { STATUS_LABELS, STATUS_COLORS, requiresPaymentConfirmation } from '@/lib/order-state-machine'
 
 const POLL_INTERVAL = 4000
@@ -493,6 +494,8 @@ export default function OrdersPOS() {
   const selectedForCheckout = selectedOrder && (selectedOrder.status === 'ready' || selectedOrder.status === 'completed')
 
   return (
+    <>
+    <BackButton />
     <div style={{
       height: '100vh',
       display: 'flex',
@@ -605,5 +608,6 @@ export default function OrdersPOS() {
       )}
     </div>
     </div>
+    </>
   )
 }

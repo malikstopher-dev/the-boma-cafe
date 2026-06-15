@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import BackButton from '@/components/admin/BackButton'
 import Link from 'next/link'
 
 interface TopProduct {
@@ -78,6 +79,7 @@ export default function AnalyticsPage() {
       fontFamily: "'Inter', -apple-system, sans-serif",
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <BackButton />
         <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>📊 Analytics</h1>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <label style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>Period:</label>

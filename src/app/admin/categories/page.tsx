@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminCategories() {
@@ -78,6 +79,7 @@ export default function AdminCategories() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
+          <BackButton />
           <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Menu Categories</h1>
           <p style={{ color: 'var(--text-light)' }}>{categories.length} categories</p>
         </div>

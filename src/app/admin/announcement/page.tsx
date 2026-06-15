@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService } from '@/lib/client-cms';
 
 export default function AdminAnnouncement() {
@@ -54,6 +55,7 @@ export default function AdminAnnouncement() {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
+        <BackButton />
         <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Announcement Bar</h1>
         <p style={{ color: 'var(--text-light)' }}>Configure the announcement that appears at the top of the website</p>
       </div>

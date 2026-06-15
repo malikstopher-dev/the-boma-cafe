@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService } from '@/lib/client-cms';
 
 function ScrollToTop() {
@@ -78,6 +79,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <div style={{ marginBottom: '2.5rem' }}>
+        <BackButton />
         <h1 style={{ fontSize: '2.25rem', fontWeight: 700, color: 'var(--dark-brown)', marginBottom: '0.5rem' }}>Dashboard</h1>
         <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>Manage your restaurant content and settings</p>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService } from '@/lib/client-cms';
 
 export default function AdminPopup() {
@@ -103,6 +104,7 @@ export default function AdminPopup() {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
+        <BackButton />
         <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Weekend Breakfast Popup</h1>
         <p style={{ color: 'var(--text-light)' }}>Configure the weekend breakfast buffet popup</p>
       </div>

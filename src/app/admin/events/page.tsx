@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminEvents() {
@@ -183,6 +184,7 @@ export default function AdminEvents() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
+          <BackButton />
           <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Events</h1>
           <p style={{ color: 'var(--text-light)' }}>{events.length} total events</p>
         </div>

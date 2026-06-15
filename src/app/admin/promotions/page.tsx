@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BackButton from '@/components/admin/BackButton';
 import { cmsService, generateId } from '@/lib/client-cms';
 
 export default function AdminPromotions() {
@@ -78,6 +79,7 @@ export default function AdminPromotions() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
+          <BackButton />
           <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Promotions</h1>
           <p style={{ color: 'var(--text-light)' }}>{promotions.length} promotions</p>
         </div>

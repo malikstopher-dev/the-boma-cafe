@@ -1,5 +1,6 @@
 'use client'
 
+import BackButton from '@/components/admin/BackButton'
 import { useState, useEffect } from 'react'
 
 interface ContactMessage {
@@ -65,6 +66,7 @@ export default function AdminInquiries() {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
+        <BackButton />
         <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Contact Inquiries</h1>
         <p style={{ color: 'var(--text-light)' }}>{messages.length} message{messages.length !== 1 ? 's' : ''}</p>
       </div>
