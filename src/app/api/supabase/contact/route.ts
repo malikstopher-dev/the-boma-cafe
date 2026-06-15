@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAnyRole } from '@/lib/auth'
+import { requireAdminOrKitchen } from '@/lib/auth/requireRole'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-export async function GET() {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+export async function GET(request: NextRequest) {
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   const { data, error } = await getAdminClient()
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)
@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)

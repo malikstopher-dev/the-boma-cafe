@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAnyRole } from '@/lib/auth'
+import { requireAdmin } from '@/lib/auth/requireRole'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  const authError = await requireAnyRole(['admin'])
+export async function GET(request: NextRequest) {
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   const { data, error } = await getAdminClient()
@@ -18,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAnyRole(['admin'])
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const authError = await requireAnyRole(['admin'])
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAnyRole(['admin'])
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)

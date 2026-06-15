@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPromotions, savePromotion, deletePromotion } from '@/lib/cms-supabase';
-import { requireAnyRole } from '@/lib/auth';
+import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
 
-export async function GET() {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+export async function GET(request: NextRequest) {
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   try {
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   try {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   try {
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   try {
@@ -61,7 +61,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   try {

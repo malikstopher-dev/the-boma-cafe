@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { requireAnyRole } from '@/lib/auth';
+import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
   try {
     const formData = await request.formData();

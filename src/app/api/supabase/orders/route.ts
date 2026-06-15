@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAnyRole, getSession } from '@/lib/auth'
+import { requireAdminOrKitchen, requireAdmin, getRequestRole } from '@/lib/auth/requireRole'
 import { canTransition, requiresPaymentConfirmation, paymentRequiredForTransition } from '@/lib/order-state-machine'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validateOrder, sanitizeOrderInput } from '@/lib/pos/validateOrder'
@@ -15,7 +15,7 @@ const ALLOWED_PATCH_FIELDS = new Set([
 ])
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)
@@ -106,10 +106,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const authError = await requireAnyRole(['admin', 'kitchen'])
+  const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
-  const session = await getSession()
+  const role = await getRequestRole(request)
 
   try {
     const { searchParams } = new URL(request.url)
@@ -121,7 +121,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Kitchen CANNOT cancel orders, mark paid, or change customer details
-    if (session?.role === 'kitchen') {
+    if (role === 'kitchen') {
       if (body.status === 'cancelled') {
         return NextResponse.json({ error: 'Kitchen cannot cancel orders' }, { status: 403 })
       }
@@ -217,8 +217,7 @@ export async function PATCH(request: NextRequest) {
     // ── Handle payment confirmation action ──────────────────────
     if (updateBody.payment_status === 'paid') {
       updateBody.payment_confirmed_at = new Date().toISOString()
-      const session = await getSession()
-      updateBody.payment_confirmed_by = session?.role ?? 'admin'
+      updateBody.payment_confirmed_by = role ?? 'admin'
     }
 
     let query = getAdminClient().from('orders').update(updateBody).eq('id', id)
@@ -257,7 +256,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAnyRole(['admin'])
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)

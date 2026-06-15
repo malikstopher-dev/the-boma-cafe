@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAnyRole } from '@/lib/auth'
+import { requireAdmin } from '@/lib/auth/requireRole'
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAnyRole(['admin'])
+  const authError = await requireAdmin(request)
   if (authError) return authError
 
   try {
