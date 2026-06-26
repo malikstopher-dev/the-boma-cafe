@@ -357,7 +357,7 @@ export default function MenuPage() {
             preload="metadata"
             poster="/hero/hero-menu.jpg"
           >
-            <source src="/hero/menu-bg.mp4" type="video/mp4" />
+            <source src="/videos/boma-menu-hero.mp4" type="video/mp4" />
           </video>
           <div className={styles.heroBgOverlay} />
           <div className={styles.heroContent}>
