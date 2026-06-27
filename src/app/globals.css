@@ -2195,6 +2195,23 @@ body.modalOpen .mobile-cta-button {
   }
 }
 
+/* ===== HERO VIDEO STYLES ===== */
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+}
+
+.hero-video-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #1a0f0a;
+}
+
 /* ===== BUTTON MICRO-INTERACTIONS ===== */
 .btn {
   will-change: transform;

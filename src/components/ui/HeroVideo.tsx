@@ -10,6 +10,8 @@ interface HeroVideoProps {
   poster?: string;
   badge?: string;
   minHeight?: string;
+  lazy?: boolean;
+  children?: React.ReactNode;
 }
 
 export default function HeroVideo({
@@ -20,16 +22,38 @@ export default function HeroVideo({
   poster = '/videos/hero-poster.jpg',
   badge,
   minHeight = '100vh',
+  lazy = true,
+  children,
 }: HeroVideoProps) {
   const [videoReady, setVideoReady] = useState(false);
+  const [visible, setVisible] = useState(!lazy);
+  const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!lazy) {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, [lazy]);
 
   const handleCanPlay = useCallback(() => {
     setVideoReady(true);
   }, []);
 
   return (
-    <section style={{
+    <section ref={sectionRef} style={{
       position: 'relative',
       minHeight,
       minHeight: minHeight === '100vh' ? '100svh' : minHeight,
@@ -40,27 +64,30 @@ export default function HeroVideo({
       backgroundColor: '#1a0f0a',
     }}>
       <div style={{ position: 'absolute', inset: 0 }}>
-        <video
-          ref={videoRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: videoReady ? 1 : 0,
-            transition: 'opacity 0.8s ease',
-          }}
-          autoPlay
-          muted
-          loop={loop}
-          playsInline
-          preload="metadata"
-          poster={poster}
-          onCanPlay={handleCanPlay}
-        >
-          <source src={videoSrc} type="video/mp4" />
-        </video>
+        {visible && (
+          <video
+            ref={videoRef}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: videoReady ? 1 : 0,
+              transition: 'opacity 0.8s ease',
+            }}
+            autoPlay
+            muted
+            loop={loop}
+            playsInline
+            preload="metadata"
+            poster={poster}
+            onCanPlay={handleCanPlay}
+            onLoadedData={handleCanPlay}
+          >
+            <source src={videoSrc} type="video/mp4" />
+          </video>
+        )}
         <div style={{
           position: 'absolute',
           inset: 0,
@@ -113,10 +140,15 @@ export default function HeroVideo({
               fontStyle: 'italic',
               color: 'var(--cream)',
               maxWidth: '650px',
-              margin: '0 auto',
+              margin: '0 auto 1.5rem',
             }}>
               {subtitle}
             </p>
+          )}
+          {children && (
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {children}
+            </div>
           )}
         </div>
       )}

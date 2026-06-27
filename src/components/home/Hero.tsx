@@ -63,7 +63,7 @@ export default function Hero({ title, subtitle }: HeroProps) {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           poster="/videos/hero-poster.jpg"
           onCanPlay={handleVideoCanPlay}
         >

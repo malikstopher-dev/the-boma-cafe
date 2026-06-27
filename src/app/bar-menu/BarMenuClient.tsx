@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import HeroVideo from '@/components/ui/HeroVideo';
 import { cmsService } from '@/lib/client-cms';
 import { getBarImage } from '@/lib/barImages';
 
@@ -401,98 +402,35 @@ export default function BarMenuClient() {
     <>
       <Header />
       <main style={{ paddingTop: 0 }}>
-        {/* Hero Section */}
-        <div style={{ paddingTop: 80 }}>
-        <section style={{
-          padding: '4rem 5%',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          minHeight: '400px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="/videos/hero-poster.jpg"
+        <HeroVideo
+          videoSrc="/videos/boma-bar-menu-hero.mp4"
+          badge="Bar Menu"
+          title="Cocktails & Drinks"
+          subtitle="Signature cocktails, classic favourites, and refreshing drinks at The Boma Café"
+          loop
+          minHeight="480px"
+          lazy={false}
+        >
+          <a href="/contact" className="btn btn-primary" style={{ padding: '0.875rem 2rem' }}>
+            Contact Us
+          </a>
+          <a
+            href="https://wa.me/27729961190"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
+              padding: '0.875rem 2rem',
+              background: '#25D366',
+              color: 'white',
+              borderRadius: '8px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              display: 'inline-block'
             }}
           >
-            <source src="/videos/boma-bar-menu-hero.mp4" type="video/mp4" />
-          </video>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            pointerEvents: 'none'
-          }} />
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{
-              display: 'inline-block',
-              background: 'var(--warm)',
-              padding: '0.4rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--dark-brown)',
-              marginBottom: '1rem',
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
-            }}>
-              Bar Menu
-            </div>
-            <h1 style={{
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              color: 'var(--white)',
-              marginBottom: '1rem',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700
-            }}>
-              Cocktails & Drinks
-            </h1>
-            <p style={{
-              fontSize: 'clamp(1rem, 2vw, 1.15rem)',
-              color: 'var(--cream)',
-              maxWidth: '550px',
-              margin: '0 auto 2rem',
-              lineHeight: 1.7
-            }}>
-              Signature cocktails, classic favourites, and refreshing drinks at The Boma Café
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="/contact" className="btn btn-primary" style={{ padding: '0.875rem 2rem' }}>
-                Contact Us
-              </a>
-              <a 
-                href="https://wa.me/27729961190" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{
-                  padding: '0.875rem 2rem',
-                  background: '#25D366',
-                  color: 'white',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  display: 'inline-block'
-                }}
-              >
-                WhatsApp Booking
-              </a>
-            </div>
-          </div>
-        </section>
-        </div>
+            WhatsApp Booking
+          </a>
+        </HeroVideo>
 
         {/* Drinks Sections */}
         <section style={{ background: 'var(--cream)', padding: 'var(--space-3xl) 5%' }}>

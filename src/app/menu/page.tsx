@@ -19,6 +19,7 @@ import {
   formatTotalPrice
 } from '@/lib/menuPricing';
 import UpsellModal from '@/components/ui/UpsellModal';
+import HeroVideo from '@/components/ui/HeroVideo';
 
 import { getMenuItemImage } from '@/lib/menuImage';
 import styles from './Menu.module.css';
@@ -347,24 +348,14 @@ export default function MenuPage() {
     <>
       <Header />
       <main className={styles.main}>
-        <div className={styles.heroBgContainer}>
-          <video
-            className={styles.heroBgVideo}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="/hero/hero-menu.jpg"
-          >
-            <source src="/videos/boma-menu-hero.mp4" type="video/mp4" />
-          </video>
-          <div className={styles.heroBgOverlay} />
-          <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>Our Menu</h1>
-            <p className={styles.heroSubtitle}>Fresh, hearty dishes made with love</p>
-          </div>
-        </div>
+        <HeroVideo
+          videoSrc="/videos/boma-menu-hero.mp4"
+          title="Our Menu"
+          subtitle="Fresh, hearty dishes made with love"
+          loop
+          minHeight="480px"
+          lazy={false}
+        />
 
         <section className={styles.searchSection}>
           <div className={styles.searchRow}>
