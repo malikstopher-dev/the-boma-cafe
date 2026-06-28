@@ -55,7 +55,6 @@ export default function HeroVideo({
   return (
     <section ref={sectionRef} style={{
       position: 'relative',
-      minHeight,
       minHeight: minHeight === '100vh' ? '100svh' : minHeight,
       overflow: 'hidden',
       display: 'flex',
