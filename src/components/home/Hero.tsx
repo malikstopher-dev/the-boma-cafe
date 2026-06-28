@@ -37,6 +37,7 @@ export default function Hero({ title, subtitle }: HeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -45,6 +46,14 @@ export default function Hero({ title, subtitle }: HeroProps) {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mql.matches);
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
   }, []);
 
   const handleVideoCanPlay = useCallback(() => {
@@ -66,8 +75,9 @@ export default function Hero({ title, subtitle }: HeroProps) {
           preload="metadata"
           poster="/videos/hero-poster.jpg"
           onCanPlay={handleVideoCanPlay}
+          style={isMobile ? { objectFit: 'cover', objectPosition: 'center center', width: '100%', height: '100%' } : undefined}
         >
-          <source src="/videos/boma-hero.mp4" type="video/mp4" />
+          <source src={isMobile ? '/videos/mobile-hero.mp4' : '/videos/boma-hero.mp4'} type="video/mp4" />
         </video>
         <div className={styles.videoOverlay} />
       </div>

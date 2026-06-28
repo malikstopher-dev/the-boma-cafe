@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface HeroVideoProps {
   videoSrc: string;
+  mobileSrc?: string;
   title?: string;
   subtitle?: string;
   loop?: boolean;
@@ -17,6 +18,7 @@ interface HeroVideoProps {
 
 export default function HeroVideo({
   videoSrc,
+  mobileSrc,
   title,
   subtitle,
   loop = true,
@@ -84,6 +86,7 @@ export default function HeroVideo({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              objectPosition: isMobile ? 'center center' : undefined,
               opacity: videoReady ? 1 : 0,
               transition: 'opacity 0.8s ease',
             }}
@@ -96,7 +99,7 @@ export default function HeroVideo({
             onCanPlay={handleCanPlay}
             onLoadedData={handleCanPlay}
           >
-            <source src={videoSrc} type="video/mp4" />
+            <source src={isMobile && mobileSrc ? mobileSrc : videoSrc} type="video/mp4" />
           </video>
         )}
         <div style={{

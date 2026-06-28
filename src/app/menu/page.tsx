@@ -350,6 +350,7 @@ export default function MenuPage() {
       <main className={styles.main}>
         <HeroVideo
           videoSrc="/videos/boma-menu-hero.mp4"
+          mobileSrc="/videos/mobile-hero.mp4"
           title="Our Menu"
           subtitle="Fresh, hearty dishes made with love"
           loop

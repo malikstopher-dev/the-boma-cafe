@@ -173,6 +173,7 @@ export default function BarMenuClient() {
       <main className={styles.main}>
         <HeroVideo
           videoSrc="/videos/boma-bar-menu-hero.mp4"
+          mobileSrc="/videos/mobile-hero.mp4"
           badge="Bar Menu"
           title="Cocktails & Drinks"
           subtitle="Handcrafted cocktails, premium spirits, and fine wines"
