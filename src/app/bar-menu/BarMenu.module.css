@@ -358,3 +358,39 @@
     font-size: 0.6rem;
   }
 }
+
+.mobileCtaSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem 5%;
+  background: #1a0f0a;
+}
+
+.mobileCtaBtn,
+.mobileWhatsAppBtn {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: opacity 0.2s;
+}
+
+.mobileCtaBtn {
+  background: var(--white);
+  color: var(--dark-brown);
+}
+
+.mobileWhatsAppBtn {
+  background: #25D366;
+  color: white;
+}
+
+.mobileCtaBtn:active,
+.mobileWhatsAppBtn:active {
+  opacity: 0.8;
+}

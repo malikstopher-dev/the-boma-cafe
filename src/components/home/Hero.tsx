@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import OptimizedHero from '@/components/ui/OptimizedHero';
 import styles from './Hero.module.css';
 
 interface HeroProps {
@@ -29,16 +30,14 @@ const slides = [
     title: 'An Experience',
     tagline: 'Where nature meets the warmth of home',
     cta: 'View Events',
-    ctaLink: '/events'
+    ctaLink: '/experience'
   }
 ];
 
 export default function Hero({ title, subtitle }: HeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -56,53 +55,35 @@ export default function Hero({ title, subtitle }: HeroProps) {
     return () => mql.removeEventListener('change', handleChange);
   }, []);
 
-  const handleVideoCanPlay = useCallback(() => {
-    setVideoReady(true);
-  }, []);
-
   const slide = slides[currentSlide];
 
   return (
     <section className={styles.hero} style={isMobile ? { marginTop: '-60px' } : undefined}>
-      <div className={styles.media}>
-        <video
-          ref={videoRef}
-          key={String(isMobile)}
-          className={`${styles.video} ${videoReady ? styles.videoReady : ''}`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/videos/hero-poster.jpg"
-          onCanPlay={handleVideoCanPlay}
-          style={isMobile ? { objectFit: 'cover', objectPosition: 'center center', width: '100%', height: '100%' } : undefined}
-        >
-          <source src={isMobile ? '/videos/mobile-hero.mp4' : '/videos/boma-hero.mp4'} type="video/mp4" />
-        </video>
-        <div className={styles.videoOverlay} />
-      </div>
+      <OptimizedHero
+        poster="/videos/hero-poster.jpg"
+        videoSrc={isMobile ? '/videos/mobile-hero.mp4' : '/videos/boma-hero.mp4'}
+      >
+        <div className={`${styles.content} ${isLoaded ? styles.visible : ''}`}>
+          <p className={styles.subtitle}>{slide.subtitle}</p>
 
-      <div className={`${styles.content} ${isLoaded ? styles.visible : ''}`}>
-        <p className={styles.subtitle}>{slide.subtitle}</p>
+          {title ? (
+            <h1 className={styles.title}>{title}</h1>
+          ) : (
+            <h1 className={styles.title}>{slide.title}</h1>
+          )}
 
-        {title ? (
-          <h1 className={styles.title}>{title}</h1>
-        ) : (
-          <h1 className={styles.title}>{slide.title}</h1>
-        )}
+          <p className={styles.tagline}>{slide.tagline}</p>
 
-        <p className={styles.tagline}>{slide.tagline}</p>
-
-        <div className={styles.cta}>
-          <Link href={slide.ctaLink} className="btn btn-primary">
-            {slide.cta}
-          </Link>
-          <Link href="/menu" className="btn btn-ghost">
-            View Menu
-          </Link>
+          <div className={styles.cta}>
+            <Link href={slide.ctaLink} className="btn btn-primary">
+              {slide.cta}
+            </Link>
+            <Link href="/menu" className="btn btn-ghost">
+              View Menu
+            </Link>
+          </div>
         </div>
-      </div>
+      </OptimizedHero>
 
       <div className={styles.nav}>
         {slides.map((_, index) => (
@@ -128,7 +109,7 @@ export default function Hero({ title, subtitle }: HeroProps) {
         <Link href="/about" className={styles.mobileCta}>Discover</Link>
         <Link href="/menu" className={styles.mobileCta}>View Menu</Link>
         <Link href="/contact" className={styles.mobileCtaPrimary}>Book a Table</Link>
-        <Link href="/events" className={styles.mobileCta}>View Events</Link>
+        <Link href="/experience" className={styles.mobileCta}>View Events</Link>
       </div>
     </section>
   );

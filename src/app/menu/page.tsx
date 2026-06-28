@@ -19,7 +19,7 @@ import {
   formatTotalPrice
 } from '@/lib/menuPricing';
 import UpsellModal from '@/components/ui/UpsellModal';
-import HeroVideo from '@/components/ui/HeroVideo';
+import OptimizedHero from '@/components/ui/OptimizedHero';
 
 import { getMenuItemImage } from '@/lib/menuImage';
 import styles from './Menu.module.css';
@@ -348,15 +348,31 @@ export default function MenuPage() {
     <>
       <Header />
       <main className={styles.main}>
-        <HeroVideo
+        <OptimizedHero
+          poster="/hero/hero-menu.jpg"
           videoSrc="/videos/boma-menu-hero.mp4"
-          mobileSrc="/videos/menu-mobile.mp4"
-          title="Our Menu"
-          subtitle="Fresh, hearty dishes made with love"
-          loop
-          lazy={false}
           className={styles.heroFull}
-        />
+        >
+          <h1 style={{
+            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+            marginBottom: '1rem',
+            lineHeight: 1.2,
+            color: 'var(--white)',
+            textShadow: '0 3px 20px rgba(0, 0, 0, 0.4)',
+          }}>
+            Our Menu
+          </h1>
+          <p style={{
+            fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+            fontStyle: 'italic',
+            color: 'var(--cream)',
+            maxWidth: '650px',
+            margin: '0 auto',
+            lineHeight: 1.6,
+          }}>
+            Fresh, hearty dishes made with love
+          </p>
+        </OptimizedHero>
 
         <section className={styles.searchSection}>
           <div className={styles.searchRow}>

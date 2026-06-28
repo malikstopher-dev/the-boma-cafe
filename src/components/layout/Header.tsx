@@ -29,7 +29,6 @@ export default function Header() {
     { href: '/about', label: 'About' },
     { href: '/menu', label: 'Menu' },
     { href: '/experience', label: 'Experience' },
-    { href: '/events', label: 'Events & Venue Hire' },
     { href: '/gallery', label: 'Gallery' },
     { href: '/contact', label: 'Contact' },
   ];

@@ -35,7 +35,7 @@ const promotionsData = [
     validFrom: '2026-04-01',
     validUntil: '2026-12-31',
     ctaText: 'View Events',
-    ctaLink: '/events',
+    ctaLink: '/experience',
     imageIndex: 1
   },
   {
@@ -55,7 +55,7 @@ const promotionsData = [
     validFrom: '2026-04-01',
     validUntil: '2026-12-31',
     ctaText: 'Learn More',
-    ctaLink: '/events',
+    ctaLink: '/experience',
     imageIndex: 3
   },
   {

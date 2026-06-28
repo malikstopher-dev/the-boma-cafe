@@ -57,7 +57,7 @@ export default function UpcomingEventsSection() {
             </Link>
           </FadeInSection>
           <FadeInSection delay={300} className={styles.eventCardWrapper}>
-            <Link href="/events" className={styles.eventCard}>
+            <Link href="/experience" className={styles.eventCard}>
               <div className={styles.eventCardImage}>
                 <Image src="/gallery/events/friday-braai.jpg" alt="Friday Braai Evening" fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} loading="lazy" />
                 <div className={styles.eventOverlay} />
@@ -101,7 +101,7 @@ export default function UpcomingEventsSection() {
         </div>
 
         <FadeInSection className={styles.sectionCta}>
-          <Link href="/events" className="btn btn-primary">View All Events</Link>
+          <Link href="/experience" className="btn btn-primary">View All Events</Link>
         </FadeInSection>
       </div>
     </section>

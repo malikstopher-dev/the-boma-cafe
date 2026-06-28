@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import HeroVideo from '@/components/ui/HeroVideo';
+import OptimizedHero from '@/components/ui/OptimizedHero';
 import { barCategories, BarItem } from './barMenuData';
 import styles from './BarMenu.module.css';
 
@@ -129,6 +129,15 @@ function CategorySection({ category }: { category: { id: string; name: string; i
 export default function BarMenuClient() {
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   const filteredCategories = useMemo(() => {
     const activeGroup = filterGroups.find(
@@ -171,36 +180,84 @@ export default function BarMenuClient() {
     <>
       <Header />
       <main className={styles.main}>
-        <HeroVideo
+        <OptimizedHero
+          poster="/videos/hero-poster.jpg"
           videoSrc="/videos/boma-bar-menu-hero.mp4"
-          mobileSrc="/videos/bar-menu-mobile.mp4"
-          badge="Bar Menu"
-          title="Cocktails & Drinks"
-          subtitle="Handcrafted cocktails, premium spirits, and fine wines"
-          loop
-          lazy={false}
           className={styles.heroFull}
         >
-          <a href="/contact" className="btn btn-primary" style={{ padding: '0.875rem 2rem' }}>
-            Book a Table
-          </a>
-          <a
-            href="https://wa.me/27729961190"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '0.875rem 2rem',
-              background: '#25D366',
-              color: 'white',
-              borderRadius: '8px',
-              fontWeight: 600,
-              textDecoration: 'none',
-              display: 'inline-block',
-            }}
-          >
-            WhatsApp Booking
-          </a>
-        </HeroVideo>
+          <div style={{
+            display: 'inline-block',
+            background: 'var(--warm)',
+            padding: '0.4rem 1.25rem',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: 'var(--dark-brown)',
+            marginBottom: '1rem',
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+          }}>
+            Bar Menu
+          </div>
+          <h1 style={{
+            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+            marginBottom: '1rem',
+            lineHeight: 1.2,
+            color: 'var(--white)',
+            textShadow: '0 3px 20px rgba(0, 0, 0, 0.4)',
+          }}>
+            Cocktails & Drinks
+          </h1>
+          <p style={{
+            fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+            fontStyle: 'italic',
+            color: 'var(--cream)',
+            maxWidth: '650px',
+            margin: '0 auto',
+            lineHeight: 1.6,
+          }}>
+            Handcrafted cocktails, premium spirits, and fine wines
+          </p>
+          {!isMobile && (
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+              <a href="/contact" className="btn btn-primary" style={{ padding: '0.875rem 2rem' }}>
+                Book a Table
+              </a>
+              <a
+                href="https://wa.me/27729961190"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '0.875rem 2rem',
+                  background: '#25D366',
+                  color: 'white',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                }}
+              >
+                WhatsApp Booking
+              </a>
+            </div>
+          )}
+        </OptimizedHero>
+
+        {isMobile && (
+          <div className={styles.mobileCtaSection}>
+            <a href="/contact" className={styles.mobileCtaBtn}>
+              Book a Table
+            </a>
+            <a
+              href="https://wa.me/27729961190"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.mobileWhatsAppBtn}
+            >
+              WhatsApp Booking
+            </a>
+          </div>
+        )}
 
         <div className={styles.searchSection} role="search" aria-label="Search bar menu">
           <div className={styles.searchInner}>

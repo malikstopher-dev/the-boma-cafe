@@ -1,12 +1,5 @@
 .hero {
   position: relative;
-  height: 100vh;
-  height: 100svh;
-  min-height: 700px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .media {
@@ -187,11 +180,6 @@
 }
 
 @media (max-width: 768px) {
-  .hero {
-    height: 100svh;
-    min-height: unset;
-  }
-
   .cta {
     display: none;
   }

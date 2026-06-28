@@ -295,39 +295,182 @@ export default function ExperiencePage() {
           </div>
         </section>
 
-        {/* 5. VENUE + EVENTS */}
-        <section style={{ background: 'var(--beige)', padding: 'var(--space-3xl) 5%', textAlign: 'center' }}>
+        {/* 5. EVENTS SECTION */}
+        <section style={{ background: 'var(--beige)', padding: 'var(--space-3xl) 5%' }}>
           <div className="container">
-            <h2 style={{ 
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', 
-              color: 'var(--dark-brown)', 
-              marginBottom: '1.5rem',
-              fontFamily: 'var(--font-display)'
-            }}>
-              Celebrate at The Boma
-            </h2>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              gap: '1.5rem', 
-              flexWrap: 'wrap',
-              marginBottom: '2rem'
-            }}>
-              {['Birthdays', 'Private Events', 'Music Nights', 'Venue Hire'].map((item, idx) => (
-                <div key={idx} style={{
-                  background: 'var(--cream)',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.9rem',
-                  color: 'var(--dark-brown)'
-                }}>
-                  {item}
-                </div>
-              ))}
+            <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                padding: '0.4rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--white)',
+                marginBottom: '0.75rem',
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}>
+                What&apos;s Happening
+              </div>
+              <h2 style={{
+                fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                color: 'var(--dark-brown)',
+                fontFamily: 'var(--font-display)',
+                marginBottom: '0.5rem'
+              }}>
+                Events & Promotions
+              </h2>
+              <p style={{ color: 'var(--text-light)', fontSize: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+                Live music, special deals, and good times every week
+              </p>
             </div>
-            <Link href="/events" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
-              View Events & Venue Hire
-            </Link>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1.5rem',
+              maxWidth: '1100px',
+              margin: '0 auto'
+            }}>
+              {/* Upcoming Events Card */}
+              <div style={{
+                background: 'var(--white)',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(26, 15, 10, 0.08)',
+                border: '1px solid rgba(232, 213, 196, 0.3)'
+              }}>
+                <div style={{ padding: '1.5rem' }}>
+                  <div style={{
+                    display: 'inline-block',
+                    background: 'var(--warm)',
+                    padding: '0.3rem 0.9rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: 'var(--dark-brown)',
+                    marginBottom: '1rem',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase'
+                  }}>
+                    Upcoming Events
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {[
+                      { title: "Mother's Day Sip & Paint", date: 'May 10', desc: 'Old school classics with Dawnay live.', time: 'All Day' },
+                      { title: 'Friday Groove Garden', date: 'May 1', desc: 'DJ Shadzo, Prezo & DJ K Smackz live.', time: '17:00' },
+                      { title: 'Saturday Groove Garden', date: 'May 2', desc: 'Featuring DJ Mauzah.', time: '12:00' },
+                      { title: 'Jazzy Sunday', date: 'Weekly', desc: 'Relax with smooth jazz and premium vibes.', time: 'All Day' },
+                    ].map((event, idx) => (
+                      <div key={idx} style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        padding: '0.85rem',
+                        background: idx % 2 === 0 ? 'var(--cream)' : 'transparent',
+                        borderRadius: '12px',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{
+                          minWidth: '60px',
+                          textAlign: 'center',
+                          background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '10px',
+                          color: 'var(--white)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          lineHeight: 1.3
+                        }}>
+                          {event.date}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--dark-brown)' }}>{event.title}</strong>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{event.desc}</span>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', whiteSpace: 'nowrap' }}>{event.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Promotions / Happenings Card */}
+              <div style={{
+                background: 'var(--white)',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(26, 15, 10, 0.08)',
+                border: '1px solid rgba(232, 213, 196, 0.3)'
+              }}>
+                <div style={{ padding: '1.5rem' }}>
+                  <div style={{
+                    display: 'inline-block',
+                    background: 'linear-gradient(135deg, var(--gold), var(--gold-light))',
+                    padding: '0.3rem 0.9rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: 'var(--dark-brown)',
+                    marginBottom: '1rem',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase'
+                  }}>
+                    Promotions & Happenings
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {[
+                      { title: 'Weekend Breakfast Buffet', desc: 'R89 Adults · R45 Kids · Sat & Sun 9:30-12:30', icon: '🥞' },
+                      { title: 'Live Music Nights', desc: 'Friday & Saturday evenings — resident DJs and live entertainment', icon: '🎵' },
+                      { title: 'Friday Braai Evening', desc: 'Sizzling braai with premium meats every Friday from 6pm', icon: '🔥' },
+                      { title: 'Happy Hour Deals', desc: '2-for-1 cocktails and great bar snacks', icon: '🍸' },
+                    ].map((promo, idx) => (
+                      <div key={idx} style={{
+                        display: 'flex',
+                        gap: '0.75rem',
+                        padding: '0.85rem',
+                        background: idx % 2 === 0 ? 'var(--cream)' : 'transparent',
+                        borderRadius: '12px',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.2rem',
+                          flexShrink: 0
+                        }}>
+                          {promo.icon}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--dark-brown)' }}>{promo.title}</strong>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', lineHeight: 1.4, display: 'block' }}>{promo.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                Birthdays · Private Events · Music Nights · Venue Hire
+              </p>
+              <a
+                href="https://wa.me/27715921190?text=Hi%20The%20Boma%20Caf%C3%A9%2C%20I%20would%20like%20to%20enquire%20about%20events%20or%20venue%20hire."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ padding: '1rem 2.5rem' }}
+              >
+                Enquire About Events
+              </a>
+            </div>
           </div>
         </section>
 

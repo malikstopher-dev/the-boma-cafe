@@ -15,7 +15,7 @@ export default function PremiumHero({
   badge, 
   title, 
   subtitle,
-  minHeight = '380px'
+  minHeight = '100vh'
 }: PremiumHeroProps) {
   const heroStyles: CSSProperties = {
     position: 'relative',

@@ -21,12 +21,14 @@ export default function AboutPage() {
     <>
       <Header />
       <main className={styles.aboutPage}>
-        <PremiumHero
-          imageUrl={aboutSettings?.heroImage || "/hero/hero-about.jpg"}
-          badge="Our Story"
-          title={aboutSettings?.heroTitle || 'About The Boma Café'}
-          subtitle={aboutSettings?.heroSubtitle || 'Discover the passion and tradition behind The Boma Café'}
-        />
+        <div style={{ marginTop: '-80px' }}>
+          <PremiumHero
+            imageUrl={aboutSettings?.heroImage || "/hero/hero-about.jpg"}
+            badge="Our Story"
+            title={aboutSettings?.heroTitle || 'About The Boma Café'}
+            subtitle={aboutSettings?.heroSubtitle || 'Discover the passion and tradition behind The Boma Café'}
+          />
+        </div>
 
         {/* Section 1: Welcome / Our Story */}
         <section className={styles.section}>
