@@ -63,7 +63,7 @@ export default function Hero({ title, subtitle }: HeroProps) {
   const slide = slides[currentSlide];
 
   return (
-    <section className={styles.hero}>
+    <section className={styles.hero} style={isMobile ? { marginTop: '-60px' } : undefined}>
       <div className={styles.media}>
         <video
           ref={videoRef}
