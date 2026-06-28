@@ -188,18 +188,12 @@
 
 @media (max-width: 768px) {
   .hero {
-    min-height: 600px;
+    height: 100svh;
+    min-height: unset;
   }
 
   .cta {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .cta a {
-    width: 100%;
-    max-width: 280px;
+    display: none;
   }
 
   .scroll {
@@ -208,6 +202,72 @@
 
   .nav {
     bottom: 80px;
+  }
+}
+
+/* Mobile CTAs */
+.mobileCtas {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileCtas {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    gap: 0;
+    padding: 0;
+  }
+
+  .mobileCta,
+  .mobileCtaPrimary {
+    flex: 1;
+    padding: 0.75rem 0.25rem;
+    text-align: center;
+    font-size: clamp(0.6rem, 2vw, 0.75rem);
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+
+  .mobileCta {
+    background: rgba(26, 15, 10, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: rgba(255, 255, 255, 0.85);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .mobileCtaPrimary {
+    background: rgba(212, 163, 115, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #1a0f0a;
+  }
+
+  .mobileCta:active,
+  .mobileCtaPrimary:active {
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 0 4%;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .tagline {
+    font-size: 1rem;
   }
 }
 

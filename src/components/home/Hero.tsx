@@ -112,6 +112,13 @@ export default function Hero({ title, subtitle }: HeroProps) {
           </svg>
         </div>
       </div>
+
+      <div className={styles.mobileCtas}>
+        <Link href="/about" className={styles.mobileCta}>Discover</Link>
+        <Link href="/menu" className={styles.mobileCta}>View Menu</Link>
+        <Link href="/contact" className={styles.mobileCtaPrimary}>Book a Table</Link>
+        <Link href="/events" className={styles.mobileCta}>View Events</Link>
+      </div>
     </section>
   );
 }
