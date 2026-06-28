@@ -12,6 +12,7 @@ interface HeroVideoProps {
   minHeight?: string;
   lazy?: boolean;
   children?: React.ReactNode;
+  className?: string;
 }
 
 export default function HeroVideo({
@@ -24,6 +25,7 @@ export default function HeroVideo({
   minHeight = '100vh',
   lazy = true,
   children,
+  className,
 }: HeroVideoProps) {
   const [videoReady, setVideoReady] = useState(false);
   const [visible, setVisible] = useState(!lazy);
@@ -53,7 +55,7 @@ export default function HeroVideo({
   }, []);
 
   return (
-    <section ref={sectionRef} style={{
+    <section ref={sectionRef} className={className} style={{
       position: 'relative',
       minHeight: minHeight === '100vh' ? '100svh' : minHeight,
       overflow: 'hidden',

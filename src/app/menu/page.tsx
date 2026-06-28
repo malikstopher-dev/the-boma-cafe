@@ -355,6 +355,7 @@ export default function MenuPage() {
           loop
           minHeight="480px"
           lazy={false}
+          className={styles.heroFull}
         />
 
         <section className={styles.searchSection}>

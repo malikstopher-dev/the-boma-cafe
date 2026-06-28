@@ -5,6 +5,10 @@
   background: var(--cream);
 }
 
+.heroFull {
+  margin-top: -80px;
+}
+
 /* Hero Background Container */
 .heroBgContainer {
   position: relative;
@@ -931,6 +935,10 @@
 }
 
 @media (max-width: 768px) {
+  .heroFull {
+    margin-top: -70px;
+  }
+
   .main {
     padding-top: 70px;
     width: 100%;

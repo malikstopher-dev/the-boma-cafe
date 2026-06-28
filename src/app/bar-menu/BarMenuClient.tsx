@@ -12,18 +12,22 @@ const ALL_FILTER = 'All';
 
 const filterGroups = [
   ALL_FILTER,
+  { label: 'Cocktails', categories: ['Signature Cocktails', 'Classic Cocktails', 'Cocktails'] },
+  { label: 'Non-Alcoholic', categories: ['Non-Alcoholic Cocktails', 'Freezos', 'Milkshakes'] },
   { label: 'Whisky', categories: ['Whisky'] },
   { label: 'Brandy', categories: ['Brandy'] },
   { label: 'Vodka', categories: ['Vodka'] },
   { label: 'Gin', categories: ['Gin'] },
   { label: 'Rum', categories: ['Rum'] },
-  { label: 'Shots', categories: ['Shots', 'Shooters'] },
+  { label: 'Shots', categories: ['Shots', 'Shooters', 'Spirits & Liqueurs'] },
   { label: 'Beers', categories: ['Beers'] },
   { label: 'Ciders', categories: ['Ciders & RTDs'] },
   { label: 'Cordials', categories: ['Roses Cordials'] },
   { label: 'White Wine', categories: ['Sauvignon Blanc', 'Chardonnay', 'Chenin Blanc', 'Rosé'] },
   { label: 'Cap Classique', categories: ['Cap Classique'] },
   { label: 'Red Wine', categories: ['Merlot', 'Pinotage', 'Cabernet Sauvignon', 'Shiraz', 'Red Blends', 'Other Varietals'] },
+  { label: 'Soft Drinks', categories: ['Soft Drinks & Mixers'] },
+  { label: 'Special Board', categories: ['Special Board'] },
 ];
 
 const containerVariants = {
@@ -39,7 +43,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
+    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
   },
 };
 
@@ -48,7 +52,7 @@ const sectionVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
   },
 };
 
@@ -72,10 +76,16 @@ const MenuItem = memo(function MenuItem({ item }: { item: BarItem }) {
       <span className={styles.itemName}>{item.name}</span>
       <span className={styles.itemDot} aria-hidden="true" />
       <span className={styles.prices}>
-        {item.bottle && <PriceTag label="Bottle" value={item.bottle} />}
-        {item.glass && <PriceTag label="Glass" value={item.glass} />}
-        {item.single && <PriceTag label="Single" value={item.single} />}
-        {item.shot && <PriceTag label="Shot" value={item.shot} />}
+        {item.price ? (
+          <span className={styles.priceValue}>{item.price}</span>
+        ) : (
+          <>
+            {item.bottle && <PriceTag label="Bottle" value={item.bottle} />}
+            {item.glass && <PriceTag label="Glass" value={item.glass} />}
+            {item.single && <PriceTag label="Single" value={item.single} />}
+            {item.shot && <PriceTag label="Shot" value={item.shot} />}
+          </>
+        )}
       </span>
     </motion.div>
   );

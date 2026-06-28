@@ -5,6 +5,7 @@ export interface BarItem {
   single?: number;
   glass?: number;
   shot?: number;
+  price?: string;
 }
 
 export interface BarCategory {
@@ -14,6 +15,82 @@ export interface BarCategory {
 }
 
 export const barCategories: BarCategory[] = [
+  {
+    id: 'signature-cocktails',
+    name: 'Signature Cocktails',
+    items: [
+      { id: 'sc1', name: 'Boma Sunset', single: 125 },
+      { id: 'sc2', name: 'Safari Sour', single: 115 },
+      { id: 'sc3', name: 'Thatched Toddy', single: 135 },
+      { id: 'sc4', name: 'Garden Spritz', single: 110 },
+    ],
+  },
+  {
+    id: 'classic-cocktails',
+    name: 'Classic Cocktails',
+    items: [
+      { id: 'cc1', name: 'Classic Mojito', single: 85 },
+      { id: 'cc2', name: 'Classic Martini', single: 79 },
+      { id: 'cc3', name: 'Margarita', single: 90 },
+      { id: 'cc4', name: 'Whiskey Sour', single: 95 },
+      { id: 'cc5', name: 'Old Fashioned', single: 100 },
+    ],
+  },
+  {
+    id: 'cocktails',
+    name: 'Cocktails',
+    items: [
+      { id: 'ck1', name: 'Caipirinha', single: 94 },
+      { id: 'ck2', name: 'Mojito', single: 91 },
+      { id: 'ck3', name: 'Pina Colada', single: 96 },
+      { id: 'ck4', name: 'Strawberry Daiquiri', single: 88 },
+      { id: 'ck5', name: 'Cosmopolitan', single: 74 },
+      { id: 'ck6', name: 'Long Island Iced Tea', single: 110 },
+      { id: 'ck7', name: 'Sex on the Beach', single: 66 },
+      { id: 'ck8', name: 'Rosemary Yuzu G&T', single: 110 },
+      { id: 'ck9', name: 'Cherry Blossom Ginger G&T', single: 104 },
+      { id: 'ck10', name: 'Yuzu Whiskey Sours', single: 103 },
+      { id: 'ck11', name: 'Brown Butter Old Fashioned', single: 77 },
+    ],
+  },
+  {
+    id: 'non-alcoholic',
+    name: 'Non-Alcoholic Cocktails',
+    items: [
+      { id: 'na1', name: 'Berry Citrus Twist', single: 55 },
+      { id: 'na2', name: 'Cosmo Crush', single: 55 },
+      { id: 'na3', name: 'No-Jito', single: 56 },
+      { id: 'na4', name: 'Virgin Pina Colada', single: 58 },
+      { id: 'na5', name: 'Virgin Strawberry Daiquiri', single: 65 },
+      { id: 'na6', name: 'Cherry Blossom Martini', single: 52 },
+      { id: 'na7', name: 'Virgin Mojito', single: 55 },
+      { id: 'na8', name: 'Shirley Temple', single: 50 },
+    ],
+  },
+  {
+    id: 'freezos',
+    name: 'Freezos',
+    items: [
+      { id: 'fz1', name: 'Coffee Freezo', single: 45 },
+      { id: 'fz2', name: 'Spiced Chai Freezo', single: 45 },
+      { id: 'fz3', name: 'Decadent Chocolate Freezo', single: 40 },
+      { id: 'fz4', name: 'White Chocolate Freezo', single: 45 },
+      { id: 'fz5', name: 'Mango Freezo', single: 65 },
+      { id: 'fz6', name: 'Chocolate Freezo', single: 65 },
+    ],
+  },
+  {
+    id: 'milkshakes',
+    name: 'Milkshakes',
+    items: [
+      { id: 'ms1', name: 'Chocolate Shake', single: 46 },
+      { id: 'ms2', name: 'Strawberry Shake', single: 51 },
+      { id: 'ms3', name: 'Bubblegum Shake', single: 46 },
+      { id: 'ms4', name: 'Oreo Shake', single: 46 },
+      { id: 'ms5', name: 'Strawberry Milkshake', single: 75 },
+      { id: 'ms6', name: 'Chocolate Milkshake', single: 75 },
+    ],
+  },
   {
     id: 'whisky',
     name: 'Whisky',
@@ -116,6 +193,17 @@ export const barCategories: BarCategory[] = [
     ],
   },
   {
+    id: 'spirits-liqueurs',
+    name: 'Spirits & Liqueurs',
+    items: [
+      { id: 'sl1', name: 'Bacardi Carta Blanca', price: 'Ask server' },
+      { id: 'sl2', name: 'Aperol', price: 'Ask server' },
+      { id: 'sl3', name: 'Malibu', price: 'Ask server' },
+      { id: 'sl4', name: 'Monate', price: 'Ask server' },
+      { id: 'sl5', name: 'Tipo Tinto Spiced', price: 'Ask server' },
+    ],
+  },
+  {
     id: 'beers',
     name: 'Beers',
     items: [
@@ -204,6 +292,7 @@ export const barCategories: BarCategory[] = [
       { id: 'cc6', name: 'Steenberg Chardonnay Brut', single: 300 },
       { id: 'cc7', name: 'Steenberg Pinot Noir Brut', single: 300 },
       { id: 'cc8', name: 'Annabelle Cuvée Rosé', single: 180 },
+      { id: 'cc9', name: "Moët & Chandon", price: 'Ask server' },
     ],
   },
   {
@@ -264,6 +353,34 @@ export const barCategories: BarCategory[] = [
       { id: 'ov1', name: 'The Wolf Trap', single: 220 },
       { id: 'ov2', name: 'Pepperwind Syrah', single: 600 },
       { id: 'ov3', name: 'Van Loveren Blanc de Blanc', single: 200 },
+      { id: 'ov4', name: 'Nederburg', price: 'Ask server' },
+      { id: 'ov5', name: 'The Beach House', price: 'Ask server' },
+    ],
+  },
+  {
+    id: 'special-board',
+    name: 'Special Board',
+    items: [
+      { id: 'sbr1', name: 'Richelieu + Mixer', price: 'Ask server' },
+      { id: 'sbr2', name: 'Klipdrift + Mixer', price: 'Ask server' },
+      { id: 'sbr3', name: 'KWV 3yr + Mixer', price: 'Ask server' },
+      { id: 'sbr4', name: 'Captain Morgan + Mixer', price: 'Ask server' },
+    ],
+  },
+  {
+    id: 'soft-drinks',
+    name: 'Soft Drinks & Mixers',
+    items: [
+      { id: 'sd1', name: 'Sprite', price: 'Ask server' },
+      { id: 'sd2', name: 'Sparletta Creme Soda', price: 'Ask server' },
+      { id: 'sd3', name: 'Schweppes / Mixers', price: 'Ask server' },
+      { id: 'sd4', name: 'Valpré Water', price: 'Ask server' },
+      { id: 'sd5', name: 'Still Water', price: 'Ask server' },
+      { id: 'sd6', name: 'Liqui Fruit', price: 'Ask server' },
+      { id: 'sd7', name: 'Tropika', price: 'Ask server' },
+      { id: 'sd8', name: 'Appletiser', price: 'Ask server' },
+      { id: 'sd9', name: 'Red Bull / Energy Drinks', price: 'Ask server' },
+      { id: 'sd10', name: 'Juice Dispensers / House Juice', price: 'Ask server' },
     ],
   },
 ];
