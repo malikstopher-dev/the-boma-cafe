@@ -183,6 +183,7 @@ export default function BarMenuClient() {
         <OptimizedHero
           poster="/videos/hero-poster.jpg"
           videoSrc="/videos/boma-bar-menu-hero.mp4"
+          mobileVideoSrc="/videos/bar-menu-mobile.mp4"
           className={styles.heroFull}
         >
           <div style={{

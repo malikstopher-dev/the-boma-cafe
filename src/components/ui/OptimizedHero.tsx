@@ -5,7 +5,8 @@ import Image from 'next/image';
 
 interface OptimizedHeroProps {
   poster: string;
-  videoSrc?: string;
+  videoSrc: string;
+  mobileVideoSrc?: string;
   className?: string;
   children?: ReactNode;
 }
@@ -13,6 +14,7 @@ interface OptimizedHeroProps {
 export default function OptimizedHero({
   poster,
   videoSrc,
+  mobileVideoSrc,
   className,
   children,
 }: OptimizedHeroProps) {
@@ -30,15 +32,15 @@ export default function OptimizedHero({
   }, []);
 
   useEffect(() => {
-    if (isMobile) return;
     const idleCallback = window.requestIdleCallback || ((cb: () => void) => setTimeout(cb, 200));
     const id = idleCallback(() => setLoadVideo(true));
     return () => {
       if (typeof id === 'number') clearTimeout(id);
     };
-  }, [isMobile]);
+  }, []);
 
-  const showVideo = loadVideo && !isMobile && videoSrc;
+  const activeVideoSrc = isMobile && mobileVideoSrc ? mobileVideoSrc : videoSrc;
+  const showVideo = loadVideo && activeVideoSrc;
 
   return (
     <div className={className} style={{
@@ -84,7 +86,7 @@ export default function OptimizedHero({
             onCanPlay={() => setVideoReady(true)}
             onLoadedData={() => setVideoReady(true)}
           >
-            <source src={videoSrc} type="video/mp4" />
+            <source src={activeVideoSrc} type="video/mp4" />
           </video>
         </div>
       )}

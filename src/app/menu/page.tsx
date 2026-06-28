@@ -349,8 +349,9 @@ export default function MenuPage() {
       <Header />
       <main className={styles.main}>
         <OptimizedHero
-          poster="/hero/hero-menu.jpg"
+          poster="/videos/hero-poster.jpg"
           videoSrc="/videos/boma-menu-hero.mp4"
+          mobileVideoSrc="/videos/menu-mobile.mp4"
           className={styles.heroFull}
         >
           <h1 style={{

@@ -61,7 +61,8 @@ export default function Hero({ title, subtitle }: HeroProps) {
     <section className={styles.hero} style={isMobile ? { marginTop: '-60px' } : undefined}>
       <OptimizedHero
         poster="/videos/hero-poster.jpg"
-        videoSrc={isMobile ? '/videos/mobile-hero.mp4' : '/videos/boma-hero.mp4'}
+        videoSrc="/videos/boma-hero.mp4"
+        mobileVideoSrc="/videos/mobile-hero.mp4"
       >
         <div className={`${styles.content} ${isLoaded ? styles.visible : ''}`}>
           <p className={styles.subtitle}>{slide.subtitle}</p>
