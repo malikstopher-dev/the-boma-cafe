@@ -123,6 +123,7 @@ export default function ExperiencePage() {
             poster="/hero/hero-experience.png"
             videoSrc="/videos/experience-hero.mp4"
             mobileVideoSrc="/videos/experience-mobile.mp4"
+            contentAlign="bottom"
           >
             <div style={{
               display: 'inline-block',

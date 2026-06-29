@@ -9,6 +9,7 @@ interface OptimizedHeroProps {
   mobileVideoSrc?: string;
   className?: string;
   children?: ReactNode;
+  contentAlign?: 'center' | 'bottom';
 }
 
 export default function OptimizedHero({
@@ -17,6 +18,7 @@ export default function OptimizedHero({
   mobileVideoSrc,
   className,
   children,
+  contentAlign = 'center',
 }: OptimizedHeroProps) {
   const [loadVideo, setLoadVideo] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
@@ -49,7 +51,7 @@ export default function OptimizedHero({
       minHeight: '600px',
       overflow: 'hidden',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: contentAlign === 'bottom' ? 'flex-end' : 'center',
       justifyContent: 'center',
       backgroundColor: '#1a0f0a',
     }}>
@@ -94,7 +96,9 @@ export default function OptimizedHero({
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(180deg, transparent 0%, rgba(26,15,10,0.02) 50%, rgba(26,15,10,0.1) 100%)',
+        background: contentAlign === 'bottom'
+          ? 'linear-gradient(180deg, transparent 0%, rgba(26,15,10,0.02) 40%, rgba(26,15,10,0.45) 100%)'
+          : 'linear-gradient(180deg, transparent 0%, rgba(26,15,10,0.02) 50%, rgba(26,15,10,0.1) 100%)',
       }} />
 
       <div style={{
@@ -103,7 +107,7 @@ export default function OptimizedHero({
         textAlign: 'center',
         color: 'var(--white)',
         maxWidth: '900px',
-        padding: '0 5%',
+        padding: contentAlign === 'bottom' ? '0 5% 4rem' : '0 5%',
       }}>
         {children}
       </div>
