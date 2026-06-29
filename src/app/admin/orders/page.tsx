@@ -401,6 +401,12 @@ export default function OrdersPOS() {
   const [selectedTable, setSelectedTable] = useState<number | null>(null)
   const [connectionError, setConnectionError] = useState(false)
   const [authExpired, setAuthExpired] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 4000)
+  }, [])
   const prevCountRef = useRef(0)
 
   const loadOrders = useCallback(async () => {
@@ -499,16 +505,17 @@ export default function OrdersPOS() {
       const res = await fetch(`/api/supabase/orders?id=${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_status: 'paid' }),
+        body: JSON.stringify({ payment_status: 'paid', status: 'confirmed' }),
       })
       if (res.ok) {
+        showToast('Payment confirmed — order sent to kitchen', 'success')
         loadOrders()
       } else {
         const data = await res.json()
-        console.error('Confirm payment failed:', data.error)
+        showToast(data.error || 'Confirm payment failed', 'error')
       }
     } catch (e) {
-      console.error('Failed to confirm payment:', e)
+      showToast('Failed to confirm payment', 'error')
     }
   }
 
@@ -520,13 +527,14 @@ export default function OrdersPOS() {
         body: JSON.stringify({ payment_status: 'paid', status: 'confirmed' }),
       })
       if (res.ok) {
+        showToast('Order accepted without payment — sent to kitchen', 'success')
         loadOrders()
       } else {
         const data = await res.json()
-        console.error('Accept without payment failed:', data.error)
+        showToast(data.error || 'Accept failed', 'error')
       }
     } catch (e) {
-      console.error('Failed to accept without payment:', e)
+      showToast('Failed to accept order', 'error')
     }
   }
 
@@ -547,6 +555,18 @@ export default function OrdersPOS() {
       {(connectionError || authExpired) && (
         <div style={{ padding: '0.5rem 1.5rem', background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.85rem', textAlign: 'center', flexShrink: 0 }}>
           {authExpired ? '⚠ Session expired — please log out and log in again' : '⚠ Connection lost — showing cached data. Retrying...'}
+        </div>
+      )}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+          padding: '0.75rem 1.5rem', borderRadius: '12px',
+          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          color: '#000', fontSize: '0.9rem', fontWeight: 600,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          {toast.message}
         </div>
       )}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
