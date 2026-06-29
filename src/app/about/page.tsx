@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FadeInSection from '@/components/ui/FadeInSection';
-import PremiumHero from '@/components/ui/PremiumHero';
+import OptimizedHero from '@/components/ui/OptimizedHero';
 import { cmsService } from '@/lib/client-cms';
 import styles from './page.module.css';
 
@@ -77,15 +77,14 @@ export default function AboutPage() {
       <Header />
       <main className={styles.aboutPage}>
         <div style={isMobile ? { marginTop: '-60px' } : undefined}>
-          <PremiumHero
-            imageUrl={aboutSettings?.heroImage || "/hero/hero-about.jpg"}
-            title={heroTitle}
-            subtitle={heroSubtitle}
+          <OptimizedHero
+            poster={aboutSettings?.heroImage || "/hero/hero-about.jpg"}
+            videoSrc="/videos/about-hero.mp4"
+            mobileVideoSrc="/videos/about-mobile.mp4"
             contentAlign={isMobile ? 'center' : 'bottom'}
-            badge={!isMobile ? heroBadge : undefined}
           >
             {!isMobile && heroContent}
-          </PremiumHero>
+          </OptimizedHero>
         </div>
 
         {isMobile && (

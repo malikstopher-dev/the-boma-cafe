@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { dataService } from '@/lib/data';
 import { siteSettingsService } from '@/lib/siteSettings';
 import { businessInfo, getReservationLink, getEventEnquiryLink } from '@/data/businessInfo';
-import PremiumHero from '@/components/ui/PremiumHero';
+import OptimizedHero from '@/components/ui/OptimizedHero';
 
 export default function ContactPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -95,12 +95,11 @@ export default function ContactPage() {
       <Header />
       <main style={{ paddingTop: 0 }}>
         <div style={isMobile ? { marginTop: '-60px' } : undefined}>
-          <PremiumHero
-            imageUrl="/hero/hero-contact.jpg"
-            title="Get in Touch"
-            subtitle="We'd love to hear from you. Send us a message or visit us"
+          <OptimizedHero
+            poster="/hero/hero-contact.jpg"
+            videoSrc="/videos/contact-hero.mp4"
+            mobileVideoSrc="/videos/contact-mobile.mp4"
             contentAlign={isMobile ? 'center' : 'bottom'}
-            badge={!isMobile ? 'Contact Us' : undefined}
           >
             {!isMobile && (
               <>
@@ -143,7 +142,7 @@ export default function ContactPage() {
                 </p>
               </>
             )}
-          </PremiumHero>
+          </OptimizedHero>
         </div>
 
         {isMobile && (
