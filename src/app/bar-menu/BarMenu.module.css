@@ -547,14 +547,14 @@
 .mobileHeroContent {
   background: #1a0f0a;
   text-align: center;
-  padding: 2rem 5%;
+  padding: 2rem 5% 3rem;
 }
 
 .mobileCtaSection {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1.5rem 5%;
+  padding: 0 5% 2.5rem;
   background: #1a0f0a;
 }
 

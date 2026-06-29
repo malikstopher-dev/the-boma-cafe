@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 interface PremiumHeroProps {
   imageUrl: string;
@@ -8,20 +8,24 @@ interface PremiumHeroProps {
   title: string;
   subtitle?: string;
   minHeight?: string;
+  children?: ReactNode;
+  contentAlign?: 'center' | 'bottom';
 }
 
-export default function PremiumHero({ 
-  imageUrl, 
-  badge, 
-  title, 
+export default function PremiumHero({
+  imageUrl,
+  badge,
+  title,
   subtitle,
-  minHeight = '100vh'
+  minHeight = '100svh',
+  children,
+  contentAlign = 'center',
 }: PremiumHeroProps) {
   const heroStyles: CSSProperties = {
     position: 'relative',
     minHeight,
     display: 'flex',
-    alignItems: 'center',
+    alignItems: contentAlign === 'bottom' ? 'flex-end' : 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     backgroundColor: 'var(--dark-brown)',
@@ -39,14 +43,16 @@ export default function PremiumHero({
   const overlay: CSSProperties = {
     position: 'absolute',
     inset: 0,
-    background: 'linear-gradient(180deg, rgba(26, 15, 10, 0.4) 0%, rgba(26, 15, 10, 0.2) 40%, rgba(26, 15, 10, 0.55) 100%)',
+    background: contentAlign === 'bottom'
+      ? 'linear-gradient(180deg, transparent 0%, rgba(26, 15, 10, 0.02) 40%, rgba(26, 15, 10, 0.45) 100%)'
+      : 'linear-gradient(180deg, rgba(26, 15, 10, 0.4) 0%, rgba(26, 15, 10, 0.2) 40%, rgba(26, 15, 10, 0.55) 100%)',
   };
 
   const contentStyles: CSSProperties = {
     position: 'relative',
     zIndex: 1,
     textAlign: 'center',
-    padding: 'var(--space-3xl) 5%',
+    padding: contentAlign === 'bottom' ? '0 5% 4rem' : 'var(--space-3xl) 5%',
     maxWidth: '850px',
   };
 
@@ -66,46 +72,50 @@ export default function PremiumHero({
         <div style={backgroundStyles} />
         <div style={overlay} />
         <div style={contentStyles}>
-          {badge && (
-            <div style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
-              padding: '0.4rem 1.25rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--dark-brown)',
-              marginBottom: '1rem',
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
-            }}>
-              {badge}
-            </div>
-          )}
-          <h1 style={{
-            fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
-            color: 'var(--white)',
-            marginBottom: subtitle ? '1rem' : '0.5rem',
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            lineHeight: 1.15,
-            textShadow: '0 3px 25px rgba(0,0,0,0.35)',
-            letterSpacing: '-0.5px',
-          }}>
-            {title}
-          </h1>
-          {subtitle && (
-            <p style={{
-              color: 'rgba(253, 248, 243, 0.92)',
-              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-              maxWidth: '650px',
-              margin: '0 auto',
-              lineHeight: 1.65,
-              textShadow: '0 2px 15px rgba(0,0,0,0.25)',
-            }}>
-              {subtitle}
-            </p>
+          {children || (
+            <>
+              {badge && (
+                <div style={{
+                  display: 'inline-block',
+                  background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+                  padding: '0.4rem 1.25rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--dark-brown)',
+                  marginBottom: '1rem',
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                }}>
+                  {badge}
+                </div>
+              )}
+              <h1 style={{
+                fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
+                color: 'var(--white)',
+                marginBottom: subtitle ? '1rem' : '0.5rem',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                lineHeight: 1.15,
+                textShadow: '0 3px 25px rgba(0,0,0,0.35)',
+                letterSpacing: '-0.5px',
+              }}>
+                {title}
+              </h1>
+              {subtitle && (
+                <p style={{
+                  color: 'rgba(253, 248, 243, 0.92)',
+                  fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                  maxWidth: '650px',
+                  margin: '0 auto',
+                  lineHeight: 1.65,
+                  textShadow: '0 2px 15px rgba(0,0,0,0.25)',
+                }}>
+                  {subtitle}
+                </p>
+              )}
+            </>
           )}
         </div>
       </section>

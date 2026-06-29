@@ -209,6 +209,7 @@ export default function MenuPage() {
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState<MenuItem | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+  const [isMobile, setIsMobile] = useState(false);
   const { addItem, items: cartItems, total, openCart, isCartOpen } = useCart();
 
   useEffect(() => {
@@ -221,6 +222,14 @@ export default function MenuPage() {
       document.body.classList.remove('modalOpen');
     };
   }, [showUpsellModal]);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   // Use default data directly - skip CMS for now since field mapping issues exist
   // The admin can still edit via admin panel which saves to CMS
@@ -348,32 +357,65 @@ export default function MenuPage() {
     <>
       <Header />
       <main className={styles.main}>
-        <OptimizedHero
-          poster="/videos/hero-poster.jpg"
-          videoSrc="/videos/boma-menu-hero.mp4"
-          mobileVideoSrc="/videos/menu-mobile.mp4"
-          className={styles.heroFull}
-        >
-          <h1 style={{
-            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-            marginBottom: '1rem',
-            lineHeight: 1.2,
-            color: 'var(--white)',
-            textShadow: '0 3px 20px rgba(0, 0, 0, 0.4)',
+        <div style={isMobile ? { marginTop: '-60px' } : undefined}>
+          <OptimizedHero
+            poster="/videos/hero-poster.jpg"
+            videoSrc="/videos/boma-menu-hero.mp4"
+            mobileVideoSrc="/videos/menu-mobile.mp4"
+            className={styles.heroFull}
+          >
+            {!isMobile && (
+              <>
+                <h1 style={{
+                  fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+                  marginBottom: '1rem',
+                  lineHeight: 1.2,
+                  color: 'var(--white)',
+                  textShadow: '0 3px 20px rgba(0, 0, 0, 0.4)',
+                }}>
+                  Our Menu
+                </h1>
+                <p style={{
+                  fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+                  fontStyle: 'italic',
+                  color: 'var(--cream)',
+                  maxWidth: '650px',
+                  margin: '0 auto',
+                  lineHeight: 1.6,
+                }}>
+                  Fresh, hearty dishes made with love
+                </p>
+              </>
+            )}
+          </OptimizedHero>
+        </div>
+
+        {isMobile && (
+          <div style={{
+            background: '#1a0f0a',
+            padding: '2rem 5% 3rem',
+            textAlign: 'center',
           }}>
-            Our Menu
-          </h1>
-          <p style={{
-            fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
-            fontStyle: 'italic',
-            color: 'var(--cream)',
-            maxWidth: '650px',
-            margin: '0 auto',
-            lineHeight: 1.6,
-          }}>
-            Fresh, hearty dishes made with love
-          </p>
-        </OptimizedHero>
+            <h1 style={{
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              marginBottom: '1rem',
+              lineHeight: 1.2,
+              color: 'var(--white)',
+            }}>
+              Our Menu
+            </h1>
+            <p style={{
+              fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+              fontStyle: 'italic',
+              color: 'var(--cream)',
+              maxWidth: '650px',
+              margin: '0 auto',
+              lineHeight: 1.6,
+            }}>
+              Fresh, hearty dishes made with love
+            </p>
+          </div>
+        )}
 
         <section className={styles.searchSection}>
           <div className={styles.searchRow}>

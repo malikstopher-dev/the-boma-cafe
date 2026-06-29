@@ -277,6 +277,7 @@ export default function BarMenuClient() {
     <>
       <Header />
       <main className={styles.main}>
+        <div style={isMobile ? { marginTop: '-60px' } : undefined}>
         <OptimizedHero
           poster="/videos/hero-poster.jpg"
           videoSrc="/videos/boma-bar-menu-hero.mp4"
@@ -342,6 +343,7 @@ export default function BarMenuClient() {
             </>
           )}
         </OptimizedHero>
+        </div>
 
         {isMobile && (
           <>

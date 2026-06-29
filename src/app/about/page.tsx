@@ -10,6 +10,15 @@ import styles from './page.module.css';
 
 export default function AboutPage() {
   const [allSettings, setAllSettings] = useState<any>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     cmsService.getAllSettings().then(setAllSettings).catch(console.error);
@@ -17,18 +26,77 @@ export default function AboutPage() {
 
   const aboutSettings = allSettings?.about;
 
+  const heroBadge = 'Our Story';
+  const heroTitle = aboutSettings?.heroTitle || 'About The Boma Café';
+  const heroSubtitle = aboutSettings?.heroSubtitle || 'Discover the passion and tradition behind The Boma Café';
+
+  const heroContent = (
+    <>
+      <div style={{
+        display: 'inline-block',
+        background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+        padding: '0.4rem 1.25rem',
+        borderRadius: 'var(--radius-full)',
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        color: 'var(--dark-brown)',
+        marginBottom: '1rem',
+        letterSpacing: '1.5px',
+        textTransform: 'uppercase',
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+      }}>
+        {heroBadge}
+      </div>
+      <h1 style={{
+        fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
+        color: 'var(--white)',
+        marginBottom: '1rem',
+        fontFamily: 'var(--font-display)',
+        fontWeight: 700,
+        lineHeight: 1.15,
+        textShadow: '0 3px 25px rgba(0,0,0,0.35)',
+        letterSpacing: '-0.5px',
+      }}>
+        {heroTitle}
+      </h1>
+      <p style={{
+        color: 'rgba(253, 248, 243, 0.92)',
+        fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+        maxWidth: '650px',
+        margin: '0 auto',
+        lineHeight: 1.65,
+        textShadow: '0 2px 15px rgba(0,0,0,0.25)',
+      }}>
+        {heroSubtitle}
+      </p>
+    </>
+  );
+
   return (
     <>
       <Header />
       <main className={styles.aboutPage}>
-        <div style={{ marginTop: '-80px' }}>
+        <div style={isMobile ? { marginTop: '-60px' } : undefined}>
           <PremiumHero
             imageUrl={aboutSettings?.heroImage || "/hero/hero-about.jpg"}
-            badge="Our Story"
-            title={aboutSettings?.heroTitle || 'About The Boma Café'}
-            subtitle={aboutSettings?.heroSubtitle || 'Discover the passion and tradition behind The Boma Café'}
-          />
+            title={heroTitle}
+            subtitle={heroSubtitle}
+            contentAlign={isMobile ? 'center' : 'bottom'}
+            badge={!isMobile ? heroBadge : undefined}
+          >
+            {!isMobile && heroContent}
+          </PremiumHero>
         </div>
+
+        {isMobile && (
+          <div style={{
+            background: '#1a0f0a',
+            padding: '2rem 5% 3rem',
+            textAlign: 'center',
+          }}>
+            {heroContent}
+          </div>
+        )}
 
         {/* Section 1: Welcome / Our Story */}
         <section className={styles.section}>

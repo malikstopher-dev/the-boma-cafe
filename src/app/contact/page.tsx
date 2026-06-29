@@ -17,6 +17,15 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     setSettings(dataService.getSettings());
@@ -85,14 +94,101 @@ export default function ContactPage() {
     <>
       <Header />
       <main style={{ paddingTop: 0 }}>
-        <div style={{ marginTop: '-80px' }}>
+        <div style={isMobile ? { marginTop: '-60px' } : undefined}>
           <PremiumHero
-          imageUrl="/hero/hero-contact.jpg"
-          badge="Contact Us"
-          title="Get in Touch"
-          subtitle="We'd love to hear from you. Send us a message or visit us"
-          />
+            imageUrl="/hero/hero-contact.jpg"
+            title="Get in Touch"
+            subtitle="We'd love to hear from you. Send us a message or visit us"
+            contentAlign={isMobile ? 'center' : 'bottom'}
+            badge={!isMobile ? 'Contact Us' : undefined}
+          >
+            {!isMobile && (
+              <>
+                <div style={{
+                  display: 'inline-block',
+                  background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+                  padding: '0.4rem 1.25rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--dark-brown)',
+                  marginBottom: '1rem',
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                }}>
+                  Contact Us
+                </div>
+                <h1 style={{
+                  fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
+                  color: 'var(--white)',
+                  marginBottom: '1rem',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  textShadow: '0 3px 25px rgba(0,0,0,0.35)',
+                  letterSpacing: '-0.5px',
+                }}>
+                  Get in Touch
+                </h1>
+                <p style={{
+                  color: 'rgba(253, 248, 243, 0.92)',
+                  fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                  maxWidth: '650px',
+                  margin: '0 auto',
+                  lineHeight: 1.65,
+                  textShadow: '0 2px 15px rgba(0,0,0,0.25)',
+                }}>
+                  We'd love to hear from you. Send us a message or visit us
+                </p>
+              </>
+            )}
+          </PremiumHero>
         </div>
+
+        {isMobile && (
+          <div style={{
+            background: '#1a0f0a',
+            padding: '2rem 5% 3rem',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+              padding: '0.4rem 1.25rem',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--dark-brown)',
+              marginBottom: '1rem',
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+            }}>
+              Contact Us
+            </div>
+            <h1 style={{
+              fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
+              color: 'var(--white)',
+              marginBottom: '1rem',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              lineHeight: 1.15,
+              letterSpacing: '-0.5px',
+            }}>
+              Get in Touch
+            </h1>
+            <p style={{
+              color: 'rgba(253, 248, 243, 0.92)',
+              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+              maxWidth: '650px',
+              margin: '0 auto',
+              lineHeight: 1.65,
+            }}>
+              We'd love to hear from you. Send us a message or visit us
+            </p>
+          </div>
+        )}
 
         <div>
         {/* Contact Info & Form - Premium Design */}
