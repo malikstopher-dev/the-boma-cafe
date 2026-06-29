@@ -11,7 +11,7 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'customer_name', 'phone', 'order_type', 'requested_time', 'status',
   'items_json', 'table_number', 'delivery_address',
   'payment_status', 'payment_confirmed_at', 'payment_confirmed_by',
-  'waiter_name', 'payment_method',
+  'waiter_name', 'payment_method', 'preparation_time_minutes',
 ])
 
 export async function GET(request: NextRequest) {
@@ -242,6 +242,7 @@ export async function PATCH(request: NextRequest) {
       const eventTypeMap: Record<string, OrderEventType> = {
         confirmed: 'ORDER_CONFIRMED',
         preparing: 'ORDER_PREPARING',
+        packing: 'ORDER_PACKING',
         ready: 'ORDER_READY',
         completed: 'ORDER_COMPLETED',
         cancelled: 'ORDER_CANCELLED',

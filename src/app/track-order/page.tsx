@@ -6,6 +6,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending: 'New',
   confirmed: 'Accepted',
   preparing: 'Preparing',
+  packing: 'Packing',
   ready: 'Ready',
   completed: 'Completed',
   cancelled: 'Cancelled',
@@ -15,6 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: '#f59e0b',
   confirmed: '#3b82f6',
   preparing: '#8b5cf6',
+  packing: '#f97316',
   ready: '#10b981',
   completed: '#6b7280',
   cancelled: '#ef4444',
@@ -29,6 +31,7 @@ interface TrackResult {
   order_type: string
   waiter_name: string | null
   table_number: number | null
+  preparation_time_minutes: number | null
   status_label: string
   created_at: string
 }
@@ -109,7 +112,7 @@ export default function TrackOrderPage() {
     }
   }
 
-  const workflowOrder = ['pending', 'confirmed', 'preparing', 'ready', 'completed']
+  const workflowOrder = ['pending', 'confirmed', 'preparing', 'packing', 'ready', 'completed']
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f5f2', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
@@ -246,6 +249,25 @@ export default function TrackOrderPage() {
                     Payment received. Your order is being processed.
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Preparation Time */}
+            {result.preparation_time_minutes && ['confirmed', 'preparing', 'packing'].includes(result.status) && (
+              <div style={{
+                background: '#f0f9ff',
+                borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.5rem',
+                border: '1px solid #bae6fd',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Estimated Prep Time</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0369a1' }}>
+                    ⏱ {result.preparation_time_minutes} minutes
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: '#075985', margin: '0.5rem 0 0' }}>
+                  Your order has been accepted and the chef is preparing it.
+                </p>
               </div>
             )}
 

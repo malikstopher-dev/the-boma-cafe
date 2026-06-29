@@ -6,6 +6,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending: 'New',
   confirmed: 'Accepted',
   preparing: 'Preparing',
+  packing: 'Packing',
   ready: 'Ready',
   completed: 'Completed',
   cancelled: 'Cancelled',
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await getAdminClient()
     .from('orders')
-    .select('order_ref, customer_name, total, status, payment_status, order_type, waiter_name, table_number, created_at')
+    .select('order_ref, customer_name, total, status, payment_status, order_type, waiter_name, table_number, created_at, preparation_time_minutes')
     .eq('order_ref', ref)
     .maybeSingle()
 
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
     order_type: data.order_type,
     waiter_name: data.waiter_name,
     table_number: data.table_number,
+    preparation_time_minutes: data.preparation_time_minutes,
     status_label: STATUS_LABELS[data.status] || data.status,
     created_at: data.created_at,
   })

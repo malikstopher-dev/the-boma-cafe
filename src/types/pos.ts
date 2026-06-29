@@ -1,4 +1,4 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'packing' | 'ready' | 'completed' | 'cancelled'
 
 export type PaymentMethod = 'cash' | 'card' | 'mobile'
 
@@ -49,6 +49,7 @@ export interface SupabaseOrder {
   waiter_name: string | null
   table_number: string | null
   created_at: string
+  preparation_time_minutes: number | null
 }
 
 export function parseOrderItems(itemsJson: string): OrderItem[] {

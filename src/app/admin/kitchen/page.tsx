@@ -17,11 +17,13 @@ interface Order {
   waiter_name: string | null
   table_number: number | null
   created_at: string
+  preparation_time_minutes: number | null
 }
 
 const COLUMNS = [
   { key: 'pending', label: 'NEW ORDERS', icon: '🟡', color: '#f59e0b', bg: '#1a1500' },
   { key: 'inPrep', label: 'IN PREP', icon: '🔵', color: '#3b82f6', bg: '#001830' },
+  { key: 'packing', label: 'PACKING', icon: '📦', color: '#f97316', bg: '#1a0c00' },
   { key: 'ready', label: 'READY', icon: '🟢', color: '#10b981', bg: '#003020' },
 ]
 
@@ -195,6 +197,7 @@ export default function KitchenDisplay() {
   const [focusedIdx, setFocusedIdx] = useState(0)
   const [connectionError, setConnectionError] = useState(false)
   const [authExpired, setAuthExpired] = useState(false)
+  const [prepTimeInputs, setPrepTimeInputs] = useState<Record<string, string>>({})
   const prevIdsRef = useRef<Set<string>>(new Set())
   const readyTimesRef = useRef<Map<string, number>>(new Map())
 
@@ -314,16 +317,20 @@ export default function KitchenDisplay() {
     return () => clearInterval(cleanup)
   }, [authed])
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: string, prepTimeMinutes?: number) => {
     setUpdating(id)
     try {
+      const body: Record<string, any> = { status }
+      if (prepTimeMinutes !== undefined) {
+        body.preparation_time_minutes = prepTimeMinutes
+      }
       const res = await fetch(`/api/supabase/orders?id=${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
-        setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status } : o))
+        setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status, preparation_time_minutes: prepTimeMinutes ?? o.preparation_time_minutes } : o))
       }
     } catch (e) {
       console.error('Failed to update order status:', e)
@@ -335,8 +342,9 @@ export default function KitchenDisplay() {
   // Build flat list of actionable orders for keyboard nav
   const pending = orders.filter((o) => o.status === 'pending')
   const inPrep = orders.filter((o) => o.status === 'confirmed' || o.status === 'preparing')
+  const packing = orders.filter((o) => o.status === 'packing')
   const readyOrders = orders.filter((o) => o.status === 'ready')
-  const allColumns = [pending, inPrep, readyOrders]
+  const allColumns = [pending, inPrep, packing, readyOrders]
 
   // Reset focus index when column changes
   useEffect(() => {
@@ -347,9 +355,11 @@ export default function KitchenDisplay() {
   useEffect(() => {
     if (!authed) return
     const handler = (e: KeyboardEvent) => {
+      // Skip shortcuts when focus is on an input (e.g. prep time field)
+      if (document.activeElement?.tagName === 'INPUT') return
       // Arrow keys to navigate
       if (e.key === 'ArrowRight') {
-        setFocusedCol((p) => Math.min(p + 1, 2))
+        setFocusedCol((p) => Math.min(p + 1, 3))
         return
       }
       if (e.key === 'ArrowLeft') {
@@ -374,7 +384,8 @@ export default function KitchenDisplay() {
       // 1 = Accept (pending → confirmed; skip if awaiting payment)
       if (e.key === '1' && order.status === 'pending') {
         if (order.order_type !== 'dine-in' && order.payment_status !== 'paid') return
-        updateStatus(order.id, 'confirmed')
+        const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined
+        updateStatus(order.id, 'confirmed', mins)
         return
       }
       // 2 = Start Prep (confirmed → preparing)
@@ -382,8 +393,13 @@ export default function KitchenDisplay() {
         updateStatus(order.id, 'preparing')
         return
       }
-      // 3 = Mark Ready (preparing → ready)
+      // 3 = Start Packing (preparing → packing)
       if (e.key === '3' && order.status === 'preparing') {
+        updateStatus(order.id, 'packing')
+        return
+      }
+      // 4 = Mark Ready (packing → ready)
+      if (e.key === '4' && order.status === 'packing') {
         updateStatus(order.id, 'ready')
         return
       }
@@ -405,7 +421,8 @@ export default function KitchenDisplay() {
   const columnData = [
     { ...COLUMNS[0], items: pending, key: 'pending' },
     { ...COLUMNS[1], items: inPrep, key: 'inPrep' },
-    { ...COLUMNS[2], items: readyOrders, key: 'ready' },
+    { ...COLUMNS[2], items: packing, key: 'packing' },
+    { ...COLUMNS[3], items: readyOrders, key: 'ready' },
   ]
 
   return (
@@ -474,7 +491,7 @@ export default function KitchenDisplay() {
             {pending.length} new
           </span>
           <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', marginLeft: '0.5rem' }}>
-            [←→] nav · [1] Accept · [2] Prep · [3] Ready
+            [←→] nav · [1] Accept · [2] Prep · [3] Pack · [4] Ready
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -521,11 +538,11 @@ export default function KitchenDisplay() {
         </div>
       )}
 
-      {/* 3-Column Layout */}
+      {/* 4-Column Layout */}
       <div style={{
         flex: 1,
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
+        gridTemplateColumns: '1fr 1fr 1fr 1fr',
         gap: '0',
         overflow: 'hidden',
       }}>
@@ -791,25 +808,54 @@ export default function KitchenDisplay() {
                           🟠 Awaiting Payment
                         </div>
                       ) : (
-                        <button
-                          onClick={() => updateStatus(order.id, 'confirmed')}
-                          disabled={updating === order.id}
-                          style={{
-                            width: '100%',
-                            padding: '0.875rem',
-                            border: 'none',
-                            borderRadius: '10px',
-                            background: '#f59e0b',
-                            color: '#000',
-                            fontSize: '1.1rem',
-                            fontWeight: 800,
-                            cursor: updating === order.id ? 'not-allowed' : 'pointer',
-                            opacity: updating === order.id ? 0.5 : 1,
-                            touchAction: 'manipulation',
-                          }}
-                        >
-                          {updating === order.id ? '...' : 'ACCEPT'}
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            max="999"
+                            placeholder="Min"
+                            value={prepTimeInputs[order.id] || ''}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              setPrepTimeInputs(prev => ({ ...prev, [order.id]: e.target.value }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined
+                                updateStatus(order.id, 'confirmed', mins)
+                              }
+                            }}
+                            style={{
+                              width: '52px', padding: '0.5rem', borderRadius: '8px',
+                              border: '2px solid rgba(255,255,255,0.1)',
+                              background: 'rgba(255,255,255,0.08)',
+                              color: '#fff', fontSize: '0.9rem', fontWeight: 700,
+                              textAlign: 'center', outline: 'none', flexShrink: 0,
+                            }}
+                          />
+                          <button
+                            onClick={() => {
+                              const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined
+                              updateStatus(order.id, 'confirmed', mins)
+                            }}
+                            disabled={updating === order.id}
+                            style={{
+                              flex: 1,
+                              padding: '0.875rem',
+                              border: 'none',
+                              borderRadius: '10px',
+                              background: '#f59e0b',
+                              color: '#000',
+                              fontSize: '1.1rem',
+                              fontWeight: 800,
+                              cursor: updating === order.id ? 'not-allowed' : 'pointer',
+                              opacity: updating === order.id ? 0.5 : 1,
+                              touchAction: 'manipulation',
+                            }}
+                          >
+                            {updating === order.id ? '...' : 'ACCEPT'}
+                          </button>
+                        </div>
                       )
                     )}
                     {order.status === 'confirmed' && (
@@ -836,14 +882,14 @@ export default function KitchenDisplay() {
                     {order.status === 'preparing' && (
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
-                          onClick={() => updateStatus(order.id, 'ready')}
+                          onClick={() => updateStatus(order.id, 'packing')}
                           disabled={updating === order.id}
                           style={{
                             flex: 1,
                             padding: '0.875rem',
                             border: 'none',
                             borderRadius: '10px',
-                            background: '#10b981',
+                            background: '#f97316',
                             color: '#000',
                             fontSize: '1.1rem',
                             fontWeight: 800,
@@ -852,9 +898,30 @@ export default function KitchenDisplay() {
                             touchAction: 'manipulation',
                           }}
                         >
-                          {updating === order.id ? '...' : 'Mark Ready'}
+                          {updating === order.id ? '...' : 'Start Packing'}
                         </button>
                       </div>
+                    )}
+                    {order.status === 'packing' && (
+                      <button
+                        onClick={() => updateStatus(order.id, 'ready')}
+                        disabled={updating === order.id}
+                        style={{
+                          width: '100%',
+                          padding: '0.875rem',
+                          border: 'none',
+                          borderRadius: '10px',
+                          background: '#10b981',
+                          color: '#000',
+                          fontSize: '1.1rem',
+                          fontWeight: 800,
+                          cursor: updating === order.id ? 'not-allowed' : 'pointer',
+                          opacity: updating === order.id ? 0.5 : 1,
+                          touchAction: 'manipulation',
+                        }}
+                      >
+                        {updating === order.id ? '...' : 'Mark Ready'}
+                      </button>
                     )}
                     {order.status === 'ready' && (
                       <div style={{
