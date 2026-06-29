@@ -12,6 +12,7 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'items_json', 'table_number', 'delivery_address',
   'payment_status', 'payment_confirmed_at', 'payment_confirmed_by',
   'waiter_name', 'payment_method', 'preparation_time_minutes',
+  'cancellation_reason',
 ])
 
 export async function GET(request: NextRequest) {
@@ -143,6 +144,14 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Require cancellation reason when admin cancels
+    if (body.status === 'cancelled' && role === 'admin') {
+      const reason = body.cancellation_reason?.trim()
+      if (!reason || reason.length < 3) {
+        return NextResponse.json({ error: 'Cancellation reason is required (min 3 characters)' }, { status: 400 })
+      }
+    }
+
     const updateBody: Record<string, any> = {}
     for (const key of Object.keys(body)) {
       if (ALLOWED_PATCH_FIELDS.has(key)) {
@@ -267,22 +276,6 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
-
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id')
-
-  if (!id) {
-    return NextResponse.json({ error: 'Order ID required' }, { status: 400 })
-  }
-
-  const { error } = await getAdminClient()
-    .from('orders')
-    .delete()
-    .eq('id', id)
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+export async function DELETE() {
+  return NextResponse.json({ error: 'Orders cannot be deleted for record-keeping purposes. Cancel the order instead.' }, { status: 403 })
 }

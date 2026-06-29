@@ -88,6 +88,7 @@ function OrderCard({
   onAssignTable,
   onConfirmPayment,
   onAcceptNoPayment,
+  onCancel,
   tables,
 }: {
   order: SupabaseOrder
@@ -96,8 +97,10 @@ function OrderCard({
   onAssignTable: (orderId: string, table: number) => void
   onConfirmPayment: (orderId: string) => void
   onAcceptNoPayment: (orderId: string) => void
+  onCancel?: (orderId: string) => void
   tables: TableInfo[]
 }) {
+  const [showTableDropdown, setShowTableDropdown] = useState(false)
   const items = parseOrderItems(order.items_json)
   const status = order.status as any
   const color = STATUS_COLORS[status] || '#6b7280'
@@ -173,32 +176,65 @@ function OrderCard({
               </button>
             </>
           )}
+          {!['completed', 'cancelled'].includes(order.status) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCancel?.(order.id) }}
+              style={{
+                padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
+                background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 700,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              Cancel
+            </button>
+          )}
           {!tn && order.status === 'pending' && availableTables.length > 0 && (
-          <select
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              const v = parseInt(e.target.value)
-              if (v) onAssignTable(order.id, v)
-              e.target.value = ''
-            }}
-            style={{
-              padding: '0.3rem 0.5rem',
-              borderRadius: '6px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="">Assign table</option>
-            {availableTables.map((t) => (
-              <option key={t.tableNumber} value={t.tableNumber}>Table {t.tableNumber}</option>
-            ))}
-          </select>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTableDropdown(!showTableDropdown) }}
+              style={{
+                padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)',
+                fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              + Assign Table
+            </button>
+            {showTableDropdown && (
+              <div style={{
+                position: 'absolute', bottom: '100%', right: 0, zIndex: 100,
+                background: '#2a2a3e', borderRadius: '10px', padding: '0.25rem',
+                border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                minWidth: '140px', marginBottom: '4px',
+              }}>
+                {availableTables.map((t) => (
+                  <button
+                    key={t.tableNumber}
+                    onClick={(e) => { e.stopPropagation(); onAssignTable(order.id, t.tableNumber); setShowTableDropdown(false) }}
+                    style={{
+                      display: 'block', width: '100%', padding: '0.4rem 0.75rem', border: 'none',
+                      background: 'transparent', color: '#fff', fontSize: '0.8rem', fontWeight: 500,
+                      cursor: 'pointer', borderRadius: '6px', textAlign: 'left',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Table {t.tableNumber}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         </div>
       </div>
+      {order.status === 'cancelled' && order.cancellation_reason && (
+        <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.6rem', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#fca5a5' }}>
+            Cancel reason: {order.cancellation_reason}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
@@ -302,22 +338,27 @@ function CheckoutPanel({
         {!tn && (
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '0.3rem' }}>Assign to table</label>
-            <select
-              onChange={(e) => {
-                const v = parseInt(e.target.value)
-                if (v) onAssignTable(order.id, v)
-              }}
-              style={{
-                width: '100%', padding: '0.5rem', borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)',
-                color: '#fff', fontSize: '0.9rem',
-              }}
-            >
-              <option value="">No table</option>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
               {tables.filter(t => t.status === 'empty').map(t => (
-                <option key={t.tableNumber} value={t.tableNumber}>Table {t.tableNumber}</option>
+                <button
+                  key={t.tableNumber}
+                  onClick={() => onAssignTable(order.id, t.tableNumber)}
+                  style={{
+                    padding: '0.35rem 0.6rem', borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.06)', color: '#fff',
+                    fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                >
+                  {t.tableNumber}
+                </button>
               ))}
-            </select>
+              {tables.filter(t => t.status === 'empty').length === 0 && (
+                <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>All tables occupied</span>
+              )}
+            </div>
           </div>
         )}
 
@@ -402,6 +443,11 @@ export default function OrdersPOS() {
   const [connectionError, setConnectionError] = useState(false)
   const [authExpired, setAuthExpired] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelling, setCancelling] = useState(false)
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -453,13 +499,32 @@ export default function OrdersPOS() {
     return () => clearInterval(interval)
   }, [loadOrders, authExpired])
 
+
+
   const activeOrders = orders.filter((o) => !['completed', 'cancelled'].includes(o.status))
+  const completedOrders = orders.filter((o) => ['completed', 'cancelled'].includes(o.status))
   const selectedOrder = orders.find((o) => o.id === selectedOrderId) || null
 
   // Filter by selected table
-  const filteredOrders = selectedTable
+  const tableFiltered = selectedTable
     ? activeOrders.filter((o) => getOrderTableNumber(o) === selectedTable)
     : activeOrders
+
+  const historyPool = showHistory ? completedOrders : tableFiltered
+
+  // Search filter
+  const visibleOrders = searchQuery.trim()
+    ? historyPool.filter((o) => {
+        const q = searchQuery.toLowerCase()
+        return (o.order_ref && o.order_ref.toLowerCase().includes(q)) ||
+               o.customer_name.toLowerCase().includes(q) ||
+               (o.phone && o.phone.toLowerCase().includes(q)) ||
+               (o.waiter_name && o.waiter_name.toLowerCase().includes(q)) ||
+               (o.table_number && o.table_number.toLowerCase().includes(q)) ||
+               o.status.toLowerCase().includes(q) ||
+               o.order_type.toLowerCase().includes(q)
+      })
+    : historyPool
 
   // Compute tables
   const tables: TableInfo[] = []
@@ -535,6 +600,31 @@ export default function OrdersPOS() {
       }
     } catch (e) {
       showToast('Failed to accept order', 'error')
+    }
+  }
+
+  const handleCancelOrder = async () => {
+    if (!cancelOrderId || cancelReason.trim().length < 3) return
+    setCancelling(true)
+    try {
+      const res = await fetch(`/api/supabase/orders?id=${cancelOrderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled', cancellation_reason: cancelReason.trim() }),
+      })
+      if (res.ok) {
+        showToast('Order cancelled', 'success')
+        setCancelOrderId(null)
+        setCancelReason('')
+        loadOrders()
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Cancel failed', 'error')
+      }
+    } catch {
+      showToast('Failed to cancel order', 'error')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -619,29 +709,57 @@ export default function OrdersPOS() {
           padding: '0.75rem 1rem',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
-              {selectedTable ? `Table ${selectedTable}` : 'Active Orders'}
-            </h2>
-            <span style={{
-              padding: '0.15rem 0.5rem', borderRadius: '6px',
-              fontSize: '0.75rem', fontWeight: 600,
-              background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
-            }}>
-              {filteredOrders.length}
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
+                {selectedTable ? `Table ${selectedTable}` : showHistory ? 'Order History' : 'Active Orders'}
+              </h2>
+              <span style={{
+                padding: '0.15rem 0.5rem', borderRadius: '6px',
+                fontSize: '0.75rem', fontWeight: 600,
+                background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+              }}>
+                {visibleOrders.length}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              style={{
+                padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
+                background: showHistory ? 'rgba(245,158,11,0.15)' : 'transparent',
+                color: showHistory ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {showHistory ? '← Active Orders' : '📜 History'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              placeholder="Search by ref, name, phone, waiter, table..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{
+                flex: 1, padding: '0.4rem 0.6rem', borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.04)', color: '#fff',
+                fontSize: '0.8rem', outline: 'none',
+              }}
+            />
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {filteredOrders.length === 0 && (
+          {visibleOrders.length === 0 && (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.15)', fontSize: '0.9rem' }}>
-              {selectedTable ? 'No orders for this table' : 'No active orders'}
+              {searchQuery ? 'No orders match your search' : selectedTable ? 'No orders for this table' : 'No orders found'}
             </div>
           )}
-          {filteredOrders.map((order) => (
+          {visibleOrders.map((order) => (
             <OrderCard
               key={order.id}
               order={order}
@@ -650,6 +768,7 @@ export default function OrdersPOS() {
               onAssignTable={handleAssignTable}
               onConfirmPayment={handleConfirmPayment}
               onAcceptNoPayment={handleAcceptNoPayment}
+              onCancel={(id) => { setCancelOrderId(id); setCancelReason('') }}
               tables={tables}
             />
           ))}
@@ -668,6 +787,64 @@ export default function OrdersPOS() {
       )}
     </div>
     </div>
+
+    {/* Cancel Reason Modal */}
+    {cancelOrderId && (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 10000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+      }}>
+        <div style={{
+          background: '#1e1e38', borderRadius: '16px', padding: '1.5rem',
+          width: '400px', maxWidth: '90vw', boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+        }}>
+          <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', color: '#fff' }}>Cancel Order</h3>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
+            Provide a reason for cancellation (required)
+          </p>
+          <textarea
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="e.g. Customer requested cancellation, out of stock..."
+            rows={3}
+            style={{
+              width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)',
+              background: '#16162a', color: '#fff', fontSize: '0.85rem', outline: 'none',
+              resize: 'vertical', boxSizing: 'border-box',
+            }}
+          />
+          {cancelReason.trim().length > 0 && cancelReason.trim().length < 3 && (
+            <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#f59e0b' }}>
+              Reason must be at least 3 characters
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => { setCancelOrderId(null); setCancelReason('') }}
+              style={{
+                padding: '0.5rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', cursor: 'pointer',
+              }}
+            >
+              Back
+            </button>
+            <button
+              onClick={handleCancelOrder}
+              disabled={cancelling || cancelReason.trim().length < 3}
+              style={{
+                padding: '0.5rem 1rem', borderRadius: '10px', border: 'none',
+                background: cancelling || cancelReason.trim().length < 3 ? 'rgba(239,68,68,0.3)' : '#ef4444',
+                color: cancelling || cancelReason.trim().length < 3 ? 'rgba(255,255,255,0.4)' : '#fff',
+                fontSize: '0.85rem', fontWeight: 700, cursor: cancelling || cancelReason.trim().length < 3 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {cancelling ? 'Cancelling...' : 'Confirm Cancel'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   )
 }

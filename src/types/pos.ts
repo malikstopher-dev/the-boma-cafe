@@ -50,6 +50,7 @@ export interface SupabaseOrder {
   table_number: string | null
   created_at: string
   preparation_time_minutes: number | null
+  cancellation_reason?: string | null
 }
 
 export function parseOrderItems(itemsJson: string): OrderItem[] {
