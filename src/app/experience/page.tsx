@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cmsService } from '@/lib/client-cms';
-import PremiumHero from '@/components/ui/PremiumHero';
+import OptimizedHero from '@/components/ui/OptimizedHero';
 import { getReservationLink } from '@/data/businessInfo';
 
 function VideoSection() {
@@ -119,12 +119,49 @@ export default function ExperiencePage() {
       <Header />
       <main style={{ paddingTop: 0 }}>
         <div style={{ marginTop: '-80px' }}>
-          <PremiumHero
-            imageUrl="/hero/hero-experience.png"
-            badge={expSettings?.heroBadge || 'Discover'}
-            title="The Boma Experience"
-            subtitle="More than dining — warmth, fire, food and unforgettable moments."
-          />
+          <OptimizedHero
+            poster="/hero/hero-experience.png"
+            videoSrc="/videos/experience-hero.mp4"
+            mobileVideoSrc="/videos/experience-mobile.mp4"
+          >
+            <div style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, var(--warm) 0%, var(--warm-light) 100%)',
+              padding: '0.4rem 1.25rem',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--dark-brown)',
+              marginBottom: '1rem',
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+            }}>
+              {expSettings?.heroBadge || 'Discover'}
+            </div>
+            <h1 style={{
+              fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
+              color: 'var(--white)',
+              marginBottom: '1rem',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              lineHeight: 1.15,
+              textShadow: '0 3px 25px rgba(0,0,0,0.35)',
+              letterSpacing: '-0.5px',
+            }}>
+              The Boma Experience
+            </h1>
+            <p style={{
+              color: 'rgba(253, 248, 243, 0.92)',
+              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+              maxWidth: '650px',
+              margin: '0 auto',
+              lineHeight: 1.65,
+              textShadow: '0 2px 15px rgba(0,0,0,0.25)',
+            }}>
+              More than dining — warmth, fire, food and unforgettable moments.
+            </p>
+          </OptimizedHero>
         </div>
 
         {/* 2. INTRO SECTION */}
