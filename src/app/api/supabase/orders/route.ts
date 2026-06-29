@@ -126,6 +126,12 @@ export async function PATCH(request: NextRequest) {
 
     // Kitchen restrictions (admin bypasses all)
     if (role === 'kitchen') {
+      if (body.status === 'cancelled') {
+        return NextResponse.json({ error: 'Kitchen cannot cancel orders' }, { status: 403 })
+      }
+      if (body.status === 'confirmed') {
+        return NextResponse.json({ error: 'Only admin can accept orders' }, { status: 403 })
+      }
       if (body.payment_status) {
         return NextResponse.json({ error: 'Kitchen cannot modify payment status' }, { status: 403 })
       }

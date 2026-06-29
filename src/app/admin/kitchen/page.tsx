@@ -406,25 +406,18 @@ export default function KitchenDisplay() {
       const order = col[focusedIdx]
       if (!order || updating === order.id) return
 
-      // 1 = Accept (pending → confirmed; skip if awaiting payment)
-      if (e.key === '1' && order.status === 'pending') {
-        if (order.order_type !== 'dine-in' && order.payment_status !== 'paid') return
-        const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined
-        updateStatus(order.id, 'confirmed', mins)
-        return
-      }
-      // 2 = Start Prep (confirmed → preparing)
-      if (e.key === '2' && order.status === 'confirmed') {
+      // 1 = Start Prep (confirmed → preparing)
+      if (e.key === '1' && order.status === 'confirmed') {
         updateStatus(order.id, 'preparing')
         return
       }
-      // 3 = Start Packing (preparing → packing)
-      if (e.key === '3' && order.status === 'preparing') {
+      // 2 = Start Packing (preparing → packing)
+      if (e.key === '2' && order.status === 'preparing') {
         updateStatus(order.id, 'packing')
         return
       }
-      // 4 = Mark Ready (packing → ready)
-      if (e.key === '4' && order.status === 'packing') {
+      // 3 = Mark Ready (packing → ready)
+      if (e.key === '3' && order.status === 'packing') {
         updateStatus(order.id, 'ready')
         return
       }
@@ -516,7 +509,7 @@ export default function KitchenDisplay() {
             {pending.length} new
           </span>
           <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', marginLeft: '0.5rem' }}>
-            [←→] nav · [1] Accept · [2] Prep · [3] Pack · [4] Ready
+            [←→] nav · [1] Prep · [2] Pack · [3] Ready
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -841,65 +834,14 @@ export default function KitchenDisplay() {
 
                     {/* Actions */}
                     {order.status === 'pending' && (
-                      (order.order_type !== 'dine-in' && order.payment_status !== 'paid') ? (
-                        <div style={{
-                          width: '100%', padding: '0.875rem',
-                          borderRadius: '10px', background: 'rgba(245,158,11,0.1)',
-                          color: '#f59e0b', fontSize: '1rem', fontWeight: 700,
-                          textAlign: 'center', border: '1px solid rgba(245,158,11,0.3)',
-                        }}>
-                          🟠 Awaiting Payment
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                          <input
-                            type="number"
-                            min="1"
-                            max="999"
-                            placeholder="Min"
-                            value={prepTimeInputs[order.id] || ''}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              setPrepTimeInputs(prev => ({ ...prev, [order.id]: e.target.value }))
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined
-                                updateStatus(order.id, 'confirmed', mins)
-                              }
-                            }}
-                            style={{
-                              width: '52px', padding: '0.5rem', borderRadius: '8px',
-                              border: '2px solid rgba(255,255,255,0.1)',
-                              background: 'rgba(255,255,255,0.08)',
-                              color: '#fff', fontSize: '0.9rem', fontWeight: 700,
-                              textAlign: 'center', outline: 'none', flexShrink: 0,
-                            }}
-                          />
-                          <button
-                            onClick={() => {
-                              const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined
-                              updateStatus(order.id, 'confirmed', mins)
-                            }}
-                            disabled={updating === order.id}
-                            style={{
-                              flex: 1,
-                              padding: '0.875rem',
-                              border: 'none',
-                              borderRadius: '10px',
-                              background: '#f59e0b',
-                              color: '#000',
-                              fontSize: '1.1rem',
-                              fontWeight: 800,
-                              cursor: updating === order.id ? 'not-allowed' : 'pointer',
-                              opacity: updating === order.id ? 0.5 : 1,
-                              touchAction: 'manipulation',
-                            }}
-                          >
-                            {updating === order.id ? '...' : 'ACCEPT'}
-                          </button>
-                        </div>
-                      )
+                      <div style={{
+                        width: '100%', padding: '0.875rem',
+                        borderRadius: '10px', background: 'rgba(245,158,11,0.08)',
+                        color: '#f59e0b', fontSize: '0.95rem', fontWeight: 600,
+                        textAlign: 'center', border: '1px solid rgba(245,158,11,0.2)',
+                      }}>
+                        ⏳ Awaiting admin confirmation
+                      </div>
                     )}
                     {(order.status === 'confirmed' || order.status === 'preparing') && (
                       <div style={{ marginBottom: '0.5rem' }}>
@@ -1029,23 +971,6 @@ export default function KitchenDisplay() {
                       </div>
                     )}
 
-                    {/* Cancel — available on pending/confirmed/preparing/packing */}
-                    {['pending', 'confirmed', 'preparing', 'packing'].includes(order.status) && (
-                      <button
-                        onClick={() => updateStatus(order.id, 'cancelled')}
-                        disabled={updating === order.id}
-                        style={{
-                          width: '100%', marginTop: '0.5rem', padding: '0.4rem',
-                          border: '1px solid rgba(239,68,68,0.25)',
-                          borderRadius: '8px', background: 'transparent',
-                          color: 'rgba(239,68,68,0.6)', fontSize: '0.75rem',
-                          fontWeight: 600, cursor: updating === order.id ? 'not-allowed' : 'pointer',
-                          opacity: updating === order.id ? 0.4 : 1,
-                        }}
-                      >
-                        ✕ Cancel Order
-                      </button>
-                    )}
                   </div>
                 )
               })}
