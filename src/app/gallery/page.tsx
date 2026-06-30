@@ -109,8 +109,8 @@ export default function GalleryPage() {
         <div style={isMobile ? { marginTop: '-60px' } : undefined}>
           <OptimizedHero
             poster="/hero/hero-gallery.jpg"
-            videoSrc="/videos/about-hero.mp4"
-            mobileVideoSrc="/videos/about-mobile.mp4"
+            videoSrc="/videos/gallery-hero.mp4"
+            mobileVideoSrc="/videos/gallery-mobile.mp4"
             contentAlign={isMobile ? 'center' : 'bottom'}
           >
             {!isMobile && (

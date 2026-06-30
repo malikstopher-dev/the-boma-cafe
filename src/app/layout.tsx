@@ -138,6 +138,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen">
+        <div className="ambient-ember-layer" aria-hidden="true">
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+          <div className="ambient-ember" />
+        </div>
         <AuthProvider>
           <CartProvider>
             <BookingProvider>
