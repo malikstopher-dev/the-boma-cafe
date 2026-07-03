@@ -205,13 +205,15 @@ export async function renderDesignToCanvas(
   canvas: HTMLCanvasElement,
   design: DesignData
 ): Promise<void> {
+  if (!design || !design.width || !design.height) return
+
   const ctx = canvas.getContext('2d')
   if (!ctx) return
 
   canvas.width = design.width
   canvas.height = design.height
 
-  await renderBackground(ctx, design.background, design.width, design.height)
+  await renderBackground(ctx, design.background || { type: 'solid', color: '#FFFFFF' }, design.width, design.height)
 
   const sorted = [...design.elements].sort((a, b) => a.zIndex - b.zIndex)
 

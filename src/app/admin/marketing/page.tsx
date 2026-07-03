@@ -71,7 +71,6 @@ export default function MarketingStudio() {
         body: JSON.stringify({
           name: `${template.name} (Copy)`,
           type: template.type,
-          templateId: template.id,
           projectData: template.designData,
           tags: template.tags,
         }),
@@ -79,9 +78,13 @@ export default function MarketingStudio() {
       if (res.ok) {
         const { data } = await res.json()
         router.push(`/admin/marketing/${data.id}`)
+      } else {
+        const err = await res.json()
+        alert('Failed to create project: ' + (err.error || 'Unknown error'))
       }
     } catch (e) {
       console.error('Failed to create from template:', e)
+      alert('Failed to create project. Check console for details.')
     }
   }
 

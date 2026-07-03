@@ -90,9 +90,11 @@ export default function ProjectEditor() {
 
   // Render to canvas when project loads
   useEffect(() => {
-    if (!project || !canvasRef.current) return
+    if (!project || !canvasRef.current || !project.projectData) return
     const canvas = canvasRef.current
-    renderDesignToCanvas(canvas, project.projectData).catch(console.error)
+    renderDesignToCanvas(canvas, project.projectData).catch(err => {
+      console.error('Canvas render failed:', err)
+    })
   }, [project])
 
   const handleSave = async (showToast = true) => {
