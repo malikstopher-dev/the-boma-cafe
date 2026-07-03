@@ -25,6 +25,7 @@ const menuItems = [
   { label: 'Kitchen', icon: '👨‍🍳', href: '/admin/kitchen' },
   { label: 'Waiters', icon: '👤', href: '/admin/waiters' },
   { label: 'Analytics', icon: '📊', href: '/admin/analytics' },
+  { label: 'Marketing Studio', icon: '🎨', href: '/admin/marketing' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
