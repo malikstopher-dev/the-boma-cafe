@@ -161,58 +161,59 @@ ALTER TABLE popup ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcement ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read access to all CMS tables (for frontend display)
-CREATE POLICY "Public read access" ON site_settings FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON menu_categories FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON menu_items FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON events FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON last_week_highlights FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON promotions FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON gallery FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON gallery_boards FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON popup FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON announcement FOR SELECT USING (true);
+-- Each wrapped in exception block for full idempotency
+DO $$ BEGIN CREATE POLICY "Public read access" ON site_settings FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON menu_categories FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON menu_items FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON events FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON last_week_highlights FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON promotions FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON gallery FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON gallery_boards FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON popup FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Public read access" ON announcement FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Service role can do everything (admin client bypasses RLS anyway, but belt-and-suspenders)
 -- Only allow writes from service_role (admin API routes)
-CREATE POLICY "Service role write access" ON site_settings FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON site_settings FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON site_settings FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON site_settings FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON site_settings FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON site_settings FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON menu_categories FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON menu_categories FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON menu_categories FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON menu_categories FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON menu_categories FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON menu_categories FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON menu_items FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON menu_items FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON menu_items FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON menu_items FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON menu_items FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON menu_items FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON events FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON events FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON events FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON events FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON events FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON events FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON last_week_highlights FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON last_week_highlights FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON last_week_highlights FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON last_week_highlights FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON last_week_highlights FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON last_week_highlights FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON promotions FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON promotions FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON promotions FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON promotions FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON promotions FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON promotions FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON gallery FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON gallery FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON gallery FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON gallery FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON gallery FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON gallery FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON gallery_boards FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON gallery_boards FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON gallery_boards FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON gallery_boards FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON gallery_boards FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON gallery_boards FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON popup FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON popup FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON popup FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON popup FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON popup FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON popup FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "Service role write access" ON announcement FOR INSERT WITH CHECK (true);
-CREATE POLICY "Service role write access" ON announcement FOR UPDATE USING (true);
-CREATE POLICY "Service role write access" ON announcement FOR DELETE USING (true);
+DO $$ BEGIN CREATE POLICY "Service role write access" ON announcement FOR INSERT WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON announcement FOR UPDATE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Service role write access" ON announcement FOR DELETE USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Insert default gallery boards
 INSERT INTO gallery_boards (id, name, description, order_index) VALUES
