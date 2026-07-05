@@ -9,6 +9,7 @@ export default function AdminCategories() {
   const [isEditing, setIsEditing] = useState(false);
   const [editCategory, setEditCategory] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', isActive: true });
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function AdminCategories() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     try {
       if (editCategory) {
         const updated = { ...editCategory, ...formData };
@@ -42,6 +44,7 @@ export default function AdminCategories() {
       setFormData({ name: '', description: '', isActive: true });
     } catch (error) {
       console.error('Error saving category:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save category');
     }
   };
 
@@ -58,6 +61,7 @@ export default function AdminCategories() {
         setCategories(categories.filter((c: any) => c.id !== id));
       } catch (error) {
         console.error('Error deleting category:', error);
+        setSaveError(error instanceof Error ? error.message : 'Failed to delete category');
       }
     }
   };
@@ -71,6 +75,7 @@ export default function AdminCategories() {
         setCategories(categories.map((c: any) => c.id === id ? updated : c));
       } catch (error) {
         console.error('Error toggling category:', error);
+        setSaveError(error instanceof Error ? error.message : 'Failed to update category');
       }
     }
   };
@@ -93,6 +98,11 @@ export default function AdminCategories() {
             <input type="text" placeholder="Category Name *" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }} />
             <textarea placeholder="Description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)', minHeight: '60px' }} />
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Active</label>
+            {saveError && (
+              <div style={{ padding: '0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', fontSize: '0.9rem' }}>
+                {saveError}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button type="submit" className="btn btn-primary">Save</button>
               <button type="button" onClick={() => { setIsEditing(false); setEditCategory(null); }} className="btn btn-ghost">Cancel</button>

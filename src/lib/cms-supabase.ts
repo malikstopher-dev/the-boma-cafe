@@ -49,9 +49,11 @@ export async function setMultipleSettings(settings: Record<string, any>): Promis
     const { data: existing } = await client.from('site_settings').select('id').eq('key', key).maybeSingle()
     const payload = { key, value: JSON.stringify(value), updated_at: new Date().toISOString() }
     if (existing) {
-      await client.from('site_settings').update(payload).eq('key', key)
+      const { error } = await client.from('site_settings').update(payload).eq('key', key)
+      if (error) throw error
     } else {
-      await client.from('site_settings').insert({ ...payload, id: randomUUID() })
+      const { error } = await client.from('site_settings').insert({ ...payload, id: randomUUID() })
+      if (error) throw error
     }
   }
   return true
@@ -68,9 +70,11 @@ export async function setSetting(key: string, value: any): Promise<boolean> {
   const payload = { key, value: JSON.stringify(value), updated_at: new Date().toISOString() }
   const { data: existing } = await client.from('site_settings').select('id').eq('key', key).maybeSingle()
   if (existing) {
-    await client.from('site_settings').update(payload).eq('key', key)
+    const { error } = await client.from('site_settings').update(payload).eq('key', key)
+    if (error) throw error
   } else {
-    await client.from('site_settings').insert({ ...payload, id: randomUUID() })
+    const { error } = await client.from('site_settings').insert({ ...payload, id: randomUUID() })
+    if (error) throw error
   }
   return true
 }
@@ -110,19 +114,23 @@ export async function saveCategory(category: any): Promise<any> {
     updated_at: now,
   }
   if (category.id) {
-    await client.from('menu_categories').update(payload).eq('id', category.id)
+    const { error } = await client.from('menu_categories').update(payload).eq('id', category.id)
+    if (error) throw error
     return category
   } else {
     const id = randomUUID()
-    await client.from('menu_categories').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('menu_categories').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...category, id }
   }
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {
   const client = await supabase()
-  await client.from('menu_items').delete().eq('category_id', id)
-  await client.from('menu_categories').delete().eq('id', id)
+  const { error: itemsError } = await client.from('menu_items').delete().eq('category_id', id)
+  if (itemsError) throw itemsError
+  const { error } = await client.from('menu_categories').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -180,17 +188,20 @@ export async function saveMenuItem(item: any): Promise<any> {
     updated_at: now,
   }
   if (item.id) {
-    await client.from('menu_items').update(payload).eq('id', item.id)
+    const { error } = await client.from('menu_items').update(payload).eq('id', item.id)
+    if (error) throw error
     return item
   } else {
     const id = randomUUID()
-    await client.from('menu_items').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('menu_items').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...item, id }
   }
 }
 
 export async function deleteMenuItem(id: string): Promise<boolean> {
-  await (await supabase()).from('menu_items').delete().eq('id', id)
+  const { error } = await (await supabase()).from('menu_items').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -233,17 +244,20 @@ export async function saveEvent(event: any): Promise<any> {
     updated_at: now,
   }
   if (event.id) {
-    await client.from('events').update(payload).eq('id', event.id)
+    const { error } = await client.from('events').update(payload).eq('id', event.id)
+    if (error) throw error
     return event
   } else {
     const id = randomUUID()
-    await client.from('events').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('events').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...event, id }
   }
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
-  await (await supabase()).from('events').delete().eq('id', id)
+  const { error } = await (await supabase()).from('events').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -280,9 +294,11 @@ export async function saveLastWeekHighlight(highlight: any): Promise<boolean> {
     updated_at: now,
   }
   if (existing) {
-    await client.from('last_week_highlights').update(payload).eq('id', existing.id)
+    const { error } = await client.from('last_week_highlights').update(payload).eq('id', existing.id)
+    if (error) throw error
   } else {
-    await client.from('last_week_highlights').insert({ ...payload, id: randomUUID() })
+    const { error } = await client.from('last_week_highlights').insert({ ...payload, id: randomUUID() })
+    if (error) throw error
   }
   return true
 }
@@ -318,17 +334,20 @@ export async function savePromotion(promotion: any): Promise<any> {
     updated_at: now,
   }
   if (promotion.id) {
-    await client.from('promotions').update(payload).eq('id', promotion.id)
+    const { error } = await client.from('promotions').update(payload).eq('id', promotion.id)
+    if (error) throw error
     return promotion
   } else {
     const id = randomUUID()
-    await client.from('promotions').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('promotions').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...promotion, id }
   }
 }
 
 export async function deletePromotion(id: string): Promise<boolean> {
-  await (await supabase()).from('promotions').delete().eq('id', id)
+  const { error } = await (await supabase()).from('promotions').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -357,17 +376,20 @@ export async function saveGalleryItem(item: any): Promise<any> {
     updated_at: now,
   }
   if (item.id) {
-    await client.from('gallery').update(payload).eq('id', item.id)
+    const { error } = await client.from('gallery').update(payload).eq('id', item.id)
+    if (error) throw error
     return item
   } else {
     const id = randomUUID()
-    await client.from('gallery').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('gallery').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...item, id }
   }
 }
 
 export async function deleteGalleryItem(id: string): Promise<boolean> {
-  await (await supabase()).from('gallery').delete().eq('id', id)
+  const { error } = await (await supabase()).from('gallery').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -419,9 +441,11 @@ export async function savePopup(popup: any): Promise<boolean> {
     updated_at: now,
   }
   if (existing) {
-    await client.from('popup').update(payload).eq('id', existing.id)
+    const { error } = await client.from('popup').update(payload).eq('id', existing.id)
+    if (error) throw error
   } else {
-    await client.from('popup').insert({ ...payload, id: randomUUID() })
+    const { error } = await client.from('popup').insert({ ...payload, id: randomUUID() })
+    if (error) throw error
   }
   return true
 }
@@ -450,9 +474,11 @@ export async function saveAnnouncement(announcement: any): Promise<boolean> {
     updated_at: now,
   }
   if (existing) {
-    await client.from('announcement').update(payload).eq('id', existing.id)
+    const { error } = await client.from('announcement').update(payload).eq('id', existing.id)
+    if (error) throw error
   } else {
-    await client.from('announcement').insert({ ...payload, id: randomUUID() })
+    const { error } = await client.from('announcement').insert({ ...payload, id: randomUUID() })
+    if (error) throw error
   }
   return true
 }
@@ -478,7 +504,7 @@ export async function saveInquiry(inquiry: any): Promise<any> {
   const client = await supabase()
   const id = randomUUID()
   const now = new Date().toISOString()
-  await client.from('contact_messages').insert({
+  const { error } = await client.from('contact_messages').insert({
     id,
     name: inquiry.name,
     email: inquiry.email || '',
@@ -488,11 +514,13 @@ export async function saveInquiry(inquiry: any): Promise<any> {
     is_read: false,
     created_at: now,
   })
+  if (error) throw error
   return { ...inquiry, id, createdAt: now }
 }
 
 export async function markInquiryRead(id: string): Promise<boolean> {
-  await (await supabase()).from('contact_messages').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id)
+  const { error } = await (await supabase()).from('contact_messages').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -515,19 +543,23 @@ export async function saveBarCategory(category: any): Promise<any> {
     updated_at: now,
   }
   if (category.id) {
-    await client.from('bar_categories').update(payload).eq('id', category.id)
+    const { error } = await client.from('bar_categories').update(payload).eq('id', category.id)
+    if (error) throw error
     return category
   } else {
     const id = randomUUID()
-    await client.from('bar_categories').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('bar_categories').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...category, id }
   }
 }
 
 export async function deleteBarCategory(id: string): Promise<boolean> {
   const client = await supabase()
-  await client.from('bar_items').delete().eq('category_id', id)
-  await client.from('bar_categories').delete().eq('id', id)
+  const { error: itemsError } = await client.from('bar_items').delete().eq('category_id', id)
+  if (itemsError) throw itemsError
+  const { error } = await client.from('bar_categories').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
@@ -563,17 +595,20 @@ export async function saveBarItem(item: any): Promise<any> {
     updated_at: now,
   }
   if (item.id) {
-    await client.from('bar_items').update(payload).eq('id', item.id)
+    const { error } = await client.from('bar_items').update(payload).eq('id', item.id)
+    if (error) throw error
     return item
   } else {
     const id = randomUUID()
-    await client.from('bar_items').insert({ ...payload, id, created_at: now })
+    const { error } = await client.from('bar_items').insert({ ...payload, id, created_at: now })
+    if (error) throw error
     return { ...item, id }
   }
 }
 
 export async function deleteBarItem(id: string): Promise<boolean> {
-  await (await supabase()).from('bar_items').delete().eq('id', id)
+  const { error } = await (await supabase()).from('bar_items').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 

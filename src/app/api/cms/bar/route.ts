@@ -23,12 +23,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (body.id && body.name !== undefined) {
+    // Bar category: has name, no categoryId
+    if (body.name !== undefined && !body.categoryId) {
       const category = await saveBarCategory(body);
       revalidatePath('/bar-menu');
       return NextResponse.json({ success: true, data: category });
     }
 
+    // Bar item: has categoryId
     if (body.categoryId !== undefined) {
       const item = await saveBarItem(body);
       revalidatePath('/bar-menu');
@@ -49,15 +51,21 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (body.categoryId || (body.id && body.name !== undefined)) {
+    // Bar category: has id/name, no categoryId
+    if ((body.id && body.name !== undefined) && !body.categoryId) {
       const category = await saveBarCategory(body);
       revalidatePath('/bar-menu');
       return NextResponse.json({ success: true, data: category });
     }
 
-    const item = await saveBarItem(body);
-    revalidatePath('/bar-menu');
-    return NextResponse.json({ success: true, data: item });
+    // Bar item: has categoryId
+    if (body.categoryId !== undefined) {
+      const item = await saveBarItem(body);
+      revalidatePath('/bar-menu');
+      return NextResponse.json({ success: true, data: item });
+    }
+
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (error) {
     console.error('Error saving bar menu:', error);
     return NextResponse.json({ error: 'Failed to save bar menu' }, { status: 500 });

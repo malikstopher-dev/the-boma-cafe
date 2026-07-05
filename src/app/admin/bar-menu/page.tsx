@@ -31,6 +31,7 @@ export default function AdminBarMenu() {
   const [editingItem, setEditingItem] = useState<BarItem | null>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showItemForm, setShowItemForm] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [catForm, setCatForm] = useState({ name: '' });
   const [itemForm, setItemForm] = useState({
@@ -73,6 +74,7 @@ export default function AdminBarMenu() {
 
   const handleCatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     try {
       const payload: any = { name: catForm.name };
       if (editingCategory) {
@@ -86,32 +88,48 @@ export default function AdminBarMenu() {
         body: JSON.stringify(payload),
       });
       const result = await res.json();
-      if (result.success) {
+      if (res.ok && result.success) {
         resetCatForm();
         loadData();
+      } else {
+        setSaveError(result.error || 'Failed to save category');
       }
     } catch (err) {
       console.error('Error saving category:', err);
+      setSaveError(err instanceof Error ? err.message : 'Failed to save category');
     }
   };
 
   const handleCatDelete = async (id: string) => {
     if (!confirm('Delete this category and all its items?')) return;
+    setSaveError(null);
     try {
-      await fetch(`/api/cms/bar?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/cms/bar?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        setSaveError(result.error || 'Failed to delete category');
+        return;
+      }
       loadData();
     } catch (err) {
       console.error('Error deleting category:', err);
+      setSaveError(err instanceof Error ? err.message : 'Failed to delete category');
     }
   };
 
   const handleCatToggle = async (cat: BarCategory) => {
+    setSaveError(null);
     try {
-      await fetch('/api/cms/bar', {
+      const res = await fetch('/api/cms/bar', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...cat, isActive: !cat.isActive }),
       });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        setSaveError(result.error || 'Failed to update category');
+        return;
+      }
       loadData();
     } catch (err) {
       console.error('Error toggling category:', err);
@@ -120,6 +138,7 @@ export default function AdminBarMenu() {
 
   const handleItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     try {
       const payload: any = {
         categoryId: itemForm.categoryId,
@@ -141,22 +160,32 @@ export default function AdminBarMenu() {
         body: JSON.stringify(payload),
       });
       const result = await res.json();
-      if (result.success) {
+      if (res.ok && result.success) {
         resetItemForm();
         loadData();
+      } else {
+        setSaveError(result.error || 'Failed to save drink');
       }
     } catch (err) {
       console.error('Error saving item:', err);
+      setSaveError(err instanceof Error ? err.message : 'Failed to save drink');
     }
   };
 
   const handleItemDelete = async (id: string) => {
     if (!confirm('Delete this item?')) return;
+    setSaveError(null);
     try {
-      await fetch(`/api/cms/bar?itemId=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/cms/bar?itemId=${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        setSaveError(result.error || 'Failed to delete drink');
+        return;
+      }
       loadData();
     } catch (err) {
       console.error('Error deleting item:', err);
+      setSaveError(err instanceof Error ? err.message : 'Failed to delete drink');
     }
   };
 
@@ -202,6 +231,12 @@ export default function AdminBarMenu() {
           <button onClick={() => { resetItemForm(); setShowItemForm(true); }} className="btn btn-primary">+ Drink</button>
         </div>
       </div>
+
+      {saveError && (
+        <div style={{ padding: '0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>
+          {saveError}
+        </div>
+      )}
 
       {showCategoryForm && (
         <div style={formSectionStyle}>

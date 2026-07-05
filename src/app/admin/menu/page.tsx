@@ -12,6 +12,7 @@ export default function AdminMenu() {
   const [editItem, setEditItem] = useState<any>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -73,6 +74,7 @@ export default function AdminMenu() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     try {
       const category = categories.find((c: any) => c.name === formData.categoryId || c.id === formData.categoryId);
       const itemData = {
@@ -103,6 +105,7 @@ export default function AdminMenu() {
       setImagePreview(null);
     } catch (error) {
       console.error('Error saving menu item:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save menu item');
     }
   };
 
@@ -130,8 +133,10 @@ export default function AdminMenu() {
       try {
         await cmsService.deleteMenuItem(id);
         setMenuItems(menuItems.filter((item: any) => item.id !== id));
+        setSaveError(null);
       } catch (error) {
         console.error('Error deleting menu item:', error);
+        setSaveError(error instanceof Error ? error.message : 'Failed to delete menu item');
       }
     }
   };
@@ -226,6 +231,11 @@ export default function AdminMenu() {
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><input type="checkbox" checked={formData.isOutOfStock} onChange={e => setFormData({...formData, isOutOfStock: e.target.checked})} /> Out of Stock</label>
             </div>
             
+            {saveError && (
+              <div style={{ gridColumn: 'span 2', padding: '0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', fontSize: '0.9rem' }}>
+                {saveError}
+              </div>
+            )}
             <div style={{ gridColumn: 'span 2', display: 'flex', gap: '1rem' }}>
               <button type="submit" className="btn btn-primary">Save</button>
               <button type="button" onClick={() => { setIsEditing(false); setEditItem(null); setImagePreview(null); }} className="btn btn-ghost">Cancel</button>
