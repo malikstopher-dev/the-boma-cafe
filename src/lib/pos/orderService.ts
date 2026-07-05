@@ -16,7 +16,7 @@ function resolveSizePrice(
     try {
       const sizes: { name: string; price: number }[] = JSON.parse(dbItem.sizes)
       const match = sizes.find((s) => s.name === selectedSize)
-      if (match) return { price: match.price, matched: true }
+      if (match) return { price: Number(match.price), matched: true }
       return { price: -1, matched: false }
     } catch { /* malformed sizes JSON */ }
   }
@@ -34,7 +34,7 @@ function resolveAddOnPrices(
     return selectedAddOns
       .map((name) => {
         const match = dbAddOns.find((a) => a.name === name)
-        return match ? { name: match.name, price: match.price } : null
+        return match ? { name: match.name, price: Number(match.price) } : null
       })
       .filter(Boolean) as { name: string; price: number }[]
   } catch {

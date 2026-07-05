@@ -31,7 +31,7 @@ export async function getMenuItemsByIds(ids: string[]): Promise<Map<string, DbMe
   // Primary: Supabase lookup
   try {
     const { data, error } = await getAdminClient()
-      .from('menu_items_supabase')
+      .from('menu_items')
       .select('id, name, description, price, sizes, add_ons')
       .in('id', ids)
     if (!error && data) {
