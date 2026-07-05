@@ -190,6 +190,7 @@ function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
 
 export default function KitchenDisplay() {
   const [authed, setAuthed] = useState(false)
+  const [checkingCookie, setCheckingCookie] = useState(true)
   const [orders, setOrders] = useState<Order[]>([])
   const [updating, setUpdating] = useState<string | null>(null)
   const [soundOn, setSoundOn] = useState(true)
@@ -251,6 +252,17 @@ export default function KitchenDisplay() {
       setConnectionError(true)
     }
   }, [soundOn])
+
+  // Check for existing auth cookie on mount (so refresh doesn't show password gate)
+  useEffect(() => {
+    fetch('/api/admin/auth')
+      .then(r => r.json())
+      .then(data => {
+        if (data.authenticated) setAuthed(true)
+      })
+      .catch(() => {})
+      .finally(() => setCheckingCookie(false))
+  }, [])
 
   // Initial load + Supabase realtime subscription
   useEffect(() => {
@@ -428,6 +440,22 @@ export default function KitchenDisplay() {
 
   const handleLogout = () => {
     setAuthed(false)
+  }
+
+  if (checkingCookie) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0f0f1a',
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: '1rem',
+      }}>
+        Checking session...
+      </div>
+    )
   }
 
   if (!authed) {

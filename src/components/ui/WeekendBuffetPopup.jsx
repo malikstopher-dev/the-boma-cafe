@@ -35,13 +35,19 @@ export default function WeekendBuffetPopup({ popup }) {
   const intervalRef = useRef(null);
 
   const slides = (popup?.isEnabled && popup?.image)
-    ? [{
-        src: popup.image,
-        alt: popup.title || 'Special Offer',
-        href: popup.ctaLink || `https://wa.me/27715921190?text=${encodeURIComponent("Hi The Boma Café, I saw your promotion and would like to know more!")}`,
-        ariaLabel: popup.ctaText || 'View Offer',
-      }]
-    : SLIDES;
+    ? (() => {
+        const link = popup.ctaLink || '/experience';
+        return [{
+          src: popup.image,
+          alt: popup.title || 'Special Offer',
+          href: link === '/events' ? '/experience' : link,
+          ariaLabel: popup.ctaText || 'View Events & Promotions',
+        }];
+      })()
+    : SLIDES.map(s => ({
+        ...s,
+        href: s.href.includes('/events') ? '/experience' : s.href,
+      }));
 
   const showOncePerSession = popup?.showOncePerSession !== false;
 
