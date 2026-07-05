@@ -25,7 +25,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
     if (propSettings) return;
     const load = async () => {
       try {
-        const res = await fetch('/api/cms/public');
+        const res = await fetch('/api/cms/public', { cache: 'no-cache' });
         const data = await res.json();
         if (data?.settings) {
           setFetchedSettings(data.settings);

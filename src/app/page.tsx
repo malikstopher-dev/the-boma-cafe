@@ -75,8 +75,8 @@ export default function Home() {
     const loadData = async () => {
       try {
         const [publicData, itemsRes] = await Promise.all([
-          fetch('/api/cms/public').then(r => r.json()),
-          fetch('/api/menu/public').then(r => r.json()),
+          fetch('/api/cms/public', { cache: 'no-cache' }).then(r => r.json()),
+          fetch('/api/menu/public', { cache: 'no-cache' }).then(r => r.json()),
         ]);
         const items = itemsRes?.menuItems || [];
         setSiteSettings(publicData.settings);

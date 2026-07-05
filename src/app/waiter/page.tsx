@@ -166,7 +166,7 @@ export default function WaiterPage() {
 
   useEffect(() => {
     if (!authed) return
-    fetch('/api/menu/public')
+    fetch('/api/menu/public', { cache: 'no-cache' })
       .then((r) => r.json())
       .then((data) => {
         setCategories(data.categories || [])

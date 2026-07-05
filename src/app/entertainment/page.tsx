@@ -34,7 +34,7 @@ export default function EntertainmentPage() {
   ];
 
   useEffect(() => {
-    fetch('/api/cms/public').then(r => r.json()).then(data => {
+    fetch('/api/cms/public', { cache: 'no-cache' }).then(r => r.json()).then(data => {
       if (data?.settings) setSettings(data.settings);
     }).catch(() => {});
   }, []);

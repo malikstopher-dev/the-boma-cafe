@@ -234,7 +234,7 @@ export default function MenuPage() {
   useEffect(() => {
     const loadFromCms = async () => {
       try {
-        const res = await fetch('/api/menu/public');
+        const res = await fetch('/api/menu/public', { cache: 'no-cache' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!data.categories || !data.menuItems) throw new Error('Invalid response');

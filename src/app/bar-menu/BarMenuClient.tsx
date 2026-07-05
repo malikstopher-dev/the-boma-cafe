@@ -231,7 +231,7 @@ export default function BarMenuClient() {
   const filterRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/bar/public')
+    fetch('/api/bar/public', { cache: 'no-cache' })
       .then(r => r.json())
       .then(data => {
         if (!data?.categories || !data?.items) return;

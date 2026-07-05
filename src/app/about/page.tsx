@@ -20,7 +20,7 @@ export default function AboutPage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/cms/public').then(r => r.json()).then(data => {
+    fetch('/api/cms/public', { cache: 'no-cache' }).then(r => r.json()).then(data => {
       if (data?.settings) setAllSettings(data.settings);
     }).catch(console.error);
   }, []);

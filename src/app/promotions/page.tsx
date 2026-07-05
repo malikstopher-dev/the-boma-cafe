@@ -12,7 +12,7 @@ export default function PromotionsPage() {
   const [cmsPromotions, setCmsPromotions] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/cms/public').then(r => r.json()).then(data => {
+    fetch('/api/cms/public', { cache: 'no-cache' }).then(r => r.json()).then(data => {
       if (data?.promotions) setCmsPromotions(data.promotions);
     }).catch(() => {});
   }, []);

@@ -74,7 +74,7 @@ export default function ExperiencePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const publicData = await fetch('/api/cms/public').then(r => r.json());
+        const publicData = await fetch('/api/cms/public', { cache: 'no-cache' }).then(r => r.json());
         setSettings(publicData.settings || {});
         if (publicData.settings?.experience) {
           setExpSettings(publicData.settings.experience);

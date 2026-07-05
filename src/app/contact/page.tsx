@@ -28,7 +28,7 @@ export default function ContactPage() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const publicData = await fetch('/api/cms/public').then(r => r.json());
+        const publicData = await fetch('/api/cms/public', { cache: 'no-cache' }).then(r => r.json());
         setSettings(publicData.settings || {});
         setContactSettings(publicData.settings?.contact || null);
       } catch (error) {
