@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 24 * 365,
       });
       return NextResponse.json({ success: true, role: 'waiter' });
     }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 24 * 365,
       });
       return NextResponse.json({ success: true, role: 'kitchen' });
     }

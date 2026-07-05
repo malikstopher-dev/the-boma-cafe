@@ -142,17 +142,22 @@ export async function getMenuItems(): Promise<any[]> {
     console.error("cms-supabase.getMenuItems() — error.hint:", (error as any)?.hint)
     throw error
   }
-  return (data || []).map(item => ({
-    ...snakeToCamel(item),
-    id: item.id,
-    categoryId: item.category_id,
-    isAvailable: item.is_available,
-    isFeatured: item.is_featured,
-    isOnPromo: item.is_on_promo,
-    sizes: item.sizes ? JSON.parse(item.sizes) : null,
-    addOns: item.add_ons ? JSON.parse(item.add_ons) : null,
-    options: item.options ? JSON.parse(item.options) : null,
-  }))
+  return (data || []).map(item => {
+    const sizes = item.sizes ? JSON.parse(item.sizes) : null;
+    const addOns = item.add_ons ? JSON.parse(item.add_ons) : null;
+    return {
+      ...snakeToCamel(item),
+      id: item.id,
+      categoryId: item.category_id,
+      price: Number(item.price) || 0,
+      isAvailable: item.is_available,
+      isFeatured: item.is_featured,
+      isOnPromo: item.is_on_promo,
+      sizes: sizes ? sizes.map((s: any) => ({ ...s, price: Number(s.price) })) : null,
+      addOns: addOns ? addOns.map((a: any) => ({ ...a, price: Number(a.price) })) : null,
+      options: item.options ? JSON.parse(item.options) : null,
+    };
+  })
 }
 
 export async function saveMenuItem(item: any): Promise<any> {
