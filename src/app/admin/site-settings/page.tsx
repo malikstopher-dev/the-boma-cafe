@@ -167,22 +167,15 @@ export default function AdminSiteSettings() {
     const loadSettings = async () => {
       try {
         const settings = await cmsService.getAllSettings();
-        setHomepage({ ...settings.homepage });
-        setAbout({ ...settings.about });
-        setExperience({ ...settings.experience });
-        setEntertainment({ ...settings.entertainment });
-        setVenueHire({ ...settings.venueHire });
-        setContact({ ...settings.contact, phone2: settings.contact?.phone2 || '', whatsapp: settings.contact?.whatsapp || '' });
-        setPromoBar({ ...settings.promoBar });
-        setBranding({ 
-          ...settings.branding, 
-          facebook: settings.branding?.facebook || '',
-          instagram: settings.branding?.instagram || '',
-          twitter: settings.branding?.twitter || '',
-          tiktok: settings.branding?.tiktok || '',
-          youtube: settings.branding?.youtube || ''
-        });
-        setSeo({ ...settings.seo });
+        setHomepage({ heroTitle: '', heroSubtitle: '', heroBackgroundImage: '', welcomeTitle: '', welcomeDescription: '', ctaText: '', ctaLink: '', featuredSectionTitle: '', featuredSectionSubtitle: '', ...settings.homepage });
+        setAbout({ heroTitle: '', heroSubtitle: '', heroImage: '', introTitle: '', introDescription: '', fullDescription: '', missionTitle: '', missionDescription: '', valuesTitle: '', valuesDescription: '', additionalImage1: '', additionalImage2: '', ...settings.about });
+        setExperience({ heroTitle: '', heroSubtitle: '', heroBadge: '', diningTitle: '', diningSubtitle: '', diningDescription: '', diningHighlights: '', diningImage: '', diningCta: '', diningCtaLink: '', puffTitle: '', puffSubtitle: '', puffDescription: '', puffHighlights: '', puffImage: '', puffCta: '', puffCtaLink: '', familyTitle: '', familySubtitle: '', familyDescription: '', familyHighlights: '', familyImage: '', familyCta: '', familyCtaLink: '', weekendTitle: '', weekendDescription: '', weekendCta: '', weekendCtaLink: '', videoEnabled: false, videoPath: '', videoTitle: '', videoSubtitle: '', ...settings.experience });
+        setEntertainment({ heroTitle: '', heroSubtitle: '', heroBadge: '', introTitle: '', introDescription: '', djTitle: '', djDescription: '', karaokeTitle: '', karaokeDescription: '', liveTitle: '', liveDescription: '', vibeTitle: '', vibeDescription: '', vibeImage: '', ctaBook: '', ctaFollow: '', ...settings.entertainment });
+        setVenueHire({ heroTitle: '', heroSubtitle: '', heroBadge: '', introTitle: '', introDescription: '', meetingTitle: '', meetingDesc: '', yearEndTitle: '', yearEndDesc: '', weddingTitle: '', weddingDesc: '', privateTitle: '', privateDesc: '', ctaTitle: '', ctaDescription: '', cta: '', ctaLink: '', slideshowEnabled: false, slideshowImages: [], ...settings.venueHire });
+        setContact({ address: '', phone: '', phone2: '', email: '', whatsapp: '', openingHours: '', mapEmbedUrl: '', ...settings.contact });
+        setPromoBar({ isEnabled: false, message: '', buttonText: '', buttonLink: '', ...settings.promoBar });
+        setBranding({ siteName: '', siteTagline: '', logo: '', favicon: '', footerText: '', facebook: '', instagram: '', twitter: '', tiktok: '', youtube: '', ...settings.branding });
+        setSeo({ homepageTitle: '', homepageDescription: '', homepageKeywords: '', ogImage: '', ...settings.seo });
       } catch (error) {
         console.error('Error loading settings:', error);
       } finally {
