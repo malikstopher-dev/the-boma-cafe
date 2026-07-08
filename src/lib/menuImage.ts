@@ -60,11 +60,11 @@
   'Cherry Blossom Ginger G&T': '/menu/cherry-blossom-ginger-g-and-t.jpg',
   'Yuzu Whiskey Sours': '/menu/yuzu-whiskey-sours.jpg',
   'Brown Butter Old Fashioned': '/menu/brown-butter-old-fashioned.jpg',
-  'Berry Citrus Twist': '/menu/berry-citrus-twist.webp',
+  'Berry Citrus Twist': '/menu/berry-citrus-twist.jpg',
   'Cosmo Crush': '/menu/cosmo-crush.jpg',
   'No-Jito': '/menu/no-jito.jpg',
-  'Virgin Pina Colada': '/menu/pina-colada.jpg',
-  'Virgin Strawberry Daiquiri': '/menu/strawberry-daiquiri.jpg',
+  'Virgin Pina Colada': '/menu/virgin-pina-colada.jpg',
+  'Virgin Strawberry Daiquiri': '/menu/virgin-strawberry-daiquiri.jpg',
   'Cherry Blossom Martini': '/menu/cherry-blossom-martini.jpg',
   'Classic Beef Burger': '/menu/classic-beef-burger.jpg',
   'Chicken Burger': '/menu/chicken-burger.jpg',
@@ -100,7 +100,7 @@
   'Cheese Cake': '/menu/cheese-cake.jpg',
   'Carrot Cake': '/menu/carrot-cake.jpg',
   'Chocolate Cake': '/menu/chocolate-cake.jpg',
-  'Ice Cream & Chocolate Sauce': '/menu/chocolate-cake.jpg',
+  'Ice Cream & Chocolate Sauce': '/menu/ice-cream-and-chocolate-sauce.jpg',
   'Seasonal Fruit': '/menu/seasonal-fruit.jpg',
   'Chicken Strips & Fries': '/menu/chicken-strips-and-fries.jpg',
   'Wings & Fries': '/menu/wings-and-fries.jpg',
@@ -142,6 +142,7 @@
   'Rock Shandy': '/menu/rock-shandy.jpg',
   'Steelworks': '/menu/steelworks.jpg',
   'Fresh Juice': '/menu/fresh-juice.jpg',
+  'Chocolate Freezo': '/menu/chocolate-freezo.jpg',
 };
 
 export function slugify(name: string) {
