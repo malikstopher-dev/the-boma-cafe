@@ -98,7 +98,7 @@ function loadSavedCart() {
   }
 }
 
-function StepIndicator({ steps, current }: { steps: typeof STEPS; current: string }) {
+function StepIndicator({ steps, current, onStep }: { steps: typeof STEPS; current: string; onStep: (key: string) => void }) {
   const currentIdx = steps.findIndex((s) => s.key === current)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 1rem', background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
@@ -107,11 +107,13 @@ function StepIndicator({ steps, current }: { steps: typeof STEPS; current: strin
         const isDone = i < currentIdx
         return (
           <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1 }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
-              padding: '0.3rem 0.4rem', borderRadius: '6px', flex: 1,
-              background: isActive ? 'rgba(16,185,129,0.15)' : 'transparent',
-            }}>
+            <button onClick={() => (isDone || isActive) && onStep(step.key)}
+              disabled={!isDone && !isActive}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
+                padding: '0.3rem 0.4rem', borderRadius: '6px', flex: 1, border: 'none', cursor: (isDone || isActive) ? 'pointer' : 'default',
+                background: isActive ? 'rgba(16,185,129,0.15)' : 'transparent',
+              }}>
               <span style={{
                 width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '0.6rem', fontWeight: 700, flexShrink: 0,
@@ -126,7 +128,7 @@ function StepIndicator({ steps, current }: { steps: typeof STEPS; current: strin
               }}>
                 {step.short}
               </span>
-            </div>
+            </button>
             {i < steps.length - 1 && (
               <span style={{ color: i < currentIdx ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)', fontSize: '0.6rem' }}>▶</span>
             )}
@@ -156,13 +158,29 @@ export default function WaiterPage() {
   const [orderRef, setOrderRef] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
+  const WAITER_STORAGE_KEY = 'boma_waiter_name'
+
   useEffect(() => {
     if (!authed) return
     fetch('/api/waiters/active')
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setWaiters(data) })
+      .then(data => {
+        if (!Array.isArray(data)) return
+        setWaiters(data)
+        const saved = localStorage.getItem(WAITER_STORAGE_KEY)
+        if (saved && data.some(w => w.name === saved)) {
+          setWaiterName(saved)
+        }
+      })
       .catch(() => {})
   }, [authed])
+
+  // Persist waiter selection
+  useEffect(() => {
+    if (waiterName) {
+      localStorage.setItem(WAITER_STORAGE_KEY, waiterName)
+    }
+  }, [waiterName])
 
   useEffect(() => {
     if (!authed) return
@@ -205,9 +223,14 @@ export default function WaiterPage() {
   const total = cart.reduce((s, i) => s + i.price * i.quantity, 0)
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0)
 
+  const goToStep = (s: 'tables' | 'menu' | 'review') => {
+    setSubmitError(null)
+    setStep(s)
+  }
+
   const submitOrder = async () => {
     if (cart.length === 0 || !tableNumber) return
-    if (!waiterName) { setSubmitError('Please select your name (waiter)'); return }
+    if (!waiterName) { setSubmitError('Please select your name (waiter) — go back to Step 1'); return }
     setSubmitError(null)
     setSubmitting(true)
     try {
@@ -258,7 +281,7 @@ export default function WaiterPage() {
         <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Order for Table {tableNumber}</p>
         {waiterName && <p style={{ color: '#dc2626', fontWeight: 600, marginBottom: '0.5rem' }}>Waiter: {waiterName}</p>}
         <p style={{ color: '#f59e0b', fontFamily: 'monospace', fontSize: '1.2rem', marginBottom: '2rem' }}>{orderRef}</p>
-        <button onClick={() => { setDone(false); setTableNumber(null); setWaiterName(''); setStep('tables'); setSearchQuery('') }}
+        <button onClick={() => { setDone(false); setTableNumber(null); setWaiterName(''); setSubmitError(null); setStep('tables'); setSearchQuery('') }}
           style={{ padding: '1rem 2rem', border: 'none', borderRadius: '12px', background: '#10b981', color: '#000', fontSize: '1rem', fontWeight: 700, cursor: 'pointer' }}
         >
           New Order
@@ -270,7 +293,7 @@ export default function WaiterPage() {
   return (
     <div style={{ minHeight: '100dvh', background: '#0f0f1a', color: '#fff', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', sans-serif", maxWidth: '500px', margin: 'auto' }}>
       {/* Step Indicator */}
-      <StepIndicator steps={STEPS} current={step} />
+      <StepIndicator steps={STEPS} current={step} onStep={(key) => { if (key !== 'done') goToStep(key as 'tables' | 'menu' | 'review') }} />
 
       {/* Table Card */}
       {tableNumber && step !== 'tables' && (
@@ -287,9 +310,14 @@ export default function WaiterPage() {
             </div>
           </div>
           {step === 'menu' && (
-            <button onClick={() => setStep('review')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#10b981', color: '#000', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
-              🛒 {itemCount}
-            </button>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <button onClick={() => goToStep('tables')} style={{ padding: '0.4rem 0.65rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', cursor: 'pointer' }}>
+                ← Table
+              </button>
+              <button onClick={() => goToStep('review')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#10b981', color: '#000', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+                🛒 {itemCount}
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -454,8 +482,11 @@ export default function WaiterPage() {
               >
                 {submitting ? 'Sending...' : submitError ? 'Retry Order' : `Send to Kitchen — R${total.toFixed(2)}`}
               </button>
-              <button onClick={() => setStep('menu')} style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' }}>
+              <button onClick={() => goToStep('menu')} style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' }}>
                 ← Add more items
+              </button>
+              <button onClick={() => goToStep('tables')} style={{ width: '100%', marginTop: '0.3rem', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem', cursor: 'pointer' }}>
+                ← Change table
               </button>
             </>
           )}
@@ -481,7 +512,7 @@ export default function WaiterPage() {
       {/* Back to tables from menu when no items */}
       {step === 'menu' && !tableNumber && (
         <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', flexShrink: 0 }}>
-          <button onClick={() => setStep('tables')} style={{ width: '100%', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' }}>
+          <button onClick={() => goToStep('tables')} style={{ width: '100%', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' }}>
             ← Select a table first
           </button>
         </div>
