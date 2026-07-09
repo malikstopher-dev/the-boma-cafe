@@ -9,9 +9,9 @@ const KITCHEN_COOKIE = 'boma_kitchen_auth'
 const WAITER_COOKIE = 'boma_waiter_auth'
 
 const passwords = {
-  admin: 'test-admin-pass-123',
-  kitchen: 'test-kitchen-pass-456',
-  waiter: 'test-waiter-pass-789',
+  admin: 'Lovers0884',
+  kitchen: 'BomaKitchen0884',
+  waiter: 'BomaWaiter0884',
 }
 
 function expectedCookieValue(role: 'admin' | 'kitchen' | 'waiter'): string {
