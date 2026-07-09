@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 const ROLES = [
-  { key: 'admin', label: 'Admin', icon: '⚙️', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  { key: 'kitchen', label: 'Kitchen', icon: '👨‍🍳', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
-  { key: 'bar', label: 'Bar', icon: '🍸', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  { key: 'waiter', label: 'Waiter', icon: '📋', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+  { key: 'admin', label: 'Admin', icon: '⚙️', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', desc: 'Manage orders, staff, and settings' },
+  { key: 'kitchen', label: 'Kitchen', icon: '👨‍🍳', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', desc: 'View and process food orders' },
+  { key: 'bar', label: 'Bar', icon: '🍸', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', desc: 'View and process drink orders' },
+  { key: 'waiter', label: 'Waiter', icon: '📋', color: '#10b981', bg: 'rgba(16,185,129,0.1)', desc: 'Take orders and manage tables' },
 ]
 
 export default function StaffLogin() {
@@ -52,7 +52,7 @@ export default function StaffLogin() {
       })
       const data = await res.json()
       if (res.ok && data.authenticated) {
-        const target = selectedRole === 'admin' ? '/staff/admin' : selectedRole === 'kitchen' ? '/staff/kitchen' : '/staff/waiter'
+        const target = selectedRole === 'admin' ? '/staff/admin' : selectedRole === 'kitchen' ? '/staff/kitchen' : selectedRole === 'bar' ? '/staff/bar' : '/staff/waiter'
         router.push(target)
       } else {
         setError(data?.error || 'Invalid password')
@@ -99,7 +99,7 @@ export default function StaffLogin() {
                 <div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>{r.label}</div>
                   <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.15rem' }}>
-                    {r.key === 'admin' ? 'Manage orders, staff, and settings' : r.key === 'kitchen' ? 'View and process orders' : 'Take orders and manage tables'}
+                    {r.desc}
                   </div>
                 </div>
                 <div style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.2)', fontSize: '1.2rem' }}>→</div>
