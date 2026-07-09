@@ -39,6 +39,7 @@ export default function PosModal({
   return (
     <div
       onClick={onClose}
+      role="presentation"
       style={{
         position: 'fixed',
         inset: 0,
@@ -54,6 +55,9 @@ export default function PosModal({
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'pos-modal-title' : undefined}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--pos-surface)',
@@ -79,12 +83,13 @@ export default function PosModal({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {icon && <span style={{ fontSize: '1.3rem' }}>{icon}</span>}
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--pos-text)', margin: 0 }}>
+              <h2 id="pos-modal-title" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--pos-text)', margin: 0 }}>
                 {title}
               </h2>
             </div>
             <button
               onClick={onClose}
+              aria-label="Close dialog"
               style={{
                 background: 'none',
                 border: 'none',

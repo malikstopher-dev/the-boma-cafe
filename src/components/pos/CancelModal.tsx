@@ -48,15 +48,19 @@ export default function CancelModal({ open, onClose, onConfirm, orderRef, loadin
       )}
 
       <div style={{ marginBottom: '1rem' }}>
-        <label style={{ fontSize: '0.8rem', color: 'var(--pos-text-muted)', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Reason *</label>
+        <label htmlFor="cancel-reason" style={{ fontSize: '0.8rem', color: 'var(--pos-text-muted)', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Reason *</label>
         <textarea
+          id="cancel-reason"
           value={reason}
           onChange={e => { setReason(e.target.value); setError('') }}
           placeholder="Enter cancellation reason..."
           rows={3}
+          aria-required="true"
+          aria-invalid={!!error}
+          aria-describedby={error ? 'cancel-reason-error' : undefined}
           style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--pos-radius-md)', border: error ? '2px solid #ef4444' : '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '0.9rem', resize: 'vertical', outline: 'none', fontFamily: 'var(--pos-font)', boxSizing: 'border-box' }}
         />
-        {error && <div style={{ marginTop: '0.3rem', color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
+        {error && <div id="cancel-reason-error" role="alert" style={{ marginTop: '0.3rem', color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
       </div>
 
       <div style={{ marginBottom: '1.25rem' }}>
@@ -64,6 +68,8 @@ export default function CancelModal({ open, onClose, onConfirm, orderRef, loadin
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
           {QUICK_REASONS.map(r => (
             <button key={r} onClick={() => { setReason(r); setError('') }}
+              aria-label={`Quick reason: ${r}`}
+              aria-pressed={reason === r}
               style={{ padding: '0.35rem 0.7rem', borderRadius: 'var(--pos-radius-full)', border: reason === r ? '1px solid #ef4444' : '1px solid var(--pos-border)', background: reason === r ? 'rgba(239,68,68,0.15)' : 'var(--pos-card)', color: reason === r ? '#ef4444' : 'var(--pos-text-secondary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--pos-font)' }}>
               {r}
             </button>

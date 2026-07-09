@@ -50,9 +50,13 @@ export default function Timer({ startTime, targetMinutes = 15, size = 'md', show
   const sizeStyle = SIZE_MAP[size]
   const isOverdue = elapsed > targetMinutes * 60 * 1000
 
+  const urgencyLabel = isOverdue ? 'overdue' : elapsed < targetMinutes * 60 * 1000 * 0.7 ? 'on track' : 'approaching limit'
+
   return (
     <span
       className={className}
+      role="timer"
+      aria-label={`Time elapsed: ${formatElapsed(elapsed)}. ${urgencyLabel}. Target: ${targetMinutes} minutes.`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

@@ -9,6 +9,7 @@ interface PosButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode
   fullWidth?: boolean
   loading?: boolean
+  ariaLabel?: string
 }
 
 const VARIANT_STYLES: Record<ButtonVariant, { bg: string; color: string; border: string; hoverBg: string }> = {
@@ -35,6 +36,7 @@ export default function PosButton({
   disabled,
   style,
   children,
+  ariaLabel,
   ...props
 }: PosButtonProps) {
   const v = VARIANT_STYLES[variant]
@@ -42,7 +44,11 @@ export default function PosButton({
 
   return (
     <button
+      aria-label={ariaLabel || (typeof children === 'string' ? children : undefined)}
       disabled={disabled || loading}
+      tabIndex={0}
+      aria-disabled={disabled || loading}
+      aria-busy={loading}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

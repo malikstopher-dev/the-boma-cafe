@@ -33,6 +33,8 @@ export default function StatusBadge({ status, size = 'md', showIcon = true, puls
   return (
     <span
       className={className}
+      role="status"
+      aria-label={`Status: ${config.label}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

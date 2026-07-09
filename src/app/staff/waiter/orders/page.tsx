@@ -93,7 +93,8 @@ export default function WaiterOrdersPage() {
       </div>
 
       {/* Search */}
-      <input type="text" placeholder="🔍 Search by table or order ref..." value={search} onChange={e => setSearch(e.target.value)}
+      <label htmlFor="order-search" className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Search orders</label>
+      <input id="order-search" type="text" placeholder="🔍 Search by table or order ref..." value={search} onChange={e => setSearch(e.target.value)} aria-label="Search orders by table number or order reference"
         style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: 'var(--pos-radius-md)', border: '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '0.85rem', boxSizing: 'border-box', outline: 'none', marginBottom: '0.75rem', fontFamily: 'var(--pos-font)' }} />
 
       {/* Filter tabs */}

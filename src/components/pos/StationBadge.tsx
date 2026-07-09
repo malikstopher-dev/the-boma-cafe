@@ -24,6 +24,8 @@ export default function StationBadge({ station, size = 'md', className }: Statio
   return (
     <span
       className={className}
+      role="status"
+      aria-label={`Station: ${config.label}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

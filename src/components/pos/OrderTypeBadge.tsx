@@ -25,6 +25,8 @@ export default function OrderTypeBadge({ type, size = 'md', className }: OrderTy
   return (
     <span
       className={className}
+      role="status"
+      aria-label={`Order type: ${config.label}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

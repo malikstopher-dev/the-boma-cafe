@@ -63,7 +63,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           return (
             <div
               key={toast.id}
+              role="alert"
+              aria-live="polite"
               onClick={() => dismiss(toast.id)}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') dismiss(toast.id) }}
               style={{
                 pointerEvents: 'auto',
                 display: 'flex',

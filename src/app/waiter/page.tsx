@@ -90,6 +90,8 @@ export default function WaiterPage() {
   const [barItems, setBarItems] = useState<BarItem[]>([])
   const [menuMode, setMenuMode] = useState<'food' | 'bar'>('food')
   const [showCartSheet, setShowCartSheet] = useState(false)
+  const [historyOrders, setHistoryOrders] = useState<any[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   useEffect(() => {
     if (!authed) return
@@ -102,6 +104,16 @@ export default function WaiterPage() {
   }, [authed])
 
   useEffect(() => { if (waiterName) localStorage.setItem(WAITER_STORAGE_KEY, waiterName) }, [waiterName])
+
+  useEffect(() => {
+    if (!authed || tab !== 'history' || !waiterName) return
+    setHistoryLoading(true)
+    fetch(`/api/supabase/orders?limit=100&source=waiter`).then(r => r.json()).then(data => {
+      if (!Array.isArray(data)) return
+      const myOrders = data.filter((o: any) => o.waiter_name === waiterName)
+      setHistoryOrders(myOrders)
+    }).catch(() => {}).finally(() => setHistoryLoading(false))
+  }, [authed, tab, waiterName])
 
   useEffect(() => {
     if (!authed) return
@@ -373,10 +385,54 @@ export default function WaiterPage() {
 
         {/* History tab */}
         {tab === 'history' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pos-text-dim)', padding: '2rem', textAlign: 'center' }}>
-            <div>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-              <p>Order history coming soon</p>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.75rem' }}>📋 My Orders</h2>
+            {!waiterName && <p style={{ color: 'var(--pos-text-dim)', textAlign: 'center', padding: '2rem' }}>Select your name in Tables to view history</p>}
+            {waiterName && historyLoading && <p style={{ color: 'var(--pos-text-dim)', textAlign: 'center', padding: '2rem' }}>Loading...</p>}
+            {waiterName && !historyLoading && historyOrders.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--pos-text-dim)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
+                <p>No orders yet</p>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {historyOrders.map(order => {
+                const items: any[] = []
+                try { const p = JSON.parse(order.items_json); (Array.isArray(p) ? p : p?.items || []).forEach((i: any) => items.push(i)) } catch { /* */ }
+                const statusColors: Record<string, string> = {
+                  pending: '#f59e0b', confirmed: '#3b82f6', preparing: '#eab308', packing: '#f97316',
+                  ready: '#10b981', served: '#06b6d4', completed: '#6b7280', cancelled: '#ef4444', rejected: '#ef4444'
+                }
+                const color = statusColors[order.status] || '#6b7280'
+                return (
+                  <div key={order.id} style={{ padding: '0.75rem', borderRadius: 'var(--pos-radius-md)', background: 'var(--pos-card)', border: '1px solid var(--pos-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <StationBadge station={order.station || 'kitchen'} size="sm" />
+                        <span style={{ fontFamily: 'var(--pos-font-mono)', fontSize: '0.8rem', color: 'var(--pos-text-dim)' }}>{order.order_ref}</span>
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--pos-text-dim)' }}>
+                        {new Date(order.created_at).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })} {new Date(order.created_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--pos-text-secondary)' }}>
+                        {items.slice(0, 3).map((item: any, i: number) => <span key={i}>{item.quantity}x {item.name}{i < Math.min(items.length, 3) - 1 ? ', ' : ''}</span>)}
+                        {items.length > 3 && <span style={{ color: 'var(--pos-text-dim)' }}> +{items.length - 3} more</span>}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontWeight: 700, color: '#10b981', fontSize: '0.85rem' }}>R{order.total?.toFixed(2) || '0.00'}</span>
+                        <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' as const, background: `${color}22`, color, border: `1px solid ${color}40` }}>{order.status}</span>
+                      </div>
+                    </div>
+                    {order.cancellation_reason && (
+                      <div style={{ marginTop: '0.3rem', padding: '0.3rem 0.5rem', borderRadius: '4px', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontSize: '0.75rem' }}>
+                        ❌ {order.cancellation_reason}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
