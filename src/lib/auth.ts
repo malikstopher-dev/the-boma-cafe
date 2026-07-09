@@ -39,12 +39,10 @@ export async function getSession(): Promise<Session | null> {
   const kitchen = cookieStore.get(KITCHEN_COOKIE)
   const waiter = cookieStore.get(WAITER_COOKIE)
 
-  console.log('COOKIES', { admin: !!admin?.value, kitchen: !!kitchen?.value, waiter: !!waiter?.value })
-
-  // Check waiter first so a lingering admin cookie doesn't shadow the waiter role
-  if (waiter?.value && waiter.value === expectedCookieValue('waiter')) return { role: 'waiter' }
-  if (kitchen?.value && kitchen.value === expectedCookieValue('kitchen')) return { role: 'kitchen' }
+  // Highest precedence: admin → kitchen → waiter
   if (admin?.value && admin.value === expectedCookieValue('admin')) return { role: 'admin' }
+  if (kitchen?.value && kitchen.value === expectedCookieValue('kitchen')) return { role: 'kitchen' }
+  if (waiter?.value && waiter.value === expectedCookieValue('waiter')) return { role: 'waiter' }
 
   return null
 }

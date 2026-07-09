@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
+import { getSession, getRoleFromHeaders } from '@/lib/auth'
 import type { Role } from '@/lib/auth'
 
 export type { Role }
@@ -7,10 +7,12 @@ export { getSession }
 
 /**
  * Resolves the authenticated role for a request.
- * Validates cookies directly via SHA-256 hash comparison.
- * Does NOT trust x-user-role header (client-spoofable).
+ * Checks x-user-role header first (set by middleware), then falls back
+ * to cookie-based getSession() for routes that bypass middleware.
  */
 export async function getRequestRole(request: NextRequest): Promise<Role | null> {
+  const fromHeaders = getRoleFromHeaders(request.headers)
+  if (fromHeaders) return fromHeaders.role
   const session = await getSession()
   return session?.role ?? null
 }

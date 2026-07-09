@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
       }
       const cookieStore = await cookies();
+      // Clear conflicting cookies when logging in as waiter
+      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
       cookieStore.set(WAITER_COOKIE, expectedCookieValue('waiter'), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -48,6 +51,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
       }
       const cookieStore = await cookies();
+      // Clear conflicting cookies when logging in as kitchen
+      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
       cookieStore.set(KITCHEN_COOKIE, expectedCookieValue('kitchen'), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -65,6 +71,9 @@ export async function POST(request: NextRequest) {
 
     if (password === adminPassword) {
       const cookieStore = await cookies();
+      // Clear conflicting cookies when logging in as admin
+      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
       cookieStore.set(ADMIN_COOKIE, expectedCookieValue('admin'), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

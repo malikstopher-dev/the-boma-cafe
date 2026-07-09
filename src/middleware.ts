@@ -47,7 +47,7 @@ function roleScope(role: string): string {
   return 'waiter:orders'
 }
 
-const PROTECTED_API_PREFIXES = ['/api/admin/', '/api/cms/', '/api/waiters/', '/api/gallery/', '/api/upload/']
+const PROTECTED_API_PREFIXES = ['/api/admin/', '/api/cms/', '/api/waiters/', '/api/gallery/', '/api/upload/', '/api/supabase/']
 
 const PUBLIC_API_EXCEPTIONS = ['/api/cms/public', '/api/waiters/active', '/api/menu/public', '/api/track-order', '/api/receipt/verify']
 
@@ -126,6 +126,9 @@ export async function middleware(request: NextRequest) {
   // /api/admin/auth POST is the login endpoint — allow unauthenticated
   if (pathname === '/api/admin/auth' && request.method === 'POST') return NextResponse.next()
 
+  // Allow public POST to supabase endpoints (public website order/book/contact forms)
+  if (pathname.startsWith('/api/supabase/') && request.method === 'POST') return NextResponse.next()
+
   const auth = await verifyRole(request)
   if (!auth) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
@@ -144,5 +147,6 @@ export const config = {
     '/api/waiters/:path*',
     '/api/gallery/:path*',
     '/api/upload/:path*',
+    '/api/supabase/:path*',
   ],
 }
