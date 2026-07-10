@@ -61,14 +61,12 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   }, [])
 
   const handleLogout = async () => {
-    await fetch('/api/admin/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) })
-    // Nuclear clear: wipe all cookies and storage client-side
-    const cookies = ['boma_admin_auth', 'boma_kitchen_auth', 'boma_waiter_auth', 'boma_bar_auth'];
-    cookies.forEach(c => { document.cookie = `${c}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0;`; });
+    // Clear local state before redirect
     localStorage.removeItem('boma_waiter_name');
     localStorage.removeItem('boma_waiter_cart');
     sessionStorage.clear();
-    setAuthed(false); setRole(null); router.replace('/staff/login'); router.refresh();
+    // Full page redirect to logout endpoint to ensure HttpOnly cookies are cleared
+    window.location.href = '/api/admin/auth?action=logout';
   }
 
   const isLoginPage = pathname === '/staff/login'
