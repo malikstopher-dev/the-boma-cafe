@@ -139,8 +139,8 @@ export async function middleware(request: NextRequest) {
   if (!isProtectedApiPath(pathname)) return NextResponse.next()
   if (isPublicApiException(pathname)) return NextResponse.next()
 
-  // /api/admin/auth POST is the login endpoint — allow unauthenticated
-  if (pathname === '/api/admin/auth' && request.method === 'POST') return NextResponse.next()
+  // /api/admin/auth POST (login) and GET (logout/session check) — allow unauthenticated
+  if (pathname === '/api/admin/auth' && (request.method === 'POST' || request.method === 'GET')) return NextResponse.next()
 
   // Allow public POST to supabase endpoints (public website order/book/contact forms)
   if (pathname.startsWith('/api/supabase/') && request.method === 'POST') return NextResponse.next()
