@@ -21,7 +21,8 @@ function LoginForm() {
     const success = await login(password);
     
     if (success) {
-      router.push(redirectTo);
+      router.replace(redirectTo);
+      router.refresh();
     } else {
       setError('Invalid password. Please try again.');
     }

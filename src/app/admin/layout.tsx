@@ -36,14 +36,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // ── Auth redirect: runs before any conditional return ──────
   useEffect(() => {
-    if (pathname === '/admin/login' || pathname === '/admin/kitchen') return
+    if (pathname === '/admin/login' || pathname === '/admin/kitchen' || pathname === '/admin/bar') return
     if (!isLoading && !isAuthenticated) {
       router.replace(`/admin/login?redirect=${encodeURIComponent(pathname)}`)
     }
   }, [isAuthenticated, isLoading, pathname, router])
 
-  // Kitchen: full-width, no sidebar (has own password gate)
-  if (pathname === '/admin/kitchen') {
+  // Kitchen / Bar: full-width, no sidebar (has own password gate)
+  if (pathname === '/admin/kitchen' || pathname === '/admin/bar') {
     return (
       <div style={{ minHeight: '100vh', background: '#0f0f1a' }}>
         {children}

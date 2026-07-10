@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       // Clear conflicting cookies when logging in as waiter
       cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
       cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+      cookieStore.set(BAR_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
       cookieStore.set(WAITER_COOKIE, expectedCookieValue('waiter'), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
         path: '/',
         maxAge: 60 * 60 * 24 * 365,
       });
-      return NextResponse.json({ success: true, role: 'waiter' });
+      return NextResponse.json({ success: true, role: 'waiter', authenticated: true });
     }
 
     if (role === 'bar') {
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
         path: '/',
         maxAge: 60 * 60 * 24 * 365,
       });
-      return NextResponse.json({ success: true, role: 'bar' });
+      return NextResponse.json({ success: true, role: 'bar', authenticated: true });
     }
 
     if (role === 'kitchen') {
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
         path: '/',
         maxAge: 60 * 60 * 24 * 365,
       });
-      return NextResponse.json({ success: true, role: 'kitchen' });
+      return NextResponse.json({ success: true, role: 'kitchen', authenticated: true });
     }
 
     const adminPassword = process.env.ADMIN_PASSWORD;
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7,
       });
 
-      return NextResponse.json({ success: true, user: { id: '1', username: 'admin', email: 'admin@thebomacafe.co.za' } });
+      return NextResponse.json({ success: true, role: 'admin', authenticated: true, user: { id: '1', username: 'admin', email: 'admin@thebomacafe.co.za' } });
     }
 
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });

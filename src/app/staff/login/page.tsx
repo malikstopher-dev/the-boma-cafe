@@ -51,9 +51,10 @@ export default function StaffLogin() {
         body: JSON.stringify({ password, role: selectedRole }),
       })
       const data = await res.json()
-      if (res.ok && data.authenticated) {
+      if (res.ok && (data.authenticated || data.success)) {
         const target = selectedRole === 'admin' ? '/staff/admin' : selectedRole === 'kitchen' ? '/staff/kitchen' : selectedRole === 'bar' ? '/staff/bar' : '/staff/waiter'
-        router.push(target)
+        router.replace(target)
+        router.refresh()
       } else {
         setError(data?.error || 'Invalid password')
         setPassword('')
