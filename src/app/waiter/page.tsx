@@ -8,6 +8,8 @@ import PosCard from '@/components/pos/PosCard'
 import Timer from '@/components/pos/Timer'
 import { posTokens as t } from '@/components/pos/DesignSystem'
 import ErrorBoundary from '@/components/pos/ErrorBoundary'
+import PinLogin from '@/components/staff/PinLogin'
+import LockScreen from '@/components/staff/LockScreen'
 
 interface MenuItem {
   id: string; categoryId: string; name: string; description: string; price: string; image?: string
@@ -22,7 +24,14 @@ interface BarCategory { id: string; name: string; isActive: boolean; order: numb
 interface CartItem { id: string; name: string; description: string; price: number; quantity: number; notes: string; station?: 'kitchen' | 'bar' }
 
 const CART_STORAGE_KEY = 'boma_waiter_cart'
-const WAITER_STORAGE_KEY = 'boma_waiter_name'
+const STAFF_STORAGE_KEY = 'boma_waiter_staff'
+
+interface StaffInfo {
+  id: string
+  name: string
+  role: string
+  employee_id: string
+}
 
 function loadSavedCart() {
   if (typeof window === 'undefined') return null
@@ -32,64 +41,22 @@ function loadSavedCart() {
   } catch { return null }
 }
 
-function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch('/api/admin/auth', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, role: 'waiter' }),
-      })
-      if (res.ok) onSuccess()
-      else setError('Invalid password')
-    } catch { setError('Connection error') }
-    finally { setLoading(false) }
-  }
-
-  return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.colors.bg.primary, padding: 16 }}>
-      <form onSubmit={handleSubmit} style={{
-        background: t.colors.bg.surface, borderRadius: 24, padding: '40px 32px',
-        width: '100%', maxWidth: 380, border: `1px solid ${t.colors.border.default}`,
-        boxShadow: t.shadow.lg, display: 'flex', flexDirection: 'column', gap: 16,
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-          <h1 style={{ fontSize: 24, fontWeight: t.typography.fontWeight.bold, color: t.colors.text.primary, margin: 0, fontFamily: t.typography.fontFamily }}>Waiter Login</h1>
-        </div>
-        <input ref={ref} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Waiter password"
-          style={{
-            width: '100%', padding: '14px 16px', borderRadius: t.radius.lg,
-            border: `2px solid ${t.colors.border.default}`,
-            background: 'rgba(255,255,255,0.05)', color: t.colors.text.primary,
-            fontSize: t.typography.fontSize.lg, textAlign: 'center', boxSizing: 'border-box',
-            fontFamily: t.typography.fontFamily, outline: 'none', transition: 'border-color 0.15s',
-          }}
-          onFocus={e => (e.currentTarget.style.borderColor = '#10b981')}
-          onBlur={e => (e.currentTarget.style.borderColor = t.colors.border.default)}
-          required />
-        {error && <div style={{ color: '#ef4444', fontSize: t.typography.fontSize.sm, textAlign: 'center' }}>{error}</div>}
-        <PosButton type="submit" variant="warning" fullWidth size="lg" loading={loading}>Enter</PosButton>
-      </form>
-    </div>
-  )
+function loadSavedStaff(): StaffInfo | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(STAFF_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
 }
 
 export default function WaiterPage() {
   const saved = loadSavedCart()
-  const [authed, setAuthed] = useState(false)
+  const savedStaff = loadSavedStaff()
+  const [authed, setAuthed] = useState(!!savedStaff)
+  const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(savedStaff)
+  const [locked, setLocked] = useState(false)
   const [tab, setTab] = useState<'food' | 'drinks' | 'tables' | 'history' | 'cart'>(saved?.cart.length ? 'cart' : 'tables')
   const [tableNumber, setTableNumber] = useState<number | null>(saved?.tableNumber ?? null)
-  const [waiters, setWaiters] = useState<{ id: string; name: string }[]>([])
-  const [waiterName, setWaiterName] = useState('')
   const [categories, setCategories] = useState<MenuCategory[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -111,26 +78,14 @@ export default function WaiterPage() {
   const [menuLoading, setMenuLoading] = useState(false)
 
   useEffect(() => {
-    if (!authed) return
-    fetch('/api/waiters/active').then(r => r.json()).then(data => {
-      if (!Array.isArray(data)) return
-      setWaiters(data)
-      const saved = localStorage.getItem(WAITER_STORAGE_KEY)
-      if (saved && data.some((w: any) => w.name === saved)) setWaiterName(saved)
-    }).catch(() => {})
-  }, [authed])
-
-  useEffect(() => { if (waiterName) localStorage.setItem(WAITER_STORAGE_KEY, waiterName) }, [waiterName])
-
-  useEffect(() => {
-    if (!authed || tab !== 'history' || !waiterName) return
+    if (!authed || tab !== 'history' || !staffInfo?.name) return
     setHistoryLoading(true)
     fetch(`/api/supabase/orders?limit=100&source=waiter`).then(r => r.json()).then(data => {
       if (!Array.isArray(data)) return
-      const myOrders = data.filter((o: any) => o.waiter_name === waiterName)
+      const myOrders = data.filter((o: any) => o.waiter_name === staffInfo.name)
       setHistoryOrders(myOrders)
     }).catch(() => {}).finally(() => setHistoryLoading(false))
-  }, [authed, tab, waiterName])
+  }, [authed, tab, staffInfo?.name])
 
   useEffect(() => {
     if (!authed) return
@@ -187,13 +142,13 @@ export default function WaiterPage() {
 
   const submitOrder = async () => {
     if (cart.length === 0 || !tableNumber) return
-    if (!waiterName) { setSubmitError('Please select your name'); return }
+    if (!staffInfo?.name) { setSubmitError('Please log in first'); return }
     setSubmitError(null); setSubmitting(true)
     try {
       const items = cart.map(c => ({ menu_item_id: c.id, quantity: c.quantity, notes: itemNotes[c.id] || undefined, station: c.station || undefined }))
       const res = await fetch('/api/supabase/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer_name: `Table ${tableNumber}`, order_type: 'dine-in', requested_time: 'ASAP', items, table_number: String(tableNumber), waiter_name: waiterName || null, order_notes: orderNotes || undefined }),
+        body: JSON.stringify({ customer_name: `Table ${tableNumber}`, order_type: 'dine-in', requested_time: 'ASAP', items, table_number: String(tableNumber), waiter_name: staffInfo?.name || null, order_notes: orderNotes || undefined }),
       })
       if (!res.ok) { const d = await res.json().catch(() => ({})); setSubmitError(d?.error || `Order failed (${res.status})`); return }
       const data = await res.json()
@@ -223,7 +178,51 @@ export default function WaiterPage() {
     return () => clearInterval(iv)
   }, [done, orderRefs])
 
-  if (!authed) return <PasswordGate onSuccess={() => setAuthed(true)} />
+  if (!authed) return (
+    <PinLogin
+      role="waiter"
+      title="Waiter Sign-in"
+      icon="📋"
+      onSuccess={(staff) => {
+        setStaffInfo(staff)
+        setAuthed(true)
+        localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(staff))
+      }}
+    />
+  )
+
+  // Lock screen
+  if (locked && staffInfo) {
+    return (
+      <LockScreen
+        staffName={staffInfo.name}
+        employeeId={staffInfo.employee_id}
+        role={staffInfo.role}
+        onUnlock={async (pin) => {
+          try {
+            const res = await fetch('/api/staff/pin-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ employee_id: staffInfo.employee_id, pin }),
+            })
+            if (res.ok) {
+              setLocked(false)
+              return true
+            }
+            return false
+          } catch { return false }
+        }}
+        onSignOut={() => {
+          setAuthed(false)
+          setStaffInfo(null)
+          setLocked(false)
+          localStorage.removeItem(STAFF_STORAGE_KEY)
+          localStorage.removeItem(CART_STORAGE_KEY)
+          window.location.href = '/api/staff/session'
+        }}
+      />
+    )
+  }
 
   /* ── Done Screen ── */
   if (done) {
@@ -237,7 +236,7 @@ export default function WaiterPage() {
         <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
         <h1 style={{ fontSize: 24, fontWeight: t.typography.fontWeight.bold, marginBottom: 4 }}>Order Sent!</h1>
         <p style={{ color: t.colors.text.muted, marginBottom: 4, fontSize: t.typography.fontSize.lg, fontWeight: t.typography.fontWeight.semibold }}>Table {tableNumber}</p>
-        {waiterName && <p style={{ color: '#ef4444', fontWeight: t.typography.fontWeight.semibold, marginBottom: 16, fontSize: t.typography.fontSize.md }}>Waiter: {waiterName}</p>}
+        {staffInfo?.name && <p style={{ color: '#ef4444', fontWeight: t.typography.fontWeight.semibold, marginBottom: 16, fontSize: t.typography.fontSize.md }}>Waiter: {staffInfo.name}</p>}
 
         {orderRefs.map((r, i) => {
           const si = stationInfo(r.station)
@@ -275,7 +274,7 @@ export default function WaiterPage() {
           <PosButton variant="secondary" fullWidth onClick={() => { setDone(false); setTab('cart'); if (lastOrder) { setTableNumber(lastOrder.tableNumber); setCart(lastOrder.cart); setItemNotes(lastOrder.itemNotes); setOrderNotes(lastOrder.orderNotes) } }}>
             ← Back to Review
           </PosButton>
-          <PosButton variant="primary" fullWidth onClick={() => { setDone(false); setTableNumber(null); setWaiterName(''); setSubmitError(null); setTab('tables'); setSearchQuery('') }}>
+          <PosButton variant="primary" fullWidth onClick={() => { setDone(false); setTableNumber(null); setSubmitError(null); setTab('tables'); setSearchQuery('') }}>
             New Order
           </PosButton>
         </div>
@@ -301,7 +300,7 @@ export default function WaiterPage() {
             <div>
               <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>Serving</span>
               <span style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, color: '#10b981' }}>Table {tableNumber}</span>
-              {waiterName && <span style={{ fontSize: t.typography.fontSize.sm, color: '#ef4444', fontWeight: t.typography.fontWeight.semibold, marginLeft: 8 }}>{waiterName}</span>}
+              {staffInfo?.name && <span style={{ fontSize: t.typography.fontSize.sm, color: '#ef4444', fontWeight: t.typography.fontWeight.semibold, marginLeft: 8 }}>{staffInfo.name}</span>}
             </div>
           </div>
           {itemCount > 0 && (
@@ -338,18 +337,22 @@ export default function WaiterPage() {
               ))}
             </div>
             <div style={{ marginTop: 16 }}>
-              <label style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.muted, display: 'block', marginBottom: 6, fontWeight: t.typography.fontWeight.semibold }}>Your Name *</label>
-              <select value={waiterName} onChange={e => setWaiterName(e.target.value)}
-                style={{
-                  width: '100%', padding: '12px 16px', borderRadius: t.radius.lg,
-                  border: waiterName ? '2px solid #10b981' : `2px solid ${t.colors.border.default}`,
-                  background: t.colors.bg.card, color: t.colors.text.primary,
-                  fontSize: t.typography.fontSize.md, outline: 'none', cursor: 'pointer',
-                  fontFamily: t.typography.fontFamily,
-                }}>
-                <option value="">Select your name...</option>
-                {waiters.map(w => <option key={w.id} value={w.name} style={{ background: t.colors.bg.card, color: t.colors.text.primary }}>{w.name}</option>)}
-              </select>
+              <label style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.muted, display: 'block', marginBottom: 6, fontWeight: t.typography.fontWeight.semibold }}>Signed in as</label>
+              <div style={{
+                width: '100%', padding: '12px 16px', borderRadius: t.radius.lg,
+                border: '2px solid #10b981',
+                background: 'rgba(16,185,129,0.08)', color: '#10b981',
+                fontSize: t.typography.fontSize.md,
+                fontFamily: t.typography.fontFamily,
+                fontWeight: t.typography.fontWeight.semibold,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span>👤</span>
+                <span>{staffInfo?.name || 'Unknown'}</span>
+                {staffInfo?.employee_id && (
+                  <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, marginLeft: 'auto', fontFamily: t.typography.fontFamilyMono }}>{staffInfo.employee_id}</span>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -422,15 +425,15 @@ export default function WaiterPage() {
         {tab === 'history' && (
           <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
             <h2 style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, margin: '0 0 12px' }}>📋 My Orders</h2>
-            {!waiterName && <p style={{ color: t.colors.text.dim, textAlign: 'center', padding: 32 }}>Select your name in Tables to view history</p>}
-            {waiterName && historyLoading && (
+            {!staffInfo?.name && <p style={{ color: t.colors.text.dim, textAlign: 'center', padding: 32 }}>Staff information not available</p>}
+            {staffInfo?.name && historyLoading && (
               <div style={{ textAlign: 'center', padding: 48 }}>
                 <div style={{ width: 32, height: 32, border: `3px solid ${t.colors.border.default}`, borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
                 <p style={{ color: t.colors.text.dim, fontSize: t.typography.fontSize.sm }}>Loading orders...</p>
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             )}
-            {waiterName && !historyLoading && historyOrders.length === 0 && (
+            {staffInfo?.name && !historyLoading && historyOrders.length === 0 && (
               <div style={{ textAlign: 'center', padding: 48, color: t.colors.text.dim }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
                 <p>No orders yet</p>
