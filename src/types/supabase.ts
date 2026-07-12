@@ -19,10 +19,23 @@ export interface Order {
   requested_time: string
   items_json: string
   total: number
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+  status: OrderStatus
   created_at: string
   table_number: string | null
   delivery_address: string | null
+  order_ref: string | null
+  server_computed_total: number | null
+  idempotency_key: string | null
+  payment_status: string | null
+  payment_confirmed_at: string | null
+  payment_confirmed_by: string | null
+  waiter_name: string | null
+  preparation_time_minutes: number | null
+  source: string | null
+  created_by: string | null
+  cancellation_reason: string | null
+  station: 'kitchen' | 'bar' | null
+  parent_order_id: string | null
 }
 
 export interface ContactMessage {
@@ -35,4 +48,4 @@ export interface ContactMessage {
 }
 
 export type BookingStatus = Booking['status']
-export type OrderStatus = Order['status']
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'packing' | 'ready' | 'served' | 'completed' | 'cancelled' | 'rejected'
