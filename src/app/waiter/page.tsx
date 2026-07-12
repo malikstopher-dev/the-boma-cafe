@@ -6,6 +6,8 @@ import StationBadge from '@/components/pos/StationBadge'
 import PosButton from '@/components/pos/PosButton'
 import PosCard from '@/components/pos/PosCard'
 import Timer from '@/components/pos/Timer'
+import { posTokens as t } from '@/components/pos/DesignSystem'
+import ErrorBoundary from '@/components/pos/ErrorBoundary'
 
 interface MenuItem {
   id: string; categoryId: string; name: string; description: string; price: string; image?: string
@@ -33,12 +35,14 @@ function loadSavedCart() {
 function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => { ref.current?.focus() }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
     try {
       const res = await fetch('/api/admin/auth', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -47,20 +51,33 @@ function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
       if (res.ok) onSuccess()
       else setError('Invalid password')
     } catch { setError('Connection error') }
+    finally { setLoading(false) }
   }
 
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--pos-bg)', padding: '1rem' }}>
-      <form onSubmit={handleSubmit} style={{ background: 'var(--pos-surface)', borderRadius: '24px', padding: '2.5rem', width: '100%', maxWidth: '380px', border: '1px solid var(--pos-border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '3rem' }}>📋</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--pos-text)', margin: '0.5rem 0 0', fontFamily: 'var(--pos-font)' }}>Waiter Login</h1>
+    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.colors.bg.primary, padding: 16 }}>
+      <form onSubmit={handleSubmit} style={{
+        background: t.colors.bg.surface, borderRadius: 24, padding: '40px 32px',
+        width: '100%', maxWidth: 380, border: `1px solid ${t.colors.border.default}`,
+        boxShadow: t.shadow.lg, display: 'flex', flexDirection: 'column', gap: 16,
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+          <h1 style={{ fontSize: 24, fontWeight: t.typography.fontWeight.bold, color: t.colors.text.primary, margin: 0, fontFamily: t.typography.fontFamily }}>Waiter Login</h1>
         </div>
         <input ref={ref} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Waiter password"
-          style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '2px solid var(--pos-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--pos-text)', fontSize: '1rem', textAlign: 'center', boxSizing: 'border-box', fontFamily: 'var(--pos-font)' }}
+          style={{
+            width: '100%', padding: '14px 16px', borderRadius: t.radius.lg,
+            border: `2px solid ${t.colors.border.default}`,
+            background: 'rgba(255,255,255,0.05)', color: t.colors.text.primary,
+            fontSize: t.typography.fontSize.lg, textAlign: 'center', boxSizing: 'border-box',
+            fontFamily: t.typography.fontFamily, outline: 'none', transition: 'border-color 0.15s',
+          }}
+          onFocus={e => (e.currentTarget.style.borderColor = '#10b981')}
+          onBlur={e => (e.currentTarget.style.borderColor = t.colors.border.default)}
           required />
-        {error && <div style={{ marginTop: '0.5rem', color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{error}</div>}
-        <PosButton type="submit" variant="warning" fullWidth size="lg" style={{ marginTop: '1rem' }}>Enter</PosButton>
+        {error && <div style={{ color: '#ef4444', fontSize: t.typography.fontSize.sm, textAlign: 'center' }}>{error}</div>}
+        <PosButton type="submit" variant="warning" fullWidth size="lg" loading={loading}>Enter</PosButton>
       </form>
     </div>
   )
@@ -89,9 +106,9 @@ export default function WaiterPage() {
   const [barCategories, setBarCategories] = useState<BarCategory[]>([])
   const [barItems, setBarItems] = useState<BarItem[]>([])
   const [menuMode, setMenuMode] = useState<'food' | 'bar'>('food')
-  const [showCartSheet, setShowCartSheet] = useState(false)
   const [historyOrders, setHistoryOrders] = useState<any[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [menuLoading, setMenuLoading] = useState(false)
 
   useEffect(() => {
     if (!authed) return
@@ -117,6 +134,7 @@ export default function WaiterPage() {
 
   useEffect(() => {
     if (!authed) return
+    setMenuLoading(true)
     Promise.all([
       fetch('/api/menu/public', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({ categories: [], menuItems: [] })),
       fetch('/api/bar/public', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({ categories: [], items: [] })),
@@ -126,7 +144,7 @@ export default function WaiterPage() {
       if (menuData.categories?.length > 0) setActiveCategory(menuData.categories[0].id)
       setBarCategories(barData.categories || [])
       setBarItems(barData.items || [])
-    })
+    }).finally(() => setMenuLoading(false))
   }, [authed])
 
   useEffect(() => {
@@ -215,22 +233,21 @@ export default function WaiterPage() {
       return { label: 'Order', icon: '📋', color: '#f59e0b' }
     }
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--pos-bg)', color: 'var(--pos-text)', padding: '2rem', fontFamily: 'var(--pos-font)' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>Order Sent!</h1>
-        <p style={{ color: 'var(--pos-text-muted)', marginBottom: '0.25rem', fontSize: '1.1rem', fontWeight: 600 }}>Table {tableNumber}</p>
-        {waiterName && <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: '1rem' }}>Waiter: {waiterName}</p>}
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: t.colors.bg.primary, color: t.colors.text.primary, padding: 32, fontFamily: t.typography.fontFamily }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+        <h1 style={{ fontSize: 24, fontWeight: t.typography.fontWeight.bold, marginBottom: 4 }}>Order Sent!</h1>
+        <p style={{ color: t.colors.text.muted, marginBottom: 4, fontSize: t.typography.fontSize.lg, fontWeight: t.typography.fontWeight.semibold }}>Table {tableNumber}</p>
+        {waiterName && <p style={{ color: '#ef4444', fontWeight: t.typography.fontWeight.semibold, marginBottom: 16, fontSize: t.typography.fontSize.md }}>Waiter: {waiterName}</p>}
 
-        {/* Split order indicator */}
         {orderRefs.map((r, i) => {
           const si = stationInfo(r.station)
           return (
-            <PosCard key={i} padding="0.75rem 1rem" style={{ width: '100%', maxWidth: '360px', marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>{si.icon}</span>
+            <PosCard key={i} padding="12px 16px" style={{ width: '100%', maxWidth: 360, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 24 }}>{si.icon}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--pos-text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{si.label}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--pos-font-mono)', color: si.color }}>{r.ref}</div>
+                  <div style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{si.label}</div>
+                  <div style={{ fontSize: t.typography.fontSize.lg, fontWeight: t.typography.fontWeight.extrabold, fontFamily: t.typography.fontFamilyMono, color: si.color }}>{r.ref}</div>
                 </div>
                 <StatusBadge status="preparing" size="sm" />
               </div>
@@ -239,22 +256,22 @@ export default function WaiterPage() {
         })}
 
         {orderRefs.length > 1 && (
-          <p style={{ fontSize: '0.8rem', color: 'var(--pos-text-dim)', marginBottom: '1rem', textAlign: 'center', maxWidth: '360px' }}>
+          <p style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.dim, marginBottom: 16, textAlign: 'center', maxWidth: 360 }}>
             Kitchen and bar work independently. Table is active until both are ready.
           </p>
         )}
 
         {cancelledRefs.length > 0 && (
-          <PosCard padding="0.75rem" style={{ width: '100%', maxWidth: '360px', marginBottom: '1rem', borderColor: '#ef4444' }}>
+          <PosCard padding="12px" style={{ width: '100%', maxWidth: 360, marginBottom: 16, borderColor: '#ef4444' }}>
             {cancelledRefs.map((c, i) => (
-              <div key={i} style={{ fontSize: '0.85rem', color: '#fca5a5' }}>
+              <div key={i} style={{ fontSize: t.typography.fontSize.sm, color: '#fca5a5' }}>
                 ❌ <strong>{c.ref}</strong>{c.reason ? `: ${c.reason}` : ''}
               </div>
             ))}
           </PosCard>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '300px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 300 }}>
           <PosButton variant="secondary" fullWidth onClick={() => { setDone(false); setTab('cart'); if (lastOrder) { setTableNumber(lastOrder.tableNumber); setCart(lastOrder.cart); setItemNotes(lastOrder.itemNotes); setOrderNotes(lastOrder.orderNotes) } }}>
             ← Back to Review
           </PosButton>
@@ -271,16 +288,20 @@ export default function WaiterPage() {
   const barItems_ = cart.filter(c => c.station === 'bar')
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--pos-bg)', color: 'var(--pos-text)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--pos-font)' }}>
+    <div style={{ minHeight: '100dvh', background: t.colors.bg.primary, color: t.colors.text.primary, display: 'flex', flexDirection: 'column', fontFamily: t.typography.fontFamily }}>
       {/* Header */}
       {tableNumber && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', background: 'var(--pos-surface)', borderBottom: '1px solid var(--pos-border)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.1rem' }}>🍽️</span>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '10px 16px', background: t.colors.bg.surface,
+          borderBottom: `1px solid ${t.colors.border.default}`, flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 20 }}>🍽️</span>
             <div>
-              <span style={{ fontSize: '0.6rem', color: 'var(--pos-text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>Serving</span>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>Table {tableNumber}</span>
-              {waiterName && <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600, marginLeft: '0.5rem' }}>{waiterName}</span>}
+              <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>Serving</span>
+              <span style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, color: '#10b981' }}>Table {tableNumber}</span>
+              {waiterName && <span style={{ fontSize: t.typography.fontSize.sm, color: '#ef4444', fontWeight: t.typography.fontWeight.semibold, marginLeft: 8 }}>{waiterName}</span>}
             </div>
           </div>
           {itemCount > 0 && (
@@ -289,7 +310,7 @@ export default function WaiterPage() {
             </PosButton>
           )}
           <button onClick={() => { window.location.href = '/api/admin/auth?action=logout' }}
-            style={{ padding: '0.35rem 0.6rem', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--pos-radius-sm)', background: 'transparent', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--pos-font)' }}>
+            style={{ padding: '6px 10px', border: '1px solid rgba(239,68,68,0.3)', borderRadius: t.radius.sm, background: 'transparent', color: '#ef4444', fontSize: t.typography.fontSize.sm, cursor: 'pointer', fontFamily: t.typography.fontFamily }}>
             Sign Out
           </button>
         </div>
@@ -299,22 +320,35 @@ export default function WaiterPage() {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* Tables tab */}
         {tab === 'tables' && (
-          <div style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.75rem' }}>Select Table</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
+          <div style={{ flex: 1, padding: 16, overflowY: 'auto' }}>
+            <h2 style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, margin: '0 0 12px' }}>Select Table</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
               {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
                 <button key={n} onClick={() => { setTableNumber(n); setTab('food') }}
-                  style={{ padding: '1rem 0.5rem', borderRadius: '12px', border: tableNumber === n ? '2px solid #10b981' : '2px solid var(--pos-border)', background: tableNumber === n ? 'rgba(16,185,129,0.15)' : 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '1.1rem', fontWeight: 700, cursor: 'pointer', minHeight: '56px', fontFamily: 'var(--pos-font)' }}>
+                  style={{
+                    padding: '16px 8px', borderRadius: t.radius.lg,
+                    border: tableNumber === n ? '2px solid #10b981' : `2px solid ${t.colors.border.default}`,
+                    background: tableNumber === n ? 'rgba(16,185,129,0.15)' : t.colors.bg.card,
+                    color: t.colors.text.primary, fontSize: t.typography.fontSize.lg,
+                    fontWeight: t.typography.fontWeight.bold, cursor: 'pointer', minHeight: 56,
+                    fontFamily: t.typography.fontFamily,
+                  }}>
                   {n}
                 </button>
               ))}
             </div>
-            <div style={{ marginTop: '1rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--pos-text-muted)', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Your Name *</label>
+            <div style={{ marginTop: 16 }}>
+              <label style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.muted, display: 'block', marginBottom: 6, fontWeight: t.typography.fontWeight.semibold }}>Your Name *</label>
               <select value={waiterName} onChange={e => setWaiterName(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: waiterName ? '2px solid #10b981' : '2px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '1rem', outline: 'none', cursor: 'pointer', fontFamily: 'var(--pos-font)' }}>
+                style={{
+                  width: '100%', padding: '12px 16px', borderRadius: t.radius.lg,
+                  border: waiterName ? '2px solid #10b981' : `2px solid ${t.colors.border.default}`,
+                  background: t.colors.bg.card, color: t.colors.text.primary,
+                  fontSize: t.typography.fontSize.md, outline: 'none', cursor: 'pointer',
+                  fontFamily: t.typography.fontFamily,
+                }}>
                 <option value="">Select your name...</option>
-                {waiters.map(w => <option key={w.id} value={w.name} style={{ background: 'var(--pos-card)', color: 'var(--pos-text)' }}>{w.name}</option>)}
+                {waiters.map(w => <option key={w.id} value={w.name} style={{ background: t.colors.bg.card, color: t.colors.text.primary }}>{w.name}</option>)}
               </select>
             </div>
           </div>
@@ -322,66 +356,63 @@ export default function WaiterPage() {
 
         {/* Food tab */}
         {tab === 'food' && (
-          <MenuBrowser mode="food" categories={categories} menuItems={menuItems} activeCategory={activeCategory} setActiveCategory={setActiveCategory} searchQuery={searchQuery} setSearchQuery={setSearchQuery} addItem={addItem} filteredItems={filteredItems} activeCats={activeCats} />
+          <MenuBrowser mode="food" categories={categories} menuItems={menuItems} activeCategory={activeCategory} setActiveCategory={setActiveCategory} searchQuery={searchQuery} setSearchQuery={setSearchQuery} addItem={addItem} filteredItems={filteredItems} activeCats={activeCats} loading={menuLoading} />
         )}
 
         {/* Drinks tab */}
         {tab === 'drinks' && (
-          <MenuBrowser mode="bar" categories={barCategories as any} menuItems={barItems} activeCategory={activeCategory} setActiveCategory={setActiveCategory} searchQuery={searchQuery} setSearchQuery={setSearchQuery} addItem={addItem} filteredItems={filteredItems} activeCats={activeCats} getBarPrice={getBarPrice} />
+          <MenuBrowser mode="bar" categories={barCategories as any} menuItems={barItems} activeCategory={activeCategory} setActiveCategory={setActiveCategory} searchQuery={searchQuery} setSearchQuery={setSearchQuery} addItem={addItem} filteredItems={filteredItems} activeCats={activeCats} getBarPrice={getBarPrice} loading={menuLoading} />
         )}
 
         {/* Cart tab */}
         {tab === 'cart' && (
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.75rem' }}>🛒 Order Review</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--pos-text-muted)', margin: '0 0 1rem' }}>Table {tableNumber} — {itemCount} item{itemCount !== 1 ? 's' : ''}</p>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+            <h2 style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, margin: '0 0 12px' }}>🛒 Order Review</h2>
+            <p style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.muted, margin: '0 0 16px' }}>Table {tableNumber} — {itemCount} item{itemCount !== 1 ? 's' : ''}</p>
 
-            {/* Food section */}
             {foodItems.length > 0 && (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>🍳 Kitchen — R{foodTotal.toFixed(2)}</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: t.typography.fontSize.xs, color: '#f59e0b', fontWeight: t.typography.fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>🍳 Kitchen — R{foodTotal.toFixed(2)}</div>
                 {foodItems.map(item => (
                   <CartItemRow key={item.id} item={item} updateQty={updateQty} itemNotes={itemNotes} setItemNotes={setItemNotes} />
                 ))}
               </div>
             )}
 
-            {/* Bar section */}
             {barItems_.length > 0 && (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ fontSize: '0.7rem', color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>🍸 Bar — R{barTotal.toFixed(2)}</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: t.typography.fontSize.xs, color: '#8b5cf6', fontWeight: t.typography.fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>🍸 Bar — R{barTotal.toFixed(2)}</div>
                 {barItems_.map(item => (
                   <CartItemRow key={item.id} item={item} updateQty={updateQty} itemNotes={itemNotes} setItemNotes={setItemNotes} />
                 ))}
               </div>
             )}
 
-            {cart.length === 0 && <p style={{ color: 'var(--pos-text-dim)', textAlign: 'center', padding: '2rem' }}>Cart empty</p>}
+            {cart.length === 0 && <p style={{ color: t.colors.text.dim, textAlign: 'center', padding: 32 }}>Cart empty</p>}
 
             {cart.length > 0 && (
               <>
-                <div style={{ marginTop: '0.5rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--pos-text-muted)', display: 'block', marginBottom: '0.3rem', fontWeight: 500 }}>Order notes</label>
+                <div style={{ marginTop: 8 }}>
+                  <label style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.muted, display: 'block', marginBottom: 4, fontWeight: t.typography.fontWeight.medium }}>Order notes</label>
                   <input value={orderNotes} onChange={e => setOrderNotes(e.target.value)} placeholder="e.g. Extra napkins"
-                    style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '0.9rem', boxSizing: 'border-box', outline: 'none', fontFamily: 'var(--pos-font)' }} />
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: t.radius.md, border: `1px solid ${t.colors.border.default}`, background: t.colors.bg.card, color: t.colors.text.primary, fontSize: t.typography.fontSize.md, boxSizing: 'border-box', outline: 'none', fontFamily: t.typography.fontFamily }} />
                 </div>
 
-                {/* Totals */}
-                <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--pos-surface)', borderRadius: 'var(--pos-radius-lg)', border: '1px solid var(--pos-border)' }}>
-                  {foodItems.length > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--pos-text-secondary)', marginBottom: '0.25rem' }}><span>🍳 Kitchen</span><span>R{foodTotal.toFixed(2)}</span></div>}
-                  {barItems_.length > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--pos-text-secondary)', marginBottom: '0.25rem' }}><span>🍸 Bar</span><span>R{barTotal.toFixed(2)}</span></div>}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 800, marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--pos-border)' }}><span>Total</span><span style={{ color: '#10b981' }}>R{total.toFixed(2)}</span></div>
+                <div style={{ marginTop: 16, padding: 12, background: t.colors.bg.surface, borderRadius: t.radius.lg, border: `1px solid ${t.colors.border.default}` }}>
+                  {foodItems.length > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: t.typography.fontSize.sm, color: t.colors.text.secondary, marginBottom: 4 }}><span>🍳 Kitchen</span><span>R{foodTotal.toFixed(2)}</span></div>}
+                  {barItems_.length > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: t.typography.fontSize.sm, color: t.colors.text.secondary, marginBottom: 4 }}><span>🍸 Bar</span><span>R{barTotal.toFixed(2)}</span></div>}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: t.typography.fontSize.lg, fontWeight: t.typography.fontWeight.extrabold, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${t.colors.border.default}` }}><span>Total</span><span style={{ color: '#10b981' }}>R{total.toFixed(2)}</span></div>
                 </div>
 
                 {submitError && (
-                  <div style={{ marginTop: '0.75rem', padding: '0.75rem', borderRadius: 'var(--pos-radius-md)', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.85rem', textAlign: 'center' }}>{submitError}</div>
+                  <div style={{ marginTop: 12, padding: 12, borderRadius: t.radius.md, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: t.typography.fontSize.sm, textAlign: 'center' }}>{submitError}</div>
                 )}
 
-                <PosButton variant="success" fullWidth loading={submitting} onClick={submitOrder} style={{ marginTop: '0.75rem', fontSize: '1.1rem' }}>
+                <PosButton variant="success" fullWidth loading={submitting} onClick={submitOrder} style={{ marginTop: 12, fontSize: t.typography.fontSize.lg }}>
                   {submitting ? 'Sending...' : submitError ? 'Retry Order' : `Send Order — R${total.toFixed(2)}`}
                 </PosButton>
-                <PosButton variant="danger" fullWidth onClick={cancelOrder} style={{ marginTop: '0.5rem' }}>Cancel Order</PosButton>
-                <PosButton variant="ghost" fullWidth onClick={() => setTab('food')} style={{ marginTop: '0.5rem' }}>← Add more items</PosButton>
+                <PosButton variant="danger" fullWidth onClick={cancelOrder} style={{ marginTop: 8 }}>Cancel Order</PosButton>
+                <PosButton variant="ghost" fullWidth onClick={() => setTab('food')} style={{ marginTop: 8 }}>← Add more items</PosButton>
               </>
             )}
           </div>
@@ -389,17 +420,23 @@ export default function WaiterPage() {
 
         {/* History tab */}
         {tab === 'history' && (
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.75rem' }}>📋 My Orders</h2>
-            {!waiterName && <p style={{ color: 'var(--pos-text-dim)', textAlign: 'center', padding: '2rem' }}>Select your name in Tables to view history</p>}
-            {waiterName && historyLoading && <p style={{ color: 'var(--pos-text-dim)', textAlign: 'center', padding: '2rem' }}>Loading...</p>}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+            <h2 style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, margin: '0 0 12px' }}>📋 My Orders</h2>
+            {!waiterName && <p style={{ color: t.colors.text.dim, textAlign: 'center', padding: 32 }}>Select your name in Tables to view history</p>}
+            {waiterName && historyLoading && (
+              <div style={{ textAlign: 'center', padding: 48 }}>
+                <div style={{ width: 32, height: 32, border: `3px solid ${t.colors.border.default}`, borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+                <p style={{ color: t.colors.text.dim, fontSize: t.typography.fontSize.sm }}>Loading orders...</p>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
             {waiterName && !historyLoading && historyOrders.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--pos-text-dim)' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
+              <div style={{ textAlign: 'center', padding: 48, color: t.colors.text.dim }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
                 <p>No orders yet</p>
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {historyOrders.map(order => {
                 const items: any[] = []
                 try { const p = JSON.parse(order.items_json); (Array.isArray(p) ? p : p?.items || []).forEach((i: any) => items.push(i)) } catch { /* */ }
@@ -409,28 +446,28 @@ export default function WaiterPage() {
                 }
                 const color = statusColors[order.status] || '#6b7280'
                 return (
-                  <div key={order.id} style={{ padding: '0.75rem', borderRadius: 'var(--pos-radius-md)', background: 'var(--pos-card)', border: '1px solid var(--pos-border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div key={order.id} style={{ padding: 12, borderRadius: t.radius.md, background: t.colors.bg.card, border: `1px solid ${t.colors.border.default}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <StationBadge station={order.station || 'kitchen'} size="sm" />
-                        <span style={{ fontFamily: 'var(--pos-font-mono)', fontSize: '0.8rem', color: 'var(--pos-text-dim)' }}>{order.order_ref}</span>
+                        <span style={{ fontFamily: t.typography.fontFamilyMono, fontSize: t.typography.fontSize.sm, color: t.colors.text.dim }}>{order.order_ref}</span>
                       </div>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--pos-text-dim)' }}>
+                      <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim }}>
                         {new Date(order.created_at).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })} {new Date(order.created_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--pos-text-secondary)' }}>
+                      <div style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.secondary }}>
                         {items.slice(0, 3).map((item: any, i: number) => <span key={i}>{item.quantity}x {item.name}{i < Math.min(items.length, 3) - 1 ? ', ' : ''}</span>)}
-                        {items.length > 3 && <span style={{ color: 'var(--pos-text-dim)' }}> +{items.length - 3} more</span>}
+                        {items.length > 3 && <span style={{ color: t.colors.text.dim }}> +{items.length - 3} more</span>}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: 700, color: '#10b981', fontSize: '0.85rem' }}>R{order.total?.toFixed(2) || '0.00'}</span>
-                        <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' as const, background: `${color}22`, color, border: `1px solid ${color}40` }}>{order.status}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontWeight: t.typography.fontWeight.bold, color: '#10b981', fontSize: t.typography.fontSize.sm }}>R{order.total?.toFixed(2) || '0.00'}</span>
+                        <span style={{ padding: '2px 6px', borderRadius: 4, fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold, textTransform: 'uppercase' as const, background: `${color}22`, color, border: `1px solid ${color}40` }}>{order.status}</span>
                       </div>
                     </div>
                     {order.cancellation_reason && (
-                      <div style={{ marginTop: '0.3rem', padding: '0.3rem 0.5rem', borderRadius: '4px', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontSize: '0.75rem' }}>
+                      <div style={{ marginTop: 4, padding: '4px 8px', borderRadius: 4, background: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontSize: t.typography.fontSize.xs }}>
                         ❌ {order.cancellation_reason}
                       </div>
                     )}
@@ -443,7 +480,7 @@ export default function WaiterPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div style={{ display: 'flex', background: 'var(--pos-surface)', borderTop: '1px solid var(--pos-border)', flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div style={{ display: 'flex', background: t.colors.bg.surface, borderTop: `1px solid ${t.colors.border.default}`, flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {[
           { key: 'food', icon: '🍽️', label: 'Food', color: '#10b981' },
           { key: 'drinks', icon: '🍸', label: 'Drinks', color: '#8b5cf6' },
@@ -452,10 +489,17 @@ export default function WaiterPage() {
           { key: 'cart', icon: '🛒', label: 'Cart', color: '#10b981', badge: itemCount },
         ].map(nav => (
           <button key={nav.key} onClick={() => { if (nav.key === 'food') { setMenuMode('food'); setActiveCategory(categories[0]?.id || null) } else if (nav.key === 'drinks') { setMenuMode('bar'); setActiveCategory(barCategories[0]?.id || null) } setTab(nav.key as any); setSearchQuery('') }}
-            style={{ flex: 1, padding: '0.5rem 0.25rem', border: 'none', background: 'transparent', color: tab === nav.key ? nav.color : 'var(--pos-text-dim)', fontSize: '0.65rem', fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontFamily: 'var(--pos-font)', position: 'relative', minHeight: '56px', justifyContent: 'center' }}>
-            <span style={{ fontSize: '1.2rem' }}>{nav.icon}</span>
+            style={{
+              flex: 1, padding: '8px 4px', border: 'none', background: 'transparent',
+              color: tab === nav.key ? nav.color : t.colors.text.dim,
+              fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold,
+              cursor: 'pointer', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: 2, fontFamily: t.typography.fontFamily,
+              position: 'relative', minHeight: 56, justifyContent: 'center',
+            }}>
+            <span style={{ fontSize: 20 }}>{nav.icon}</span>
             {nav.label}
-            {nav.badge ? <span style={{ position: 'absolute', top: '4px', right: 'calc(50% - 18px)', background: '#ef4444', color: '#fff', borderRadius: '999px', minWidth: '18px', height: '18px', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{nav.badge}</span> : null}
+            {nav.badge ? <span style={{ position: 'absolute', top: 4, right: 'calc(50% - 18px)', background: '#ef4444', color: '#fff', borderRadius: 999, minWidth: 18, height: 18, fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.extrabold, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{nav.badge}</span> : null}
           </button>
         ))}
       </div>
@@ -464,46 +508,72 @@ export default function WaiterPage() {
 }
 
 /* ── Menu Browser sub-component ── */
-function MenuBrowser({ mode, categories, menuItems, activeCategory, setActiveCategory, searchQuery, setSearchQuery, addItem, filteredItems, activeCats, getBarPrice }: {
+function MenuBrowser({ mode, categories, menuItems, activeCategory, setActiveCategory, searchQuery, setSearchQuery, addItem, filteredItems, activeCats, getBarPrice, loading }: {
   mode: 'food' | 'bar'; categories: any[]; menuItems: any[]; activeCategory: string | null; setActiveCategory: (id: string | null) => void
   searchQuery: string; setSearchQuery: (q: string) => void; addItem: (item: any, price?: number, station?: 'kitchen' | 'bar') => void
-  filteredItems: any[]; activeCats: any[]; getBarPrice?: (item: any) => number
+  filteredItems: any[]; activeCats: any[]; getBarPrice?: (item: any) => number; loading?: boolean
 }) {
   const accent = mode === 'bar' ? '#8b5cf6' : '#10b981'
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Search */}
-      <div style={{ padding: '0.5rem 1rem', flexShrink: 0 }}>
+      <div style={{ padding: '8px 16px', flexShrink: 0 }}>
         <input type="text" placeholder={`🔍 Search ${mode === 'bar' ? 'drinks' : 'food'}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-          style={{ width: '100%', padding: '0.7rem 0.85rem', borderRadius: '10px', border: '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '0.9rem', boxSizing: 'border-box', outline: 'none', fontFamily: 'var(--pos-font)' }} />
+          style={{
+            width: '100%', padding: '10px 14px', borderRadius: t.radius.lg,
+            border: `1px solid ${t.colors.border.default}`, background: t.colors.bg.card,
+            color: t.colors.text.primary, fontSize: t.typography.fontSize.md,
+            boxSizing: 'border-box', outline: 'none', fontFamily: t.typography.fontFamily,
+          }} />
       </div>
 
       {/* Categories */}
-      <div style={{ display: 'flex', gap: '0.35rem', padding: '0 1rem 0.5rem', overflowX: 'auto', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 6, padding: '0 16px 8px', overflowX: 'auto', flexShrink: 0 }}>
         {activeCats.map(cat => (
           <button key={cat.id} onClick={() => { setActiveCategory(cat.id); setSearchQuery('') }}
-            style={{ padding: '0.4rem 0.8rem', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', background: activeCategory === cat.id ? accent : 'var(--pos-card)', color: activeCategory === cat.id ? '#fff' : 'var(--pos-text-muted)', fontFamily: 'var(--pos-font)' }}>
+            style={{
+              padding: '6px 14px', borderRadius: 20, border: 'none', whiteSpace: 'nowrap',
+              fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, cursor: 'pointer',
+              background: activeCategory === cat.id ? accent : t.colors.bg.card,
+              color: activeCategory === cat.id ? '#fff' : t.colors.text.muted,
+              fontFamily: t.typography.fontFamily,
+            }}>
             {cat.name}
           </button>
         ))}
       </div>
 
       {/* Items */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 1rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-        {filteredItems.map(item => (
-          <button key={item.id} onClick={() => addItem(item, mode === 'bar' ? (getBarPrice?.(item) ?? 0) : undefined, mode === 'bar' ? 'bar' : 'kitchen')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0.85rem', borderRadius: 'var(--pos-radius-md)', border: `1px solid ${accent}20`, background: `${accent}08`, color: 'var(--pos-text)', cursor: 'pointer', textAlign: 'left', width: '100%', minHeight: '56px', fontFamily: 'var(--pos-font)' }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{item.name}</div>
-              {item.description && <div style={{ fontSize: '0.7rem', color: 'var(--pos-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.description.slice(0, 50)}</div>}
-            </div>
-            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: accent, flexShrink: 0, marginLeft: '0.5rem' }}>
-              R{mode === 'bar' ? (getBarPrice?.(item) ?? 0).toFixed(2) : parseFloat(item.price).toFixed(2)}
-            </span>
-          </button>
-        ))}
-        {filteredItems.length === 0 && <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--pos-text-dim)', fontSize: '0.9rem' }}>No items found</div>}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 48 }}>
+            <div style={{ width: 32, height: 32, border: `3px solid ${t.colors.border.default}`, borderTopColor: accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+            <p style={{ color: t.colors.text.dim, fontSize: t.typography.fontSize.sm }}>Loading menu...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 48, color: t.colors.text.dim, fontSize: t.typography.fontSize.md }}>No items found</div>
+        ) : (
+          filteredItems.map(item => (
+            <button key={item.id} onClick={() => addItem(item, mode === 'bar' ? (getBarPrice?.(item) ?? 0) : undefined, mode === 'bar' ? 'bar' : 'kitchen')}
+              style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 14px', borderRadius: t.radius.md,
+                border: `1px solid ${accent}20`, background: `${accent}08`,
+                color: t.colors.text.primary, cursor: 'pointer', textAlign: 'left',
+                width: '100%', minHeight: 56, fontFamily: t.typography.fontFamily,
+              }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: t.typography.fontWeight.semibold, fontSize: t.typography.fontSize.md }}>{item.name}</div>
+                {item.description && <div style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.description.slice(0, 50)}</div>}
+              </div>
+              <span style={{ fontSize: t.typography.fontSize.md, fontWeight: t.typography.fontWeight.bold, color: accent, flexShrink: 0, marginLeft: 8 }}>
+                R{mode === 'bar' ? (getBarPrice?.(item) ?? 0).toFixed(2) : parseFloat(item.price).toFixed(2)}
+              </span>
+            </button>
+          ))
+        )}
       </div>
     </div>
   )
@@ -515,17 +585,17 @@ function CartItemRow({ item, updateQty, itemNotes, setItemNotes }: {
   itemNotes: Record<string, string>; setItemNotes: (fn: any) => void
 }) {
   return (
-    <div style={{ padding: '0.6rem 0', borderBottom: '1px solid var(--pos-border)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.name}</span>
-        <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.9rem' }}>R{(item.price * item.quantity).toFixed(2)}</span>
+    <div style={{ padding: '10px 0', borderBottom: `1px solid ${t.colors.border.default}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <span style={{ fontWeight: t.typography.fontWeight.semibold, fontSize: t.typography.fontSize.md }}>{item.name}</span>
+        <span style={{ color: '#10b981', fontWeight: t.typography.fontWeight.bold, fontSize: t.typography.fontSize.md }}>R{(item.price * item.quantity).toFixed(2)}</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <button onClick={() => updateQty(item.id, -1)} style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--pos-font)' }}>−</button>
-        <span style={{ fontWeight: 700, fontSize: '1.05rem', minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
-        <button onClick={() => updateQty(item.id, 1)} style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--pos-font)' }}>+</button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button onClick={() => updateQty(item.id, -1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${t.colors.border.default}`, background: t.colors.bg.card, color: t.colors.text.primary, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: t.typography.fontFamily }}>−</button>
+        <span style={{ fontWeight: t.typography.fontWeight.bold, fontSize: t.typography.fontSize.lg, minWidth: 24, textAlign: 'center' }}>{item.quantity}</span>
+        <button onClick={() => updateQty(item.id, 1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${t.colors.border.default}`, background: t.colors.bg.card, color: t.colors.text.primary, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: t.typography.fontFamily }}>+</button>
         <input placeholder="Notes" value={itemNotes[item.id] || ''} onChange={e => setItemNotes((prev: any) => ({ ...prev, [item.id]: e.target.value }))}
-          style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--pos-border)', background: 'var(--pos-card)', color: 'var(--pos-text)', fontSize: '0.8rem', outline: 'none', fontFamily: 'var(--pos-font)' }} />
+          style={{ flex: 1, padding: '6px 10px', borderRadius: t.radius.sm, border: `1px solid ${t.colors.border.default}`, background: t.colors.bg.card, color: t.colors.text.primary, fontSize: t.typography.fontSize.sm, outline: 'none', fontFamily: t.typography.fontFamily }} />
       </div>
     </div>
   )

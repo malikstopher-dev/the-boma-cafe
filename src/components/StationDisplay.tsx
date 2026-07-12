@@ -8,6 +8,7 @@ import OrderTypeBadge from '@/components/pos/OrderTypeBadge'
 import Timer from '@/components/pos/Timer'
 import CountBadge from '@/components/pos/CountBadge'
 import CancelModal from '@/components/pos/CancelModal'
+import { posTokens as t } from '@/components/pos/DesignSystem'
 
 export interface StationDisplayProps {
   station: 'kitchen' | 'bar'
@@ -39,11 +40,11 @@ interface Order {
 const READY_CLEANUP_MS = 5 * 60 * 1000
 
 const COLUMNS = [
-  { key: 'pending',   label: 'NEW',      icon: '🆕', color: '#f59e0b', bg: 'rgba(245,158,11,0.06)' },
-  { key: 'confirmed', label: 'CONFIRMED', icon: '✅', color: '#3b82f6', bg: 'rgba(59,130,246,0.06)' },
-  { key: 'preparing', label: 'PREPARING', icon: '🔥', color: '#eab308', bg: 'rgba(234,179,8,0.06)' },
-  { key: 'packing',   label: 'PACKING',  icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.06)' },
-  { key: 'ready',     label: 'READY',    icon: '✅', color: '#10b981', bg: 'rgba(16,185,129,0.06)' },
+  { key: 'pending',   label: 'NEW',      icon: '🆕', color: '#f59e0b', bg: 'rgba(245,158,11,0.04)' },
+  { key: 'confirmed', label: 'CONFIRMED', icon: '✅', color: '#3b82f6', bg: 'rgba(59,130,246,0.04)' },
+  { key: 'preparing', label: 'PREPARING', icon: '🔥', color: '#eab308', bg: 'rgba(234,179,8,0.04)' },
+  { key: 'packing',   label: 'PACKING',  icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.04)' },
+  { key: 'ready',     label: 'READY',    icon: '✅', color: '#10b981', bg: 'rgba(16,185,129,0.04)' },
 ]
 
 function playDing() {
@@ -80,24 +81,6 @@ function playReadyChime() {
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
-}
-
-function parseItems(json: string): any[] {
-  try {
-    const parsed = JSON.parse(json)
-    return Array.isArray(parsed) ? parsed : (parsed?.items || [])
-  } catch { return [] }
-}
-
-function parseMetadata(json: string): any {
-  try {
-    const parsed = JSON.parse(json)
-    return parsed && !Array.isArray(parsed) ? (parsed.metadata || {}) : {}
-  } catch { return {} }
-}
-
-function formatCurrency(amount: number) {
-  return `R${amount.toFixed(0)}`
 }
 
 export default function StationDisplay({ station, title, icon, primaryColor, loginRole }: StationDisplayProps) {
@@ -351,7 +334,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, role: loginRole }),
       })
-      if (res.ok) { setShowPasswordGate(false); setAuthed(true) }
+      if (res.ok) { setShowPasswordGate(false); setAuthed(true); setAuthExpired(false); setPassword('') }
       else { setPasswordError(`Invalid ${title} password`) }
     } catch { setPasswordError('Connection error') }
     finally { setPasswordLoading(false) }
@@ -361,27 +344,52 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
 
   if (checkingCookie) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--pos-bg)', color: 'var(--pos-text-muted)', fontFamily: 'var(--pos-font)' }}>
-        Checking session...
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: t.colors.bg.primary, color: t.colors.text.muted, fontFamily: t.typography.fontFamily, gap: 16 }}>
+        <div style={{ width: 32, height: 32, border: `3px solid ${t.colors.border.default}`, borderTopColor: primaryColor, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ fontSize: t.typography.fontSize.sm }}>Checking session...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
-  if (!authed || showPasswordGate) {
+  if (!authed || showPasswordGate || authExpired) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a14', padding: '2rem' }}>
-        <form onSubmit={handleLogin} style={{ background: 'var(--pos-surface)', borderRadius: '24px', padding: '3rem', width: '100%', maxWidth: '400px', border: '1px solid var(--pos-border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>{icon}</div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--pos-text)', margin: 0, fontFamily: 'var(--pos-font)' }}>{title}</h1>
-            <p style={{ color: 'var(--pos-text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Enter {title} password</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.colors.bg.primary, padding: 24 }}>
+        <form onSubmit={handleLogin} style={{
+          background: t.colors.bg.surface, borderRadius: 24, padding: '3rem 2rem',
+          width: '100%', maxWidth: 400, border: `1px solid ${t.colors.border.default}`,
+          boxShadow: t.shadow.lg, display: 'flex', flexDirection: 'column', gap: 20,
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>{icon}</div>
+            <h1 style={{ fontSize: 24, fontWeight: t.typography.fontWeight.bold, color: t.colors.text.primary, margin: 0, fontFamily: t.typography.fontFamily }}>{title}</h1>
+            <p style={{ color: t.colors.text.muted, fontSize: t.typography.fontSize.sm, marginTop: 8 }}>
+              {authExpired ? 'Session expired — please log in again' : `Enter ${title} password`}
+            </p>
           </div>
           <input ref={inputRef} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={`${title} password`}
-            style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '2px solid var(--pos-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--pos-text)', fontSize: '1.1rem', textAlign: 'center', outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--pos-font)' }}
+            style={{
+              width: '100%', padding: '14px 16px', borderRadius: t.radius.lg,
+              border: `2px solid ${t.colors.border.default}`,
+              background: 'rgba(255,255,255,0.05)', color: t.colors.text.primary,
+              fontSize: t.typography.fontSize.lg, textAlign: 'center', outline: 'none',
+              boxSizing: 'border-box', fontFamily: t.typography.fontFamily,
+              transition: 'border-color 0.15s',
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
+            onBlur={e => (e.currentTarget.style.borderColor = t.colors.border.default)}
             required autoComplete="off" />
-          {passwordError && <div style={{ marginTop: '0.75rem', color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>{passwordError}</div>}
+          {passwordError && <div style={{ color: '#ef4444', fontSize: t.typography.fontSize.sm, textAlign: 'center' }}>{passwordError}</div>}
           <button type="submit" disabled={passwordLoading}
-            style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', border: 'none', borderRadius: '12px', background: passwordLoading ? 'rgba(255,255,255,0.1)' : primaryColor, color: passwordLoading ? 'var(--pos-text-muted)' : '#000', fontSize: '1.1rem', fontWeight: 700, cursor: passwordLoading ? 'not-allowed' : 'pointer', opacity: passwordLoading ? 0.6 : 1, fontFamily: 'var(--pos-font)' }}>
+            style={{
+              width: '100%', padding: '14px 16px', border: 'none', borderRadius: t.radius.lg,
+              background: passwordLoading ? 'rgba(255,255,255,0.1)' : primaryColor,
+              color: passwordLoading ? t.colors.text.muted : '#000',
+              fontSize: t.typography.fontSize.lg, fontWeight: t.typography.fontWeight.bold,
+              cursor: passwordLoading ? 'not-allowed' : 'pointer',
+              opacity: passwordLoading ? 0.6 : 1, fontFamily: t.typography.fontFamily,
+              transition: 'opacity 0.15s',
+            }}>
             {passwordLoading ? 'Verifying...' : `Enter ${title}`}
           </button>
         </form>
@@ -395,7 +403,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   const activeColData = columnData[activeCol]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--pos-bg)', color: 'var(--pos-text)', fontFamily: 'var(--pos-font)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: t.colors.bg.primary, color: t.colors.text.primary, fontFamily: t.typography.fontFamily, display: 'flex', flexDirection: 'column' }}>
       <style>{`
         @keyframes flash-border { 0%, 100% { border-color: ${primaryColor}; } 50% { border-color: ${primaryColor}00; } }
         @keyframes fade-out { to { opacity: 0; transform: scale(0.96); } }
@@ -406,45 +414,53 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
       `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', background: 'var(--pos-surface)', borderBottom: '1px solid var(--pos-border)', flexShrink: 0, gap: '0.5rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700, color: primaryColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '10px 16px', background: t.colors.bg.surface,
+        borderBottom: `1px solid ${t.colors.border.default}`, flexShrink: 0,
+        gap: 8, flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.bold,
+            color: primaryColor, textTransform: 'uppercase', letterSpacing: '0.06em',
+          }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: primaryColor, display: 'inline-block' }} />
             {icon} {title.toUpperCase()}
           </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--pos-text-dim)', fontFamily: 'var(--pos-font-mono)' }}>
+          <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, fontFamily: t.typography.fontFamilyMono }}>
             {new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
           <CountBadge count={pending.length} color={primaryColor} size="sm" />
-          {!isMobile && <span style={{ fontSize: '0.65rem', color: 'var(--pos-text-dim)' }}>←→ nav · 1 Prep · 2 Ready</span>}
+          {!isMobile && <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim }}>←→ nav · 1 Prep · 2 Ready</span>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => setSoundOn(!soundOn)} title={soundOn ? 'Sound on' : 'Sound off'}
-            style={{ padding: '0.35rem 0.6rem', border: '1px solid var(--pos-border)', borderRadius: 'var(--pos-radius-sm)', background: 'rgba(255,255,255,0.05)', color: soundOn ? '#10b981' : 'var(--pos-text-dim)', fontSize: '0.95rem', cursor: 'pointer' }}>
+            style={{ padding: '6px 10px', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.sm, background: 'rgba(255,255,255,0.05)', color: soundOn ? '#10b981' : t.colors.text.dim, fontSize: 16, cursor: 'pointer' }}>
             {soundOn ? '🔊' : '🔇'}
           </button>
           <button onClick={handleLogout}
-            style={{ padding: '0.35rem 0.6rem', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--pos-radius-sm)', background: 'transparent', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--pos-font)' }}>
+            style={{ padding: '6px 10px', border: '1px solid rgba(239,68,68,0.3)', borderRadius: t.radius.sm, background: 'transparent', color: '#ef4444', fontSize: t.typography.fontSize.sm, cursor: 'pointer', fontFamily: t.typography.fontFamily }}>
             Logout
           </button>
         </div>
       </div>
 
       {/* Error banners */}
-      {connectionError && <div style={{ padding: '0.4rem 1rem', background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.8rem', textAlign: 'center', flexShrink: 0 }}>⚠ Connection lost — retrying...</div>}
-      {authExpired && <div style={{ padding: '0.4rem 1rem', background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.8rem', textAlign: 'center', flexShrink: 0 }}>⚠ Session expired — please log in again</div>}
-      {errorMessage && <div style={{ padding: '0.4rem 1rem', background: 'rgba(239,68,68,0.12)', borderBottom: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5', fontSize: '0.8rem', textAlign: 'center', flexShrink: 0 }}>{errorMessage}</div>}
+      {connectionError && <div style={{ padding: '6px 16px', background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: t.typography.fontSize.sm, textAlign: 'center', flexShrink: 0 }}>⚠ Connection lost — retrying...</div>}
+      {errorMessage && <div style={{ padding: '6px 16px', background: 'rgba(239,68,68,0.12)', borderBottom: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5', fontSize: t.typography.fontSize.sm, textAlign: 'center', flexShrink: 0 }}>{errorMessage}</div>}
 
-      {/* Empty state when zero orders */}
-      {!connectionError && !authExpired && displayOrders.length === 0 && (
+      {/* Empty state */}
+      {!connectionError && displayOrders.length === 0 && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.6 }}>{icon}</div>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--pos-text)', margin: '0 0 0.5rem' }}>No {station === 'bar' ? 'drink' : 'food'} orders yet</h2>
-          <p style={{ color: 'var(--pos-text-dim)', fontSize: '0.9rem', margin: '0 0 1.5rem', maxWidth: '320px' }}>
+          <div style={{ fontSize: 64, marginBottom: 16, opacity: 0.5 }}>{icon}</div>
+          <h2 style={{ fontSize: 20, fontWeight: t.typography.fontWeight.bold, color: t.colors.text.primary, margin: '0 0 8px' }}>No {station === 'bar' ? 'drink' : 'food'} orders yet</h2>
+          <p style={{ color: t.colors.text.dim, fontSize: t.typography.fontSize.md, margin: '0 0 24px', maxWidth: 320 }}>
             {station === 'bar' ? 'Drink orders from waiters will appear here.' : 'Food orders from waiters will appear here.'}
           </p>
           <button onClick={loadOrders}
-            style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--pos-radius-md)', border: `1px solid ${primaryColor}`, background: 'transparent', color: primaryColor, fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--pos-font)', touchAction: 'manipulation' }}>
+            style={{ padding: '10px 24px', borderRadius: t.radius.md, border: `1px solid ${primaryColor}`, background: 'transparent', color: primaryColor, fontSize: t.typography.fontSize.md, fontWeight: t.typography.fontWeight.bold, cursor: 'pointer', fontFamily: t.typography.fontFamily }}>
             🔄 Refresh
           </button>
         </div>
@@ -452,11 +468,19 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
 
       {/* Mobile tab bar */}
       {isMobile && displayOrders.length > 0 && (
-        <div style={{ display: 'flex', background: 'var(--pos-surface)', borderBottom: '1px solid var(--pos-border)', overflowX: 'auto', flexShrink: 0 }}>
+        <div style={{ display: 'flex', background: t.colors.bg.surface, borderBottom: `1px solid ${t.colors.border.default}`, overflowX: 'auto', flexShrink: 0 }}>
           {columnData.map((col, i) => (
             <button key={col.key} onClick={() => setMobileTab(i)}
-              style={{ flex: 1, minWidth: 0, padding: '0.6rem 0.25rem', border: 'none', borderBottom: i === mobileTab ? `3px solid ${col.color}` : '3px solid transparent', background: i === mobileTab ? col.bg : 'transparent', color: i === mobileTab ? col.color : 'var(--pos-text-muted)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontFamily: 'var(--pos-font)', whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: '1rem' }}>{col.icon}</span>
+              style={{
+                flex: 1, minWidth: 0, padding: '8px 4px', border: 'none',
+                borderBottom: i === mobileTab ? `3px solid ${col.color}` : '3px solid transparent',
+                background: i === mobileTab ? col.bg : 'transparent',
+                color: i === mobileTab ? col.color : t.colors.text.muted,
+                fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold,
+                cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', gap: 2, fontFamily: t.typography.fontFamily, whiteSpace: 'nowrap',
+              }}>
+              <span style={{ fontSize: 18 }}>{col.icon}</span>
               {col.label}
               {col.items.length > 0 && <CountBadge count={col.items.length} color={col.color} size="sm" />}
             </button>
@@ -469,7 +493,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
         {columnData.map((col, colIdx) => (
           <Column key={col.key} col={col} colIdx={colIdx} focusedCol={isMobile ? mobileTab : focusedCol} focusedIdx={focusedIdx}
             orders={col.items} updating={updating} updateStatus={updateStatus} prepTimeInputs={prepTimeInputs} setPrepTimeInputs={setPrepTimeInputs}
-            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={false} openCancelModal={openCancelModal} />
+            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={false} openCancelModal={openCancelModal} primaryColor={primaryColor} />
         ))}
       </div>}
 
@@ -478,7 +502,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
         <div className="pos-kanban-mobile" style={{ flex: 1, flexDirection: 'column', overflow: 'hidden', background: activeColData.bg }}>
           <Column col={activeColData} colIdx={activeCol} focusedCol={activeCol} focusedIdx={0}
             orders={activeColData.items} updating={updating} updateStatus={updateStatus} prepTimeInputs={prepTimeInputs} setPrepTimeInputs={setPrepTimeInputs}
-            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={true} openCancelModal={openCancelModal} />
+            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={true} openCancelModal={openCancelModal} primaryColor={primaryColor} />
         </div>
       )}
 
@@ -489,7 +513,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
 }
 
 /* ── Column sub-component ── */
-function Column({ col, colIdx, focusedCol, focusedIdx, orders, updating, updateStatus, prepTimeInputs, setPrepTimeInputs, cardErrors, readyTimesRef, station, isMobile, openCancelModal }: {
+function Column({ col, colIdx, focusedCol, focusedIdx, orders, updating, updateStatus, prepTimeInputs, setPrepTimeInputs, cardErrors, readyTimesRef, station, isMobile, openCancelModal, primaryColor }: {
   col: typeof COLUMNS[number] & { items: Order[] }
   colIdx: number
   focusedCol: number
@@ -504,37 +528,36 @@ function Column({ col, colIdx, focusedCol, focusedIdx, orders, updating, updateS
   station: string
   isMobile: boolean
   openCancelModal: (id: string, ref: string) => void
+  primaryColor: string
 }) {
   const isActive = colIdx === focusedCol
 
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', background: col.bg,
-      borderRight: !isMobile ? '1px solid var(--pos-border)' : 'none',
+      borderRight: !isMobile ? `1px solid ${t.colors.border.default}` : 'none',
       outline: isActive && !isMobile ? `2px solid ${col.color}40` : 'none',
       outlineOffset: '-2px', overflow: 'hidden',
     }}>
       {/* Column header */}
-      <div style={{ padding: '0.6rem 0.75rem', borderBottom: `2px solid ${col.color}30`, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: col.color, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--pos-font)' }}>
+      <div style={{ padding: '8px 12px', borderBottom: `2px solid ${col.color}30`, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0, fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.bold, color: col.color, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: t.typography.fontFamily }}>
           {col.icon} {col.label}
         </h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <span style={{ padding: '0.15rem 0.5rem', borderRadius: 'var(--pos-radius-full)', fontSize: '0.75rem', fontWeight: 700, background: `${col.color}20`, color: col.color }}>{col.items.length}</span>
-        </div>
+        <span style={{ padding: '2px 8px', borderRadius: t.radius.full, fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.bold, background: `${col.color}20`, color: col.color }}>{col.items.length}</span>
       </div>
 
       {/* Cards */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {col.items.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem 0.5rem', color: 'var(--pos-text-dim)', fontSize: '0.8rem' }}>
+          <div style={{ textAlign: 'center', padding: '32px 8px', color: t.colors.text.dim, fontSize: t.typography.fontSize.sm }}>
             {col.key === 'pending' ? 'No new orders' : col.key === 'confirmed' ? 'No accepted' : col.key === 'preparing' ? 'Nothing in prep' : 'No orders'}
           </div>
         )}
         {col.items.map((order, idx) => (
           <OrderCard key={order.id} order={order} col={col} colIdx={colIdx} focusedCol={focusedCol} focusedIdx={idx}
             updating={updating} updateStatus={updateStatus} prepTimeInputs={prepTimeInputs} setPrepTimeInputs={setPrepTimeInputs}
-            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={isMobile} openCancelModal={openCancelModal} />
+            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={isMobile} openCancelModal={openCancelModal} primaryColor={primaryColor} />
         ))}
       </div>
     </div>
@@ -542,7 +565,7 @@ function Column({ col, colIdx, focusedCol, focusedIdx, orders, updating, updateS
 }
 
 /* ── Order Card sub-component ── */
-function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updateStatus, prepTimeInputs, setPrepTimeInputs, cardErrors, readyTimesRef, station, isMobile, openCancelModal }: {
+function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updateStatus, prepTimeInputs, setPrepTimeInputs, cardErrors, readyTimesRef, station, isMobile, openCancelModal, primaryColor }: {
   order: Order
   col: typeof COLUMNS[number]
   colIdx: number
@@ -557,6 +580,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
   station: string
   isMobile: boolean
   openCancelModal: (id: string, ref: string) => void
+  primaryColor: string
 }) {
   const isFocused = colIdx === focusedCol
   const isNew = order.status === 'pending'
@@ -574,51 +598,54 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
 
   return (
     <div className={isNew ? 'pos-new-flash' : fading ? 'pos-fade-ready' : ''} style={{
-      background: 'var(--pos-card)', borderRadius: 'var(--pos-radius-lg)', padding: isMobile ? '0.75rem' : '1rem',
+      background: t.colors.bg.card, borderRadius: t.radius.lg, padding: isMobile ? 12 : 14,
       border: isFocused ? `2px solid ${col.color}` : `1px solid ${col.color}30`,
-      boxShadow: isFocused ? `0 0 16px ${col.color}25` : 'var(--pos-shadow-sm)',
+      boxShadow: isFocused ? `0 0 16px ${col.color}25` : t.shadow.sm,
       transition: 'opacity 0.3s, transform 0.3s', opacity: fading ? 0 : 1, position: 'relative', overflow: 'hidden',
     }}>
       {/* Colored left accent */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px', background: col.color, borderRadius: '3px 0 0 3px' }} />
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: col.color, borderRadius: '3px 0 0 3px' }} />
 
       {/* Row 1: Ref + Timer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem', paddingLeft: '6px' }}>
-        <span style={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 800, fontFamily: 'var(--pos-font-mono)', color: 'var(--pos-text)', lineHeight: 1.2 }}>{displayRef}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, paddingLeft: 6 }}>
+        <span style={{ fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, fontFamily: t.typography.fontFamilyMono, color: t.colors.text.primary, lineHeight: 1.2 }}>{displayRef}</span>
         <Timer startTime={order.created_at} targetMinutes={station === 'bar' ? 5 : 15} size="sm" />
       </div>
 
       {/* Row 2: Badges */}
-      <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.5rem', flexWrap: 'wrap', paddingLeft: '6px' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap', paddingLeft: 6 }}>
         <OrderTypeBadge type={order.order_type as any} size="sm" />
         <StationBadge station={station as any} size="sm" />
         {order.order_type !== 'dine-in' && (
-          <span style={{ padding: '2px 6px', borderRadius: 'var(--pos-radius-sm)', fontSize: '0.65rem', fontWeight: 700,
+          <span style={{
+            padding: '2px 6px', borderRadius: t.radius.sm, fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold,
             background: order.payment_status === 'paid' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-            color: order.payment_status === 'paid' ? '#10b981' : '#f59e0b', border: `1px solid ${order.payment_status === 'paid' ? '#10b98130' : '#f59e0b30'}` }}>
+            color: order.payment_status === 'paid' ? '#10b981' : '#f59e0b',
+            border: `1px solid ${order.payment_status === 'paid' ? '#10b98130' : '#f59e0b30'}`,
+          }}>
             {order.payment_status === 'paid' ? '✅ Paid' : '⏳ Pay'}
           </span>
         )}
       </div>
 
       {/* Row 3: Meta info */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem', paddingLeft: '6px', fontSize: '0.75rem', color: 'var(--pos-text-secondary)' }}>
-        {order.table_number && <span style={{ fontWeight: 700, color: '#ef4444' }}>🪑 T{order.table_number}</span>}
-        {order.waiter_name && <span style={{ fontWeight: 600 }}>👤 {order.waiter_name}</span>}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6, paddingLeft: 6, fontSize: t.typography.fontSize.sm, color: t.colors.text.secondary }}>
+        {order.table_number && <span style={{ fontWeight: t.typography.fontWeight.bold, color: '#ef4444' }}>🪑 T{order.table_number}</span>}
+        {order.waiter_name && <span style={{ fontWeight: t.typography.fontWeight.semibold }}>👤 {order.waiter_name}</span>}
         <span>📦 {itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-        <span style={{ fontWeight: 700, color: 'var(--pos-text)' }}>R{order.total.toFixed(0)}</span>
+        <span style={{ fontWeight: t.typography.fontWeight.bold, color: t.colors.text.primary }}>R{order.total.toFixed(0)}</span>
       </div>
 
       {/* Items */}
       {items.length > 0 && (
-        <div style={{ marginBottom: '0.5rem', paddingLeft: '6px' }}>
+        <div style={{ marginBottom: 6, paddingLeft: 6 }}>
           {items.map((item: any, idx: number) => (
-            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0.2rem 0', fontSize: '0.85rem', borderBottom: idx < items.length - 1 ? '1px solid var(--pos-border)' : 'none' }}>
+            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '3px 0', fontSize: t.typography.fontSize.md, borderBottom: idx < items.length - 1 ? `1px solid ${t.colors.border.default}` : 'none' }}>
               <span>
-                <strong style={{ color: 'var(--pos-text)' }}>{item.quantity}x</strong>{' '}
-                <span style={{ color: 'var(--pos-text-secondary)' }}>{item.name}</span>
+                <strong style={{ color: t.colors.text.primary }}>{item.quantity}x</strong>{' '}
+                <span style={{ color: t.colors.text.secondary }}>{item.name}</span>
               </span>
-              {item.notes && <span style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: 600, marginLeft: '0.5rem', flexShrink: 0 }}>⚠️ {item.notes}</span>}
+              {item.notes && <span style={{ fontSize: t.typography.fontSize.xs, color: '#fbbf24', fontWeight: t.typography.fontWeight.semibold, marginLeft: 8, flexShrink: 0 }}>⚠️ {item.notes}</span>}
             </div>
           ))}
         </div>
@@ -626,58 +653,70 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
 
       {/* Special instructions */}
       {hasNotes && (
-        <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 'var(--pos-radius-md)', padding: '0.5rem', marginBottom: '0.5rem', marginLeft: '6px' }}>
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚠️ Notes</span>
+        <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: t.radius.md, padding: 8, marginBottom: 6, marginLeft: 6 }}>
+          <span style={{ fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚠️ Notes</span>
           {items.filter((i: any) => i.notes).map((item: any, idx: number) => (
-            <div key={idx} style={{ fontSize: '0.8rem', color: '#fde68a', marginTop: '0.15rem' }}><strong>{item.name}:</strong> {item.notes}</div>
+            <div key={idx} style={{ fontSize: t.typography.fontSize.sm, color: '#fde68a', marginTop: 2 }}><strong>{item.name}:</strong> {item.notes}</div>
           ))}
         </div>
       )}
 
       {metadata.orderNotes && (
-        <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 'var(--pos-radius-md)', padding: '0.5rem', marginBottom: '0.5rem', marginLeft: '6px' }}>
-          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚠️ Order Note</span>
-          <div style={{ fontSize: '0.85rem', color: '#fca5a5', marginTop: '0.2rem' }}>{metadata.orderNotes}</div>
+        <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: t.radius.md, padding: 8, marginBottom: 6, marginLeft: 6 }}>
+          <span style={{ fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.extrabold, color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚠️ Order Note</span>
+          <div style={{ fontSize: t.typography.fontSize.sm, color: '#fca5a5', marginTop: 2 }}>{metadata.orderNotes}</div>
         </div>
       )}
 
       {/* Card error */}
       {cardErrors[order.id] && (
-        <div style={{ padding: '0.3rem 0.5rem', marginBottom: '0.4rem', borderRadius: 'var(--pos-radius-sm)', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', marginLeft: '6px' }}>
+        <div style={{ padding: '4px 8px', marginBottom: 6, borderRadius: t.radius.sm, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, textAlign: 'center', marginLeft: 6 }}>
           ⚠ {cardErrors[order.id]}
         </div>
       )}
 
       {/* Action buttons */}
-      <div style={{ paddingLeft: '6px' }}>
+      <div style={{ paddingLeft: 6 }}>
         {order.status === 'pending' && order.source === 'waiter' && (
           <button onClick={() => updateStatus(order.id, 'preparing')} disabled={updating === order.id}
-            style={{ width: '100%', padding: isMobile ? '0.9rem' : '0.75rem', border: 'none', borderRadius: 'var(--pos-radius-md)', background: 'var(--pos-purple)', color: '#fff', fontSize: isMobile ? '1rem' : '0.9rem', fontWeight: 700, cursor: updating === order.id ? 'not-allowed' : 'pointer', opacity: updating === order.id ? 0.5 : 1, fontFamily: 'var(--pos-font)', touchAction: 'manipulation' }}>
+            style={{
+              width: '100%', padding: isMobile ? 14 : 12, border: 'none', borderRadius: t.radius.md,
+              background: t.colors.accent.purple, color: '#fff',
+              fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.md,
+              fontWeight: t.typography.fontWeight.bold, cursor: updating === order.id ? 'not-allowed' : 'pointer',
+              opacity: updating === order.id ? 0.5 : 1, fontFamily: t.typography.fontFamily, touchAction: 'manipulation',
+            }}>
             {updating === order.id ? '...' : '🔥 START PREP'}
           </button>
         )}
         {order.status === 'pending' && order.source !== 'waiter' && (
           <>
-            <div style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--pos-radius-md)', background: 'rgba(245,158,11,0.08)', color: '#f59e0b', fontSize: '0.8rem', fontWeight: 600, textAlign: 'center', border: '1px solid rgba(245,158,11,0.2)' }}>
+            <div style={{ width: '100%', padding: 10, borderRadius: t.radius.md, background: 'rgba(245,158,11,0.08)', color: '#f59e0b', fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, textAlign: 'center', border: '1px solid rgba(245,158,11,0.2)' }}>
               ⏳ Awaiting admin confirmation
             </div>
-            <button onClick={() => openCancelModal(order.id, displayRef)} style={{ width: '100%', marginTop: '0.3rem', padding: '0.4rem', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--pos-radius-sm)', background: 'transparent', color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--pos-font)' }}>
+            <button onClick={() => openCancelModal(order.id, displayRef)} style={{ width: '100%', marginTop: 4, padding: 8, border: '1px solid rgba(239,68,68,0.3)', borderRadius: t.radius.sm, background: 'transparent', color: '#ef4444', fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.semibold, cursor: 'pointer', fontFamily: t.typography.fontFamily }}>
               ❌ Cancel
             </button>
           </>
         )}
         {order.status === 'confirmed' && (
           <>
-            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
               <input type="number" min="1" max="999" placeholder="Prep time (min)"
                 value={prepTimeInputs[order.id] || ''}
                 onChange={e => { e.stopPropagation(); setPrepTimeInputs(prev => ({ ...prev, [order.id]: e.target.value })) }}
                 onKeyDown={e => { if (e.key === 'Enter') { const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined; if (mins) updateStatus(order.id, order.status, mins) } }}
-                style={{ flex: 1, padding: '0.35rem 0.4rem', borderRadius: 'var(--pos-radius-sm)', border: '1px solid var(--pos-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--pos-text)', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', outline: 'none', fontFamily: 'var(--pos-font)' }} />
-              {order.preparation_time_minutes && <span style={{ fontSize: '0.65rem', color: 'var(--pos-text-dim)', whiteSpace: 'nowrap' }}>Current: {order.preparation_time_minutes}m</span>}
+                style={{ flex: 1, padding: '6px 8px', borderRadius: t.radius.sm, border: `1px solid ${t.colors.border.default}`, background: 'rgba(255,255,255,0.08)', color: t.colors.text.primary, fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, textAlign: 'center', outline: 'none', fontFamily: t.typography.fontFamily }} />
+              {order.preparation_time_minutes && <span style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, whiteSpace: 'nowrap' }}>Current: {order.preparation_time_minutes}m</span>}
             </div>
             <button onClick={() => updateStatus(order.id, 'preparing')} disabled={updating === order.id}
-              style={{ width: '100%', padding: isMobile ? '0.9rem' : '0.75rem', border: 'none', borderRadius: 'var(--pos-radius-md)', background: 'var(--pos-purple)', color: '#fff', fontSize: isMobile ? '1rem' : '0.9rem', fontWeight: 700, cursor: updating === order.id ? 'not-allowed' : 'pointer', opacity: updating === order.id ? 0.5 : 1, fontFamily: 'var(--pos-font)', touchAction: 'manipulation' }}>
+              style={{
+                width: '100%', padding: isMobile ? 14 : 12, border: 'none', borderRadius: t.radius.md,
+                background: t.colors.accent.purple, color: '#fff',
+                fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.md,
+                fontWeight: t.typography.fontWeight.bold, cursor: updating === order.id ? 'not-allowed' : 'pointer',
+                opacity: updating === order.id ? 0.5 : 1, fontFamily: t.typography.fontFamily, touchAction: 'manipulation',
+              }}>
               {updating === order.id ? '...' : '🔥 START PREP'}
             </button>
           </>
@@ -685,25 +724,31 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
         {(order.status === 'preparing' || order.status === 'packing') && (
           <>
             {order.status === 'preparing' && (
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
                 <input type="number" min="1" max="999" placeholder="Remaining (min)"
                   value={prepTimeInputs[order.id] || ''}
                   onChange={e => { e.stopPropagation(); setPrepTimeInputs(prev => ({ ...prev, [order.id]: e.target.value })) }}
                   onKeyDown={e => { if (e.key === 'Enter') { const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined; if (mins) updateStatus(order.id, order.status, mins) } }}
-                  style={{ flex: 1, padding: '0.35rem 0.4rem', borderRadius: 'var(--pos-radius-sm)', border: '1px solid var(--pos-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--pos-text)', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', outline: 'none', fontFamily: 'var(--pos-font)' }} />
+                  style={{ flex: 1, padding: '6px 8px', borderRadius: t.radius.sm, border: `1px solid ${t.colors.border.default}`, background: 'rgba(255,255,255,0.08)', color: t.colors.text.primary, fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, textAlign: 'center', outline: 'none', fontFamily: t.typography.fontFamily }} />
                 <button onClick={() => { const mins = prepTimeInputs[order.id] ? parseInt(prepTimeInputs[order.id]) : undefined; if (mins) updateStatus(order.id, order.status, mins) }}
                   disabled={updating === order.id}
-                  style={{ padding: '0.35rem 0.5rem', borderRadius: 'var(--pos-radius-sm)', border: '1px solid var(--pos-border)', background: 'rgba(255,255,255,0.1)', color: 'var(--pos-text-secondary)', fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--pos-font)' }}>Set</button>
+                  style={{ padding: '6px 10px', borderRadius: t.radius.sm, border: `1px solid ${t.colors.border.default}`, background: 'rgba(255,255,255,0.1)', color: t.colors.text.secondary, fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.semibold, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: t.typography.fontFamily }}>Set</button>
               </div>
             )}
             <button onClick={() => updateStatus(order.id, 'ready')} disabled={updating === order.id}
-              style={{ width: '100%', padding: isMobile ? '0.9rem' : '0.75rem', border: 'none', borderRadius: 'var(--pos-radius-md)', background: '#10b981', color: '#000', fontSize: isMobile ? '1rem' : '0.9rem', fontWeight: 800, cursor: updating === order.id ? 'not-allowed' : 'pointer', opacity: updating === order.id ? 0.5 : 1, fontFamily: 'var(--pos-font)', touchAction: 'manipulation' }}>
+              style={{
+                width: '100%', padding: isMobile ? 14 : 12, border: 'none', borderRadius: t.radius.md,
+                background: '#10b981', color: '#000',
+                fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.md,
+                fontWeight: t.typography.fontWeight.extrabold, cursor: updating === order.id ? 'not-allowed' : 'pointer',
+                opacity: updating === order.id ? 0.5 : 1, fontFamily: t.typography.fontFamily, touchAction: 'manipulation',
+              }}>
               {updating === order.id ? '...' : '✅ MARK READY'}
             </button>
           </>
         )}
         {order.status === 'ready' && (
-          <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--pos-text-dim)', padding: '0.3rem 0' }}>
+          <div style={{ textAlign: 'center', fontSize: t.typography.fontSize.sm, color: t.colors.text.dim, padding: '4px 0' }}>
             {readyAge > 0 && <span>Auto-clear in {Math.ceil((READY_CLEANUP_MS - readyAge) / 60000)}m</span>}
           </div>
         )}
