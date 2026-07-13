@@ -7,6 +7,7 @@ import { formatWhatsAppUrl, generateOrderMessage, BUSINESS_INFO } from '@/lib/wh
 import { enqueueOrder, syncPendingOrders } from '@/lib/offline-queue'
 import type { OrderType } from '@/lib/pos/types'
 import styles from './CartButton.module.css'
+import ValidationModal, { type ValidationError } from './ValidationModal'
 
 interface FieldErrors {
   name?: string
@@ -25,6 +26,8 @@ export default function CartButton() {
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false)
   const [orderError, setOrderError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [modalErrors, setModalErrors] = useState<ValidationError[]>([])
+  const [modalTitle, setModalTitle] = useState('')
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     phone: '',
@@ -37,6 +40,11 @@ export default function CartButton() {
   const [orderRef, setOrderRef] = useState('')
   const [pendingSync, setPendingSync] = useState(0)
   const lastSubmitRef = useRef(0)
+  const nameRef = useRef<HTMLInputElement>(null)
+  const phoneRef = useRef<HTMLInputElement>(null)
+  const tableRef = useRef<HTMLInputElement>(null)
+  const deliveryRef = useRef<HTMLInputElement>(null)
+  const waiterRef = useRef<HTMLInputElement>(null)
 
   const items = Array.isArray(cartCtx?.items) ? cartCtx.items : []
   const total = cartCtx?.total ?? 0
@@ -102,6 +110,34 @@ export default function CartButton() {
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
   }, [customerInfo, items.length, orderType])
+
+  const focusField = useCallback((field: string) => {
+    const refMap: Record<string, React.RefObject<HTMLInputElement | null>> = {
+      name: nameRef,
+      phone: phoneRef,
+      tableNumber: tableRef,
+      table_number: tableRef,
+      deliveryAddress: deliveryRef,
+      delivery_address: deliveryRef,
+      waiterName: waiterRef,
+      waiter_name: waiterRef,
+    }
+    const ref = refMap[field]
+    if (ref?.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => ref.current?.focus(), 300)
+    }
+  }, [])
+
+  const showValidationPopup = useCallback((title: string, errors: ValidationError[]) => {
+    setModalTitle(title)
+    setModalErrors(errors)
+  }, [])
+
+  const closeValidationPopup = useCallback(() => {
+    setModalErrors([])
+    setModalTitle('')
+  }, [])
 
   const submitOrder = useCallback(async (): Promise<string> => {
     const now = Date.now()
@@ -222,7 +258,13 @@ export default function CartButton() {
     setOrderError('')
     setFieldErrors({})
 
-    if (!validateForm()) return
+    if (!validateForm()) {
+      const errs: ValidationError[] = Object.entries(fieldErrors).map(([field, message]) => ({
+        field, message: message || `${field} is required`,
+      }))
+      if (errs.length > 0) showValidationPopup('Order Incomplete', errs)
+      return
+    }
 
     setIsOrderSubmitting(true)
 
@@ -255,6 +297,7 @@ export default function CartButton() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save order'
       setOrderError(msg)
+      showValidationPopup('Could Not Place Order', [{ field: 'items', message: msg }])
     } finally {
       setIsOrderSubmitting(false)
     }
@@ -265,7 +308,13 @@ export default function CartButton() {
     setOrderError('')
     setFieldErrors({})
 
-    if (!validateForm()) return
+    if (!validateForm()) {
+      const errs: ValidationError[] = Object.entries(fieldErrors).map(([field, message]) => ({
+        field, message: message || `${field} is required`,
+      }))
+      if (errs.length > 0) showValidationPopup('Order Incomplete', errs)
+      return
+    }
 
     setIsOrderSubmitting(true)
 
@@ -278,6 +327,7 @@ export default function CartButton() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save order'
       setOrderError(msg)
+      showValidationPopup('Could Not Place Order', [{ field: 'items', message: msg }])
     } finally {
       setIsOrderSubmitting(false)
     }
@@ -433,6 +483,7 @@ export default function CartButton() {
                   <div className={styles.formGrid}>
                     <div>
                       <input
+                        ref={nameRef}
                         type="text"
                         placeholder="Your name *"
                         value={customerInfo?.name ?? ''}
@@ -446,6 +497,7 @@ export default function CartButton() {
                     </div>
                     <div>
                       <input
+                        ref={phoneRef}
                         type="tel"
                         placeholder="Phone number *"
                         value={customerInfo?.phone ?? ''}
@@ -483,6 +535,7 @@ export default function CartButton() {
                     {orderType === 'delivery' && (
                       <div>
                         <input
+                          ref={deliveryRef}
                           type="text"
                           placeholder="Delivery address *"
                           value={customerInfo?.deliveryAddress ?? ''}
@@ -499,6 +552,7 @@ export default function CartButton() {
                       <>
                         <div>
                           <input
+                            ref={tableRef}
                             type="text"
                             placeholder="Table number *"
                             value={customerInfo?.tableNumber ?? ''}
@@ -512,6 +566,7 @@ export default function CartButton() {
                         </div>
                         <div>
                           <input
+                            ref={waiterRef}
                             type="text"
                             placeholder="Waiter name (optional)"
                             value={customerInfo?.waiterName ?? ''}
@@ -587,6 +642,14 @@ export default function CartButton() {
           </div>
         </div>
       )}
+
+      <ValidationModal
+        open={modalErrors.length > 0}
+        title={modalTitle || 'Order Incomplete'}
+        errors={modalErrors}
+        onClose={closeValidationPopup}
+        onFixField={focusField}
+      />
     </>
   )
 }
