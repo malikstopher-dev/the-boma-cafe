@@ -47,6 +47,7 @@ export interface SupabaseOrder {
   payment_confirmed_by: string | null
   waiter_name: string | null
   table_number: string | null
+  source?: string
   created_at: string
   preparation_time_minutes: number | null
   cancellation_reason?: string | null

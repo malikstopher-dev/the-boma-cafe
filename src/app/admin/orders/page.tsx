@@ -90,6 +90,7 @@ function OrderCard({
   onAssignTable,
   onConfirmPayment,
   onAcceptNoPayment,
+  onConfirmWaiterOrder,
   onCancel,
   tables,
 }: {
@@ -99,6 +100,7 @@ function OrderCard({
   onAssignTable: (orderId: string, table: number) => void
   onConfirmPayment: (orderId: string) => void
   onAcceptNoPayment: (orderId: string) => void
+  onConfirmWaiterOrder: (orderId: string) => void
   onCancel?: (orderId: string) => void
   tables: TableInfo[]
 }) {
@@ -154,6 +156,20 @@ function OrderCard({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981' }}>R{order.total.toFixed(2)}</span>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {/* Waiter order: show Confirm button for admin/FOH (kitchen can still start without confirmation) */}
+          {order.source === 'waiter' && order.status === 'pending' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onConfirmWaiterOrder(order.id) }}
+              style={{
+                padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
+                background: '#3b82f6', color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+              title="Confirm waiter order (kitchen can also start without this)"
+            >
+              ✅ Confirm
+            </button>
+          )}
           {requiresPaymentConfirmation(order.order_type) && order.payment_status === 'pending' && (
             <>
               <button
@@ -637,6 +653,26 @@ export default function OrdersPOS() {
     }
   }
 
+  // Confirm a waiter order (no payment involved)
+  const handleConfirmWaiterOrder = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/supabase/orders?id=${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'confirmed' }),
+      })
+      if (res.ok) {
+        showToast('Waiter order confirmed', 'success')
+        loadOrders()
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Confirm failed', 'error')
+      }
+    } catch (e) {
+      showToast('Failed to confirm order', 'error')
+    }
+  }
+
   const handleCancelOrder = async () => {
     if (!cancelOrderId || cancelReason.trim().length < 3) return
     setCancelling(true)
@@ -808,6 +844,7 @@ export default function OrdersPOS() {
               onAssignTable={handleAssignTable}
               onConfirmPayment={handleConfirmPayment}
               onAcceptNoPayment={handleAcceptNoPayment}
+              onConfirmWaiterOrder={handleConfirmWaiterOrder}
               onCancel={(id) => { setCancelOrderId(id); setCancelReason('') }}
               tables={tables}
             />
