@@ -186,6 +186,13 @@ export async function middleware(request: NextRequest) {
       return redirectToLogin(request)
     }
 
+    if (pathname === '/admin/messages') {
+      if (['admin', 'kitchen', 'bar', 'waiter'].includes(auth.role)) {
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+      }
+      return redirectToLogin(request)
+    }
+
     // All other /admin/* routes: admin ONLY
     if (auth.role !== 'admin') return redirectToLogin(request)
 
