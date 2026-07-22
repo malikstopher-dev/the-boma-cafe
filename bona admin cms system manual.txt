@@ -1,0 +1,340 @@
+You are a Senior Technical Writer, Product Designer, and Restaurant Operations Consultant.
+
+Create a complete, professionally designed PDF manual for **The Boma Cafe Restaurant Management System (RMS)**.
+
+The final output should be:
+
+1. Beautifully structured Markdown (preferred) or LaTeX.
+2. Ready to export directly into a professional PDF.
+3. Written for non-technical restaurant staff and management.
+4. Include tables, diagrams, screenshots placeholders, SOPs, and troubleshooting guides.
+
+# Brand
+
+Company: The Boma Cafe
+Industry: Premium African-inspired café, restaurant, and bar.
+Tone: Professional, premium, modern, easy to understand.
+
+Use a luxury hospitality design style similar to:
+
+* Toast POS
+* Lightspeed Restaurant
+* Square for Restaurants
+* Apple documentation
+
+Use a professional color palette:
+
+* Deep Charcoal
+* Warm Bronze
+* Soft Gold
+* White
+* Olive Green accents
+
+---
+
+# DELIVERABLES
+
+Create TWO separate manuals.
+
+# MANUAL 1
+
+# THE BOMA CAFE CMS ADMINISTRATOR MANUAL
+
+Audience:
+
+* Owner
+* Managers
+* Administrators
+
+Include:
+
+# Cover Page
+
+# Copyright Page
+
+# Table of Contents
+
+# Introduction
+
+# System Overview
+
+# Architecture Overview
+
+# User Roles & Permissions
+
+# Logging In
+
+# Dashboard Overview
+
+# Managing Homepage Content
+
+# Managing About Page
+
+# Managing Events
+
+# Managing Promotions
+
+# Managing Gallery
+
+# Managing Popups
+
+# Managing Site Settings
+
+# Managing Contact Information
+
+# Managing Marketing Studio
+
+# Managing Website Media
+
+# Managing Food Menu
+
+# Managing Orders
+
+# Reports & Analytics
+
+# Notifications
+
+# Staff Management
+
+# Security Guidelines
+
+# Daily Management Procedures
+
+# Opening Procedures
+
+# Closing Procedures
+
+# Backup & Recovery
+
+# Troubleshooting
+
+# Frequently Asked Questions
+
+# Appendix
+
+For every section include:
+
+* Purpose
+* Description
+* Step-by-step instructions
+* Screenshot placeholders
+* Best practices
+* Common mistakes
+* Troubleshooting tips
+
+---
+
+# MANUAL 2
+
+# THE BOMA CAFE STAFF OPERATIONS MANUAL
+
+Audience:
+
+* Waiters
+* Kitchen Staff
+* Bar Staff
+* Supervisors
+
+Include:
+
+# Cover Page
+
+# Table of Contents
+
+# Introduction
+
+# Restaurant Workflow Overview
+
+# Logging In
+
+# Employee ID & PIN System
+
+# Starting a Shift
+
+# Table Management
+
+# Taking Orders
+
+# Sending Orders
+
+# Editing Orders
+
+# Food Orders Workflow
+
+# Drinks Orders Workflow
+
+# Kitchen Display System
+
+# Bar Display System
+
+# Order Statuses
+
+# Notifications
+
+# Staff Chat System
+
+# Voice Notes
+
+# Shift Handover
+
+# Manager Approvals
+
+# Discounts
+
+# Refunds
+
+# Voids
+
+# Device Security
+
+# Break Procedures
+
+# Closing Shift Procedures
+
+# Troubleshooting
+
+# Frequently Asked Questions
+
+# Emergency Procedures
+
+---
+
+# Include diagrams
+
+Create Mermaid diagrams for:
+
+## System Architecture
+
+## Order Flow
+
+## Kitchen Workflow
+
+## Bar Workflow
+
+## Staff Communication Flow
+
+## Table Lifecycle
+
+## Login & Authentication Flow
+
+## Notification Flow
+
+---
+
+# Include Standard Operating Procedures (SOPs)
+
+Examples:
+
+## Opening the restaurant
+
+## Starting kitchen station
+
+## Starting bar station
+
+## Waiter opening checklist
+
+## Taking an order
+
+## Handling customer complaints
+
+## Refund procedures
+
+## Shift handover
+
+## End-of-day closing
+
+---
+
+# Include screenshots placeholders
+
+Example:
+
+[Insert Screenshot: Admin Dashboard]
+
+[Insert Screenshot: Waiter POS]
+
+[Insert Screenshot: Kitchen Display]
+
+[Insert Screenshot: Bar Dashboard]
+
+---
+
+# Include callout boxes
+
+TIP
+
+IMPORTANT
+
+WARNING
+
+BEST PRACTICE
+
+---
+
+# Include quick reference cards
+
+Create one-page cheat sheets for:
+
+* Waiters
+* Kitchen
+* Bar
+* Managers
+
+---
+
+# Include onboarding guides
+
+## New waiter onboarding
+
+## New kitchen staff onboarding
+
+## New manager onboarding
+
+---
+
+# Include training checklists
+
+* Beginner
+* Intermediate
+* Advanced
+
+---
+
+# Include printable appendices
+
+* Daily checklist
+* Weekly checklist
+* Incident report form
+* Device handover form
+* Shift handover form
+
+---
+
+# Formatting Requirements
+
+* Professional typography.
+* Page numbers.
+* Headers and footers.
+* Clickable table of contents.
+* Consistent styling.
+* Suitable for printing and digital viewing.
+* Use tables wherever appropriate.
+* Use icons and callout sections where helpful.
+
+---
+
+# Final Deliverables
+
+Generate:
+
+1. The-Boma-Cafe-CMS-Administrator-Manual.pdf
+2. The-Boma-Cafe-Staff-Operations-Manual.pdf
+
+If direct PDF generation is not available, generate:
+
+* administrator-manual.md
+* staff-operations-manual.md
+
+with all formatting preserved and ready for PDF export.
+
+The documents should feel like premium enterprise software documentation and be suitable for handing directly to restaurant staff and management.
