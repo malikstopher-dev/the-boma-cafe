@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
@@ -92,6 +93,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>(defaultSize);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
+  const itemImage = getMenuItemImage(item.name, item.category);
 
   useEffect(() => {
     if (isOpen) {
@@ -124,8 +126,32 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+    <motion.div
+      className={styles.modalOverlay}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className={styles.modalContent}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        onClick={e => e.stopPropagation()}
+      >
+        {itemImage && (
+          <div className={styles.modalImageWrapper}>
+            <Image
+              src={itemImage}
+              alt={item.name}
+              fill
+              sizes="(max-width: 500px) 100vw, 500px"
+              className={styles.modalImage}
+            />
+          </div>
+        )}
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{item.name}</h2>
           <button className={styles.modalClose} onClick={onClose} aria-label="Close item details">×</button>
@@ -206,8 +232,8 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
             Add to Order
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -600,14 +626,16 @@ export default function MenuPage() {
       </main>
       <Footer settings={null} />
 
-      {selectedItem && (
-        <OptionModal
-          item={selectedItem}
-          isOpen={!!selectedItem}
-          onClose={() => setSelectedItem(null)}
-          onAddToCart={handleAddToCart}
-        />
-      )}
+      <AnimatePresence>
+        {selectedItem && (
+          <OptionModal
+            item={selectedItem}
+            isOpen={!!selectedItem}
+            onClose={() => setSelectedItem(null)}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+      </AnimatePresence>
 
       <UpsellModal
         isOpen={showUpsellModal}
