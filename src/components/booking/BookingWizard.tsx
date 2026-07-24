@@ -400,7 +400,7 @@ export default function BookingWizard() {
           <div style={{ ...styles.mainContent, ...(isNarrow ? { width: '100%', maxWidth: '100%' } : {}) }}>
             <div style={{
               background: '#fff', borderRadius: '20px', padding: isNarrow ? '1.25rem' : '2rem',
-              boxShadow: 'var(--shadow-md)', minHeight: 400, maxWidth: '100%', overflow: 'hidden',
+              boxShadow: 'var(--shadow-md)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.3rem', color: 'var(--heading)', fontFamily: 'var(--font-display)' }}>
@@ -428,60 +428,61 @@ export default function BookingWizard() {
                   {step === 8 && renderStep8()}
                 </motion.div>
               </AnimatePresence>
+            </div>
 
-              {/* Navigation */}
-              {step < STEPS.length - 1 ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--beige-dark)', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={handleBack}
-                    disabled={step === 0}
-                    style={{
-                      ...styles.navBtn,
-                      visibility: step === 0 ? 'hidden' : 'visible',
-                      flex: isNarrow ? 1 : undefined,
-                    }}
-                  >
-                    ← Back
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    style={{
-                      ...styles.navBtn,
-                      background: 'var(--primary)',
-                      color: '#fff',
-                      border: 'none',
-                      flex: isNarrow ? 1 : undefined,
-                    }}
-                    disabled={step === 2 && availability && wizard.venue_area_id
-                      ? !availability.slots.find(s => s.venue_area_id === wizard.venue_area_id)?.is_available
-                      : false}
-                  >
-                    Continue →
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--beige-dark)', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <button onClick={handleBack} style={{ ...styles.navBtn, flex: isNarrow ? 1 : undefined }}>← Back</button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    style={{
-                      ...styles.navBtn,
-                      background: 'linear-gradient(135deg, var(--primary), #A65A1F)',
-                      color: '#fff',
-                      border: 'none',
-                      opacity: submitting ? 0.7 : 1,
-                      flex: isNarrow ? 1 : undefined,
-                    }}
-                  >
-                    {submitting ? 'Submitting...' : 'Confirm Booking'}
-                  </button>
-                </div>
-              )}
+            {/* Navigation — OUTSIDE the white card so it's never clipped */}
+            {step < STEPS.length - 1 ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.25rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleBack}
+                  disabled={step === 0}
+                  style={{
+                    ...styles.navBtn,
+                    visibility: step === 0 ? 'hidden' : 'visible',
+                    flex: isNarrow ? 1 : undefined,
+                  }}
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handleNext}
+                  style={{
+                    ...styles.navBtn,
+                    background: 'var(--primary)',
+                    color: '#fff',
+                    border: 'none',
+                    flex: isNarrow ? 1 : undefined,
+                  }}
+                  disabled={step === 2 && availability && wizard.venue_area_id
+                    ? !availability.slots.find(s => s.venue_area_id === wizard.venue_area_id)?.is_available
+                    : false}
+                >
+                  Continue →
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.25rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button onClick={handleBack} style={{ ...styles.navBtn, flex: isNarrow ? 1 : undefined }}>← Back</button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  style={{
+                    ...styles.navBtn,
+                    background: 'linear-gradient(135deg, var(--primary), #A65A1F)',
+                    color: '#fff',
+                    border: 'none',
+                    opacity: submitting ? 0.7 : 1,
+                    flex: isNarrow ? 1 : undefined,
+                  }}
+                >
+                  {submitting ? 'Submitting...' : 'Confirm Booking'}
+                </button>
+              </div>
+            )}
 
-              {errors.submit && (
-                <p style={{ color: 'var(--red)', marginTop: '1rem', fontSize: '0.9rem' }}>{errors.submit}</p>
-              )}
+            {errors.submit && (
+              <p style={{ color: 'var(--red)', marginTop: '1rem', fontSize: '0.9rem' }}>{errors.submit}</p>
+            )}
             </div>
           </div>
 
