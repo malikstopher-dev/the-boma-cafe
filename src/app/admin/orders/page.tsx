@@ -263,12 +263,14 @@ function CheckoutPanel({
   onClose,
   onAssignTable,
   tables,
+  isMobile,
 }: {
   order: SupabaseOrder | null
   onPay: (id: string, method: PaymentMethod) => void
   onClose: () => void
   onAssignTable: (orderId: string, table: number) => void
   tables: TableInfo[]
+  isMobile?: boolean
 }) {
   const [method, setMethod] = useState<PaymentMethod>('card')
   const [paying, setPaying] = useState(false)
@@ -332,9 +334,11 @@ function CheckoutPanel({
 
   return (
     <div style={{
-      width: '380px',
+      width: isMobile ? '100%' : '380px',
+      maxHeight: isMobile ? '50vh' : 'none',
       background: '#12121e',
-      borderLeft: '1px solid rgba(255,255,255,0.06)',
+      borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.06)',
+      borderTop: isMobile ? '1px solid rgba(255,255,255,0.06)' : 'none',
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
@@ -466,6 +470,15 @@ export default function OrdersPOS() {
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
   const [cancelReason, setCancelReason] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -735,15 +748,18 @@ export default function OrdersPOS() {
           {toast.message}
         </div>
       )}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
       {/* LEFT: Table Grid */}
       <div style={{
-        width: '240px',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        width: isMobile ? '100%' : '240px',
+        maxHeight: isMobile ? '40vh' : 'none',
+        borderBottom: isMobile ? '1px solid rgba(255,255,255,0.06)' : 'none',
+        borderRight: isMobile ? 'none' : '1px solid rgba(255,255,255,0.06)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
         background: '#0a0a14',
+        overflowY: isMobile ? 'auto' : 'visible',
       }}>
         <div style={{
           padding: '0.75rem 1rem',
@@ -780,6 +796,7 @@ export default function OrdersPOS() {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        minHeight: isMobile ? 0 : 'auto',
       }}>
         <div style={{
           padding: '0.75rem 1rem',
@@ -860,6 +877,7 @@ export default function OrdersPOS() {
           onClose={() => setSelectedOrderId(null)}
           onAssignTable={handleAssignTable}
           tables={tables}
+          isMobile={isMobile}
         />
       )}
     </div>

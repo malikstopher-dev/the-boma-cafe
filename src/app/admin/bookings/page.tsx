@@ -153,7 +153,7 @@ export default function AdminBookings() {
       <PageHeader title="Bookings" description={`${filtered.length} booking${filtered.length !== 1 ? 's' : ''}`} />
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -162,7 +162,7 @@ export default function AdminBookings() {
               padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
               background: activeTab === tab.id ? '#0F766E' : '#F1F3F7',
               color: activeTab === tab.id ? '#fff' : '#475569',
-              fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap',
+              fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
               display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
