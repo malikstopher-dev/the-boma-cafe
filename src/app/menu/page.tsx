@@ -93,7 +93,7 @@ function OptionModal({ item, isOpen, onClose, onAddToCart }: OptionModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>(defaultSize);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
-  const itemImage = getMenuItemImage(item.name, item.category);
+  const itemImage = getMenuItemImage(item.name);
 
   useEffect(() => {
     if (isOpen) {
