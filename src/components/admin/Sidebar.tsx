@@ -55,6 +55,7 @@ const navGroups: NavGroup[] = [
       { label: 'Events', icon: '🎉', href: '/admin/events' },
       { label: 'Promotions', icon: '🎁', href: '/admin/promotions' },
       { label: 'Gallery', icon: '🖼️', href: '/admin/gallery' },
+      { label: 'Media Library', icon: '📁', href: '/admin/media' },
       { label: 'Popup', icon: '🔔', href: '/admin/popup' },
       { label: 'Announcement', icon: '📢', href: '/admin/announcement' },
     ],
