@@ -95,6 +95,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
                   { label: 'About', href: '/about' },
                   { label: 'Menu', href: '/menu' },
                   { label: 'Bar Menu', href: '/bar-menu' },
+                  { label: 'Book Event', href: '/book-event' },
                   { label: 'Experience', href: '/experience' },
                   { label: 'Gallery', href: '/gallery' },
                   { label: 'Contact', href: '/contact' },
@@ -156,6 +157,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
             <Link href="/" className={styles.mobileFooterLink}>Home</Link>
             <Link href="/menu" className={styles.mobileFooterLink}>Menu</Link>
             <Link href="/bar-menu" className={styles.mobileFooterLink}>Bar Menu</Link>
+            <Link href="/book-event" className={styles.mobileFooterLink}>Book Event</Link>
             <Link href="/contact" className={styles.mobileFooterLink}>Contact</Link>
           </div>
 

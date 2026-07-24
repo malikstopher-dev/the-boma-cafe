@@ -15,8 +15,8 @@ const slides = [
     subtitle: 'Welcome to',
     title: 'The Boma Cafe',
     tagline: 'Where the Rustic Meets the Soulful!',
-    cta: 'Book a Table',
-    ctaLink: '/contact'
+    cta: 'Book Your Event',
+    ctaLink: '/book-event'
   },
   {
     subtitle: 'Escape the City',
@@ -73,6 +73,9 @@ export default function Hero({ title, subtitle }: HeroProps) {
         <Link href={slide.ctaLink} className="btn btn-primary">
           {slide.cta}
         </Link>
+        <Link href="/book-event" className="btn btn-primary">
+          Book Your Event
+        </Link>
         <Link href="/menu" className="btn btn-ghost">
           View Menu
         </Link>
@@ -115,9 +118,10 @@ export default function Hero({ title, subtitle }: HeroProps) {
       {isMobile && renderContent()}
 
       <div className={styles.mobileCtas}>
+        <Link href="/book-event" className={styles.mobileCtaPrimary}>Book Event</Link>
         <Link href="/about" className={styles.mobileCta}>Discover</Link>
         <Link href="/menu" className={styles.mobileCta}>View Menu</Link>
-        <Link href="/contact" className={styles.mobileCtaPrimary}>Book a Table</Link>
+        <Link href="/contact" className={styles.mobileCta}>Book a Table</Link>
         <Link href="/experience" className={styles.mobileCta}>View Events</Link>
       </div>
     </section>

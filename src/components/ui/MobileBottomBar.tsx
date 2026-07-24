@@ -47,6 +47,10 @@ export default function MobileBottomBar() {
         <i className="fas fa-utensils" />
         <span>Menu</span>
       </Link>
+      <Link href="/book-event" className={styles.action}>
+        <i className="fas fa-calendar-check" />
+        <span>Book</span>
+      </Link>
     </div>
   );
 }

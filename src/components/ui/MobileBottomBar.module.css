@@ -59,4 +59,8 @@
   .action[href="/menu"] i {
     color: var(--fire-orange);
   }
+
+  .action[href="/book-event"] i {
+    color: var(--primary);
+  }
 }

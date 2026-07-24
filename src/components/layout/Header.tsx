@@ -46,6 +46,8 @@ export default function Header() {
     { href: '/contact', label: 'Contact' },
   ];
 
+  const bookEventLink = { href: '/book-event', label: 'Book Event' };
+
   const leftLinks = navLinks.slice(0, 4);
   const rightLinks = navLinks.slice(4);
 
@@ -96,6 +98,9 @@ export default function Header() {
                 <i className="fas fa-map-marker-alt" style={{ fontSize: '0.8rem' }} />
               </a>
             </div>
+            <Link href={bookEventLink.href} className={styles.navCta}>
+              {bookEventLink.label}
+            </Link>
           </div>
         </div>
       </header>
@@ -121,6 +126,10 @@ export default function Header() {
                   {link.label}
                 </Link>
               ))}
+              <Link href={bookEventLink.href} className={styles.mobileNavCta}>
+                <i className="fas fa-calendar-check" style={{ marginRight: 8 }} />
+                {bookEventLink.label}
+              </Link>
             </nav>
             <div className={styles.mobileCtaRow}>
               <a href={`tel:${phoneRaw}`} className={styles.mobileCtaBtn}>

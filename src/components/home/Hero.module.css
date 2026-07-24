@@ -90,6 +90,22 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
+.cta :global(.btn-primary):first-child {
+  background: #fff;
+  color: #2C1E1A;
+}
+
+.cta :global(.btn-primary):nth-child(2) {
+  background: linear-gradient(135deg, var(--primary-soft), var(--primary));
+  color: #fff;
+}
+
+.cta :global(.btn-primary):nth-child(2):hover {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(194, 106, 45, 0.35);
+}
+
 .cta :global(.btn-primary:hover) {
   background: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
@@ -215,12 +231,12 @@
   .mobileCta,
   .mobileCtaPrimary {
     flex: 1;
-    padding: 0.75rem 0.25rem;
+    padding: 0.65rem 0.2rem;
     text-align: center;
-    font-size: clamp(0.6rem, 2vw, 0.75rem);
+    font-size: clamp(0.55rem, 1.8vw, 0.7rem);
     font-weight: 600;
     text-decoration: none;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     text-transform: uppercase;
     transition: opacity 0.2s;
     white-space: nowrap;
