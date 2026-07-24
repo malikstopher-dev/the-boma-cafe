@@ -371,7 +371,7 @@ export default function BookingWizard() {
         </p>
       </div>
 
-      <div style={styles.container}>
+      <div style={{ ...styles.container, padding: isNarrow ? '0 0.75rem' : '0 1rem' }}>
         {/* Progress Bar */}
         <div style={styles.progressBar}>
           {STEPS.map((label, i) => (
@@ -395,12 +395,12 @@ export default function BookingWizard() {
           ))}
         </div>
 
-        <div style={styles.wizardRow}>
+        <div style={{ ...styles.wizardRow, flexDirection: isNarrow ? 'column' : 'row' }}>
           {/* Main content */}
-          <div style={{ ...styles.mainContent, ...(isNarrow ? { width: '100%' } : {}) }}>
+          <div style={{ ...styles.mainContent, ...(isNarrow ? { width: '100%', maxWidth: '100%' } : {}) }}>
             <div style={{
-              background: '#fff', borderRadius: '20px', padding: '2rem',
-              boxShadow: 'var(--shadow-md)', minHeight: 400,
+              background: '#fff', borderRadius: '20px', padding: isNarrow ? '1.25rem' : '2rem',
+              boxShadow: 'var(--shadow-md)', minHeight: 400, maxWidth: '100%', overflow: 'hidden',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.3rem', color: 'var(--heading)', fontFamily: 'var(--font-display)' }}>
@@ -431,13 +431,14 @@ export default function BookingWizard() {
 
               {/* Navigation */}
               {step < STEPS.length - 1 ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--beige-dark)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--beige-dark)', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <button
                     onClick={handleBack}
                     disabled={step === 0}
                     style={{
                       ...styles.navBtn,
                       visibility: step === 0 ? 'hidden' : 'visible',
+                      flex: isNarrow ? 1 : undefined,
                     }}
                   >
                     ← Back
@@ -449,6 +450,7 @@ export default function BookingWizard() {
                       background: 'var(--primary)',
                       color: '#fff',
                       border: 'none',
+                      flex: isNarrow ? 1 : undefined,
                     }}
                     disabled={step === 2 && availability && wizard.venue_area_id
                       ? !availability.slots.find(s => s.venue_area_id === wizard.venue_area_id)?.is_available
@@ -458,8 +460,8 @@ export default function BookingWizard() {
                   </button>
                 </div>
               ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--beige-dark)' }}>
-                  <button onClick={handleBack} style={styles.navBtn}>← Back</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--beige-dark)', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button onClick={handleBack} style={{ ...styles.navBtn, flex: isNarrow ? 1 : undefined }}>← Back</button>
                   <button
                     onClick={handleSubmit}
                     disabled={submitting}
@@ -469,6 +471,7 @@ export default function BookingWizard() {
                       color: '#fff',
                       border: 'none',
                       opacity: submitting ? 0.7 : 1,
+                      flex: isNarrow ? 1 : undefined,
                     }}
                   >
                     {submitting ? 'Submitting...' : 'Confirm Booking'}
@@ -486,7 +489,7 @@ export default function BookingWizard() {
           {enoughForQuote && step >= 3 && (
             <div style={{
               ...styles.quotationSidebar,
-              ...(isNarrow ? { width: '100%', marginTop: '1rem' } : {}),
+              ...(isNarrow ? { width: '100%', marginTop: '1rem', maxWidth: '100%' } : {}),
             }}>
               <div style={{
                 background: '#fff', borderRadius: '20px', padding: '1.5rem',
@@ -582,7 +585,7 @@ export default function BookingWizard() {
   function renderStep1() {
     return (
       <div style={{ display: 'grid', gap: '1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : '1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={styles.label}>Event Date</label>
             <input
@@ -662,8 +665,8 @@ export default function BookingWizard() {
   function renderStep3() {
     if (!config) return null
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-        {config.venue_areas.map((area: any) => {
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+        {(config.venue_areas || []).map((area: any) => {
           const slot = availability?.slots?.find(s => s.venue_area_id === area.id)
           const isAvailable = slot ? slot.is_available : true
           const totalGuests = wizard.adults + wizard.children
@@ -703,8 +706,8 @@ export default function BookingWizard() {
   function renderStep4() {
     if (!config) return null
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-        {config.food_packages.map((pkg: any) => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+        {(config.food_packages || []).map((pkg: any) => (
           <button
             key={pkg.id}
             onClick={() => update({ food_package_id: wizard.food_package_id === pkg.id ? '' : pkg.id })}
@@ -735,8 +738,8 @@ export default function BookingWizard() {
   function renderStep5() {
     if (!config) return null
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-        {config.drink_packages.map((pkg: any) => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+        {(config.drink_packages || []).map((pkg: any) => (
           <button
             key={pkg.id}
             onClick={() => update({ drink_package_id: wizard.drink_package_id === pkg.id ? '' : pkg.id })}
@@ -767,9 +770,9 @@ export default function BookingWizard() {
 
   function renderStep6() {
     if (!config) return null
-    const grouped = config.addon_categories.map(cat => ({
+    const grouped = (config.addon_categories || []).map(cat => ({
       ...cat,
-      items: config.addons.filter((a: any) => a.category_id === cat.id),
+      items: (config.addons || []).filter((a: any) => a.category_id === cat.id),
     }))
 
     return (
@@ -787,6 +790,7 @@ export default function BookingWizard() {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '0.75rem 1rem', borderRadius: '12px', border: `1px solid ${qty > 0 ? 'var(--primary)' : 'var(--beige-dark)'}`,
                     background: qty > 0 ? 'rgba(194, 106, 45, 0.05)' : 'var(--white)',
+                    gap: '0.5rem', flexWrap: isNarrow ? 'wrap' : 'nowrap',
                   }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -836,7 +840,7 @@ export default function BookingWizard() {
   function renderStep7() {
     return (
       <div style={{ display: 'grid', gap: '1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : '1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={styles.label}>Full Name *</label>
             <input
@@ -1006,14 +1010,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: '1.5rem',
     alignItems: 'flex-start',
-    flexWrap: 'wrap',
   },
   mainContent: {
     flex: 1,
     minWidth: 0,
+    maxWidth: '100%',
   },
   quotationSidebar: {
     width: 340,
+    maxWidth: '100%',
     flexShrink: 0,
   },
   navBtn: {
@@ -1025,6 +1030,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontSize: '0.9rem',
     cursor: 'pointer',
+    textAlign: 'center' as const,
   },
   label: {
     display: 'block',
@@ -1060,6 +1066,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-body)',
     fontSize: '0.9rem',
     transition: 'all 0.2s ease',
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    overflow: 'hidden',
   },
   qtyBtn: {
     width: 44,
