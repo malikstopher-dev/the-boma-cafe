@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 
 interface AnnouncementBarProps {
   text?: string;
-  link?: string;
-  linkText?: string;
 }
 
-export default function AnnouncementBar({ text, link, linkText }: AnnouncementBarProps) {
+export default function AnnouncementBar({ text }: AnnouncementBarProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [isClosed, setIsClosed] = useState(false);
 
@@ -21,6 +19,13 @@ export default function AnnouncementBar({ text, link, linkText }: AnnouncementBa
     } catch { /* sessionStorage unavailable */ }
   }, []);
 
+  // Auto-dismiss after 3 seconds
+  useEffect(() => {
+    if (!text || isClosed) return;
+    const timer = setTimeout(() => setIsVisible(false), 3000);
+    return () => clearTimeout(timer);
+  }, [text, isClosed]);
+
   if (!text || !isVisible || isClosed) return null;
 
   return (
@@ -30,40 +35,38 @@ export default function AnnouncementBar({ text, link, linkText }: AnnouncementBa
       left: 0,
       right: 0,
       zIndex: 1001,
-      background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
+      background: 'linear-gradient(135deg, #2C1E1A 0%, #3D2B22 100%)',
       padding: '0.6rem 1rem',
-      borderBottom: '1px solid rgba(244, 164, 96, 0.3)'
+      borderBottom: '1px solid rgba(244, 164, 96, 0.3)',
     }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative', gap: '1rem' }}>
-        <p style={{ color: 'var(--cream)', fontSize: '0.85rem', textAlign: 'left', fontWeight: 500, flex: 1 }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', gap: '0.75rem' }}>
+        <p style={{ color: '#F5EDE3', fontSize: '0.85rem', textAlign: 'center', fontWeight: 500, margin: 0 }}>
           {text}
-          {link && (
-            <a href={link} style={{ color: 'var(--warm)', textDecoration: 'underline', marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>
-              {linkText || ' Learn more'}
-            </a>
-          )}
         </p>
-        <button 
+        <button
           onClick={() => {
+            setIsVisible(false);
             setIsClosed(true);
             try { sessionStorage.setItem('announcement_bar_closed', 'true'); } catch {}
           }}
           aria-label="Close announcement"
           style={{
-            background: 'none',
+            background: 'rgba(255,255,255,0.15)',
             border: 'none',
-            color: 'var(--cream)',
+            borderRadius: '50%',
+            color: '#F5EDE3',
             cursor: 'pointer',
-            padding: '4px 8px',
+            padding: 0,
+            width: 28,
+            height: 28,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: 0.7,
-            transition: 'opacity 0.3s ease',
-            flexShrink: 0
+            flexShrink: 0,
+            transition: 'background 0.2s',
           }}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '16px', height: '16px' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '14px', height: '14px' }}>
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>

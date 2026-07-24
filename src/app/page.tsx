@@ -123,11 +123,7 @@ export default function Home() {
   return (
     <>
       {displayAnnText && (
-        <AnnouncementBar 
-          text={displayAnnText} 
-          link={displayAnnLink} 
-          linkText={displayAnnLinkText}
-        />
+        <AnnouncementBar text={displayAnnText} />
       )}
       <Header />
       <WeekendBuffetPopup popup={popup} />
