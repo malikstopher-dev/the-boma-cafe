@@ -103,6 +103,7 @@ export default function BookingWizard() {
     slots: Array<{ venue_area_id: string; venue_area_name: string; is_available: boolean; capacity_max: number }>
   } | null>(null)
   const [availLoading, setAvailLoading] = useState(false)
+  const [isNarrow, setIsNarrow] = useState(false)
 
   // Load config
   useEffect(() => {
@@ -116,6 +117,15 @@ export default function BookingWizard() {
       })
       .catch(() => setConfigError('Failed to load booking configuration'))
       .finally(() => setConfigLoading(false))
+  }, [])
+
+  // Responsive detection
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 860px)')
+    const handleChange = (e: MediaQueryListEvent) => setIsNarrow(e.matches)
+    setIsNarrow(mql.matches)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
   }, [])
 
   const update = useCallback((partial: Partial<WizardState>) => {
@@ -353,7 +363,7 @@ export default function BookingWizard() {
   return (
     <div style={styles.page}>
       <div style={{ textAlign: 'center', padding: '3rem 1rem 1rem' }}>
-        <h1 style={{ fontSize: '2.5rem', color: 'var(--heading)', fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>
+        <h1 style={{ fontSize: isNarrow ? '1.8rem' : '2.5rem', color: 'var(--heading)', fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>
           Book Your Event
         </h1>
         <p style={{ color: 'var(--muted)', maxWidth: 500, margin: '0 auto' }}>
@@ -387,7 +397,7 @@ export default function BookingWizard() {
 
         <div style={styles.wizardRow}>
           {/* Main content */}
-          <div style={styles.mainContent}>
+          <div style={{ ...styles.mainContent, ...(isNarrow ? { width: '100%' } : {}) }}>
             <div style={{
               background: '#fff', borderRadius: '20px', padding: '2rem',
               boxShadow: 'var(--shadow-md)', minHeight: 400,
@@ -474,7 +484,10 @@ export default function BookingWizard() {
 
           {/* Quotation Sidebar */}
           {enoughForQuote && step >= 3 && (
-            <div style={styles.quotationSidebar}>
+            <div style={{
+              ...styles.quotationSidebar,
+              ...(isNarrow ? { width: '100%', marginTop: '1rem' } : {}),
+            }}>
               <div style={{
                 background: '#fff', borderRadius: '20px', padding: '1.5rem',
                 boxShadow: 'var(--shadow-md)', position: 'sticky', top: '1rem',
@@ -986,11 +999,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '2rem',
     padding: '1.5rem 0',
     overflowX: 'auto',
+    gap: 0,
+    WebkitOverflowScrolling: 'touch',
   },
   wizardRow: {
     display: 'flex',
     gap: '1.5rem',
     alignItems: 'flex-start',
+    flexWrap: 'wrap',
   },
   mainContent: {
     flex: 1,
