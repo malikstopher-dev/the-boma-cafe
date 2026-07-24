@@ -163,6 +163,18 @@ export default function AdminSiteSettings() {
     contactDescription: 'Get in touch with The Boma Cafe.'
   });
 
+  const [bookingSettings, setBookingSettings] = useState({
+    deposit_percentage: '30',
+    tax_rate: '0',
+    quote_validity_days: '7',
+    min_advance_days: '1',
+    max_advance_days: '365',
+    enabled: 'true',
+    auto_confirm: 'true',
+    business_hours_start: '08:00',
+    business_hours_end: '22:00',
+  });
+
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -176,6 +188,18 @@ export default function AdminSiteSettings() {
         setPromoBar({ isEnabled: false, message: '', buttonText: '', buttonLink: '', ...settings.promoBar });
         setBranding({ siteName: '', siteTagline: '', logo: '', favicon: '', footerText: '', facebook: '', instagram: '', twitter: '', tiktok: '', youtube: '', ...settings.branding });
         setSeo({ homepageTitle: '', homepageDescription: '', homepageKeywords: '', ogImage: '', ...settings.seo });
+
+        // Load booking settings
+        const bookingKeys = [
+          'booking:deposit_percentage', 'booking:tax_rate', 'booking:quote_validity_days',
+          'booking:min_advance_days', 'booking:max_advance_days', 'booking:enabled',
+          'booking:auto_confirm', 'booking:business_hours_start', 'booking:business_hours_end',
+        ]
+        const bookingVals: Record<string, string> = {}
+        for (const key of bookingKeys) {
+          if (settings[key]) bookingVals[key.replace('booking:', '')] = settings[key]
+        }
+        setBookingSettings(prev => ({ ...prev, ...bookingVals }))
       } catch (error) {
         console.error('Error loading settings:', error);
       } finally {
@@ -189,8 +213,18 @@ export default function AdminSiteSettings() {
     setIsSaving(true);
     setSaveMessage('');
     try {
-      const allSettings = { homepage, about, experience, entertainment, venueHire, contact, promoBar, branding, seo };
-      await cmsService.saveAllSettings(allSettings);
+      if (section === 'booking') {
+        for (const [key, value] of Object.entries(bookingSettings)) {
+          await fetch('/api/cms/all-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [`booking:${key}`]: value }),
+          })
+        }
+      } else {
+        const allSettings = { homepage, about, experience, entertainment, venueHire, contact, promoBar, branding, seo };
+        await cmsService.saveAllSettings(allSettings);
+      }
       setSaveMessage('Saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
@@ -209,7 +243,8 @@ export default function AdminSiteSettings() {
     { id: 'contact', label: 'Contact', icon: '📞' },
     { id: 'promoBar', label: 'Promo Bar', icon: '📢' },
     { id: 'branding', label: 'Branding', icon: '🎨' },
-    { id: 'seo', label: 'SEO', icon: '🔍' }
+    { id: 'seo', label: 'SEO', icon: '🔍' },
+    { id: 'booking', label: 'Booking', icon: '📅' }
   ];
 
   const inputStyle = {
@@ -950,6 +985,68 @@ export default function AdminSiteSettings() {
           </div>
           <button onClick={() => handleSave('seo')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
             {isSaving ? 'Saving...' : 'Save SEO Settings'}
+          </button>
+        </div>
+      )}
+
+      {/* Booking Tab */}
+      {activeTab === 'booking' && (
+        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Booking System Settings</h2>
+          <div style={{ display: 'grid', gap: '1.5rem', maxWidth: 500 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Deposit Percentage (%)</label>
+                <input type="number" value={bookingSettings.deposit_percentage} onChange={e => setBookingSettings({...bookingSettings, deposit_percentage: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Tax Rate (%)</label>
+                <input type="number" value={bookingSettings.tax_rate} onChange={e => setBookingSettings({...bookingSettings, tax_rate: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Quote Validity (Days)</label>
+                <input type="number" value={bookingSettings.quote_validity_days} onChange={e => setBookingSettings({...bookingSettings, quote_validity_days: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Min Advance (Days)</label>
+                <input type="number" value={bookingSettings.min_advance_days} onChange={e => setBookingSettings({...bookingSettings, min_advance_days: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Max Advance (Days)</label>
+                <input type="number" value={bookingSettings.max_advance_days} onChange={e => setBookingSettings({...bookingSettings, max_advance_days: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Business Hours Start</label>
+                <input type="time" value={bookingSettings.business_hours_start} onChange={e => setBookingSettings({...bookingSettings, business_hours_start: e.target.value})} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Business Hours End</label>
+                <input type="time" value={bookingSettings.business_hours_end} onChange={e => setBookingSettings({...bookingSettings, business_hours_end: e.target.value})} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Booking Enabled</label>
+                <select value={bookingSettings.enabled} onChange={e => setBookingSettings({...bookingSettings, enabled: e.target.value})} style={inputStyle}>
+                  <option value="true">Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Auto-Confirm on Deposit</label>
+              <select value={bookingSettings.auto_confirm} onChange={e => setBookingSettings({...bookingSettings, auto_confirm: e.target.value})} style={inputStyle}>
+                <option value="true">Auto-confirm when deposit is paid</option>
+                <option value="false">Manual confirmation required</option>
+              </select>
+            </div>
+          </div>
+          <button onClick={() => handleSave('booking')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
+            {isSaving ? 'Saving...' : 'Save Booking Settings'}
           </button>
         </div>
       )}

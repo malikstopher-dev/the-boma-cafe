@@ -29,7 +29,15 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Orders', icon: '📋', href: '/admin/orders' },
       { label: 'Kitchen', icon: '👨‍🍳', href: '/admin/kitchen' },
+    ],
+  },
+  {
+    label: 'Bookings',
+    items: [
       { label: 'Bookings', icon: '📅', href: '/admin/bookings' },
+      { label: 'Quotes', icon: '📄', href: '/admin/quotes' },
+      { label: 'Pricing', icon: '💰', href: '/admin/pricing' },
+      { label: 'Availability', icon: '🗓️', href: '/admin/availability' },
     ],
   },
   {
