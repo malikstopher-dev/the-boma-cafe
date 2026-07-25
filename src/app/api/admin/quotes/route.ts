@@ -13,9 +13,11 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200)
   const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10), 0)
 
-  let query = (await getAdminClient())
+  const client = await getAdminClient()
+
+  let query = client
     .from('quotes')
-    .select('*, booking:bookings(id, name, email, phone, booking_date, booking_time)')
+    .select('*, booking:bookings(id, name, email, phone, booking_date, booking_time)', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -29,7 +31,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to load quotes' }, { status: 500 })
   }
 
-  return NextResponse.json({ data, count })
+  const quoteIds = (data || []).map((q: any) => q.id)
+  let versionsMap: Record<string, number> = {}
+
+  if (quoteIds.length > 0) {
+    const { data: versions } = await client
+      .from('quote_versions')
+      .select('quote_id')
+      .in('quote_id', quoteIds)
+    if (versions) {
+      for (const v of versions) {
+        versionsMap[v.quote_id] = (versionsMap[v.quote_id] || 0) + 1
+      }
+    }
+  }
+
+  const enriched = (data || []).map((q: any) => ({
+    ...q,
+    version_count: versionsMap[q.id] || 0,
+    is_expired: q.valid_until ? new Date(q.valid_until) < new Date() : false,
+  }))
+
+  return NextResponse.json({ data: enriched, count })
 }
 
 export async function PATCH(request: NextRequest) {

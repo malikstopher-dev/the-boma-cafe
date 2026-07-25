@@ -3,7 +3,7 @@ import { getAdminClient } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { bookingFormSchema, type BookingFormData } from '@/lib/booking/validation'
 import { calculateQuotation } from '@/lib/booking/pricing'
-import { generateQuoteNumber } from '@/lib/booking/quote-generator'
+import { generateQuoteNumber, generateAccessToken } from '@/lib/booking/quote-generator'
 import { persistQuotation } from '@/lib/booking/pricing'
 import { getBookingSettings } from '@/lib/booking/settings'
 import { createAuditEntry } from '@/lib/booking/audit'
@@ -12,6 +12,7 @@ import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
 import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/email/templates/customer-quotation'
 import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
 import { formatCurrency } from '@/lib/booking/utils'
+import { generateAndStorePdf, downloadPdfBuffer } from '@/lib/pdf'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,27 +108,17 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Generate quote number and persist quotation
-    const quoteNumber = generateQuoteNumber()
+    const quoteNumber = await generateQuoteNumber()
     const quoteId = await persistQuotation(booking.id, calculation, quoteNumber, settings.quote_validity_days)
 
+    let accessToken = ''
     if (quoteId) {
+      accessToken = generateAccessToken(quoteId)
+      await client.from('quotes').update({ access_token: accessToken }).eq('id', quoteId)
       await client.from('bookings').update({ quote_id: quoteId, status: 'quote_sent' }).eq('id', booking.id)
     }
 
-    // 5. Record tentative availability
-    await recordAvailability(data.venue_area_id, booking.id, data.booking_date, data.booking_time, endTime, data.adults + data.children, 'tentative')
-
-    // 6. Create audit entry
-    await createAuditEntry({
-      booking_id: booking.id,
-      previous_status: null,
-      new_status: quoteId ? 'quote_sent' : 'draft',
-      changed_by: 'system',
-      reason: 'Booking submitted via website',
-    })
-
-    // --- EMAIL SENDING ---
-    // Fetch display names for email templates
+    // 5. Fetch display names (needed for PDF, email templates)
     let bookingTypeName = 'Event'
     let venueAreaName = 'Venue'
     let foodPackageName = 'None selected'
@@ -156,7 +147,7 @@ export async function POST(request: NextRequest) {
         }))
       }
     } catch {
-      // Non-critical — emails still go out with fallback names
+      // Non-critical — emails + PDF still go out with fallback names
     }
 
     const addonsDisplayText = addonNames.map(a => `${a.name} x ${a.qty}`).join(', ')
@@ -164,6 +155,65 @@ export async function POST(request: NextRequest) {
     const estimatedTotalStr = formatCurrency(calculation.total)
     const depositStr = formatCurrency(calculation.deposit_amount)
     const balanceStr = formatCurrency(calculation.balance_amount)
+
+    // 6. Generate PDF quotation (never fails booking)
+    let pdfFileName: string | null = null
+    try {
+      if (quoteId) {
+        const pdfInput = {
+          portalUrl: `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`,
+          quoteId,
+          quoteNumber,
+          version: 1,
+          customerName: data.name,
+          customerPhone: data.phone,
+          customerEmail: data.email,
+          bookingReference: booking.id,
+          bookingType: bookingTypeName,
+          venueArea: venueAreaName,
+          foodPackage: foodPackageName,
+          drinkPackage: drinkPackageName,
+          addons: addonNames.map(a => `${a.name} x ${a.qty}`).join(', '),
+          bookingDate: data.booking_date,
+          bookingTime: data.booking_time,
+          guests: data.adults + data.children,
+          lineItems: calculation.line_items
+            .filter((i: any) => i.total > 0)
+            .map((i: any) => ({
+              label: i.label,
+              quantity: i.quantity,
+              unitPrice: i.unit_price,
+              total: i.total,
+            })),
+          subtotal: calculation.subtotal,
+          taxRate: calculation.tax_rate,
+          taxAmount: calculation.tax_amount,
+          total: calculation.total,
+          depositPercentage: calculation.deposit_percentage,
+          depositAmount: calculation.deposit_amount,
+          balanceAmount: calculation.balance_amount,
+          validUntil: new Date(Date.now() + settings.quote_validity_days * 86400000).toISOString().split('T')[0],
+          portalUrl,
+        }
+        pdfFileName = await generateAndStorePdf(pdfInput, 'system', 'Initial quotation')
+      }
+    } catch (err) {
+      console.error('PDF generation failed (non-fatal):', err)
+    }
+
+    // 7. Record tentative availability
+    await recordAvailability(data.venue_area_id, booking.id, data.booking_date, data.booking_time, endTime, data.adults + data.children, 'tentative')
+
+    // 8. Create audit entry
+    await createAuditEntry({
+      booking_id: booking.id,
+      previous_status: null,
+      new_status: quoteId ? 'quote_sent' : 'draft',
+      changed_by: 'system',
+      reason: 'Booking submitted via website',
+    })
+
+    // --- EMAIL SENDING ---
 
     // Build line items HTML for admin email
     const lineItemsHtml = calculation.line_items
@@ -177,7 +227,27 @@ export async function POST(request: NextRequest) {
     let customerEmailSent = false
     let adminEmailSent = false
 
+    // Prepare PDF attachment if available
+    let pdfAttachment: { filename: string; content: Buffer; contentType: string } | null = null
+    if (pdfFileName) {
+      try {
+        const pdfBuffer = await downloadPdfBuffer(pdfFileName)
+        if (pdfBuffer) {
+          const parts = pdfFileName.split('/')
+          const displayName = parts[parts.length - 1]
+          pdfAttachment = {
+            filename: displayName,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load PDF for attachment (non-fatal):', err)
+      }
+    }
+
     try {
+      const portalUrl = `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`
       const customerHtml = buildCustomerQuotationHtml({
         customerName: data.name,
         quoteNumber,
@@ -189,6 +259,7 @@ export async function POST(request: NextRequest) {
         depositAmount: depositStr,
         balanceAmount: balanceStr,
         venueArea: venueAreaName,
+        portalUrl,
       })
       const customerText = buildCustomerQuotationText({
         customerName: data.name,
@@ -201,6 +272,7 @@ export async function POST(request: NextRequest) {
         depositAmount: depositStr,
         balanceAmount: balanceStr,
         venueArea: venueAreaName,
+        portalUrl,
       })
 
       customerEmailSent = await sendEmail({
@@ -208,6 +280,7 @@ export async function POST(request: NextRequest) {
         subject: `Your Booking Quotation (${quoteNumber})`,
         html: customerHtml,
         text: customerText,
+        attachments: pdfAttachment ? [pdfAttachment] : undefined,
       })
     } catch (err) {
       console.error('Failed to send customer email:', err)
@@ -264,6 +337,7 @@ export async function POST(request: NextRequest) {
           subject: `New Booking (${quoteNumber})`,
           html: adminHtml,
           text: adminText,
+          attachments: pdfAttachment ? [pdfAttachment] : undefined,
         })
       }
     } catch (err) {

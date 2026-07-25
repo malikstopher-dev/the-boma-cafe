@@ -8,6 +8,7 @@ export interface BookingSettings {
   max_advance_days: number
   enabled: boolean
   auto_confirm: boolean
+  payments_enabled: boolean
   business_hours_start: string
   business_hours_end: string
   notification_emails: string[]
@@ -21,6 +22,7 @@ const SETTING_KEYS = [
   'booking:max_advance_days',
   'booking:enabled',
   'booking:auto_confirm',
+  'booking:payments_enabled',
   'booking:business_hours_start',
   'booking:business_hours_end',
   'booking:notification_emails',
@@ -41,6 +43,7 @@ const DEFAULTS: BookingSettings = {
   max_advance_days: 365,
   enabled: true,
   auto_confirm: true,
+  payments_enabled: false,
   business_hours_start: '08:00',
   business_hours_end: '22:00',
   notification_emails: DEFAULT_NOTIFICATION_EMAILS,
@@ -81,6 +84,7 @@ export async function getBookingSettings(): Promise<BookingSettings> {
     max_advance_days: parseInt(settings['booking:max_advance_days']) || DEFAULTS.max_advance_days,
     enabled: settings['booking:enabled'] !== 'false',
     auto_confirm: settings['booking:auto_confirm'] !== 'false',
+    payments_enabled: settings['booking:payments_enabled'] === 'true',
     business_hours_start: settings['booking:business_hours_start'] || DEFAULTS.business_hours_start,
     business_hours_end: settings['booking:business_hours_end'] || DEFAULTS.business_hours_end,
     notification_emails: notificationEmails,

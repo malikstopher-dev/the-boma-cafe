@@ -9,6 +9,7 @@ export function buildCustomerQuotationHtml({
   depositAmount,
   balanceAmount,
   venueArea,
+  portalUrl,
 }: {
   customerName: string
   quoteNumber: string
@@ -20,6 +21,7 @@ export function buildCustomerQuotationHtml({
   depositAmount: string
   balanceAmount: string
   venueArea: string
+  portalUrl?: string
 }): string {
   const preheader = `${quoteNumber} - ${bookingType} on ${bookingDate} - ${estimatedTotal}`
   return `<!DOCTYPE html>
@@ -93,7 +95,7 @@ export function buildCustomerQuotationHtml({
               <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block;">
                 <tr>
                   <td style="border-radius:12px;background:linear-gradient(135deg,#C26A2D,#A65A1F);">
-                    <a href="https://thebomacafe.co.za/book-event" style="display:inline-block;padding:14px 40px;color:#fff;text-decoration:none;font-size:16px;font-weight:600;border-radius:12px;">View Booking</a>
+                    <a href="${portalUrl || 'https://thebomacafe.co.za/book-event'}" style="display:inline-block;padding:14px 40px;color:#fff;text-decoration:none;font-size:16px;font-weight:600;border-radius:12px;">View & Accept Quotation</a>
                   </td>
                 </tr>
               </table>
@@ -130,6 +132,7 @@ export function buildCustomerQuotationText({
   depositAmount,
   balanceAmount,
   venueArea,
+  portalUrl,
 }: {
   customerName: string
   quoteNumber: string
@@ -141,6 +144,7 @@ export function buildCustomerQuotationText({
   depositAmount: string
   balanceAmount: string
   venueArea: string
+  portalUrl?: string
 }): string {
   return [
     `Hello ${customerName},`,
@@ -163,7 +167,7 @@ export function buildCustomerQuotationText({
     `Deposit: ${depositAmount}`,
     `Balance: ${balanceAmount}`,
     '',
-    'View your booking: https://thebomacafe.co.za/book-event',
+    `View and accept your quotation: ${portalUrl || 'https://thebomacafe.co.za/book-event'}`,
     '',
     'Our events team will contact you within 24 hours to confirm your booking.',
     '',

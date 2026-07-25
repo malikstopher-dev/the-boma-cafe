@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/admin/design-system/Input'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import { useToast } from '@/components/admin/design-system/Toast'
 
 const STATUSES = ['draft', 'sent', 'accepted', 'expired', 'converted', 'cancelled'] as const
 
@@ -27,6 +28,12 @@ interface QuoteWithBooking {
   deposit_amount: number
   valid_until: string
   created_at: string
+  pdf_path: string | null
+  storage_path: string | null
+  pdf_version: number | null
+  version: number
+  version_count: number
+  is_expired: boolean
   booking: {
     id: string
     name: string
@@ -42,6 +49,8 @@ export default function AdminQuotes() {
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const { success, error: showError } = useToast()
 
   useEffect(() => {
     fetch('/api/admin/quotes')
@@ -68,6 +77,50 @@ export default function AdminQuotes() {
     }
     return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [quotes, search, statusFilter])
+
+  const regeneratePdf = async (quoteId: string) => {
+    setActionLoading(`regenerate-${quoteId}`)
+    try {
+      const res = await fetch(`/api/admin/quotes/${quoteId}/regenerate-pdf`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setQuotes(quotes.map(q => q.id === quoteId ? {
+          ...q,
+          pdf_path: data.pdf_path,
+          storage_path: data.storage_path,
+          pdf_version: data.pdf_version,
+          version: data.version,
+        } : q))
+        success('PDF regenerated successfully')
+      } else {
+        showError(data.error || 'Failed to regenerate PDF')
+      }
+    } catch {
+      showError('Failed to regenerate PDF')
+    }
+    setActionLoading(null)
+  }
+
+  const resendQuotation = async (quoteId: string) => {
+    setActionLoading(`resend-${quoteId}`)
+    try {
+      const res = await fetch(`/api/admin/quotes/${quoteId}/resend`, { method: 'POST' })
+      const data = await res.json()
+      if (data.customer_email_sent || data.admin_email_sent) {
+        setQuotes(quotes.map(q => q.id === quoteId ? { ...q, status: 'sent' } : q))
+        success('Quotation resent')
+      } else {
+        showError(data.error || 'Failed to resend quotation')
+      }
+    } catch {
+      showError('Failed to resend quotation')
+    }
+    setActionLoading(null)
+  }
+
+  const downloadPdf = (quoteId: string) => {
+    window.open(`/api/admin/quotes/${quoteId}/download`, '_blank')
+  }
 
   return (
     <div>
@@ -101,6 +154,11 @@ export default function AdminQuotes() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <span style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>#{quote.quote_number}</span>
                     <Badge variant={STATUS_VARIANTS[quote.status] || 'default'}>{quote.status}</Badge>
+                    {quote.storage_path && (
+                      <span style={{ padding: '2px 6px', borderRadius: 4, background: '#F0FDF4', color: '#166534', fontSize: 11, fontWeight: 500 }}>
+                        PDF v{quote.pdf_version || 1}
+                      </span>
+                    )}
                   </div>
                   {quote.booking && (
                     <span style={{ fontSize: 13, color: '#94A3B8' }}>
@@ -109,8 +167,15 @@ export default function AdminQuotes() {
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>
-                    R {Number(quote.total).toLocaleString()}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                    {quote.is_expired && quote.status === 'sent' && (
+                      <span style={{ padding: '2px 6px', borderRadius: 4, background: '#FEF2F2', color: '#DC2626', fontSize: 11, fontWeight: 500 }}>
+                        EXPIRED
+                      </span>
+                    )}
+                    <span style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>
+                      R {Number(quote.total).toLocaleString()}
+                    </span>
                   </div>
                   <div style={{ fontSize: 12, color: '#94A3B8' }}>
                     Deposit: R {Number(quote.deposit_amount).toLocaleString()}
@@ -128,13 +193,39 @@ export default function AdminQuotes() {
                     <div><strong>Time:</strong> {quote.booking.booking_time}</div>
                   </>
                 )}
-                <div><strong>Valid until:</strong> {quote.valid_until}</div>
+                <div>
+                  <strong>Valid until:</strong> {quote.valid_until}
+                  {quote.is_expired && <span style={{ color: '#DC2626', fontWeight: 600 }}> (expired)</span>}
+                </div>
                 <div><strong>Created:</strong> {new Date(quote.created_at).toLocaleDateString()}</div>
+                {quote.version_count > 0 && (
+                  <div><strong>Versions:</strong> {quote.version_count} PDF(s) generated</div>
+                )}
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Button variant="primary" size="sm">View Details</Button>
-                <Button variant="ghost" size="sm">Resend</Button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Button variant="primary" size="sm" onClick={() => downloadPdf(quote.id)} disabled={!quote.storage_path}>
+                  {quote.storage_path ? 'View PDF' : 'No PDF'}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => downloadPdf(quote.id)} disabled={!quote.storage_path}>
+                  Download
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => resendQuotation(quote.id)}
+                  disabled={actionLoading === `resend-${quote.id}`}
+                >
+                  {actionLoading === `resend-${quote.id}` ? 'Sending...' : 'Email PDF'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => regeneratePdf(quote.id)}
+                  disabled={actionLoading === `regenerate-${quote.id}`}
+                >
+                  {actionLoading === `regenerate-${quote.id}` ? 'Generating...' : 'Regenerate PDF'}
+                </Button>
                 {quote.status === 'draft' && (
                   <Button variant="ghost" size="sm" onClick={async () => {
                     await fetch(`/api/admin/quotes?id=${quote.id}`, {

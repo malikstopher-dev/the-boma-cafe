@@ -204,6 +204,11 @@ export interface Quote {
   validity_days: number
   valid_until: string
   notes: string | null
+  pdf_path: string | null
+  storage_path: string | null
+  pdf_version: number | null
+  generated_at: string | null
+  generated_by: string | null
   version: number
   created_at: string
   updated_at: string
@@ -367,6 +372,7 @@ export interface BookingSettings {
   max_advance_days: number
   enabled: boolean
   auto_confirm: boolean
+  payments_enabled: boolean
   business_hours_start: string
   business_hours_end: string
 }

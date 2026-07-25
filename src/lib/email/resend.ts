@@ -25,11 +25,18 @@ function getFromAndReplyTo() {
   }
 }
 
+export interface EmailAttachment {
+  filename: string
+  content: Buffer
+  contentType: string
+}
+
 export interface EmailPayload {
   to: string
   subject: string
   html: string
   text?: string
+  attachments?: EmailAttachment[]
 }
 
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
@@ -47,6 +54,11 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       html: payload.html,
       text: payload.text,
       replyTo,
+      attachments: payload.attachments?.map(a => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+      })),
     })
     if (error) {
       console.error('Resend error:', error)
@@ -64,6 +76,7 @@ export interface MultiEmailPayload {
   subject: string
   html: string
   text?: string
+  attachments?: EmailAttachment[]
 }
 
 export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<boolean> {
@@ -83,6 +96,11 @@ export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<b
         html: payload.html,
         text: payload.text,
         replyTo,
+        attachments: payload.attachments?.map(a => ({
+          filename: a.filename,
+          content: a.content,
+          contentType: a.contentType,
+        })),
       })
       if (error) {
         console.error(`Resend error to ${to}:`, error)
