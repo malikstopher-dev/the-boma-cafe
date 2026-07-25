@@ -713,9 +713,7 @@ export default function BookingWizard() {
     return (
       <div style={styles.page}>
         <div style={styles.container}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             style={{
               maxWidth: 640, margin: '0 auto', padding: '3rem 2rem',
               textAlign: 'center',
@@ -727,7 +725,7 @@ export default function BookingWizard() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1.5rem', fontSize: '2.5rem', color: '#fff',
             }}>
-              &#10003;
+              {'\u2713'}
             </div>
             <h1 style={{ fontSize: '1.75rem', color: 'var(--heading)', marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>
               Quotation Sent!
@@ -736,7 +734,7 @@ export default function BookingWizard() {
               Reference: <strong>{submitResult.quote_number}</strong>
             </p>
             <p style={{ color: 'var(--body)', marginBottom: '2rem', maxWidth: 400, margin: '0 auto 2rem' }}>
-              We&apos;ll review your booking and be in touch within 24 hours. A copy has been sent to {wizard.email}.
+              {"We'll review your booking and be in touch within 24 hours. A copy has been sent to "}{wizard.email}.
             </p>
             <div style={{
               background: 'var(--beige)', borderRadius: '16px', padding: '1.5rem',
@@ -766,7 +764,7 @@ export default function BookingWizard() {
             >
               Book Another Event
             </button>
-          </motion.div>
+          </div>
         </div>
       </div>
     )
@@ -797,12 +795,12 @@ export default function BookingWizard() {
               }}>
                 {i + 1}
               </div>
-              {i < STEPS.length - 1 && (
+              {i < STEPS.length - 1 ? (
                 <div style={{
                   flex: 1, height: 2, margin: '0 8px',
-                  background: i < step ? 'var(--primary)' : 'var(--beige-dark)',
+                  background: i <= step ? 'var(--primary)' : 'var(--beige-dark)',
                 }} />
-              )}
+              ) : null}
             </div>
           ))}
         </div>
