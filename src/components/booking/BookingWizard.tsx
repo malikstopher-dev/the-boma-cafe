@@ -73,6 +73,7 @@ export default function BookingWizard() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitResult, setSubmitResult] = useState<any>(null)
+  const [emailSent, setEmailSent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [availability, setAvailability] = useState<any>(null)
   const [availLoading, setAvailLoading] = useState(false)
@@ -233,6 +234,7 @@ export default function BookingWizard() {
 
       setSubmitResult(data)
       setSubmitted(true)
+      setEmailSent(data.email_sent === true)
     } catch {
       setErrors({ submit: 'Network error. Please try again.' })
     } finally {
@@ -246,6 +248,7 @@ export default function BookingWizard() {
     setSubmitted(false)
     setSubmitResult(null)
     setQuotation(null)
+    setEmailSent(false)
   }, [])
 
   if (configLoading) {
@@ -257,7 +260,7 @@ export default function BookingWizard() {
   }
 
   if (submitted && submitResult) {
-    return <SuccessContent submitResult={submitResult} email={wizard.email} onReset={handleReset} />
+    return <SuccessContent submitResult={submitResult} email={wizard.email} onReset={handleReset} emailSent={emailSent} />
   }
 
   return (

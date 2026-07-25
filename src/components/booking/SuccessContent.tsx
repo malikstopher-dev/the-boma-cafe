@@ -18,6 +18,7 @@ export default function SuccessContent({
   submitResult,
   email,
   onReset,
+  emailSent = false,
 }: {
   submitResult: {
     quote_number: string
@@ -29,6 +30,7 @@ export default function SuccessContent({
   }
   email: string
   onReset: () => void
+  emailSent?: boolean
 }) {
   return (
     <div style={sPage}>
@@ -54,7 +56,8 @@ export default function SuccessContent({
             Reference: <strong>{submitResult.quote_number}</strong>
           </p>
           <p style={{ color: 'var(--body)', marginBottom: '2rem', maxWidth: 400, margin: '0 auto 2rem' }}>
-            {'We\'ll review your booking and be in touch within 24 hours. A copy has been sent to '}{email}.
+            {'We\'ll review your booking and be in touch within 24 hours.'}
+            {emailSent ? <span>{' A copy has been sent to '}{email}.</span> : null}
           </p>
           <div style={{
             background: 'var(--beige)', borderRadius: '16px', padding: '1.5rem',

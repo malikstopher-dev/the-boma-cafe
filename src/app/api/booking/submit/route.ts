@@ -8,6 +8,10 @@ import { persistQuotation } from '@/lib/booking/pricing'
 import { getBookingSettings } from '@/lib/booking/settings'
 import { createAuditEntry } from '@/lib/booking/audit'
 import { recordAvailability } from '@/lib/booking/availability'
+import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
+import { buildCustomerQuotationHtml } from '@/lib/email/templates/customer-quotation'
+import { buildAdminNotificationHtml } from '@/lib/email/templates/admin-notification'
+import { formatCurrency } from '@/lib/booking/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,7 +111,6 @@ export async function POST(request: NextRequest) {
     const quoteId = await persistQuotation(booking.id, calculation, quoteNumber, settings.quote_validity_days)
 
     if (quoteId) {
-      // Link quote to booking
       await client.from('bookings').update({ quote_id: quoteId, status: 'quote_sent' }).eq('id', booking.id)
     }
 
@@ -123,20 +126,155 @@ export async function POST(request: NextRequest) {
       reason: 'Booking submitted via website',
     })
 
-    // 7. Queue admin notification
-    await client.from('notification_queue').insert({
-      recipient_type: 'admin',
-      recipient_identifier: 'info@thebomacafe.co.za',
-      notification_type: 'admin_new_booking',
-      template_data: {
-        booking_id: booking.id,
-        quote_number: quoteNumber,
-        customer_name: data.name,
-        total: calculation.total,
-        booking_date: data.booking_date,
-        booking_time: data.booking_time,
-      },
-    })
+    // --- EMAIL SENDING ---
+    // Fetch display names for email templates
+    let bookingTypeName = 'Event'
+    let venueAreaName = 'Venue'
+    let foodPackageName = 'None selected'
+    let drinkPackageName = 'None selected'
+    let addonNames: Array<{ name: string; qty: number }> = []
+
+    try {
+      const [btResult, vaResult, fpResult, dpResult, addonsResult] = await Promise.all([
+        client.from('booking_types').select('name').eq('id', data.booking_type_id).maybeSingle(),
+        client.from('venue_areas').select('name').eq('id', data.venue_area_id).maybeSingle(),
+        data.food_package_id ? client.from('food_packages').select('name').eq('id', data.food_package_id).maybeSingle() : Promise.resolve(null),
+        data.drink_package_id ? client.from('drink_packages').select('name').eq('id', data.drink_package_id).maybeSingle() : Promise.resolve(null),
+        (data.addons || []).length > 0
+          ? client.from('addons').select('id, name').in('id', (data.addons || []).map((a: any) => a.id))
+          : Promise.resolve({ data: [] }),
+      ])
+      if (btResult?.data) bookingTypeName = btResult.data.name
+      if (vaResult?.data) venueAreaName = vaResult.data.name
+      if (fpResult?.data) foodPackageName = fpResult.data.name
+      if (dpResult?.data) drinkPackageName = dpResult.data.name
+      if (addonsResult?.data) {
+        const addonMap = new Map<string, string>(addonsResult.data.map((a: any) => [a.id, a.name] as [string, string]))
+        addonNames = (data.addons || []).map((a: any) => ({
+          name: addonMap.get(a.id) || 'Unknown',
+          qty: a.quantity,
+        }))
+      }
+    } catch {
+      // Non-critical — emails still go out with fallback names
+    }
+
+    const addonsDisplayText = addonNames.map(a => `${a.name} x ${a.qty}`).join(', ')
+    const guests = data.adults + data.children
+    const estimatedTotalStr = formatCurrency(calculation.total)
+    const depositStr = formatCurrency(calculation.deposit_amount)
+    const balanceStr = formatCurrency(calculation.balance_amount)
+
+    // Build line items HTML for admin email
+    const lineItemsHtml = calculation.line_items
+      .filter((i: any) => i.total > 0)
+      .map((item: any) =>
+        `<tr><td style="padding:5px 0;font-size:13px;color:#555;">${item.label}${item.quantity > 1 ? ` x ${item.quantity}` : ''}</td><td style="padding:5px 0;font-size:13px;color:#333;text-align:right;">${formatCurrency(item.total)}</td></tr>`
+      )
+      .join('')
+
+    // Send emails (never fail booking on email error)
+    let customerEmailSent = false
+    let adminEmailSent = false
+
+    try {
+      const customerHtml = buildCustomerQuotationHtml({
+        customerName: data.name,
+        quoteNumber,
+        bookingType: bookingTypeName,
+        bookingDate: data.booking_date,
+        bookingTime: data.booking_time,
+        guests,
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        venueArea: venueAreaName,
+      })
+
+      customerEmailSent = await sendEmail({
+        to: data.email,
+        subject: `Your Booking Quotation - ${quoteNumber}`,
+        html: customerHtml,
+      })
+    } catch (err) {
+      console.error('Failed to send customer email:', err)
+    }
+
+    try {
+      const adminHtml = buildAdminNotificationHtml({
+        customerName: data.name,
+        customerPhone: data.phone,
+        customerEmail: data.email,
+        quoteNumber,
+        bookingType: bookingTypeName,
+        bookingDate: data.booking_date,
+        bookingTime: data.booking_time,
+        guests,
+        venueArea: venueAreaName,
+        foodPackage: foodPackageName,
+        drinkPackage: drinkPackageName,
+        addons: addonsDisplayText,
+        specialRequests: data.special_requests || '',
+        lineItems: lineItemsHtml,
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        subtotal: formatCurrency(calculation.subtotal),
+        taxAmount: formatCurrency(calculation.tax_amount),
+        taxRate: calculation.tax_rate,
+        bookingId: booking.id,
+      })
+
+      const adminRecipients = settings.notification_emails
+      if (adminRecipients.length > 0) {
+        adminEmailSent = await sendEmailToMultiple({
+          recipients: adminRecipients,
+          subject: `New Booking Received - ${quoteNumber}`,
+          html: adminHtml,
+        })
+      }
+    } catch (err) {
+      console.error('Failed to send admin notification:', err)
+    }
+
+    // 7. Update notification queue with email results
+    try {
+      if (customerEmailSent) {
+        await client.from('notification_queue').insert({
+          recipient_type: 'customer',
+          recipient_identifier: data.email,
+          notification_type: 'quote_ready',
+          template_data: {
+            booking_id: booking.id,
+            quote_number: quoteNumber,
+            customer_name: data.name,
+            total: calculation.total,
+          },
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+        })
+      }
+      if (adminEmailSent) {
+        const adminRecipients = settings.notification_emails
+        for (const email of adminRecipients) {
+          await client.from('notification_queue').insert({
+            recipient_type: 'admin',
+            recipient_identifier: email,
+            notification_type: 'admin_new_booking',
+            template_data: {
+              booking_id: booking.id,
+              quote_number: quoteNumber,
+              customer_name: data.name,
+              total: calculation.total,
+            },
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update notification queue:', err)
+    }
 
     return NextResponse.json({
       success: true,
@@ -144,6 +282,7 @@ export async function POST(request: NextRequest) {
       quote_id: quoteId,
       quote_number: quoteNumber,
       quotation: calculation,
+      email_sent: customerEmailSent,
     }, { status: 201 })
   } catch (error) {
     console.error('Submit booking error:', error)

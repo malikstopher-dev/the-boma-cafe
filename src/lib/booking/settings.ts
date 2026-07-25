@@ -10,6 +10,7 @@ export interface BookingSettings {
   auto_confirm: boolean
   business_hours_start: string
   business_hours_end: string
+  notification_emails: string[]
 }
 
 const SETTING_KEYS = [
@@ -22,7 +23,15 @@ const SETTING_KEYS = [
   'booking:auto_confirm',
   'booking:business_hours_start',
   'booking:business_hours_end',
+  'booking:notification_emails',
 ] as const
+
+const DEFAULT_NOTIFICATION_EMAILS = [
+  'bookings@stopher-malik.co.za',
+  'info@thebomacafe.co.za',
+  'admin@thebomacafe.co.za',
+  'info@stopher-malik.co.za',
+]
 
 const DEFAULTS: BookingSettings = {
   deposit_percentage: 30,
@@ -34,6 +43,7 @@ const DEFAULTS: BookingSettings = {
   auto_confirm: true,
   business_hours_start: '08:00',
   business_hours_end: '22:00',
+  notification_emails: DEFAULT_NOTIFICATION_EMAILS,
 }
 
 export async function getBookingSettings(): Promise<BookingSettings> {
@@ -49,6 +59,20 @@ export async function getBookingSettings(): Promise<BookingSettings> {
     settings[row.key] = row.value
   }
 
+  // notification_emails: CMS > env var > defaults
+  let notificationEmails = DEFAULT_NOTIFICATION_EMAILS
+  if (settings['booking:notification_emails']) {
+    notificationEmails = settings['booking:notification_emails']
+      .split(',')
+      .map(e => e.trim())
+      .filter(e => e.length > 0)
+  } else if (process.env.BOOKING_NOTIFICATION_EMAILS) {
+    notificationEmails = process.env.BOOKING_NOTIFICATION_EMAILS
+      .split(',')
+      .map(e => e.trim())
+      .filter(e => e.length > 0)
+  }
+
   return {
     deposit_percentage: parseFloat(settings['booking:deposit_percentage']) || DEFAULTS.deposit_percentage,
     tax_rate: parseFloat(settings['booking:tax_rate']) || DEFAULTS.tax_rate,
@@ -59,6 +83,7 @@ export async function getBookingSettings(): Promise<BookingSettings> {
     auto_confirm: settings['booking:auto_confirm'] !== 'false',
     business_hours_start: settings['booking:business_hours_start'] || DEFAULTS.business_hours_start,
     business_hours_end: settings['booking:business_hours_end'] || DEFAULTS.business_hours_end,
+    notification_emails: notificationEmails,
   }
 }
 

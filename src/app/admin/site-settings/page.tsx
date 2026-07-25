@@ -173,6 +173,7 @@ export default function AdminSiteSettings() {
     auto_confirm: 'true',
     business_hours_start: '08:00',
     business_hours_end: '22:00',
+    notification_emails: 'bookings@stopher-malik.co.za,info@thebomacafe.co.za,admin@thebomacafe.co.za,info@stopher-malik.co.za',
   });
 
   useEffect(() => {
@@ -193,7 +194,8 @@ export default function AdminSiteSettings() {
         const bookingKeys = [
           'booking:deposit_percentage', 'booking:tax_rate', 'booking:quote_validity_days',
           'booking:min_advance_days', 'booking:max_advance_days', 'booking:enabled',
-          'booking:auto_confirm', 'booking:business_hours_start', 'booking:business_hours_end',
+          'booking:auto_confirm', 'booking:business_hours_start',           'booking:business_hours_end',
+          'booking:notification_emails',
         ]
         const bookingVals: Record<string, string> = {}
         for (const key of bookingKeys) {
@@ -1043,6 +1045,11 @@ export default function AdminSiteSettings() {
                 <option value="true">Auto-confirm when deposit is paid</option>
                 <option value="false">Manual confirmation required</option>
               </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Notification Email Recipients</label>
+              <input type="text" value={bookingSettings.notification_emails} onChange={e => setBookingSettings({...bookingSettings, notification_emails: e.target.value})} style={{...inputStyle, maxWidth: '100%'}} placeholder="email1@example.com,email2@example.com" />
+              <small style={{ color: 'var(--muted)', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>Comma-separated email addresses that receive new booking notifications.</small>
             </div>
           </div>
           <button onClick={() => handleSave('booking')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
