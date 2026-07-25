@@ -9,8 +9,8 @@ import { getBookingSettings } from '@/lib/booking/settings'
 import { createAuditEntry } from '@/lib/booking/audit'
 import { recordAvailability } from '@/lib/booking/availability'
 import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
-import { buildCustomerQuotationHtml } from '@/lib/email/templates/customer-quotation'
-import { buildAdminNotificationHtml } from '@/lib/email/templates/admin-notification'
+import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/email/templates/customer-quotation'
+import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
 import { formatCurrency } from '@/lib/booking/utils'
 
 export const dynamic = 'force-dynamic'
@@ -190,11 +190,24 @@ export async function POST(request: NextRequest) {
         balanceAmount: balanceStr,
         venueArea: venueAreaName,
       })
+      const customerText = buildCustomerQuotationText({
+        customerName: data.name,
+        quoteNumber,
+        bookingType: bookingTypeName,
+        bookingDate: data.booking_date,
+        bookingTime: data.booking_time,
+        guests,
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        venueArea: venueAreaName,
+      })
 
       customerEmailSent = await sendEmail({
         to: data.email,
-        subject: `Your Booking Quotation - ${quoteNumber}`,
+        subject: `Your Booking Quotation (${quoteNumber})`,
         html: customerHtml,
+        text: customerText,
       })
     } catch (err) {
       console.error('Failed to send customer email:', err)
@@ -224,13 +237,33 @@ export async function POST(request: NextRequest) {
         taxRate: calculation.tax_rate,
         bookingId: booking.id,
       })
+      const adminText = buildAdminNotificationText({
+        customerName: data.name,
+        customerPhone: data.phone,
+        customerEmail: data.email,
+        quoteNumber,
+        bookingType: bookingTypeName,
+        bookingDate: data.booking_date,
+        bookingTime: data.booking_time,
+        guests,
+        venueArea: venueAreaName,
+        foodPackage: foodPackageName,
+        drinkPackage: drinkPackageName,
+        addons: addonsDisplayText,
+        specialRequests: data.special_requests || '',
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        bookingId: booking.id,
+      })
 
       const adminRecipients = settings.notification_emails
       if (adminRecipients.length > 0) {
         adminEmailSent = await sendEmailToMultiple({
           recipients: adminRecipients,
-          subject: `New Booking Received - ${quoteNumber}`,
+          subject: `New Booking (${quoteNumber})`,
           html: adminHtml,
+          text: adminText,
         })
       }
     } catch (err) {

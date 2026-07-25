@@ -25,15 +25,14 @@ function getFromAndReplyTo() {
   }
 }
 
-export async function sendEmail({
-  to,
-  subject,
-  html,
-}: {
+export interface EmailPayload {
   to: string
   subject: string
   html: string
-}): Promise<boolean> {
+  text?: string
+}
+
+export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   const { from, replyTo, isValid } = getFromAndReplyTo()
   if (!isValid || !from) return false
 
@@ -43,10 +42,11 @@ export async function sendEmail({
   try {
     const { error } = await client.emails.send({
       from,
-      to,
-      subject,
-      html,
-      replyTo: replyTo,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+      replyTo,
     })
     if (error) {
       console.error('Resend error:', error)
@@ -59,30 +59,30 @@ export async function sendEmail({
   }
 }
 
-export async function sendEmailToMultiple({
-  recipients,
-  subject,
-  html,
-}: {
+export interface MultiEmailPayload {
   recipients: string[]
   subject: string
   html: string
-}): Promise<boolean> {
+  text?: string
+}
+
+export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<boolean> {
   const { from, replyTo, isValid } = getFromAndReplyTo()
-  if (!isValid || !from || recipients.length === 0) return false
+  if (!isValid || !from || payload.recipients.length === 0) return false
 
   const client = getResend()
   if (!client) return false
 
   let allSucceeded = true
-  for (const to of recipients) {
+  for (const to of payload.recipients) {
     try {
       const { error } = await client.emails.send({
         from,
         to,
-        subject,
-        html,
-        replyTo: replyTo,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+        replyTo,
       })
       if (error) {
         console.error(`Resend error to ${to}:`, error)
