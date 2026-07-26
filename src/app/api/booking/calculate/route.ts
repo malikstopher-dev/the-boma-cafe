@@ -30,7 +30,10 @@ export async function POST(request: NextRequest) {
       result = await calculateQuotation(body)
     } catch (calcErr) {
       const msg = calcErr instanceof Error ? calcErr.message : String(calcErr)
-      return NextResponse.json({ error: 'Failed to calculate quotation', detail: msg, stack: calcErr instanceof Error ? calcErr.stack : undefined }, { status: 500 })
+      const stack = calcErr instanceof Error ? calcErr.stack : undefined
+      const name = calcErr instanceof Error ? calcErr.name : typeof calcErr
+      console.error('calculateQuotation error:', name, msg, stack)
+      return NextResponse.json({ error: 'Failed to calculate quotation', detail: msg, name, stack }, { status: 500 })
     }
     return NextResponse.json(result)
   } catch (error) {
