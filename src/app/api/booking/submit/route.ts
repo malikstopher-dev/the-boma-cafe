@@ -156,7 +156,8 @@ export async function POST(request: NextRequest) {
     const depositStr = formatCurrency(calculation.deposit_amount)
     const balanceStr = formatCurrency(calculation.balance_amount)
 
-    // 6. Generate PDF quotation asynchronously in background (never blocks booking)
+    // 6. Generate PDF quotation (never fails booking)
+    let pdfAttachment: { filename: string; content: Buffer; contentType: string } | null = null
     if (quoteId) {
       const pdfInput = {
         portalUrl: `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`,
@@ -192,9 +193,22 @@ export async function POST(request: NextRequest) {
         balanceAmount: calculation.balance_amount,
         validUntil: new Date(Date.now() + settings.quote_validity_days * 86400000).toISOString().split('T')[0],
       }
-      generateAndStorePdf(pdfInput, 'system', 'Initial quotation').catch(err => {
-        console.error('Background PDF generation failed (non-fatal):', err)
-      })
+      try {
+        const pdfFileName = await generateAndStorePdf(pdfInput, 'system', 'Initial quotation')
+        if (pdfFileName) {
+          const pdfBuffer = await downloadPdfBuffer(pdfFileName)
+          if (pdfBuffer) {
+            const parts = pdfFileName.split('/')
+            pdfAttachment = {
+              filename: parts[parts.length - 1],
+              content: pdfBuffer,
+              contentType: 'application/pdf',
+            }
+          }
+        }
+      } catch (err) {
+        console.error('PDF generation failed (non-fatal):', err)
+      }
     }
 
     // 7. Record tentative availability
@@ -222,7 +236,6 @@ export async function POST(request: NextRequest) {
     // Send emails (never fail booking on email error)
     let customerEmailSent = false
     let adminEmailSent = false
-    const pdfAttachment = undefined
 
     try {
       const portalUrl = `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`
