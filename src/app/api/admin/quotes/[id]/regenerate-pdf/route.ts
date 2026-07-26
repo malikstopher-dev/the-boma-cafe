@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { generateAndStorePdf, downloadPdfBuffer } from '@/lib/pdf'
+import { generateAndStorePdf } from '@/lib/pdf/generate'
+import { downloadPdfBuffer } from '@/lib/pdf/storage'
 
 export const dynamic = 'force-dynamic'
 

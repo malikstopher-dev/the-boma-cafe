@@ -5,7 +5,7 @@ import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/em
 import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
 import { formatCurrency } from '@/lib/booking/utils'
 import { getBookingSettings } from '@/lib/booking/settings'
-import { downloadPdfBuffer } from '@/lib/pdf'
+import { downloadPdfBuffer } from '@/lib/pdf/storage'
 
 export const dynamic = 'force-dynamic'
 

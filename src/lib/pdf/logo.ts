@@ -21,7 +21,7 @@ function findLogoPath(): string | null {
 
 function findHeroImagePath(): string | null {
   const candidates = [
-    join(process.cwd(), 'public', 'videos', 'hero-poster.jpg'),
+    join(process.cwd(), 'videos', 'hero-poster.jpg'),
     join(process.cwd(), 'public', 'images', 'hero.jpg'),
     join(process.cwd(), 'public', 'hero.jpg'),
     join(process.cwd(), 'public', 'images', 'venue.jpg'),

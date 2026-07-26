@@ -4,14 +4,13 @@ let adminApp: App | null = null
 
 function buildCredential() {
   try {
-    const { cert } = require('firebase-admin/credential')
+    const { cert } = require('firebase-admin/app')
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
     const privateKey = process.env.FIREBASE_PRIVATE_KEY
     if (clientEmail && privateKey) {
       return cert({ projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, clientEmail, privateKey: privateKey.replace(/\\n/g, '\n') })
     }
   } catch {
-    // cert() not available — fall back to ADC
   }
   return undefined
 }
