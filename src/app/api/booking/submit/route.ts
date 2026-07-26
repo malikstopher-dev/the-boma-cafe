@@ -12,7 +12,7 @@ import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
 import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/email/templates/customer-quotation'
 import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
 import { formatCurrency } from '@/lib/booking/utils'
-import { generateAndStorePdf, downloadPdfBuffer } from '@/lib/pdf'
+import { generateAndStorePdf } from '@/lib/pdf'
 
 export const dynamic = 'force-dynamic'
 
@@ -156,8 +156,7 @@ export async function POST(request: NextRequest) {
     const depositStr = formatCurrency(calculation.deposit_amount)
     const balanceStr = formatCurrency(calculation.balance_amount)
 
-    // 6. Generate PDF quotation (never fails booking)
-    let pdfAttachment: { filename: string; content: Buffer; contentType: string } | null = null
+    // 6. Fire PDF generation in background (never blocks booking response)
     if (quoteId) {
       const pdfInput = {
         portalUrl: `https://the-boma-cafe.vercel.app/booking/${quoteNumber}?token=${accessToken}`,
@@ -193,22 +192,9 @@ export async function POST(request: NextRequest) {
         balanceAmount: calculation.balance_amount,
         validUntil: new Date(Date.now() + settings.quote_validity_days * 86400000).toISOString().split('T')[0],
       }
-      try {
-        const pdfFileName = await generateAndStorePdf(pdfInput, 'system', 'Initial quotation')
-        if (pdfFileName) {
-          const pdfBuffer = await downloadPdfBuffer(pdfFileName)
-          if (pdfBuffer) {
-            const parts = pdfFileName.split('/')
-            pdfAttachment = {
-              filename: parts[parts.length - 1],
-              content: pdfBuffer,
-              contentType: 'application/pdf',
-            }
-          }
-        }
-      } catch (err) {
-        console.error('PDF generation failed (non-fatal):', err)
-      }
+      generateAndStorePdf(pdfInput, 'system', 'Initial quotation').catch(err => {
+        console.error('Background PDF generation failed:', err)
+      })
     }
 
     // 7. Record tentative availability
@@ -271,7 +257,6 @@ export async function POST(request: NextRequest) {
         subject: `Your Booking Quotation (${quoteNumber})`,
         html: customerHtml,
         text: customerText,
-        attachments: pdfAttachment ? [pdfAttachment] : undefined,
       })
     } catch (err) {
       console.error('Failed to send customer email:', err)
@@ -328,7 +313,6 @@ export async function POST(request: NextRequest) {
           subject: `New Booking (${quoteNumber})`,
           html: adminHtml,
           text: adminText,
-          attachments: pdfAttachment ? [pdfAttachment] : undefined,
         })
       }
     } catch (err) {
