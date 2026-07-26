@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     let pdfAttachment: { filename: string; content: Buffer; contentType: string } | null = null
     if (quoteId) {
       const pdfInput = {
-        portalUrl: `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`,
+        portalUrl: `https://the-boma-cafe.vercel.app/booking/${quoteNumber}?token=${accessToken}`,
         quoteId,
         quoteNumber,
         version: 1,
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
     let adminEmailSent = false
 
     try {
-      const portalUrl = `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`
+      const portalUrl = `https://the-boma-cafe.vercel.app/booking/${quoteNumber}?token=${accessToken}`
       const customerHtml = buildCustomerQuotationHtml({
         customerName: data.name,
         quoteNumber,

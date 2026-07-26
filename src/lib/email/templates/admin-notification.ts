@@ -43,7 +43,7 @@ export function buildAdminNotificationHtml({
   taxRate: number
   bookingId: string
 }): string {
-  const cmsUrl = `https://thebomacafe.co.za/admin/bookings?booking=${bookingId}`
+  const cmsUrl = `https://the-boma-cafe.vercel.app/admin/bookings?booking=${bookingId}`
   const addonsDisplay = addons || 'None'
   const specialDisplay = specialRequests || 'None'
   const preheader = `${quoteNumber} - ${customerName} - ${bookingType} - ${estimatedTotal}`
@@ -188,7 +188,7 @@ export function buildAdminNotificationText({
   balanceAmount: string
   bookingId: string
 }): string {
-  const cmsUrl = `https://thebomacafe.co.za/admin/bookings?booking=${bookingId}`
+  const cmsUrl = `https://the-boma-cafe.vercel.app/admin/bookings?booking=${bookingId}`
   const addonsDisplay = addons || 'None'
   const specialDisplay = specialRequests || 'None'
 

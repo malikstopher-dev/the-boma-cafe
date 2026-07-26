@@ -42,7 +42,7 @@ export async function generateQuotationPdf(input: PdfGenerationInput): Promise<B
   const dateIssued = new Date().toISOString().split('T')[0]
 
   let qrDataUri: string | null = null
-  const qrUrl = input.portalUrl || `https://thebomacafe.co.za/booking/${input.quoteNumber}`
+  const qrUrl = input.portalUrl || `https://the-boma-cafe.vercel.app/booking/${input.quoteNumber}`
   try {
     qrDataUri = await generateQrDataUri(qrUrl)
   } catch {

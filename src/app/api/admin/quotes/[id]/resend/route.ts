@@ -98,7 +98,7 @@ export async function POST(
     let customerEmailSent = false
     try {
       const portalUrl = quote.access_token
-        ? `https://thebomacafe.co.za/booking/${quote.quote_number}?token=${quote.access_token}`
+        ? `https://the-boma-cafe.vercel.app/booking/${quote.quote_number}?token=${quote.access_token}`
         : undefined
       const customerHtml = buildCustomerQuotationHtml({
         customerName: booking.name || 'Customer',
