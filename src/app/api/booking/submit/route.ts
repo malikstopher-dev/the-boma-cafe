@@ -12,7 +12,7 @@ import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
 import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/email/templates/customer-quotation'
 import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
 import { formatCurrency } from '@/lib/booking/utils'
-import { generateAndStorePdf } from '@/lib/pdf'
+
 
 
 
@@ -158,51 +158,10 @@ export async function POST(request: NextRequest) {
     const depositStr = formatCurrency(calculation.deposit_amount)
     const balanceStr = formatCurrency(calculation.balance_amount)
 
-    // 6. Fire PDF generation in background (never blocks booking response)
-    if (quoteId) {
-      const pdfInput = {
-        portalUrl: `https://the-boma-cafe.vercel.app/booking/${quoteNumber}?token=${accessToken}`,
-        quoteId,
-        quoteNumber,
-        version: 1,
-        customerName: data.name,
-        customerPhone: data.phone,
-        customerEmail: data.email,
-        bookingReference: booking.id,
-        bookingType: bookingTypeName,
-        venueArea: venueAreaName,
-        foodPackage: foodPackageName,
-        drinkPackage: drinkPackageName,
-        addons: addonNames.map(a => `${a.name} x ${a.qty}`).join(', '),
-        bookingDate: data.booking_date,
-        bookingTime: data.booking_time,
-        guests: data.adults + data.children,
-        lineItems: calculation.line_items
-          .filter((i: any) => i.total > 0)
-          .map((i: any) => ({
-            label: i.label,
-            quantity: i.quantity,
-            unitPrice: i.unit_price,
-            total: i.total,
-          })),
-        subtotal: calculation.subtotal,
-        taxRate: calculation.tax_rate,
-        taxAmount: calculation.tax_amount,
-        total: calculation.total,
-        depositPercentage: calculation.deposit_percentage,
-        depositAmount: calculation.deposit_amount,
-        balanceAmount: calculation.balance_amount,
-        validUntil: new Date(Date.now() + settings.quote_validity_days * 86400000).toISOString().split('T')[0],
-      }
-      generateAndStorePdf(pdfInput, 'system', 'Initial quotation').catch(err => {
-        console.error('Background PDF generation failed:', err)
-      })
-    }
-
-    // 7. Record tentative availability
+    // 6. Record tentative availability
     await recordAvailability(data.venue_area_id, booking.id, data.booking_date, data.booking_time, endTime, data.adults + data.children, 'tentative')
 
-    // 8. Create audit entry
+    // 7. Create audit entry
     await createAuditEntry({
       booking_id: booking.id,
       previous_status: null,
