@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   coverHeroImage: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    width: '100%', height: '100%',
+    width: 595, height: 842,
   },
   coverOverlay: {
     position: 'absolute',
@@ -480,7 +480,7 @@ export function QuotationPDF(props: QuotationPDFProps) {
     >
       {/* === PAGE 1: COVER === */}
       <Page size="A4" style={styles.coverPage}>
-        {heroDataUri && <Image style={styles.coverHeroImage} src={heroDataUri} />}
+        {heroDataUri && <Image fixed style={styles.coverHeroImage} src={heroDataUri} />}
         <View style={styles.coverOverlay} />
         <Text style={styles.coverWatermark}>THE BOMA CAFÉ – CONFIDENTIAL</Text>
         <View style={styles.coverContent}>

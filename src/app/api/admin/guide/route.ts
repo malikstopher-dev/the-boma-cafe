@@ -1,3 +1,4 @@
+import React from 'react'
 import { NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { AdminGuidePDF } from '@/lib/pdf/AdminGuidePDF'
@@ -6,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const pdfBuffer = await renderToBuffer(<AdminGuidePDF />)
+    const pdfBuffer = await renderToBuffer(React.createElement(AdminGuidePDF))
 
     return new NextResponse(pdfBuffer, {
       headers: {

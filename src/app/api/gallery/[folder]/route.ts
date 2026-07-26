@@ -11,11 +11,11 @@ const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { folder: string } }
+  { params }: { params: Promise<{ folder: string }> }
 ) {
   const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
-  const folder = params.folder;
+  const { folder } = await params;
   
   if (!VALID_FOLDERS.includes(folder)) {
     return NextResponse.json(

@@ -348,9 +348,9 @@ export function AdminGuidePDF() {
               The Content Management System (CMS) is your central control panel for managing bookings,
               quotations, pricing, and customer data. Access it from any modern web browser.
             </Body>
-            <Step /> Navigate to your website and append /admin to the URL (e.g. https://thebomacafe.co.za/admin)
-            <Step /> Enter the admin password provided to you during setup
-            <Step /> You will be presented with the CMS dashboard
+            <Step>Navigate to your website and append /admin to the URL (e.g. https://thebomacafe.co.za/admin)</Step>
+            <Step>Enter the admin password provided to you during setup</Step>
+            <Step>You will be presented with the CMS dashboard</Step>
             <Tip>The admin password can be changed in the .env.local file on your server. Contact your developer to update it.</Tip>
           </SubSection>
 
@@ -439,11 +439,11 @@ export function AdminGuidePDF() {
             <Body>
               If a customer did not receive their quotation email, or you need to resend it:
             </Body>
-            <Step /> Go to Quotes in the CMS sidebar
-            <Step /> Find the quotation using the search box (search by quote number, customer name, or email)
-            <Step /> Click the Email PDF button on the quotation card
-            <Step /> The system will resend the quotation to both the customer and all admin recipients
-            <Step /> The quotation status will be updated to sent if it was still in draft
+            <Step>Go to Quotes in the CMS sidebar</Step>
+            <Step>Find the quotation using the search box (search by quote number, customer name, or email)</Step>
+            <Step>Click the Email PDF button on the quotation card</Step>
+            <Step>The system will resend the quotation to both the customer and all admin recipients</Step>
+            <Step>The quotation status will be updated to sent if it was still in draft</Step>
             <Tip>You can resend a quotation as many times as needed. Each resend includes the latest PDF and the secure customer portal link.</Tip>
           </SubSection>
 
@@ -452,11 +452,11 @@ export function AdminGuidePDF() {
               If you have updated pricing or other quotation details, you can regenerate the PDF
               without resending the email. This creates a new version while preserving the original.
             </Body>
-            <Step /> Navigate to Quotes in the CMS
-            <Step /> Locate the quotation you need to update
-            <Step /> Click the Regenerate PDF button
-            <Step /> The system increments the version number and stores the new PDF alongside the original
-            <Step /> The version count on the quotation card updates to reflect the new total
+            <Step>Navigate to Quotes in the CMS</Step>
+            <Step>Locate the quotation you need to update</Step>
+            <Step>Click the Regenerate PDF button</Step>
+            <Step>The system increments the version number and stores the new PDF alongside the original</Step>
+            <Step>The version count on the quotation card updates to reflect the new total</Step>
             <Warning>Regenerating a PDF does NOT automatically resend it. Use the Email PDF button separately to send the updated version to the customer.</Warning>
           </SubSection>
 
@@ -502,14 +502,14 @@ export function AdminGuidePDF() {
               Each venue area, food package, drink package, and add-on has its own pricing,
               which can differ between weekday and weekend rates. To update prices:
             </Body>
-            <Step /> Navigate to the Pricing section in the CMS
-            <Step /> Select the entity type: Venue Areas, Food Packages, Drink Packages, or Add-ons
-            <Step /> Modify the relevant price fields:
+            <Step>Navigate to the Pricing section in the CMS</Step>
+            <Step>Select the entity type: Venue Areas, Food Packages, Drink Packages, or Add-ons</Step>
+            <Step>Modify the relevant price fields:</Step>
             <Bullet>Venue Areas: base_price_weekday, base_price_weekend, hourly_rate_weekday, hourly_rate_weekend, minimum_spend</Bullet>
             <Bullet>Food Packages: per_person_weekday, per_person_weekend, child_multiplier</Bullet>
             <Bullet>Drink Packages: amount_weekday, amount_weekend, pricing_model (per_person or flat_rate)</Bullet>
             <Bullet>Add-ons: amount_weekday, amount_weekend, pricing_model (flat_fee, per_person, or per_hour)</Bullet>
-            <Step /> Save your changes. New quotations will use the updated pricing automatically.
+            <Step>Save your changes. New quotations will use the updated pricing automatically.</Step>
             <Warning>Price changes only affect future quotations. Existing quotations are not automatically updated. You can regenerate the PDF for existing quotations if needed.</Warning>
           </SubSection>
 
@@ -557,11 +557,11 @@ export function AdminGuidePDF() {
               This is essential for private events, public holidays, maintenance, or
               seasonal closures.
             </Body>
-            <Step /> Navigate to Availability in the CMS
-            <Step /> Select the venue area you want to block (or block all areas)
-            <Step /> Choose the start and end dates
-            <Step /> Optionally add a reason (visible only to admin)
-            <Step /> Save the blocked date
+            <Step>Navigate to Availability in the CMS</Step>
+            <Step>Select the venue area you want to block (or block all areas)</Step>
+            <Step>Choose the start and end dates</Step>
+            <Step>Optionally add a reason (visible only to admin)</Step>
+            <Step>Save the blocked date</Step>
             <Tip>Blocked dates are checked in real time. If a customer tries to book on a blocked date, they will see the date as unavailable in the booking wizard.</Tip>
           </SubSection>
 
@@ -806,10 +806,10 @@ export function AdminGuidePDF() {
             <Body>
               To take a manual backup, use the Supabase Dashboard:
             </Body>
-            <Step /> Log in to the Supabase Dashboard (https://supabase.com)
-            <Step /> Select your project
-            <Step /> Go to Database → Backups
-            <Step /> Click Create backup or download the latest daily backup
+            <Step>Log in to the Supabase Dashboard (https://supabase.com)</Step>
+            <Step>Select your project</Step>
+            <Step>Go to Database → Backups</Step>
+            <Step>Click Create backup or download the latest daily backup</Step>
             <Tip>Database backups contain all booking data, customer information, pricing, and settings. Store backups in a secure, separate location.</Tip>
           </SubSection>
 
@@ -817,12 +817,12 @@ export function AdminGuidePDF() {
             <Body>
               In the event of a system failure or data loss, follow these steps:
             </Body>
-            <Step /> Restore the database from the most recent backup via Supabase Dashboard
-            <Step /> Verify that all site_settings are correct (pricing, deposit %, tax rate, notification emails)
-            <Step /> Check that the Supabase Storage bucket (quotations) still contains the PDF files
-            <Step /> Run the deployment migrations to ensure all schema changes are applied
-            <Step /> Test the booking wizard by submitting a sample booking request
-            <Step /> Verify email delivery by checking the notification_queue table
+            <Step>Restore the database from the most recent backup via Supabase Dashboard</Step>
+            <Step>Verify that all site_settings are correct (pricing, deposit %, tax rate, notification emails)</Step>
+            <Step>Check that the Supabase Storage bucket (quotations) still contains the PDF files</Step>
+            <Step>Run the deployment migrations to ensure all schema changes are applied</Step>
+            <Step>Test the booking wizard by submitting a sample booking request</Step>
+            <Step>Verify email delivery by checking the notification_queue table</Step>
           </SubSection>
 
           <SubSection title="9.3  Deployment Rollback">
@@ -830,11 +830,11 @@ export function AdminGuidePDF() {
               The Git repository contains tagged releases that mark stable versions of the
               system. To roll back to a previous version:
             </Body>
-            <Step /> View available tags: git tag -l
-            <Step /> Check out a specific tag: git checkout tags/v1.0.0-booking-system
-            <Step /> Deploy the checked-out version to your hosting platform
-            <Step /> Restore any database changes that are incompatible with the older code
-            <Step /> Run any necessary rollback migrations
+            <Step>View available tags: git tag -l</Step>
+            <Step>Check out a specific tag: git checkout tags/v1.0.0-booking-system</Step>
+            <Step>Deploy the checked-out version to your hosting platform</Step>
+            <Step>Restore any database changes that are incompatible with the older code</Step>
+            <Step>Run any necessary rollback migrations</Step>
             <Warning>Always test a rollback in a staging environment before applying to production. Database schema changes may not be reversible without data loss.</Warning>
           </SubSection>
         </Section>

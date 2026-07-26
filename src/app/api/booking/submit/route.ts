@@ -156,49 +156,45 @@ export async function POST(request: NextRequest) {
     const depositStr = formatCurrency(calculation.deposit_amount)
     const balanceStr = formatCurrency(calculation.balance_amount)
 
-    // 6. Generate PDF quotation (never fails booking)
-    let pdfFileName: string | null = null
-    try {
-      if (quoteId) {
-        const pdfInput = {
-          portalUrl: `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`,
-          quoteId,
-          quoteNumber,
-          version: 1,
-          customerName: data.name,
-          customerPhone: data.phone,
-          customerEmail: data.email,
-          bookingReference: booking.id,
-          bookingType: bookingTypeName,
-          venueArea: venueAreaName,
-          foodPackage: foodPackageName,
-          drinkPackage: drinkPackageName,
-          addons: addonNames.map(a => `${a.name} x ${a.qty}`).join(', '),
-          bookingDate: data.booking_date,
-          bookingTime: data.booking_time,
-          guests: data.adults + data.children,
-          lineItems: calculation.line_items
-            .filter((i: any) => i.total > 0)
-            .map((i: any) => ({
-              label: i.label,
-              quantity: i.quantity,
-              unitPrice: i.unit_price,
-              total: i.total,
-            })),
-          subtotal: calculation.subtotal,
-          taxRate: calculation.tax_rate,
-          taxAmount: calculation.tax_amount,
-          total: calculation.total,
-          depositPercentage: calculation.deposit_percentage,
-          depositAmount: calculation.deposit_amount,
-          balanceAmount: calculation.balance_amount,
-          validUntil: new Date(Date.now() + settings.quote_validity_days * 86400000).toISOString().split('T')[0],
-          portalUrl,
-        }
-        pdfFileName = await generateAndStorePdf(pdfInput, 'system', 'Initial quotation')
+    // 6. Generate PDF quotation asynchronously in background (never blocks booking)
+    if (quoteId) {
+      const pdfInput = {
+        portalUrl: `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`,
+        quoteId,
+        quoteNumber,
+        version: 1,
+        customerName: data.name,
+        customerPhone: data.phone,
+        customerEmail: data.email,
+        bookingReference: booking.id,
+        bookingType: bookingTypeName,
+        venueArea: venueAreaName,
+        foodPackage: foodPackageName,
+        drinkPackage: drinkPackageName,
+        addons: addonNames.map(a => `${a.name} x ${a.qty}`).join(', '),
+        bookingDate: data.booking_date,
+        bookingTime: data.booking_time,
+        guests: data.adults + data.children,
+        lineItems: calculation.line_items
+          .filter((i: any) => i.total > 0)
+          .map((i: any) => ({
+            label: i.label,
+            quantity: i.quantity,
+            unitPrice: i.unit_price,
+            total: i.total,
+          })),
+        subtotal: calculation.subtotal,
+        taxRate: calculation.tax_rate,
+        taxAmount: calculation.tax_amount,
+        total: calculation.total,
+        depositPercentage: calculation.deposit_percentage,
+        depositAmount: calculation.deposit_amount,
+        balanceAmount: calculation.balance_amount,
+        validUntil: new Date(Date.now() + settings.quote_validity_days * 86400000).toISOString().split('T')[0],
       }
-    } catch (err) {
-      console.error('PDF generation failed (non-fatal):', err)
+      generateAndStorePdf(pdfInput, 'system', 'Initial quotation').catch(err => {
+        console.error('Background PDF generation failed (non-fatal):', err)
+      })
     }
 
     // 7. Record tentative availability
@@ -226,25 +222,7 @@ export async function POST(request: NextRequest) {
     // Send emails (never fail booking on email error)
     let customerEmailSent = false
     let adminEmailSent = false
-
-    // Prepare PDF attachment if available
-    let pdfAttachment: { filename: string; content: Buffer; contentType: string } | null = null
-    if (pdfFileName) {
-      try {
-        const pdfBuffer = await downloadPdfBuffer(pdfFileName)
-        if (pdfBuffer) {
-          const parts = pdfFileName.split('/')
-          const displayName = parts[parts.length - 1]
-          pdfAttachment = {
-            filename: displayName,
-            content: pdfBuffer,
-            contentType: 'application/pdf',
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load PDF for attachment (non-fatal):', err)
-      }
-    }
+    const pdfAttachment = undefined
 
     try {
       const portalUrl = `https://thebomacafe.co.za/booking/${quoteNumber}?token=${accessToken}`

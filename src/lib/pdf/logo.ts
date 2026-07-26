@@ -6,6 +6,7 @@ let cachedHeroDataUri: string | null = null
 
 function findLogoPath(): string | null {
   const candidates = [
+    join(process.cwd(), 'public', 'images', 'logo-pdf.png'),
     join(process.cwd(), 'public', 'logo.png'),
     join(process.cwd(), 'public', 'logo.svg'),
     join(process.cwd(), 'public', 'images', 'logo.png'),

@@ -14,12 +14,12 @@ function sanitizeFilename(name: string): string {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { folder: string; filename: string } }
+  { params }: { params: Promise<{ folder: string; filename: string }> }
 ) {
   const authError = await requireAdminOrKitchen(request)
   if (authError) return authError
 
-  const { folder, filename: rawFilename } = params;
+  const { folder, filename: rawFilename } = await params;
   const filename = sanitizeFilename(rawFilename);
 
   if (!VALID_FOLDERS.includes(folder)) {
