@@ -14,6 +14,8 @@ import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/em
 import { formatCurrency } from '@/lib/booking/utils'
 import { generateAndStorePdf } from '@/lib/pdf'
 
+
+
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {

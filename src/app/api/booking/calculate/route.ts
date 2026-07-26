@@ -25,10 +25,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Duration must be 1-12 hours' }, { status: 400 })
     }
 
-    const result = await calculateQuotation(body)
+    let result
+    try {
+      result = await calculateQuotation(body)
+    } catch (calcErr) {
+      const msg = calcErr instanceof Error ? calcErr.message : String(calcErr)
+      return NextResponse.json({ error: 'Failed to calculate quotation', detail: msg, stack: calcErr instanceof Error ? calcErr.stack : undefined }, { status: 500 })
+    }
     return NextResponse.json(result)
   } catch (error) {
     console.error('Calculate quote error:', error)
-    return NextResponse.json({ error: 'Failed to calculate quotation' }, { status: 500 })
+    const message = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: 'Failed to calculate quotation', detail: message }, { status: 500 })
   }
 }
