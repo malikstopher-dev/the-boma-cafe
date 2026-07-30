@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
 interface DashboardData {
@@ -58,21 +57,25 @@ export default function InventoryDashboardPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <PageHeader title="Inventory Dashboard" description="Stock overview and KPIs" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+      <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg border p-4">
+              <div className="skeleton-shimmer h-4 w-24 mb-2 rounded" />
+              <div className="skeleton-shimmer h-8 w-16 rounded" />
+            </div>
+          ))}
         </div>
-      </div>
+        <style>{`.skeleton-shimmer { background: linear-gradient(90deg, #F1F3F7 25%, #E5E7EB 50%, #F1F3F7 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; } @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+      </AdminPage>
     )
   }
 
   if (!data) {
     return (
-      <div>
-        <PageHeader title="Inventory Dashboard" description="Stock overview and KPIs" />
+      <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs">
         <EmptyState title="Could not load dashboard" description="Check your connection and try again" />
-      </div>
+      </AdminPage>
     )
   }
 
@@ -97,9 +100,7 @@ export default function InventoryDashboardPage() {
   const allCards = [...cards, ...poCards]
 
   return (
-    <div>
-      <PageHeader title="Inventory Dashboard" description="Stock overview and KPIs" actions={<Button onClick={fetchData} variant="secondary" size="sm">Refresh</Button>} />
-
+    <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs" actions={<Button onClick={fetchData} variant="secondary" size="sm">Refresh</Button>}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {allCards.map(card => (
           <div key={card.label} className="bg-white rounded-lg border p-4">
@@ -119,7 +120,7 @@ export default function InventoryDashboardPage() {
               {alerts.slice(0, 10).map(a => (
                 <div key={a.productId} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
                   <span className="truncate flex-1">{a.productName}</span>
-                  <Badge variant={a.type === 'negative_balance' ? 'danger' : a.type === 'out_of_stock' ? 'danger' : 'warning'}>
+                  <Badge variant={a.type === 'negative_balance' || a.type === 'out_of_stock' ? 'danger' : 'warning'}>
                     {a.type.replace('_', ' ')} ({a.currentBalance})
                   </Badge>
                 </div>
@@ -182,7 +183,7 @@ export default function InventoryDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-lg border p-4">
           <h3 className="font-semibold mb-3">Slow Movers</h3>
           {slowMovers.length === 0 ? (
@@ -227,7 +228,7 @@ export default function InventoryDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border p-4">
           <h3 className="font-semibold mb-3">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -239,6 +240,6 @@ export default function InventoryDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }
