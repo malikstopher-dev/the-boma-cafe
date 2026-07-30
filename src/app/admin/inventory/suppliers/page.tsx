@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
+import DataTable from '@/components/admin/design-system/DataTable'
+import type { Column } from '@/components/admin/design-system/DataTable'
+import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
 interface Supplier {
@@ -61,12 +63,61 @@ export default function SuppliersPage() {
     } finally { setSaving(false) }
   }
 
-  return (
-    <div>
-      <PageHeader title="Suppliers" description="Manage your suppliers and their contact information" actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Supplier</Button>} />
+  const columns: Column<Supplier>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      cell: supplier => (
+        <span className={!supplier.is_active ? 'opacity-50' : ''}>{supplier.name}</span>
+      ),
+    },
+    {
+      key: 'contact_person',
+      header: 'Contact',
+      cell: supplier => (
+        <span className="text-gray-500">{supplier.contact_person || '—'}</span>
+      ),
+    },
+    {
+      key: 'phone',
+      header: 'Phone',
+      cell: supplier => (
+        <span className="text-gray-500">{supplier.phone || '—'}</span>
+      ),
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      cell: supplier => (
+        <span className="text-gray-500">{supplier.email || '—'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: supplier => (
+        <Badge variant={supplier.is_active ? 'success' : 'default'}>{supplier.is_active ? 'Active' : 'Archived'}</Badge>
+      ),
+    },
+  ]
 
+  return (
+    <AdminPage
+      title="Suppliers"
+      description="Manage your suppliers and their contact information"
+      actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Supplier</Button>}
+      filters={
+        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search suppliers…">
+          <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer select-none">
+            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
+            Show archived
+          </label>
+        </FilterBar>
+      }
+    >
       {showCreateForm && (
-        <div className="bg-white rounded-lg border p-4 mb-6">
+        <div className="bg-white rounded-lg border p-4 mb-4">
           <h3 className="font-semibold mb-3">New Supplier</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <input className="border rounded px-3 py-2 text-sm" placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
@@ -81,44 +132,19 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      <div className="flex gap-2 mb-4">
-        <input className="border rounded px-3 py-2 text-sm flex-1 max-w-xs" placeholder="Search suppliers..." value={search} onChange={e => setSearch(e.target.value)} />
-        <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer">
-          <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />
-          Show archived
-        </label>
-      </div>
-
-      {isLoading ? <SkeletonCard /> : suppliers.length === 0 ? (
-        <EmptyState title="No suppliers found" description={search ? 'Try a different search' : 'Add your first supplier to get started'} />
-      ) : (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left p-3 font-medium">Name</th>
-                <th className="text-left p-3 font-medium">Contact</th>
-                <th className="text-left p-3 font-medium">Phone</th>
-                <th className="text-left p-3 font-medium">Email</th>
-                <th className="text-left p-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suppliers.map(supplier => (
-                <tr key={supplier.id} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/inventory/suppliers/${supplier.id}`)}>
-                  <td className={`p-3 font-medium ${!supplier.is_active ? 'text-gray-400' : ''}`}>{supplier.name}</td>
-                  <td className="p-3 text-gray-500">{supplier.contact_person || '—'}</td>
-                  <td className="p-3 text-gray-500">{supplier.phone || '—'}</td>
-                  <td className="p-3 text-gray-500">{supplier.email || '—'}</td>
-                  <td className="p-3">
-                    <Badge variant={supplier.is_active ? 'success' : 'default'}>{supplier.is_active ? 'Active' : 'Archived'}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+      <DataTable<Supplier>
+        columns={columns}
+        data={suppliers}
+        keyField="id"
+        onRowClick={supplier => router.push(`/admin/inventory/suppliers/${supplier.id}`)}
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState
+            title="No suppliers found"
+            description={search ? 'Try a different search' : 'Add your first supplier to get started'}
+          />
+        }
+      />
+    </AdminPage>
   )
 }
