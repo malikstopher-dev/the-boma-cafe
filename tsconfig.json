@@ -38,10 +38,9 @@
     "**/*.jsx",
     ".next/dev/types/**/*.ts"
   ],
-  "references": [
-    { "path": "./src/inventory" }
-  ],
+
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/inventory"
   ]
 }
