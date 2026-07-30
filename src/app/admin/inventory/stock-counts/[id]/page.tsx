@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -50,8 +50,8 @@ export default function StockCountDetailPage() {
   const countedProductIds = new Set(countItems.map((i: any) => i.product_id))
   const uncountedProducts = products.filter((p: any) => !countedProductIds.has(p.id))
 
-  if (isLoading) return <div><PageHeader title="Stock Count" /><SkeletonCard /></div>
-  if (error || !data || !stockCount) return <div><PageHeader title="Stock Count" /><div className="text-red-500">{error || 'Not found'}</div></div>
+  if (isLoading) return <AdminPage title="Stock Count"><SkeletonCard /></AdminPage>
+  if (error || !data || !stockCount) return <AdminPage title="Stock Count"><div className="text-red-500">{error || 'Not found'}</div></AdminPage>
 
   const isInProgress = stockCount.status === 'in_progress'
   const isSubmitted = stockCount.status === 'submitted'
@@ -136,22 +136,21 @@ export default function StockCountDetailPage() {
   const totalForCounting = countItems.length + uncountedProducts.length
 
   return (
-    <div>
-      <PageHeader title={`Stock Count — ${new Date(stockCount.created_at).toLocaleDateString()}`} actions={<><Badge variant={STATUS_VARIANTS[stockCount.status]}>{stockCount.status.replace('_', ' ')}</Badge>
-        {(isSubmitted && !isApproved) && (
-          <Button onClick={handleApprove} disabled={approving} size="sm">
-            {approving ? 'Approving...' : 'Approve'}
+    <AdminPage title={`Stock Count — ${new Date(stockCount.created_at).toLocaleDateString()}`} actions={<><Badge variant={STATUS_VARIANTS[stockCount.status]}>{stockCount.status.replace('_', ' ')}</Badge>
+      {(isSubmitted && !isApproved) && (
+        <Button onClick={handleApprove} disabled={approving} size="sm">
+          {approving ? 'Approving...' : 'Approve'}
+        </Button>
+      )}
+      {isInProgress && (
+        <>
+          <Button onClick={() => setMode(mode === 'review' ? 'count' : 'review')} variant="secondary" size="sm">
+            {mode === 'review' ? 'Back to Count' : 'Summary'}
           </Button>
-        )}
-        {isInProgress && (
-          <>
-            <Button onClick={() => setMode(mode === 'review' ? 'count' : 'review')} variant="secondary" size="sm">
-              {mode === 'review' ? 'Back to Count' : 'Summary'}
-            </Button>
-            <Button onClick={handleCancel} variant="danger" size="sm">Cancel</Button>
-          </>
-        )}
-        <Link href="/admin/inventory/stock-counts"><Button variant="secondary" size="sm">Back</Button></Link></>} />
+          <Button onClick={handleCancel} variant="danger" size="sm">Cancel</Button>
+        </>
+      )}
+      <Link href="/admin/inventory/stock-counts"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="text-sm text-gray-500 mb-4">
         Counted: {countItems.length} / {totalForCounting} products
@@ -200,6 +199,6 @@ export default function StockCountDetailPage() {
           approving={approving}
         />
       )}
-    </div>
+    </AdminPage>
   )
 }

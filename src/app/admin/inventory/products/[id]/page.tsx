@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -57,25 +57,22 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <PageHeader title="Product Detail" description="Loading..." />
+      <AdminPage title="Product Detail">
         <SkeletonCard />
-      </div>
+      </AdminPage>
     )
   }
 
   if (error || !product) {
     return (
-      <div>
-        <PageHeader title="Product Detail" description="Error" />
+      <AdminPage title="Product Detail">
         <EmptyState title="Product not found" description={error || 'The product could not be loaded'} />
-      </div>
+      </AdminPage>
     )
   }
 
   return (
-    <div>
-      <PageHeader title={product.name} description={`SKU: ${product.sku || '—'}`} actions={<><Badge variant={product.is_active ? 'success' : 'info'}>{product.is_active ? 'Active' : 'Archived'}</Badge><Link href="/admin/inventory/products"><Button variant="secondary" size="sm">Back</Button></Link></>} />
+    <AdminPage title={product.name} description={`SKU: ${product.sku || '—'}`} actions={<><Badge variant={product.is_active ? 'success' : 'info'}>{product.is_active ? 'Active' : 'Archived'}</Badge><Link href="/admin/inventory/products"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -138,6 +135,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Textarea } from '@/components/admin/design-system/Input';
 import Badge from '@/components/admin/design-system/Badge';
@@ -77,8 +77,7 @@ export default function AdminCategories() {
   const closeForm = () => { setIsEditing(false); setEditCategory(null); setFormData({ name: '', description: '', isActive: true }); };
 
   return (
-    <div>
-      <PageHeader title="Menu Categories" description={`${categories.length} categories`} actions={<Button variant="primary" onClick={() => { setFormData({ name: '', description: '', isActive: true }); setIsEditing(true); }}>+ Add Category</Button>} />
+    <AdminPage title="Menu Categories" description={`${categories.length} categories`} actions={<Button variant="primary" onClick={() => { setFormData({ name: '', description: '', isActive: true }); setIsEditing(true); }}>+ Add Category</Button>}>
 
       {isEditing && (
         <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, marginBottom: 24, maxWidth: 480 }}>
@@ -122,6 +121,6 @@ export default function AdminCategories() {
       )}
 
       <ConfirmDialog open={!!deleteTarget} title="Delete Category" message={`Delete "${deleteTarget?.name}"? All items in this category will also be deleted.`} confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
-    </div>
+    </AdminPage>
   );
 }

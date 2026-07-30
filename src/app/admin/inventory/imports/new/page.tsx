@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 
@@ -119,7 +119,7 @@ export default function NewImportPage() {
 
   return (
     <div>
-      <PageHeader title="New Import" description="Upload a supplier spreadsheet or stock count file" actions={<Link href="/admin/inventory/imports"><Button variant="secondary" size="sm">Back</Button></Link>} />
+      <AdminPage title="New Import" description="Upload a supplier spreadsheet or stock count file" actions={<Link href="/admin/inventory/imports"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{error}</div>
@@ -245,6 +245,6 @@ export default function NewImportPage() {
           )}
         </div>
       )}
-    </div>
+    </AdminPage>
   )
 }

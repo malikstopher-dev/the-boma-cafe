@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Textarea } from '@/components/admin/design-system/Input';
 import Badge from '@/components/admin/design-system/Badge';
@@ -81,8 +81,7 @@ export default function AdminPromotions() {
   const closeForm = () => { setIsEditing(false); setEditPromo(null); setFormData(defaultForm); };
 
   return (
-    <div>
-      <PageHeader title="Promotions" description={`${promotions.length} promotions`} actions={<Button variant="primary" onClick={() => { setFormData(defaultForm); setIsEditing(true); }}>+ Add Promotion</Button>} />
+    <AdminPage title="Promotions" description={`${promotions.length} promotions`} actions={<Button variant="primary" onClick={() => { setFormData(defaultForm); setIsEditing(true); }}>+ Add Promotion</Button>}>
 
       {isEditing && (
         <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, marginBottom: 24 }}>
@@ -143,6 +142,6 @@ export default function AdminPromotions() {
       )}
 
       <ConfirmDialog open={!!deleteTarget} title="Delete Promotion" message={`Are you sure you want to delete "${deleteTarget?.title}"?`} confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
-    </div>
+    </AdminPage>
   );
 }

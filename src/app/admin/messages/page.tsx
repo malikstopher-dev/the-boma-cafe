@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import { ConversationList, ChatWindow } from '@/components/chat'
 import { useToast } from '@/components/admin/design-system/Toast'
 
@@ -117,8 +117,7 @@ export default function AdminMessagesPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
-      <PageHeader title="Messages" description="Chat with staff" />
+    <AdminPage title="Messages" description="Chat with staff">
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
         {/* Left: Conversation list */}
@@ -232,6 +231,6 @@ export default function AdminMessagesPage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -89,22 +89,21 @@ export default function SupplierDetailPage() {
     }
   }
 
-  if (isLoading) return <div><PageHeader title="Supplier" /><SkeletonCard /></div>
-  if (error || !supplier) return <div><PageHeader title="Supplier" /><EmptyState title="Not found" description={error || ''} /></div>
+  if (isLoading) return <AdminPage title="Supplier"><SkeletonCard /></AdminPage>
+  if (error || !supplier) return <AdminPage title="Supplier"><EmptyState title="Not found" description={error || ''} /></AdminPage>
 
   return (
-    <div>
-      <PageHeader title={supplier.name} description="Supplier details" actions={<><Badge variant={supplier.is_active ? 'success' : 'default'}>{supplier.is_active ? 'Active' : 'Archived'}</Badge>
-        {supplier.is_active ? (
-          <>
-            <Button onClick={() => setEditing(!editing)} variant="secondary" size="sm">{editing ? 'Cancel' : 'Edit'}</Button>
-            {editing && <Button onClick={handleSave} size="sm">Save</Button>}
-            <Button onClick={handleArchive} variant="danger" size="sm">Archive</Button>
-          </>
-        ) : (
-          <Button onClick={handleRestore} size="sm">Restore</Button>
-        )}
-        <Link href="/admin/inventory/suppliers"><Button variant="secondary" size="sm">Back</Button></Link></>} />
+    <AdminPage title={supplier.name} description="Supplier details" actions={<><Badge variant={supplier.is_active ? 'success' : 'default'}>{supplier.is_active ? 'Active' : 'Archived'}</Badge>
+      {supplier.is_active ? (
+        <>
+          <Button onClick={() => setEditing(!editing)} variant="secondary" size="sm">{editing ? 'Cancel' : 'Edit'}</Button>
+          {editing && <Button onClick={handleSave} size="sm">Save</Button>}
+          <Button onClick={handleArchive} variant="danger" size="sm">Archive</Button>
+        </>
+      ) : (
+        <Button onClick={handleRestore} size="sm">Restore</Button>
+      )}
+      <Link href="/admin/inventory/suppliers"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border p-4">
@@ -160,6 +159,6 @@ export default function SupplierDetailPage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }

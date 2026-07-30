@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Textarea, Select } from '@/components/admin/design-system/Input';
 import Badge from '@/components/admin/design-system/Badge';
@@ -149,12 +149,11 @@ export default function AdminMenu() {
   ];
 
   return (
-    <div>
-      <PageHeader
-        title="Menu Items"
-        description={`${menuItems.length} items across ${activeCategories.length} categories`}
-        actions={<Button variant="primary" onClick={openAdd}>+ Add Item</Button>}
-      />
+    <AdminPage
+      title="Menu Items"
+      description={`${menuItems.length} items across ${activeCategories.length} categories`}
+      actions={<Button variant="primary" onClick={openAdd}>+ Add Item</Button>}
+    >
 
       {/* Search + Filter */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -283,6 +282,6 @@ export default function AdminMenu() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
+    </AdminPage>
   );
 }

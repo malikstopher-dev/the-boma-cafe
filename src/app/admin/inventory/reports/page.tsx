@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 
@@ -240,16 +240,15 @@ export default function ReportsPage() {
   }
 
   return (
-    <div>
-      <PageHeader title="Reports" description="Inventory reports and analytics" actions={<Button variant="secondary" size="sm" onClick={() => {
-          if (!data) return
-          const csv = [Object.keys(data[0] || {})].concat(data.map((r: any) => Object.values(r).join(','))).join('\n')
-          const blob = new Blob([csv], { type: 'text/csv' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url; a.download = `${activeTab}-report.csv`; a.click()
-          URL.revokeObjectURL(url)
-        }} disabled={!data}>Export CSV</Button>} />
+    <AdminPage title="Reports" description="Inventory reports and analytics" actions={<Button variant="secondary" size="sm" onClick={() => {
+        if (!data) return
+        const csv = [Object.keys(data[0] || {})].concat(data.map((r: any) => Object.values(r).join(','))).join('\n')
+        const blob = new Blob([csv], { type: 'text/csv' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url; a.download = `${activeTab}-report.csv`; a.click()
+        URL.revokeObjectURL(url)
+      }} disabled={!data}>Export CSV</Button>}>
 
       <div className="flex gap-2 mb-6 border-b overflow-x-auto">
         {REPORT_TABS.map(t => (
@@ -312,6 +311,6 @@ export default function ReportsPage() {
       ) : (
         <div className="text-center py-12 text-gray-400 text-sm">Select filters and click "Run Report"</div>
       )}
-    </div>
+    </AdminPage>
   )
 }

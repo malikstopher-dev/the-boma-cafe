@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { Input } from '@/components/admin/design-system/Input'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -89,16 +89,14 @@ export default function AdminPricing() {
 
   if (isLoading) {
     return (
-      <div>
-        <PageHeader title="Pricing Editor" description="Manage booking prices and packages" />
+      <AdminPage title="Pricing Editor" description="Manage booking prices and packages">
         <div style={{ display: 'grid', gap: 12, marginTop: 20 }}><SkeletonCard /><SkeletonCard /></div>
-      </div>
+      </AdminPage>
     )
   }
 
   return (
-    <div>
-      <PageHeader title="Pricing Editor" description="Edit venue, package, and add-on prices without code" />
+    <AdminPage title="Pricing Editor" description="Edit venue, package, and add-on prices without code">
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
@@ -241,7 +239,7 @@ export default function AdminPricing() {
           </div>
         </div>
       )}
-    </div>
+    </AdminPage>
   )
 }
 
@@ -341,7 +339,7 @@ function EntityEditor({
           </div>
         </div>
       ))}
-    </div>
+    </AdminPage>
   )
 }
 

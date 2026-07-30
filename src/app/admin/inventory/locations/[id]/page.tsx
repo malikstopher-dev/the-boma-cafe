@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -84,22 +84,21 @@ export default function LocationDetailPage() {
     }
   }
 
-  if (isLoading) return <div><PageHeader title="Location" /><SkeletonCard /></div>
-  if (error || !location) return <div><PageHeader title="Location" /><EmptyState title="Not found" description={error || ''} /></div>
+  if (isLoading) return <AdminPage title="Location"><SkeletonCard /></AdminPage>
+  if (error || !location) return <AdminPage title="Location"><EmptyState title="Not found" description={error || ''} /></AdminPage>
 
   return (
-    <div>
-      <PageHeader title={location.name} description={`Code: ${location.code}`} actions={<><Badge variant={location.is_active ? 'success' : 'default'}>{location.is_active ? 'Active' : 'Archived'}</Badge>
-        {location.is_active ? (
-          <>
-            <Button onClick={() => setEditing(!editing)} variant="secondary" size="sm">{editing ? 'Cancel' : 'Edit'}</Button>
-            {editing && <Button onClick={handleSave} size="sm">Save</Button>}
-            <Button onClick={handleArchive} variant="danger" size="sm">Archive</Button>
-          </>
-        ) : (
-          <Button onClick={handleRestore} size="sm">Restore</Button>
-        )}
-        <Link href="/admin/inventory/locations"><Button variant="secondary" size="sm">Back</Button></Link></>} />
+    <AdminPage title={location.name} description={`Code: ${location.code}`} actions={<><Badge variant={location.is_active ? 'success' : 'default'}>{location.is_active ? 'Active' : 'Archived'}</Badge>
+      {location.is_active ? (
+        <>
+          <Button onClick={() => setEditing(!editing)} variant="secondary" size="sm">{editing ? 'Cancel' : 'Edit'}</Button>
+          {editing && <Button onClick={handleSave} size="sm">Save</Button>}
+          <Button onClick={handleArchive} variant="danger" size="sm">Archive</Button>
+        </>
+      ) : (
+        <Button onClick={handleRestore} size="sm">Restore</Button>
+      )}
+      <Link href="/admin/inventory/locations"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border p-4">
@@ -149,6 +148,6 @@ export default function LocationDetailPage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }

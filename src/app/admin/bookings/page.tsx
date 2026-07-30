@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { Input, Select } from '@/components/admin/design-system/Input'
 import Badge from '@/components/admin/design-system/Badge'
@@ -149,8 +149,7 @@ export default function AdminBookings() {
   ]
 
   return (
-    <div>
-      <PageHeader title="Bookings" description={`${filtered.length} booking${filtered.length !== 1 ? 's' : ''}`} />
+    <AdminPage title="Bookings" description={`${filtered.length} booking${filtered.length !== 1 ? 's' : ''}`}>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
@@ -296,6 +295,6 @@ export default function AdminBookings() {
         onConfirm={deleteBooking}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
+    </AdminPage>
   )
 }

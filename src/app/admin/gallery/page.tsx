@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Select } from '@/components/admin/design-system/Input';
 import Badge from '@/components/admin/design-system/Badge';
@@ -121,8 +121,7 @@ export default function AdminGallery() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Gallery" description={`${gallery.length} items`} actions={<Button variant="primary" onClick={() => { closeForm(); setIsEditing(true); }}>+ Add Item</Button>} />
+    <AdminPage title="Gallery" description={`${gallery.length} items`} actions={<Button variant="primary" onClick={() => { closeForm(); setIsEditing(true); }}>+ Add Item</Button>}>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#F1F3F7', borderRadius: 10, padding: 4 }}>
@@ -228,6 +227,6 @@ export default function AdminGallery() {
       )}
 
       <ConfirmDialog open={!!deleteTarget} title="Delete Gallery Item" message="Are you sure you want to delete this item?" confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
-    </div>
+    </AdminPage>
   );
 }

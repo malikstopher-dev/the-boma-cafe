@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 
@@ -47,11 +47,10 @@ export default function NewStockCountPage() {
     }
   }
 
-  if (isLoading) return <div><PageHeader title="New Stock Count" /><SkeletonCard /></div>
+  if (isLoading) return <AdminPage title="New Stock Count"><SkeletonCard /></AdminPage>
 
   return (
-    <div>
-      <PageHeader title="New Stock Count" description="Start a physical inventory count session" actions={<Link href="/admin/inventory/stock-counts"><Button variant="secondary" size="sm">Back</Button></Link>} />
+    <AdminPage title="New Stock Count" description="Start a physical inventory count session" actions={<Link href="/admin/inventory/stock-counts"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
       <div className="max-w-md bg-white rounded-lg border p-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
@@ -72,6 +71,6 @@ export default function NewStockCountPage() {
           This will create a new stock count session. You will count each product one by one.
         </p>
       </div>
-    </div>
+    </AdminPage>
   )
 }

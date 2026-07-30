@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -43,8 +43,7 @@ export default function AdminInquiries() {
   const unreadCount = messages.filter(m => !m.is_read).length
 
   return (
-    <div>
-      <PageHeader title="Inquiries" description={`${messages.length} messages · ${unreadCount} unread`} />
+    <AdminPage title="Inquiries" description={`${messages.length} messages · ${unreadCount} unread`}>
 
       {isLoading ? <div style={{ display: 'grid', gap: 12 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
       : messages.length === 0 ? <EmptyState icon="✉️" title="No messages yet" description="Contact form submissions will appear here" />
@@ -79,6 +78,6 @@ export default function AdminInquiries() {
       )}
 
       <ConfirmDialog open={!!deleteTarget} title="Delete Message" message={`Delete message from "${deleteTarget?.name}"?`} confirmLabel="Delete" onConfirm={deleteMessage} onCancel={() => setDeleteTarget(null)} />
-    </div>
+    </AdminPage>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import { StatCard } from '@/components/admin/design-system/Card'
 import { OrderStatusBadge } from '@/components/admin/design-system/Badge'
 import Button from '@/components/admin/design-system/Button'
@@ -128,16 +128,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div>
-      <PageHeader
-        title={`${greeting()}, Admin`}
-        description="Here's what's happening at The Boma Café today"
-        actions={
-          <Link href="/admin/orders">
-            <Button variant="primary" size="md">+ New Order</Button>
-          </Link>
-        }
-      />
+    <AdminPage
+      title={`${greeting()}, Admin`}
+      description="Here's what's happening at The Boma Café today"
+      actions={
+        <Link href="/admin/orders">
+          <Button variant="primary" size="md">+ New Order</Button>
+        </Link>
+      }
+    >
 
       {/* Stat Cards */}
       <div style={{
@@ -235,6 +234,6 @@ export default function AdminDashboard() {
           <StatCard value={inquiries} label="Inquiries" />
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Textarea, Select } from '@/components/admin/design-system/Input';
 import Badge from '@/components/admin/design-system/Badge';
@@ -152,8 +152,7 @@ export default function AdminEvents() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Events" description={`${events.length} total events`} />
+    <AdminPage title="Events" description={`${events.length} total events`}>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#F1F3F7', borderRadius: 10, padding: 4 }}>
@@ -311,6 +310,6 @@ export default function AdminEvents() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
+    </AdminPage>
   );
 }

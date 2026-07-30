@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -49,33 +49,30 @@ export default function ImportDetailPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <PageHeader title="Import Detail" description="Loading..." />
+      <AdminPage title="Import Detail">
         <SkeletonCard />
-      </div>
+      </AdminPage>
     )
   }
 
   if (error || !importData) {
     return (
-      <div>
-        <PageHeader title="Import Detail" />
+      <AdminPage title="Import Detail">
         <EmptyState title="Import not found" description={error || 'Could not load import details'} />
-      </div>
+      </AdminPage>
     )
   }
 
   return (
-    <div>
-      <PageHeader title={importData.filename} description={`${importData.importType?.replace('_', ' ') || 'Import'} — ${new Date(importData.createdAt || importData.created_at).toLocaleString()}`} actions={<><Badge variant={
-          importData.status === 'applied' ? 'success' :
-          importData.status === 'rolled_back' ? 'warning' :
-          importData.status === 'failed' ? 'danger' : 'default'
-        }>{importData.status}</Badge>
-        {importData.canRollback && (
-          <Button onClick={handleRollback} variant="danger" size="sm">Rollback Import</Button>
-        )}
-        <Link href="/admin/inventory/imports"><Button variant="secondary" size="sm">Back</Button></Link></>} />
+    <AdminPage title={importData.filename} description={`${importData.importType?.replace('_', ' ') || 'Import'} — ${new Date(importData.createdAt || importData.created_at).toLocaleString()}`} actions={<><Badge variant={
+        importData.status === 'applied' ? 'success' :
+        importData.status === 'rolled_back' ? 'warning' :
+        importData.status === 'failed' ? 'danger' : 'default'
+      }>{importData.status}</Badge>
+      {importData.canRollback && (
+        <Button onClick={handleRollback} variant="danger" size="sm">Rollback Import</Button>
+      )}
+      <Link href="/admin/inventory/imports"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border p-4">
@@ -110,6 +107,6 @@ export default function ImportDetailPage() {
           </dl>
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }

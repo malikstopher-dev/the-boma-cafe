@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -63,7 +63,6 @@ export default function PurchaseOrderDetailPage() {
       const res = await fetch(`/api/inventory/purchase-orders/${id}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        ...(action === 'receive' ? {} : {}),
       })
       if (res.ok) {
         load()
@@ -117,8 +116,8 @@ export default function PurchaseOrderDetailPage() {
     }
   }
 
-  if (isLoading) return <div><PageHeader title="Purchase Order" /><SkeletonCard /></div>
-  if (error || !po) return <div><PageHeader title="Purchase Order" /><EmptyState title="Not found" description={error || ''} /></div>
+  if (isLoading) return <AdminPage title="Purchase Order"><SkeletonCard /></AdminPage>
+  if (error || !po) return <AdminPage title="Purchase Order"><EmptyState title="Not found" description={error || ''} /></AdminPage>
 
   const isDraft = po.status === 'draft'
   const isApproved = po.status === 'approved'
@@ -130,29 +129,33 @@ export default function PurchaseOrderDetailPage() {
   const totalOrdered = items.reduce((s: number, i: any) => s + Number(i.quantity_ordered), 0)
   const totalReceived = items.reduce((s: number, i: any) => s + Number(i.quantity_received ?? 0), 0)
 
-  return (
-    <div>
-      <PageHeader title={`PO — ${po.inventory_suppliers?.name ?? 'Unknown Supplier'}`} actions={<><Badge variant={STATUS_VARIANTS[po.status] || 'default'}>{po.status.replace('_', ' ')}</Badge>
-        {isDraft && (
-          <>
-            <Button onClick={() => handleAction('approve')} disabled={actionLoading} size="sm">Approve</Button>
-            <Button onClick={() => handleAction('cancel')} disabled={actionLoading} variant="danger" size="sm">Cancel</Button>
-          </>
-        )}
-        {isApproved && (
-          <>
-            <Button onClick={() => handleAction('order')} disabled={actionLoading} size="sm">Mark Ordered</Button>
-            <Button onClick={() => handleAction('cancel')} disabled={actionLoading} variant="danger" size="sm">Cancel</Button>
-          </>
-        )}
-        {canReceive && (
-          <>
-            <Button onClick={() => setReceiving(!receiving)} variant="secondary" size="sm">{receiving ? 'Cancel' : 'Receive Items'}</Button>
-            <Button onClick={() => handleAction('cancel')} disabled={actionLoading} variant="danger" size="sm">Cancel</Button>
-          </>
-        )}
-        <Link href="/admin/inventory/purchase-orders"><Button variant="secondary" size="sm">Back</Button></Link></>} />
+  const pageActions = (
+    <>
+      <Badge variant={STATUS_VARIANTS[po.status] || 'default'}>{po.status.replace('_', ' ')}</Badge>
+      {isDraft && (
+        <>
+          <Button onClick={() => handleAction('approve')} disabled={actionLoading} size="sm">Approve</Button>
+          <Button onClick={() => handleAction('cancel')} disabled={actionLoading} variant="danger" size="sm">Cancel</Button>
+        </>
+      )}
+      {isApproved && (
+        <>
+          <Button onClick={() => handleAction('order')} disabled={actionLoading} size="sm">Mark Ordered</Button>
+          <Button onClick={() => handleAction('cancel')} disabled={actionLoading} variant="danger" size="sm">Cancel</Button>
+        </>
+      )}
+      {canReceive && (
+        <>
+          <Button onClick={() => setReceiving(!receiving)} variant="secondary" size="sm">{receiving ? 'Cancel' : 'Receive Items'}</Button>
+          <Button onClick={() => handleAction('cancel')} disabled={actionLoading} variant="danger" size="sm">Cancel</Button>
+        </>
+      )}
+      <Link href="/admin/inventory/purchase-orders"><Button variant="secondary" size="sm">Back</Button></Link>
+    </>
+  )
 
+  return (
+    <AdminPage title={`PO — ${po.inventory_suppliers?.name ?? 'Unknown Supplier'}`} actions={pageActions}>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg border p-3">
           <div className="text-xs text-gray-500">Status</div>
@@ -236,7 +239,7 @@ export default function PurchaseOrderDetailPage() {
           })}
 
           <Button onClick={handleReceive} disabled={actionLoading} size="lg">
-            {actionLoading ? 'Receiving...' : `Receive & Update Stock`}
+            {actionLoading ? 'Receiving...' : 'Receive & Update Stock'}
           </Button>
           <p className="text-xs text-gray-400 mt-2">
             This will create inventory transactions (type: purchase) and update stock balances automatically.
@@ -277,6 +280,6 @@ export default function PurchaseOrderDetailPage() {
           ))}
         </div>
       )}
-    </div>
+    </AdminPage>
   )
 }

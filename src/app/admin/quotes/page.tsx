@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { Input, Select } from '@/components/admin/design-system/Input'
 import Badge from '@/components/admin/design-system/Badge'
@@ -123,8 +123,7 @@ export default function AdminQuotes() {
   }
 
   return (
-    <div>
-      <PageHeader title="Quotes" description={`${filtered.length} quotation${filtered.length !== 1 ? 's' : ''}`} />
+    <AdminPage title="Quotes" description={`${filtered.length} quotation${filtered.length !== 1 ? 's' : ''}`}>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
@@ -243,6 +242,6 @@ export default function AdminQuotes() {
           ))}
         </div>
       )}
-    </div>
+    </AdminPage>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { Input } from '@/components/admin/design-system/Input'
 import Badge from '@/components/admin/design-system/Badge'
@@ -81,8 +81,7 @@ export default function WaitersPage() {
   }
 
   return (
-    <div style={{ maxWidth: 640 }}>
-      <PageHeader title="Waiters" description={`${waiters.filter(w => w.active).length} on duty · ${waiters.length} total`} />
+    <AdminPage title="Waiters" description={`${waiters.filter(w => w.active).length} on duty · ${waiters.length} total`}>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, marginBottom: 16 }}>
         <Input placeholder="Employee ID (e.g. W003)" value={newEmployeeId} onChange={e => setNewEmployeeId(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && addWaiter()} />
@@ -139,6 +138,6 @@ export default function WaitersPage() {
       )}
 
       <ConfirmDialog open={!!deleteTarget} title={`Delete "${deleteTarget?.name}"?`} message="Historical orders will keep the waiter name. They will be removed from future assignment lists." confirmLabel="Delete" onConfirm={deleteWaiter} onCancel={() => setDeleteTarget(null)} />
-    </div>
+    </AdminPage>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -82,14 +82,14 @@ export default function MenuItemsPage() {
     !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase())
   )
 
-  if (isLoading) return <div><PageHeader title="Menu Integration" /><SkeletonCard /></div>
+  if (isLoading) return <AdminPage title="Menu Integration"><SkeletonCard /></AdminPage>
 
   const linkedCount = items.filter(i => i.has_inventory).length
   const unlinkedCount = items.length - linkedCount
 
   return (
     <div>
-      <PageHeader title="Menu Integration" description="Link bar menu items to inventory products" actions={<><Badge variant="success">{linkedCount} linked</Badge><Badge variant="default">{unlinkedCount} unlinked</Badge></>} />
+      <AdminPage title="Menu Integration" description="Link bar menu items to inventory products" actions={<><Badge variant="success">{linkedCount} linked</Badge><Badge variant="default">{unlinkedCount} unlinked</Badge></>}>
 
       <div className="flex gap-2 mb-4">
         <input className="border rounded px-3 py-2 text-sm flex-1 max-w-xs" placeholder="Search menu items..." value={search} onChange={e => setSearch(e.target.value)} />
@@ -174,6 +174,6 @@ export default function MenuItemsPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminPage>
   )
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Textarea } from '@/components/admin/design-system/Input';
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton';
@@ -55,8 +55,7 @@ export default function AdminPopup() {
   if (isLoading) return <div style={{ display: 'grid', gap: 12 }}><SkeletonCard /><SkeletonCard /></div>;
 
   return (
-    <div>
-      <PageHeader title="Weekend Popup" description="Configure the weekend breakfast buffet popup" />
+    <AdminPage title="Weekend Popup" description="Configure the weekend breakfast buffet popup">
 
       <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -109,6 +108,6 @@ export default function AdminPopup() {
           <Button variant="primary" onClick={handleSave} loading={isSaving}>Save Settings</Button>
         </div>
       </div>
-    </div>
+    </AdminPage>
   );
 }

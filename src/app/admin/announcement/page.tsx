@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/admin/design-system/PageHeader';
+import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
 import { Input, Textarea } from '@/components/admin/design-system/Input';
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton';
@@ -30,8 +30,7 @@ export default function AdminAnnouncement() {
   if (isLoading) return <div style={{ display: 'grid', gap: 12 }}><SkeletonCard /></div>;
 
   return (
-    <div>
-      <PageHeader title="Announcement Bar" description="Configure the announcement that appears at the top of the website" />
+    <AdminPage title="Announcement Bar" description="Configure the announcement that appears at the top of the website">
 
       <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, maxWidth: 560 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -52,6 +51,6 @@ export default function AdminAnnouncement() {
           <Button variant="primary" onClick={handleSave} loading={isSaving}>Save Settings</Button>
         </div>
       </div>
-    </div>
+    </AdminPage>
   );
 }

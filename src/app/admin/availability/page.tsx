@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { Input, Select } from '@/components/admin/design-system/Input'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
@@ -96,18 +96,16 @@ export default function AdminAvailability() {
 
   if (isLoading) {
     return (
-      <div>
-        <PageHeader title="Blocked Dates" description="Manage venue availability" />
+      <AdminPage title="Blocked Dates" description="Manage venue availability">
         <div style={{ display: 'grid', gap: 12, marginTop: 20 }}><SkeletonCard /><SkeletonCard /></div>
-      </div>
+      </AdminPage>
     )
   }
 
   return (
-    <div>
-      <PageHeader title="Blocked Dates" description="Block dates when venue areas are unavailable"
-        actions={<Button variant="primary" size="sm" onClick={() => setShowForm(true)}>+ Block Date</Button>}
-      />
+    <AdminPage title="Blocked Dates" description="Block dates when venue areas are unavailable"
+      actions={<Button variant="primary" size="sm" onClick={() => setShowForm(true)}>+ Block Date</Button>}
+    >
 
       {/* Create form */}
       {showForm && (
@@ -227,6 +225,6 @@ export default function AdminAvailability() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
+    </AdminPage>
   )
 }

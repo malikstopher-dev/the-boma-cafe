@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 
@@ -91,11 +91,10 @@ export default function NewPurchaseOrderPage() {
     }
   }
 
-  if (isLoading) return <div><PageHeader title="New Purchase Order" /><SkeletonCard /></div>
+  if (isLoading) return <AdminPage title="New Purchase Order"><SkeletonCard /></AdminPage>
 
   return (
-    <div>
-      <PageHeader title="New Purchase Order" description="Create a new order to send to a supplier" actions={<Link href="/admin/inventory/purchase-orders"><Button variant="secondary" size="sm">Back</Button></Link>} />
+    <AdminPage title="New Purchase Order" description="Create a new order to send to a supplier" actions={<Link href="/admin/inventory/purchase-orders"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
       <div className="max-w-3xl">
         <div className="bg-white rounded-lg border p-4 mb-4">
@@ -166,6 +165,6 @@ export default function NewPurchaseOrderPage() {
           <Link href="/admin/inventory/purchase-orders"><Button variant="secondary">Cancel</Button></Link>
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }
