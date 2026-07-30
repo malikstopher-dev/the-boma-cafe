@@ -11,6 +11,7 @@ import EmptyState from '@/components/admin/design-system/EmptyState';
 import ConfirmDialog from '@/components/admin/design-system/ConfirmDialog';
 import { useToast } from '@/components/admin/design-system/Toast';
 import { cmsService } from '@/lib/client-cms';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 export default function AdminMenu() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -191,7 +192,7 @@ export default function AdminMenu() {
               <Textarea label="Description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Describe this item..." />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <Input label="Image URL" value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} placeholder="https://... or /menu/item.jpg" />
+              <ImageUpload module="food" value={formData.image} onChange={url => setFormData({ ...formData, image: url })} label="Item Image" />
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>

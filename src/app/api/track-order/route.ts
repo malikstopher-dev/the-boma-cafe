@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to look up order' }, { status: 500 })
   }
 
   if (!fullResult) {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     .eq('order_ref', ref)
     .maybeSingle()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to look up order' }, { status: 500 })
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
 
   if (!['pending', 'confirmed'].includes(order.status)) {

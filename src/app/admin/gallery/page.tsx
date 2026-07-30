@@ -11,6 +11,7 @@ import ConfirmDialog from '@/components/admin/design-system/ConfirmDialog';
 import { useToast } from '@/components/admin/design-system/Toast';
 import { cmsService, generateId } from '@/lib/client-cms';
 import MediaPicker from '@/components/admin/MediaPicker';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 const categories = ['Events', 'Food', 'Venue', 'People', 'Promotions'];
 const categoryFolders: Record<string, string> = { 'Events': 'events', 'Food': 'food', 'Venue': 'venue', 'People': 'people', 'Promotions': 'promotions' };
@@ -144,7 +145,9 @@ export default function AdminGallery() {
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <Select label="Type" options={[{ value: 'image', label: 'Image' }, { value: 'video', label: 'Video' }]} value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} />
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <div style={{ flex: 1 }}><Input label="URL" required value={formData.url} onChange={e => setFormData({ ...formData, url: e.target.value })} placeholder="/gallery/events/photo.jpg" /></div>
+                  <div style={{ flex: 1 }}>
+                    <ImageUpload module="gallery" value={formData.url} onChange={url => setFormData({ ...formData, url })} label="Image" />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end' }}><MediaPicker module="gallery" type="food_image" value={formData.url} onChange={url => setFormData({ ...formData, url })} /></div>
                 </div>
                 <Input label="Title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Optional title" />

@@ -35,10 +35,6 @@ export function formatStartingPrice(item: MenuItem): string {
   return `R${price}`;
 }
 
-export function formatPrice(price: number): string {
-  return `R${price}`;
-}
-
 export function getSizePrice(item: MenuItem, sizeName: string): number {
   const size = item.variants?.find(v => v.name === sizeName);
   return size?.price ?? item.price ?? 0;

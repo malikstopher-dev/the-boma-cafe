@@ -111,7 +111,7 @@ function roleScope(role: string): string {
   return 'waiter:orders'
 }
 
-const PROTECTED_API_PREFIXES = ['/api/admin/', '/api/cms/', '/api/waiters/', '/api/gallery/', '/api/upload/', '/api/supabase/', '/api/staff/']
+const PROTECTED_API_PREFIXES = ['/api/admin/', '/api/cms/', '/api/waiters/', '/api/gallery/', '/api/upload/', '/api/supabase/', '/api/staff/', '/api/inventory/']
 
 const PUBLIC_API_EXCEPTIONS = ['/api/cms/public', '/api/waiters/active', '/api/menu/public', '/api/track-order', '/api/receipt/verify', '/api/staff/pin-login', '/api/staff/list', '/api/staff/session']
 
@@ -229,5 +229,6 @@ export const config = {
     '/api/upload/:path*',
     '/api/supabase/:path*',
     '/api/staff/:path*',
+    '/api/inventory/:path*',
   ],
 }

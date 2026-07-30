@@ -8,6 +8,7 @@ import { SkeletonCard } from '@/components/admin/design-system/Skeleton';
 import { useToast } from '@/components/admin/design-system/Toast';
 import { cmsService } from '@/lib/client-cms';
 import MediaPicker from '@/components/admin/MediaPicker';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 export default function AdminPopup() {
   const [formData, setFormData] = useState({
@@ -96,7 +97,9 @@ export default function AdminPopup() {
           <Input label="CTA Link" value={formData.ctaLink} onChange={e => setFormData({ ...formData, ctaLink: e.target.value })} placeholder="/menu" />
           <div style={{ gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1 }}><Input label="Image URL" value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} placeholder="/images/buffet.jpg" /></div>
+              <div style={{ flex: 1 }}>
+                <ImageUpload module="promotions" value={formData.image} onChange={url => setFormData({ ...formData, image: url })} label="Popup Image" />
+              </div>
               <div style={{ display: 'flex', alignItems: 'flex-end' }}><MediaPicker module="promotions" type="campaign_image" value={formData.image} onChange={url => setFormData({ ...formData, image: url })} /></div>
             </div>
           </div>

@@ -11,6 +11,7 @@ import ConfirmDialog from '@/components/admin/design-system/ConfirmDialog';
 import { useToast } from '@/components/admin/design-system/Toast';
 import { cmsService, generateId } from '@/lib/client-cms';
 import MediaPicker from '@/components/admin/MediaPicker';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 export default function AdminEvents() {
   const [events, setEvents] = useState<any[]>([]);
@@ -200,13 +201,12 @@ export default function AdminEvents() {
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <Input label="Cover Image URL" value={formData.coverImage} onChange={e => setFormData({ ...formData, coverImage: e.target.value })} placeholder="/images/event.jpg" />
+                  <ImageUpload module="events" value={formData.coverImage} onChange={url => setFormData({ ...formData, coverImage: url })} label="Cover Image" />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                   <MediaPicker module="events" type="campaign_image" value={formData.coverImage} onChange={url => setFormData({ ...formData, coverImage: url })} />
                 </div>
               </div>
-              {formData.coverImage && <img src={formData.coverImage} alt="Preview" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>

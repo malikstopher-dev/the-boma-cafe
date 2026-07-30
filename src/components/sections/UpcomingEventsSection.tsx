@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import FadeInSection from '@/components/ui/FadeInSection';
 import Slideshow from '@/components/ui/Slideshow';
+import { resolveImage } from '@/lib/resolve-image';
 import styles from '@/app/page.module.css';
 
 interface EventCard {
@@ -35,7 +36,7 @@ export default function UpcomingEventsSection({ events = [], slideshowImages = [
     ? slideshowImages
     : events
         .filter(e => e.coverImage || e.image)
-        .map(e => ({ src: e.coverImage || e.image!, alt: e.title }));
+        .map(e => ({ src: resolveImage(e.coverImage || e.image) || e.coverImage || e.image!, alt: e.title }));
 
   return (
     <section className={styles.eventsSection}>
@@ -59,7 +60,7 @@ export default function UpcomingEventsSection({ events = [], slideshowImages = [
                 <Link href={event.ctaLink || '/experience'} className={styles.eventCard}>
                   <div className={styles.eventCardImage}>
                     <Image
-                      src={event.coverImage || event.image || '/gallery/weekend-buffet.jpg'}
+                      src={resolveImage(event.coverImage || event.image) || event.coverImage || event.image || '/gallery/weekend-buffet.jpg'}
                       alt={event.title}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"

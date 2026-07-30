@@ -1,0 +1,140 @@
+import type { CreateTransactionInput, InventoryTransaction, TransactionType } from './types'
+import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError } from '../lib/errors'
+import { getInventoryClient } from '../lib/db'
+import { writeAuditLog } from '../lib/audit'
+
+const DECREASE_TYPES: ReadonlySet<TransactionType> = new Set([
+  'sale', 'sale_bottle', 'spillage', 'comp', 'staff',
+  'waste', 'breakage', 'expiry_loss', 'transfer_out',
+  'theft', 'donation',
+])
+
+function isDecreaseType(t: TransactionType): boolean {
+  return DECREASE_TYPES.has(t)
+}
+
+export async function getCurrentBalance(productId: string, locationId: string): Promise<number> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .rpc('inventory_get_balance', {
+      p_product_id: productId,
+      p_location_id: locationId,
+    })
+    .single()
+
+  if (error) {
+    const { data: fallback } = await supabase
+      .from('inventory_transactions')
+      .select('quantity')
+      .eq('product_id', productId)
+      .eq('location_id', locationId)
+    if (!fallback) return 0
+    return fallback.reduce((sum, row) => sum + Number(row.quantity), 0)
+  }
+
+  return Number((data as { balance?: number } | null)?.balance ?? 0)
+}
+
+export async function getBalanceAtTime(
+  productId: string,
+  locationId: string,
+  timestamp: string,
+): Promise<number> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_transactions')
+    .select('quantity')
+    .eq('product_id', productId)
+    .eq('location_id', locationId)
+    .lte('created_at', timestamp)
+
+  if (error) {
+    return 0
+  }
+
+  return (data ?? []).reduce((sum, row) => sum + Number(row.quantity), 0)
+}
+
+export async function createTransaction(input: CreateTransactionInput): Promise<InventoryTransaction> {
+  const supabase = getInventoryClient()
+
+  const { data: product } = await supabase
+    .from('inventory_products')
+    .select('id')
+    .eq('id', input.product_id)
+    .maybeSingle()
+  if (!product) throw new ProductNotFoundError(input.product_id)
+
+  const { data: location } = await supabase
+    .from('inventory_locations')
+    .select('id')
+    .eq('id', input.location_id)
+    .eq('is_active', true)
+    .maybeSingle()
+  if (!location) throw new LocationNotFoundError(input.location_id)
+
+  if (isDecreaseType(input.transaction_type) && input.quantity >= 0) {
+    const currentBalance = await getCurrentBalance(input.product_id, input.location_id)
+    const requested = Math.abs(input.quantity)
+    if (currentBalance < requested) {
+      throw new InsufficientStockError(
+        input.product_id,
+        input.location_id,
+        requested,
+        currentBalance,
+      )
+    }
+  }
+
+  const actualQuantity = isDecreaseType(input.transaction_type)
+    ? -Math.abs(input.quantity)
+    : Math.abs(input.quantity)
+
+  const { data, error } = await supabase
+    .from('inventory_transactions')
+    .insert({
+      product_id: input.product_id,
+      location_id: input.location_id,
+      transaction_type: input.transaction_type,
+      quantity: actualQuantity,
+      unit_cost: input.unit_cost ?? null,
+      reference_type: input.reference_type ?? null,
+      reference_id: input.reference_id ?? null,
+      performed_by: input.performed_by ?? null,
+      notes: input.notes ?? null,
+      import_batch_id: input.import_batch_id ?? null,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Failed to create transaction: ${error.message}`)
+  }
+
+  await writeAuditLog('inventory_transactions', data.id, 'created', {
+    product_id: input.product_id,
+    location_id: input.location_id,
+    transaction_type: input.transaction_type,
+    quantity: actualQuantity,
+    reference_type: input.reference_type,
+    reference_id: input.reference_id,
+  }, input.performed_by ?? null)
+
+  try {
+    const newBal = await getCurrentBalance(input.product_id, input.location_id)
+    await supabase
+      .from('inventory_product_balances')
+      .upsert({
+        product_id: input.product_id,
+        location_id: input.location_id,
+        balance: newBal,
+        refreshed_at: new Date().toISOString(),
+      }, { onConflict: 'product_id, location_id' })
+  } catch { /* cache refresh is non-critical */ }
+
+  return data as InventoryTransaction
+}
+
+export async function getBalance(productId: string, locationId: string): Promise<number> {
+  return getCurrentBalance(productId, locationId)
+}

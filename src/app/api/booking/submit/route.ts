@@ -8,13 +8,6 @@ import { persistQuotation } from '@/lib/booking/pricing'
 import { getBookingSettings } from '@/lib/booking/settings'
 import { createAuditEntry } from '@/lib/booking/audit'
 import { recordAvailability } from '@/lib/booking/availability'
-import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
-import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/email/templates/customer-quotation'
-import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
-import { formatCurrency } from '@/lib/booking/utils'
-
-
-
 
 export const dynamic = 'force-dynamic'
 
@@ -154,9 +147,6 @@ export async function POST(request: NextRequest) {
 
     const addonsDisplayText = addonNames.map(a => `${a.name} x ${a.qty}`).join(', ')
     const guests = data.adults + data.children
-    const estimatedTotalStr = formatCurrency(calculation.total)
-    const depositStr = formatCurrency(calculation.deposit_amount)
-    const balanceStr = formatCurrency(calculation.balance_amount)
 
     // 6. Record tentative availability
     await recordAvailability(data.venue_area_id, booking.id, data.booking_date, data.booking_time, endTime, data.adults + data.children, 'tentative')
@@ -170,154 +160,53 @@ export async function POST(request: NextRequest) {
       reason: 'Booking submitted via website',
     })
 
-    // --- EMAIL SENDING ---
+    // --- ENQUEUE BACKGROUND JOB ---
 
-    // Build line items HTML for admin email
-    const lineItemsHtml = calculation.line_items
-      .filter((i: any) => i.total > 0)
-      .map((item: any) =>
-        `<tr><td style="padding:5px 0;font-size:13px;color:#555;">${item.label}${item.quantity > 1 ? ` x ${item.quantity}` : ''}</td><td style="padding:5px 0;font-size:13px;color:#333;text-align:right;">${formatCurrency(item.total)}</td></tr>`
-      )
-      .join('')
+    const portalUrl = `https://the-boma-cafe.vercel.app/booking/${quoteNumber}?token=${accessToken}`
+    const validUntil = new Date()
+    validUntil.setDate(validUntil.getDate() + (settings.quote_validity_days || 14))
 
-    // Send emails (never fail booking on email error)
-    let customerEmailSent = false
-    let adminEmailSent = false
-
-    try {
-      const portalUrl = `https://the-boma-cafe.vercel.app/booking/${quoteNumber}?token=${accessToken}`
-      const customerHtml = buildCustomerQuotationHtml({
-        customerName: data.name,
-        quoteNumber,
-        bookingType: bookingTypeName,
-        bookingDate: data.booking_date,
-        bookingTime: data.booking_time,
-        guests,
-        estimatedTotal: estimatedTotalStr,
-        depositAmount: depositStr,
-        balanceAmount: balanceStr,
-        venueArea: venueAreaName,
-        portalUrl,
+    const { data: job, error: jobError } = await client
+      .from('background_jobs')
+      .insert({
+        job_type: 'pdf_generation',
+        payload: {
+          quoteId,
+          quoteNumber,
+          version: 1,
+          customerName: data.name,
+          customerEmail: data.email,
+          customerPhone: data.phone,
+          bookingReference: booking.id,
+          bookingType: bookingTypeName,
+          venueArea: venueAreaName,
+          foodPackage: foodPackageName,
+          drinkPackage: drinkPackageName,
+          addons: addonsDisplayText,
+          addonNames,
+          bookingDate: data.booking_date,
+          bookingTime: data.booking_time,
+          guests,
+          lineItems: calculation.line_items.filter((i: any) => i.total > 0),
+          subtotal: calculation.subtotal,
+          taxRate: calculation.tax_rate,
+          taxAmount: calculation.tax_amount,
+          total: calculation.total,
+          depositPercentage: calculation.deposit_percentage,
+          depositAmount: calculation.deposit_amount,
+          balanceAmount: calculation.balance_amount,
+          validUntil: validUntil.toISOString().split('T')[0],
+          portalUrl,
+          notificationEmails: settings.notification_emails,
+          company: data.company || null,
+          specialRequests: data.special_requests || null,
+        },
+        idempotency_key: `booking-submit-${quoteNumber}`,
+        priority: 1,
+        max_retries: 3,
       })
-      const customerText = buildCustomerQuotationText({
-        customerName: data.name,
-        quoteNumber,
-        bookingType: bookingTypeName,
-        bookingDate: data.booking_date,
-        bookingTime: data.booking_time,
-        guests,
-        estimatedTotal: estimatedTotalStr,
-        depositAmount: depositStr,
-        balanceAmount: balanceStr,
-        venueArea: venueAreaName,
-        portalUrl,
-      })
-
-      customerEmailSent = await sendEmail({
-        to: data.email,
-        subject: `Your Booking Quotation (${quoteNumber})`,
-        html: customerHtml,
-        text: customerText,
-      })
-    } catch (err) {
-      console.error('Failed to send customer email:', err)
-    }
-
-    try {
-      const adminHtml = buildAdminNotificationHtml({
-        customerName: data.name,
-        customerPhone: data.phone,
-        customerEmail: data.email,
-        quoteNumber,
-        bookingType: bookingTypeName,
-        bookingDate: data.booking_date,
-        bookingTime: data.booking_time,
-        guests,
-        venueArea: venueAreaName,
-        foodPackage: foodPackageName,
-        drinkPackage: drinkPackageName,
-        addons: addonsDisplayText,
-        specialRequests: data.special_requests || '',
-        lineItems: lineItemsHtml,
-        estimatedTotal: estimatedTotalStr,
-        depositAmount: depositStr,
-        balanceAmount: balanceStr,
-        subtotal: formatCurrency(calculation.subtotal),
-        taxAmount: formatCurrency(calculation.tax_amount),
-        taxRate: calculation.tax_rate,
-        bookingId: booking.id,
-      })
-      const adminText = buildAdminNotificationText({
-        customerName: data.name,
-        customerPhone: data.phone,
-        customerEmail: data.email,
-        quoteNumber,
-        bookingType: bookingTypeName,
-        bookingDate: data.booking_date,
-        bookingTime: data.booking_time,
-        guests,
-        venueArea: venueAreaName,
-        foodPackage: foodPackageName,
-        drinkPackage: drinkPackageName,
-        addons: addonsDisplayText,
-        specialRequests: data.special_requests || '',
-        estimatedTotal: estimatedTotalStr,
-        depositAmount: depositStr,
-        balanceAmount: balanceStr,
-        bookingId: booking.id,
-      })
-
-      const adminRecipients = settings.notification_emails
-      if (adminRecipients.length > 0) {
-        adminEmailSent = await sendEmailToMultiple({
-          recipients: adminRecipients,
-          subject: `New Booking (${quoteNumber})`,
-          html: adminHtml,
-          text: adminText,
-        })
-      }
-    } catch (err) {
-      console.error('Failed to send admin notification:', err)
-    }
-
-    // 7. Update notification queue with email results
-    try {
-      if (customerEmailSent) {
-        await client.from('notification_queue').insert({
-          recipient_type: 'customer',
-          recipient_identifier: data.email,
-          notification_type: 'quote_ready',
-          template_data: {
-            booking_id: booking.id,
-            quote_number: quoteNumber,
-            customer_name: data.name,
-            total: calculation.total,
-          },
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-        })
-      }
-      if (adminEmailSent) {
-        const adminRecipients = settings.notification_emails
-        for (const email of adminRecipients) {
-          await client.from('notification_queue').insert({
-            recipient_type: 'admin',
-            recipient_identifier: email,
-            notification_type: 'admin_new_booking',
-            template_data: {
-              booking_id: booking.id,
-              quote_number: quoteNumber,
-              customer_name: data.name,
-              total: calculation.total,
-            },
-            status: 'sent',
-            sent_at: new Date().toISOString(),
-          })
-        }
-      }
-    } catch (err) {
-      console.error('Failed to update notification queue:', err)
-    }
+      .select('id')
+      .single()
 
     return NextResponse.json({
       success: true,
@@ -325,7 +214,7 @@ export async function POST(request: NextRequest) {
       quote_id: quoteId,
       quote_number: quoteNumber,
       quotation: calculation,
-      email_sent: customerEmailSent,
+      job_id: job?.id || null,
     }, { status: 201 })
   } catch (error) {
     console.error('Submit booking error:', error)

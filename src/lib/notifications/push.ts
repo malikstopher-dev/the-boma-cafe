@@ -46,42 +46,6 @@ export async function sendToRole(
   }
 }
 
-/**
- * Send push notification to a specific user by user_id.
- */
-export async function sendToUser(
-  userId: string,
-  payload: PushPayload,
-): Promise<{ sent: number; failed: number }> {
-  try {
-    const { data: subscriptions } = await getAdminClient()
-      .from('push_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-
-    return sendToSubscriptions(subscriptions || [], payload)
-  } catch (err) {
-    console.error(`[push] sendToUser(${userId}) failed:`, err)
-    return { sent: 0, failed: 0 }
-  }
-}
-
-/**
- * Send to specific FCM tokens.
- */
-export async function sendToTokens(
-  tokens: string[],
-  payload: PushPayload,
-): Promise<{ sent: number; failed: number }> {
-  try {
-    return sendMessages(tokens, payload)
-  } catch (err) {
-    console.error('[push] sendToTokens failed:', err)
-    return { sent: 0, failed: tokens.length }
-  }
-}
-
 export async function notifyOrderCreated(
   orderRef: string,
   role: PushRole,

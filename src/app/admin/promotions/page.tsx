@@ -11,6 +11,7 @@ import ConfirmDialog from '@/components/admin/design-system/ConfirmDialog';
 import { useToast } from '@/components/admin/design-system/Toast';
 import { cmsService, generateId } from '@/lib/client-cms';
 import MediaPicker from '@/components/admin/MediaPicker';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 export default function AdminPromotions() {
   const [promotions, setPromotions] = useState<any[]>([]);
@@ -93,7 +94,9 @@ export default function AdminPromotions() {
             <Input label="Valid Until" type="date" value={formData.validUntil} onChange={e => setFormData({ ...formData, validUntil: e.target.value })} />
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1 }}><Input label="Image URL" value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} placeholder="/images/promo.jpg" /></div>
+                <div style={{ flex: 1 }}>
+                  <ImageUpload module="promotions" value={formData.image} onChange={url => setFormData({ ...formData, image: url })} label="Promotion Image" />
+                </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}><MediaPicker module="promotions" type="campaign_image" value={formData.image} onChange={url => setFormData({ ...formData, image: url })} /></div>
               </div>
             </div>

@@ -90,7 +90,8 @@ export async function POST(
     const pdfFileName = await generateAndStorePdf(pdfInput)
 
     if (!pdfFileName) {
-      return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 })
+      console.error('[regenerate-pdf] generateAndStorePdf returned null — check [generateAndStorePdf] logs above')
+      return NextResponse.json({ error: 'Failed to generate PDF. Check server logs for details.' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -100,7 +101,8 @@ export async function POST(
       version: newVersion,
     })
   } catch (err) {
-    console.error('Regenerate PDF error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[regenerate-pdf] caught exception:', err)
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return NextResponse.json({ error: 'PDF generation failed: ' + message }, { status: 500 })
   }
 }

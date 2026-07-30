@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/lib/cart';
 import { MenuItem, MenuCategory } from '@/types';
+import { resolveImage } from '@/lib/resolve-image';
 import {
   hasSizes,
   hasAddOns,
@@ -561,7 +562,7 @@ export default function MenuPage() {
                   {section.items.slice(0, visibleCount).map((item: MenuItem) => {
                     const CMS_IMAGE_NAMES = ['Full Chicken, Chips & 4 Rotis', '200g Ribs & Steak', '1/4 Chicken, Pap & Gravy'];
                     const itemImage = (CMS_IMAGE_NAMES.includes(item.name) && item.image)
-                      ? item.image
+                      ? (resolveImage(item.image) || item.image)
                       : getMenuItemImage(item.name);
                     return (
                     <div key={item.id} className={styles.itemCard} onClick={() => setSelectedItem(item)}>

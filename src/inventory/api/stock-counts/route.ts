@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getInventoryClient } from '@/inventory/lib/db'
+import type { ApiResponse, InventoryStockCount } from '@/inventory/engine/types'
+import { createStockCount, listStockCounts } from '@/inventory/engine/stock-counts'
+
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryStockCount[]>>> {
+  try {
+    const { searchParams } = new URL(request.url)
+    const locationId = searchParams.get('location_id') ?? undefined
+
+    const data = await listStockCounts(locationId)
+    return NextResponse.json({ data })
+  } catch (error) {
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'Unknown error' } },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
+  try {
+    const body = await request.json()
+    const { location_id, performed_by, notes } = body
+
+    if (!location_id) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'location_id is required' } },
+        { status: 400 },
+      )
+    }
+
+    const result = await createStockCount(location_id, performed_by ?? null, notes ?? null)
+    return NextResponse.json({ data: result }, { status: 201 })
+  } catch (error) {
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'Unknown error' } },
+      { status: 500 },
+    )
+  }
+}

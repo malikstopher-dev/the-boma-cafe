@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       .gte('created_at', new Date(Date.now() - days * 86400000).toISOString())
       .order('created_at', { ascending: false })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500, ...NO_CACHE })
+    if (error) return NextResponse.json({ error: 'Failed to load analytics' }, { status: 500, ...NO_CACHE })
     if (!orders || orders.length === 0) {
       return NextResponse.json({
         revenue: 0,

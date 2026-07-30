@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth/requireRole'
 import { statusUpdateSchema } from '@/lib/booking/validation'
 import { createAuditEntry } from '@/lib/booking/audit'
 import { releaseAvailability } from '@/lib/booking/availability'
+import { autoReserveForBooking, cancelReservationsForBooking, consumeReservationsForBooking } from '@/inventory/engine/reservations'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,9 +46,30 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update status' }, { status: 500 })
     }
 
-    // Handle availability on cancellation
+    // Handle inventory reservations on status transitions
+    if (new_status === 'confirmed') {
+      try {
+        await autoReserveForBooking(booking_id)
+      } catch {
+        // Non-blocking: reservation failure shouldn't block the status update
+      }
+    }
+
     if (new_status === 'cancelled' || new_status === 'refunded') {
       await releaseAvailability(booking_id)
+      try {
+        await cancelReservationsForBooking(booking_id)
+      } catch {
+        // Non-blocking
+      }
+    }
+
+    if (new_status === 'completed') {
+      try {
+        await consumeReservationsForBooking(booking_id)
+      } catch {
+        // Non-blocking
+      }
     }
 
     // Create audit entry

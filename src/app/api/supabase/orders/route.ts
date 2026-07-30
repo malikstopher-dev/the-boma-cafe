@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       .not('waiter_name', 'is', null)
       .neq('waiter_name', '')
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to process order request' }, { status: 500 })
 
     const counts: Record<string, number> = {}
     for (const row of data) {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       .eq('order_ref', orderRef)
       .maybeSingle()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to process order request' }, { status: 500 })
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(data)
   }
@@ -369,7 +369,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { data: updated, error } = await query.select('id').maybeSingle()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to process order request' }, { status: 500 })
     if (updateBody.status && !updated) {
       return NextResponse.json({ error: 'Conflict' }, { status: 409 })
     }

@@ -1,0 +1,156 @@
+import { NextRequest, NextResponse } from 'next/server'
+import type { ApiResponse } from '@/inventory/engine/types'
+import {
+  getDashboardSummary,
+  getAlerts,
+  getRecentActivity,
+  getFastMovers,
+  getSlowMovers,
+  getTodayTransactions,
+  type DashboardSummary,
+  type AlertItem,
+  type RecentActivityItem,
+  type FastMoverItem,
+  type SlowMoverItem,
+  type TodayTransactionSummary,
+} from '@/inventory/engine/dashboard'
+import { getReconciliation, getInventoryValue, type ReconciliationRow } from '@/inventory/engine/reconciliation'
+import { getInventoryClient } from '@/inventory/lib/db'
+
+async function getOpenPoStats() {
+  const supabase = getInventoryClient()
+  const today = new Date().toISOString().slice(0, 10)
+
+  const { count: openCount } = await supabase
+    .from('inventory_purchase_orders')
+    .select('*', { count: 'exact', head: true })
+    .in('status', ['ordered', 'partial'])
+
+  const { data: overdue } = await supabase
+    .from('inventory_purchase_orders')
+    .select('id, supplier_id, expected_at, inventory_suppliers!inner(name)')
+    .in('status', ['ordered', 'partial'])
+    .lt('expected_at', today)
+    .limit(5)
+
+  const { data: recentPos } = await supabase
+    .from('inventory_purchase_orders')
+    .select('id, status, created_at, supplier_id, inventory_suppliers!inner(name)')
+    .in('status', ['ordered', 'partial', 'received'])
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  return {
+    openCount: openCount ?? 0,
+    overdueCount: overdue?.length ?? 0,
+    overdue: (overdue ?? []).map((p: any) => ({
+      id: p.id,
+      supplierName: p.inventory_suppliers?.name ?? 'Unknown',
+      expectedAt: p.expected_at,
+    })),
+    recent: (recentPos ?? []).map((p: any) => ({
+      id: p.id,
+      status: p.status,
+      supplierName: p.inventory_suppliers?.name ?? 'Unknown',
+      createdAt: p.created_at,
+    })),
+  }
+}
+
+function missingLocation(): NextResponse<ApiResponse<unknown>> {
+  return NextResponse.json(
+    { error: { code: 'VALIDATION_ERROR', message: 'location_id query parameter is required' } },
+    { status: 400 },
+  )
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
+  try {
+    const { searchParams } = new URL(request.url)
+    const locationId = searchParams.get('location_id')
+    const section = searchParams.get('section') ?? 'summary'
+    const limit = Math.min(Number(searchParams.get('limit')) || 10, 100)
+    const days = Number(searchParams.get('days')) || 30
+
+    if (!locationId) return missingLocation()
+
+    switch (section) {
+      case 'summary': {
+        const data = await getDashboardSummary(locationId)
+        return NextResponse.json({ data })
+      }
+
+      case 'alerts': {
+        const data = await getAlerts(locationId)
+        return NextResponse.json({ data })
+      }
+
+      case 'reconciliation': {
+        const date = searchParams.get('date') ?? undefined
+        const data = await getReconciliation(locationId, date)
+        return NextResponse.json({ data })
+      }
+
+      case 'recent': {
+        const data = await getRecentActivity(locationId, limit)
+        return NextResponse.json({ data })
+      }
+
+      case 'fast-movers': {
+        const data = await getFastMovers(locationId, days, limit)
+        return NextResponse.json({ data })
+      }
+
+      case 'slow-movers': {
+        const data = await getSlowMovers(locationId, days, limit)
+        return NextResponse.json({ data })
+      }
+
+      case 'value': {
+        const data = await getInventoryValue(locationId)
+        return NextResponse.json({ data: { value: data } })
+      }
+
+      case 'today': {
+        const data = await getTodayTransactions(locationId)
+        return NextResponse.json({ data })
+      }
+
+      case 'combined': {
+        const [summary, alerts, recent, fastMovers, slowMovers, value, today, poResult] = await Promise.all([
+          getDashboardSummary(locationId),
+          getAlerts(locationId),
+          getRecentActivity(locationId, 10),
+          getFastMovers(locationId, days, 5),
+          getSlowMovers(locationId, days, 5),
+          getInventoryValue(locationId),
+          getTodayTransactions(locationId),
+          getOpenPoStats(),
+        ])
+        return NextResponse.json({
+          data: {
+            summary,
+            alerts,
+            recent,
+            fastMovers,
+            slowMovers,
+            inventoryValue: value,
+            todayTransactions: today,
+            purchaseOrders: poResult,
+          },
+        })
+      }
+
+      default:
+        return NextResponse.json(
+          { error: { code: 'BAD_REQUEST', message: `Unknown section: ${section}` } },
+          { status: 400 },
+        )
+    }
+  } catch (error) {
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'Unknown error' } },
+      { status: 500 },
+    )
+  }
+}

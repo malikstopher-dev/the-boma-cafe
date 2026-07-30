@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     .eq('role', 'waiter')
     .order('name')
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to fetch waiters' }, { status: 500 })
   return NextResponse.json((data || []).map(toWaiter))
 }
 
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       .select('id, name, employee_id, on_duty, created_at')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to create waiter' }, { status: 500 })
     return NextResponse.json(toWaiter(data), { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -126,7 +126,7 @@ export async function PATCH(request: NextRequest) {
       .select('id, name, employee_id, on_duty, created_at')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to update waiter' }, { status: 500 })
     return NextResponse.json(toWaiter(data))
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -148,6 +148,5 @@ export async function DELETE(request: NextRequest) {
     .eq('id', id)
     .eq('role', 'waiter')
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+  if (error) return NextResponse.json({ error: 'Failed to delete waiter' }, { status: 500 })
 }

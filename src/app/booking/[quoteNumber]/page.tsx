@@ -154,10 +154,13 @@ function formatTime(timeStr: string): string {
 }
 
 export default function BookingPortalPage() {
+  console.log('[portal] component mounted')
+
   const params = useParams()
   const searchParams = useSearchParams()
   const quoteNumber = params?.quoteNumber as string
   const token = searchParams?.get('token')
+  console.log('[portal] params resolved', { quoteNumber, hasToken: !!token })
 
   const [data, setData] = useState<QuoteData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -167,26 +170,35 @@ export default function BookingPortalPage() {
   const [acceptError, setAcceptError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('[portal] useEffect fired', { quoteNumber, hasToken: !!token })
     if (!quoteNumber || !token) {
+      console.log('[portal] missing quoteNumber or token, showing error')
       setError('Invalid link. Please use the link from your email.')
       setLoading(false)
       return
     }
     const fetchData = async () => {
+      console.log('[portal] fetch started', { url: `/api/booking/portal?quoteNumber=${encodeURIComponent(quoteNumber)}` })
       try {
         const res = await fetch(`/api/booking/portal?quoteNumber=${encodeURIComponent(quoteNumber)}&token=${encodeURIComponent(token)}`)
+        console.log('[portal] fetch completed', { status: res.status, ok: res.ok })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
+          console.log('[portal] fetch error response', { body })
           throw new Error(body.error || 'Failed to load quotation')
         }
         const json = await res.json()
+        console.log('[portal] data received', { quoteStatus: json.quote?.status, itemCount: json.items?.length })
         setData(json)
         if (json.quote.status === 'accepted' || json.quote.status === 'converted') {
+          console.log('[portal] quote already accepted')
           setAccepted(true)
         }
       } catch (err: any) {
+        console.log('[portal] fetch caught error', { message: err.message })
         setError(err.message || 'Failed to load quotation')
       } finally {
+        console.log('[portal] loading set to false')
         setLoading(false)
       }
     }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PremiumHero from '@/components/ui/PremiumHero';
+import { resolveImage } from '@/lib/resolve-image';
 const DEFAULT_IMAGE = '/gallery/promotions/default.jpg';
 
 export default function PromotionsPage() {
@@ -28,7 +29,7 @@ export default function PromotionsPage() {
     imageIndex: idx,
   }));
 
-  const displayImages = cmsPromotions.filter(p => p.isActive).map(p => p.image || DEFAULT_IMAGE);
+  const displayImages = cmsPromotions.filter(p => p.isActive).map(p => resolveImage(p.image) || p.image || DEFAULT_IMAGE);
 
   useEffect(() => {
     if (displayImages.length === 0) return;

@@ -74,7 +74,7 @@ export async function POST(
       )
       .join('')
 
-    // Load PDF attachment if available
+    // Load PDF attachment
     let pdfAttachment: { filename: string; content: Buffer; contentType: string } | null = null
     const pdfFilePath = quote.storage_path || quote.pdf_path
     if (pdfFilePath) {
@@ -92,6 +92,15 @@ export async function POST(
       } catch (err) {
         console.error('Failed to load PDF attachment:', err)
       }
+    }
+
+    if (!pdfAttachment) {
+      console.error('[resend] no PDF available — refusing to send email', {
+        quote_id: quoteId,
+        storage_path: quote.storage_path,
+        pdf_path: quote.pdf_path,
+      })
+      return NextResponse.json({ error: 'Quotation PDF has not been generated.' }, { status: 409 })
     }
 
     // Send customer email

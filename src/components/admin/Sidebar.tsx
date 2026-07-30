@@ -22,6 +22,7 @@ const navGroups: NavGroup[] = [
     label: 'Overview',
     items: [
       { label: 'Dashboard', icon: '📊', href: '/admin/dashboard' },
+      { label: 'Background Jobs', icon: '⚡', href: '/admin/background-jobs' },
     ],
   },
   {
@@ -38,6 +39,22 @@ const navGroups: NavGroup[] = [
       { label: 'Quotes', icon: '📄', href: '/admin/quotes' },
       { label: 'Pricing', icon: '💰', href: '/admin/pricing' },
       { label: 'Availability', icon: '🗓️', href: '/admin/availability' },
+    ],
+  },
+  {
+    label: 'Inventory',
+    items: [
+      { label: 'Dashboard', icon: '📦', href: '/admin/inventory' },
+      { label: 'Products', icon: '🏷️', href: '/admin/inventory/products' },
+      { label: 'Purchase Orders', icon: '📋', href: '/admin/inventory/purchase-orders' },
+      { label: 'Suppliers', icon: '🚚', href: '/admin/inventory/suppliers' },
+      { label: 'Locations', icon: '📍', href: '/admin/inventory/locations' },
+      { label: 'Menu Integration', icon: '🔗', href: '/admin/inventory/menu-items' },
+      { label: 'Transactions', icon: '🔄', href: '/admin/inventory/transactions' },
+      { label: 'Imports', icon: '📥', href: '/admin/inventory/imports' },
+      { label: 'Stock Counts', icon: '📋', href: '/admin/inventory/stock-counts' },
+      { label: 'Reports', icon: '📊', href: '/admin/inventory/reports' },
+      { label: 'Settings', icon: '⚙️', href: '/admin/inventory/settings' },
     ],
   },
   {

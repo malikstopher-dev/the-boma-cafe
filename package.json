@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:worker": "tsup",
     "start": "next start",
     "lint": "next lint",
     "seed:menu-prices": "tsx scripts/seed-menu-prices.ts",
@@ -24,6 +25,7 @@
     "react-dom": "^19.2.8",
     "resend": "^6.18.0",
     "uuid": "^13.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -31,8 +33,9 @@
     "@types/node": "20.12.12",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@types/uuid": "^10.0.0",
-    "sharp": "^0.35.3",
-    "typescript": "5.4.5"
+    "@vitest/coverage-v8": "^4.1.10",
+    "tsup": "^8.5.1",
+    "typescript": "5.4.5",
+    "vitest": "^4.1.10"
   }
 }

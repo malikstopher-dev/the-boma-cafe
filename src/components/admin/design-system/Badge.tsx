@@ -15,12 +15,13 @@ const variantMap: Record<BadgeVariant, string> = {
   bar: styles.badgeBar,
 }
 
-export default function Badge({ variant = 'default', children }: {
+export default function Badge({ variant = 'default', children, className }: {
   variant?: BadgeVariant
   children: React.ReactNode
+  className?: string
 }) {
   return (
-    <span className={`${styles.badge} ${variantMap[variant]}`}>
+    <span className={`${styles.badge} ${variantMap[variant]} ${className ?? ''}`.trim()}>
       {children}
     </span>
   )

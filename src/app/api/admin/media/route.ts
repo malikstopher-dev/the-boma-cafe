@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('uploaded_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to access media' }, { status: 500 })
   return NextResponse.json({ data })
 }
 
@@ -42,7 +42,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const { error } = await client.from('media').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to access media' }, { status: 500 })
 
   return NextResponse.json({ success: true })
 }

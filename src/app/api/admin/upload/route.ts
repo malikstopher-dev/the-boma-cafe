@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       .from(BUCKET)
       .upload(storagePath, file, { contentType: file.type, upsert: true })
 
-    if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
+    if (uploadError) return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
 
     const { data: urlData } = client.storage.from(BUCKET).getPublicUrl(storagePath)
 
@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (mediaError) return NextResponse.json({ error: mediaError.message }, { status: 500 })
+    if (mediaError) return NextResponse.json({ error: 'Failed to save media record' }, { status: 500 })
 
     return NextResponse.json({ data: mediaData })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Upload failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }

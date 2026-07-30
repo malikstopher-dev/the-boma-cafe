@@ -1,0 +1,32 @@
+name: Inventory CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/inventory/**'
+      - 'supabase/migrations/039_*'
+      - 'supabase/migrations/040_*'
+      - 'supabase/migrations/045_*'
+      - 'supabase/migrations/046_*'
+      - 'supabase/migrations/047_*'
+      - 'vitest.config.ts'
+      - 'package.json'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: TypeScript check (inventory)
+        run: npx tsc --noEmit -p src/inventory/tsconfig.json
+
+      - name: Run inventory tests
+        run: npx vitest run src/inventory/
