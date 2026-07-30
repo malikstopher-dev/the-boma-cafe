@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
+import DataTable from '@/components/admin/design-system/DataTable'
+import type { Column } from '@/components/admin/design-system/DataTable'
+import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import { Select } from '@/components/admin/design-system/Input'
 import Badge from '@/components/admin/design-system/Badge'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
 interface Transaction {
@@ -66,74 +68,105 @@ export default function TransactionsPage() {
     return <Badge variant={variants[type] || 'default'}>{type.replace('_', ' ')}</Badge>
   }
 
+  const columns: Column<Transaction>[] = [
+    {
+      key: 'created_at',
+      header: 'Date',
+      sortable: true,
+      cell: tx => (
+        <span className="text-xs text-gray-500">{new Date(tx.created_at).toLocaleString()}</span>
+      ),
+    },
+    {
+      key: 'transaction_type',
+      header: 'Type',
+      cell: tx => typeBadge(tx.transaction_type),
+    },
+    {
+      key: 'product_id',
+      header: 'Product',
+      cell: tx => (
+        <span className="text-xs font-mono">{tx.product_id.substring(0, 8)}…</span>
+      ),
+    },
+    {
+      key: 'quantity',
+      header: 'Quantity',
+      sortable: true,
+      className: 'font-medium',
+      cell: tx => (
+        <span className={tx.quantity < 0 ? 'text-red-600' : 'text-green-600'}>
+          {tx.quantity > 0 ? '+' : ''}{tx.quantity}
+        </span>
+      ),
+    },
+    {
+      key: 'unit_cost',
+      header: 'Unit Cost',
+      cell: tx => (
+        <span>{tx.unit_cost ? `R${tx.unit_cost}` : '—'}</span>
+      ),
+    },
+    {
+      key: 'notes',
+      header: 'Notes',
+      cell: tx => (
+        <span className="text-xs text-gray-400">{tx.notes || '—'}</span>
+      ),
+    },
+  ]
+
   return (
-    <div>
-      <PageHeader title="Transactions" description="Inventory transaction ledger" />
-
-      <div className="flex gap-3 mb-4 flex-wrap">
-        <Select
-          value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value)}
-          className="w-48"
-          options={[
-            { value: '', label: 'All Types' },
-            { value: 'purchase', label: 'Purchase' },
-            { value: 'sale', label: 'Sale' },
-            { value: 'breakage', label: 'Breakage' },
-            { value: 'spillage', label: 'Spillage' },
-            { value: 'waste', label: 'Waste' },
-            { value: 'adjustment', label: 'Adjustment' },
-            { value: 'transfer_in', label: 'Transfer In' },
-            { value: 'transfer_out', label: 'Transfer Out' },
-            { value: 'opening', label: 'Opening Stock' },
-            { value: 'comp', label: 'Comp' },
-            { value: 'staff', label: 'Staff' },
-            { value: 'return', label: 'Return' },
-          ]}
-        />
-        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="px-3 py-2 border rounded-lg text-sm" />
-        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="px-3 py-2 border rounded-lg text-sm" />
-        <Button onClick={fetchTransactions} variant="secondary" size="sm">Filter</Button>
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      ) : transactions.length === 0 ? (
-        <EmptyState title="No transactions found" description="Try adjusting your filters" />
-      ) : (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-left p-3 font-medium">Type</th>
-                  <th className="text-left p-3 font-medium">Product</th>
-                  <th className="text-left p-3 font-medium">Quantity</th>
-                  <th className="text-left p-3 font-medium">Unit Cost</th>
-                  <th className="text-left p-3 font-medium">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map(tx => (
-                  <tr key={tx.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 text-xs text-gray-500">{new Date(tx.created_at).toLocaleString()}</td>
-                    <td className="p-3">{typeBadge(tx.transaction_type)}</td>
-                    <td className="p-3 text-xs font-mono">{tx.product_id.substring(0, 8)}…</td>
-                    <td className={`p-3 font-medium ${tx.quantity < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {tx.quantity > 0 ? '+' : ''}{tx.quantity}
-                    </td>
-                    <td className="p-3">{tx.unit_cost ? `R${tx.unit_cost}` : '—'}</td>
-                    <td className="p-3 text-xs text-gray-400">{tx.notes || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
+    <AdminPage
+      title="Transactions"
+      description="Inventory transaction ledger"
+      filters={
+        <FilterBar>
+          <Select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="w-48"
+            options={[
+              { value: '', label: 'All Types' },
+              { value: 'purchase', label: 'Purchase' },
+              { value: 'sale', label: 'Sale' },
+              { value: 'breakage', label: 'Breakage' },
+              { value: 'spillage', label: 'Spillage' },
+              { value: 'waste', label: 'Waste' },
+              { value: 'adjustment', label: 'Adjustment' },
+              { value: 'transfer_in', label: 'Transfer In' },
+              { value: 'transfer_out', label: 'Transfer Out' },
+              { value: 'opening', label: 'Opening Stock' },
+              { value: 'comp', label: 'Comp' },
+              { value: 'staff', label: 'Staff' },
+              { value: 'return', label: 'Return' },
+            ]}
+          />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={e => setDateFrom(e.target.value)}
+            className="px-3 py-2 border rounded-lg text-sm"
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={e => setDateTo(e.target.value)}
+            className="px-3 py-2 border rounded-lg text-sm"
+          />
+          <Button onClick={fetchTransactions} variant="secondary" size="sm">Filter</Button>
+        </FilterBar>
+      }
+    >
+      <DataTable<Transaction>
+        columns={columns}
+        data={transactions}
+        keyField="id"
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState title="No transactions found" description="Try adjusting your filters" />
+        }
+      />
+    </AdminPage>
   )
 }
