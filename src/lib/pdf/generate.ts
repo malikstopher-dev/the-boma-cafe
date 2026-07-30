@@ -3,8 +3,7 @@ import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer'
 import { ensureBucket, uploadPdf, downloadPdfBuffer } from './storage'
 import { generateQrDataUri } from './qrcode'
 import { getAdminClient } from '@/lib/supabase'
-
-let _QuotationPDF: any = null
+import { QuotationPDF as QuotationPDFComponent } from './QuotationPDF'
 
 export interface PdfGenerationInput {
   quoteId: string
@@ -50,11 +49,7 @@ export async function generateQuotationPdf(input: PdfGenerationInput): Promise<B
     // QR code is non-critical
   }
 
-  if (!_QuotationPDF) {
-    _QuotationPDF = require(/* turbopackIgnore: true */ './QuotationPDF').QuotationPDF
-  }
-
-  const element = React.createElement(_QuotationPDF, {
+  const element = React.createElement(QuotationPDFComponent, {
     quoteNumber: input.quoteNumber,
     dateIssued,
     validUntil: input.validUntil,
