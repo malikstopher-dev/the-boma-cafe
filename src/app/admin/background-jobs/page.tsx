@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
+import DataTable from '@/components/admin/design-system/DataTable'
+import type { Column } from '@/components/admin/design-system/DataTable'
+import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import { Select } from '@/components/admin/design-system/Input'
 import Badge from '@/components/admin/design-system/Badge'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 import { useToast } from '@/components/admin/design-system/Toast'
 
@@ -95,13 +97,69 @@ export default function AdminBackgroundJobs() {
 
   const jobTypes = [...new Set(jobs.map(j => j.job_type))]
 
-  return (
-    <div>
-      <PageHeader
-        title="Background Jobs"
-        description="Monitor and manage async job processing"
-      />
+  const columns: Column<BackgroundJob>[] = [
+    {
+      key: 'job_type',
+      header: 'Type',
+      cell: job => (
+        <span className="font-mono text-xs">{job.job_type}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: job => (
+        <Badge variant={STATUS_VARIANTS[job.status] || 'default'}>
+          {job.status.replace('_', ' ')}
+        </Badge>
+      ),
+    },
+    {
+      key: 'retry_count',
+      header: 'Retries',
+      cell: job => (
+        <span>{job.retry_count}/{job.max_retries}</span>
+      ),
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      cell: job => (
+        <span className="text-gray-500 text-xs">{new Date(job.created_at).toLocaleString()}</span>
+      ),
+    },
+    {
+      key: 'scheduled_at',
+      header: 'Scheduled',
+      cell: job => (
+        <span className="text-gray-500 text-xs">{new Date(job.scheduled_at).toLocaleString()}</span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      cell: job => {
+        if (job.status === 'failed' || job.status === 'dead_letter') {
+          return (
+            <Button size="sm" variant="primary" onClick={() => handleAction(job.id, 'retry')} loading={actionLoading === job.id}>
+              Retry
+            </Button>
+          )
+        }
+        if (job.status === 'pending') {
+          return (
+            <Button size="sm" variant="danger" onClick={() => handleAction(job.id, 'cancel')} loading={actionLoading === job.id}>
+              Cancel
+            </Button>
+          )
+        }
+        return null
+      },
+    },
+  ]
 
+  return (
+    <AdminPage title="Background Jobs" description="Monitor and manage async job processing">
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           {Object.entries(stats).map(([status, count]) => (
@@ -116,7 +174,7 @@ export default function AdminBackgroundJobs() {
         </div>
       )}
 
-      <div className="flex gap-3 mb-4">
+      <FilterBar>
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -126,7 +184,6 @@ export default function AdminBackgroundJobs() {
             ...STATUSES.map(s => ({ value: s, label: s.replace('_', ' ') })),
           ]}
         />
-
         <Select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
@@ -136,79 +193,20 @@ export default function AdminBackgroundJobs() {
             ...jobTypes.map(t => ({ value: t, label: t })),
           ]}
         />
-      </div>
+      </FilterBar>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      ) : jobs.length === 0 ? (
-        <EmptyState
-          title="No jobs found"
-          description={statusFilter ? 'No jobs match the selected filter' : 'No background jobs have been created yet'}
-        />
-      ) : (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left p-3 font-medium">Type</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Retries</th>
-                  <th className="text-left p-3 font-medium">Created</th>
-                  <th className="text-left p-3 font-medium">Scheduled</th>
-                  <th className="text-left p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job) => (
-                  <tr key={job.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-mono text-xs">{job.job_type}</td>
-                    <td className="p-3">
-                      <Badge variant={STATUS_VARIANTS[job.status] || 'default'}>
-                        {job.status.replace('_', ' ')}
-                      </Badge>
-                    </td>
-                    <td className="p-3">
-                      {job.retry_count}/{job.max_retries}
-                    </td>
-                    <td className="p-3 text-gray-500 text-xs">
-                      {new Date(job.created_at).toLocaleString()}
-                    </td>
-                    <td className="p-3 text-gray-500 text-xs">
-                      {new Date(job.scheduled_at).toLocaleString()}
-                    </td>
-                    <td className="p-3">
-                      {job.status === 'failed' || job.status === 'dead_letter' ? (
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => handleAction(job.id, 'retry')}
-                          loading={actionLoading === job.id}
-                        >
-                          Retry
-                        </Button>
-                      ) : job.status === 'pending' ? (
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleAction(job.id, 'cancel')}
-                          loading={actionLoading === job.id}
-                        >
-                          Cancel
-                        </Button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
+      <DataTable<BackgroundJob>
+        columns={columns}
+        data={jobs}
+        keyField="id"
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState
+            title="No jobs found"
+            description={statusFilter ? 'No jobs match the selected filter' : 'No background jobs have been created yet'}
+          />
+        }
+      />
+    </AdminPage>
   )
 }

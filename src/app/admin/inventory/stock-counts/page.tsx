@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
+import DataTable from '@/components/admin/design-system/DataTable'
+import type { Column } from '@/components/admin/design-system/DataTable'
+import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
 const STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'default' | 'danger'> = {
@@ -52,45 +54,62 @@ export default function StockCountsPage() {
     return locations.find(l => l.id === id)?.name || id.slice(0, 8)
   }
 
+  const columns: Column<StockCount>[] = [
+    {
+      key: 'created_at',
+      header: 'Date',
+      sortable: true,
+      cell: count => (
+        <span>{new Date(count.created_at).toLocaleDateString()}</span>
+      ),
+    },
+    {
+      key: 'location_id',
+      header: 'Location',
+      cell: count => (
+        <span>{locationName(count.location_id)}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: count => (
+        <Badge variant={STATUS_VARIANTS[count.status] || 'default'}>{count.status.replace('_', ' ')}</Badge>
+      ),
+    },
+    {
+      key: 'completed_at',
+      header: 'Completed',
+      cell: count => (
+        <span className="text-gray-500">{count.completed_at ? new Date(count.completed_at).toLocaleDateString() : '—'}</span>
+      ),
+    },
+  ]
+
   return (
-    <div>
-      <PageHeader title="Stock Counts" description="Physical inventory counting sessions" actions={<Link href="/admin/inventory/stock-counts/new"><Button size="sm">New Count</Button></Link>} />
-
-      <div className="flex gap-2 mb-4">
-        <select className="border rounded px-3 py-2 text-sm" value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
-          <option value="">All Locations</option>
-          {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-        </select>
-      </div>
-
-      {isLoading ? <SkeletonCard /> : filtered.length === 0 ? (
-        <EmptyState title="No stock counts" description="Start your first physical inventory count" />
-      ) : (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left p-3 font-medium">Date</th>
-                <th className="text-left p-3 font-medium">Location</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Completed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(count => (
-                <tr key={count.id} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/inventory/stock-counts/${count.id}`)}>
-                  <td className="p-3">{new Date(count.created_at).toLocaleDateString()}</td>
-                  <td className="p-3">{locationName(count.location_id)}</td>
-                  <td className="p-3">
-                    <Badge variant={STATUS_VARIANTS[count.status] || 'default'}>{count.status.replace('_', ' ')}</Badge>
-                  </td>
-                  <td className="p-3 text-gray-500">{count.completed_at ? new Date(count.completed_at).toLocaleDateString() : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+    <AdminPage
+      title="Stock Counts"
+      description="Physical inventory counting sessions"
+      actions={<Link href="/admin/inventory/stock-counts/new"><Button size="sm">New Count</Button></Link>}
+      filters={
+        <FilterBar>
+          <select className="border rounded px-3 py-2 text-sm" value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
+            <option value="">All Locations</option>
+            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        </FilterBar>
+      }
+    >
+      <DataTable<StockCount>
+        columns={columns}
+        data={filtered}
+        keyField="id"
+        onRowClick={count => router.push(`/admin/inventory/stock-counts/${count.id}`)}
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState title="No stock counts" description="Start your first physical inventory count" />
+        }
+      />
+    </AdminPage>
   )
 }
