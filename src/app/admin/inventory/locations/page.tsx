@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
+import AdminPage from '@/components/admin/design-system/AdminPage'
+import DataTable from '@/components/admin/design-system/DataTable'
+import type { Column } from '@/components/admin/design-system/DataTable'
+import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
 interface Location {
@@ -60,12 +62,54 @@ export default function LocationsPage() {
     } finally { setSaving(false) }
   }
 
-  return (
-    <div>
-      <PageHeader title="Locations" description="Manage inventory storage locations" actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Location</Button>} />
+  const columns: Column<Location>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      cell: loc => (
+        <span className={!loc.is_active ? 'opacity-50' : ''}>{loc.name}</span>
+      ),
+    },
+    {
+      key: 'code',
+      header: 'Code',
+      cell: loc => (
+        <span className="font-mono text-sm">{loc.code}</span>
+      ),
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      cell: loc => (
+        <span className="text-gray-500">{loc.description || '—'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: loc => (
+        <Badge variant={loc.is_active ? 'success' : 'default'}>{loc.is_active ? 'Active' : 'Archived'}</Badge>
+      ),
+    },
+  ]
 
+  return (
+    <AdminPage
+      title="Locations"
+      description="Manage inventory storage locations"
+      actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Location</Button>}
+      filters={
+        <FilterBar>
+          <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer select-none">
+            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
+            Show archived
+          </label>
+        </FilterBar>
+      }
+    >
       {showCreateForm && (
-        <div className="bg-white rounded-lg border p-4 mb-6">
+        <div className="bg-white rounded-lg border p-4 mb-4">
           <h3 className="font-semibold mb-3">New Location</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <input className="border rounded px-3 py-2 text-sm" placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
@@ -79,41 +123,16 @@ export default function LocationsPage() {
         </div>
       )}
 
-      <div className="flex gap-2 mb-4">
-        <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer">
-          <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />
-          Show archived
-        </label>
-      </div>
-
-      {isLoading ? <SkeletonCard /> : locations.length === 0 ? (
-        <EmptyState title="No locations found" description="Add your first location to get started" />
-      ) : (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left p-3 font-medium">Name</th>
-                <th className="text-left p-3 font-medium">Code</th>
-                <th className="text-left p-3 font-medium">Description</th>
-                <th className="text-left p-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {locations.map(loc => (
-                <tr key={loc.id} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/inventory/locations/${loc.id}`)}>
-                  <td className={`p-3 font-medium ${!loc.is_active ? 'text-gray-400' : ''}`}>{loc.name}</td>
-                  <td className="p-3 font-mono text-sm">{loc.code}</td>
-                  <td className="p-3 text-gray-500">{loc.description || '—'}</td>
-                  <td className="p-3">
-                    <Badge variant={loc.is_active ? 'success' : 'default'}>{loc.is_active ? 'Active' : 'Archived'}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+      <DataTable<Location>
+        columns={columns}
+        data={locations}
+        keyField="id"
+        onRowClick={loc => router.push(`/admin/inventory/locations/${loc.id}`)}
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState title="No locations found" description="Add your first location to get started" />
+        }
+      />
+    </AdminPage>
   )
 }
