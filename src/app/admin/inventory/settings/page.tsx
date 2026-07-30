@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PageHeader } from '@/components/admin/design-system/PageHeader'
-import Button from '@/components/admin/design-system/Button'
-import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
+import AdminPage from '@/components/admin/design-system/AdminPage'
+import DataTable from '@/components/admin/design-system/DataTable'
+import type { Column } from '@/components/admin/design-system/DataTable'
 
 interface Uom {
   id: string
@@ -36,70 +36,73 @@ export default function SettingsPage() {
     }).finally(() => setIsLoading(false))
   }, [])
 
-  return (
-    <div>
-      <PageHeader title="Inventory Settings" description="Manage UOMs and categories" />
+  const uomColumns: Column<Uom>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      cell: uom => <span className="font-medium">{uom.name}</span>,
+    },
+    {
+      key: 'symbol',
+      header: 'Symbol',
+      cell: uom => <span className="text-gray-500">{uom.symbol || '—'}</span>,
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      cell: uom => <span className="capitalize">{uom.category}</span>,
+    },
+  ]
 
+  const catColumns: Column<Category>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      cell: cat => <span className="font-medium">{cat.name}</span>,
+    },
+    {
+      key: 'parent_id',
+      header: 'Parent',
+      cell: cat => <span className="text-gray-500">{cat.parent_id || '—'}</span>,
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      cell: cat => <span>{cat.is_active ? 'Active' : 'Archived'}</span>,
+    },
+  ]
+
+  const tabStyle = (active: boolean) =>
+    `px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+      active ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+    }`
+
+  return (
+    <AdminPage title="Inventory Settings" description="Manage UOMs and categories">
       <div className="flex gap-2 mb-6 border-b">
-        <button
-          onClick={() => setTab('uoms')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${tab === 'uoms' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500'}`}
-        >Units of Measure</button>
-        <button
-          onClick={() => setTab('categories')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${tab === 'categories' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500'}`}
-        >Categories</button>
+        <button onClick={() => setTab('uoms')} className={tabStyle(tab === 'uoms')}>Units of Measure</button>
+        <button onClick={() => setTab('categories')} className={tabStyle(tab === 'categories')}>Categories</button>
       </div>
 
-      {isLoading ? <SkeletonCard /> : tab === 'uoms' ? (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left p-3 font-medium">Name</th>
-                <th className="text-left p-3 font-medium">Symbol</th>
-                <th className="text-left p-3 font-medium">Category</th>
-              </tr>
-            </thead>
-            <tbody>
-              {uoms.map(uom => (
-                <tr key={uom.id} className="border-b">
-                  <td className="p-3 font-medium">{uom.name}</td>
-                  <td className="p-3 text-gray-500">{uom.symbol || '—'}</td>
-                  <td className="p-3 capitalize">{uom.category}</td>
-                </tr>
-              ))}
-              {uoms.length === 0 && (
-                <tr><td colSpan={3} className="p-6 text-center text-gray-400">No UOMs defined yet</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {tab === 'uoms' ? (
+        <DataTable<Uom>
+          columns={uomColumns}
+          data={uoms}
+          keyField="id"
+          isLoading={isLoading}
+          emptyState={<div className="p-6 text-center text-gray-400">No UOMs defined yet</div>}
+        />
       ) : (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left p-3 font-medium">Name</th>
-                <th className="text-left p-3 font-medium">Parent</th>
-                <th className="text-left p-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map(cat => (
-                <tr key={cat.id} className="border-b">
-                  <td className="p-3 font-medium">{cat.name}</td>
-                  <td className="p-3 text-gray-500">{cat.parent_id || '—'}</td>
-                  <td className="p-3">{cat.is_active ? 'Active' : 'Archived'}</td>
-                </tr>
-              ))}
-              {categories.length === 0 && (
-                <tr><td colSpan={3} className="p-6 text-center text-gray-400">No categories defined yet</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<Category>
+          columns={catColumns}
+          data={categories}
+          keyField="id"
+          isLoading={isLoading}
+          emptyState={<div className="p-6 text-center text-gray-400">No categories defined yet</div>}
+        />
       )}
-    </div>
+    </AdminPage>
   )
 }
