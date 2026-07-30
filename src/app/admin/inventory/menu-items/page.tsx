@@ -175,5 +175,6 @@ export default function MenuItemsPage() {
         </div>
       )}
     </AdminPage>
+    </div>
   )
 }

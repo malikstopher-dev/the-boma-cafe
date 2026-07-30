@@ -339,7 +339,7 @@ function EntityEditor({
           </div>
         </div>
       ))}
-    </AdminPage>
+    </div>
   )
 }
 
