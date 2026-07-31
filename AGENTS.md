@@ -657,3 +657,50 @@ All four M5 components delivered, verified (TypeScript clean, 61/61 tests passin
 - Tests: 56/56 passing
 - Build: next build compiles successfully (5.4min, global tsc times out â€” pre-existing)
 - Vercel deployment fix: 3 JSX errors in migrated AdminPage files fixed (commit `4ccefdc`)
+
+---
+
+## Session: Operations Restructure — /admin/inventory ? /admin/operations (2026-07-31)
+
+### Objective
+Finish the final item of the 8-refinement plan: rename and restructure the admin UI from "Inventory" to manager-first "Operations". User approved overriding the old frozen "no rename" rule.
+
+### Route Changes (commit `ee05722`, 61 files)
+- All 37 inventory admin pages moved: `src/app/admin/inventory/*` ? `src/app/admin/operations/*`
+- **Opening Checklist is the Operations landing page** (`/admin/operations`); old dashboard ? `/admin/operations/dashboard`
+- Checklist history ? `/admin/operations/history`; containers ? `/admin/operations/beverage/containers`
+- **Food/Beverage splits** (new routes): `/admin/operations/food/products`, `/admin/operations/beverage/products`, `/admin/operations/food/reconcile`, `/admin/operations/beverage/reconcile`
+- **New page:** `/admin/operations/receiving` — Goods Receiving queue (POs in ordered/partial status, links to PO detail receive flow)
+- **Settings** became a hub with sub-routes: `settings/uoms`, `settings/categories`, `settings/cost-centres`
+- API paths unchanged (`/api/inventory/*`) — only admin UI routes moved; middleware already protects `/admin/:path*`
+
+### Sidebar (7 Operations sub-groups replacing the flat 25-item Inventory group)
+- Open: Opening Checklist, Reconcile Food, Reconcile Beverage, Stock Counts, Variance Report
+- Inventory: Dashboard, All Products, Food Products, Beverage Products, Containers, Reorder, Forecasting, Analytics
+- Purchasing: Purchase Orders, Receiving, Suppliers, Supplier Performance, Price History
+- Production: Recipes, Production Runs, Waste & Breakage, Order Items, Menu Integration
+- Records: Locations, Transactions, Imports, Notifications (badge href updated)
+- Reports, Settings
+
+### Legacy Redirects (next.config.js)
+- `/admin/inventory` ? `/admin/operations`, `/admin/inventory/:path*` ? `/admin/operations/:path*` (permanent)
+- Special cases: `/admin/inventory/checklist` ? `/admin/operations`, `/admin/inventory/checklist/history` ? `/admin/operations/history`, `/admin/inventory/containers` ? `/admin/operations/beverage/containers`
+
+### Shared Components Created (src/inventory/components/)
+- `products-view.tsx` — ProductsView with optional `forcedType` (FOOD/BEVERAGE/all)
+- `reconciliation-view.tsx` — ReconciliationView with optional `forcedType` (adds inventory_type query param)
+- `settings-views.tsx` — UomsView, CategoriesView, CostCentresView (split out of old settings page)
+- `src/inventory/ambient.d.ts` — permanent `declare module '*.module.css'` (inventory components now import design-system CSS modules; required for strict inventory tsc)
+
+### Pre-existing Build Blockers Found & Fixed (would have failed next build)
+- **12 pages used `subtitle=`** on AdminPage (prop is `description=`) — pages from M2–M4 era verified only via narrow temp tsconfigs
+- **imports/page.tsx** used `render:` instead of `cell:` in DataTable columns + object literal for emptyState
+- **TS2344**: DataTable `<T extends Record<string, unknown>>` vs plain interfaces — converted all page interfaces to `type` aliases (51 across operations pages; pattern still exists in some src/app non-inventory pages)
+- **Badge/Button** CSS module maps (`Record<Variant, string>`) broke under strict noUncheckedIndexedAccess — added `?? ''` fallbacks
+- Receiving page Badge `primary` variant ? `info` (BadgeVariant has no primary)
+
+### Verification (2026-07-31)
+- `npx tsc --noEmit -p src/inventory/tsconfig.json` clean (strict)
+- UI pages verified via temp `src/inventory/tsconfig.ui.json` (extends root, strict:false, explicit jsx+paths, includes ambient.d.ts) — deleted after verification
+- 61/61 vitest passing
+- Zero `/admin/inventory` references remain in `src/` (grep verified)
