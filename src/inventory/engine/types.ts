@@ -241,6 +241,46 @@ export interface ReorderSuggestion {
   estimatedDaysUntilStockout: number | null
 }
 
+export type DepletionUrgency = 'out_of_stock' | 'critical' | 'warning' | 'ok'
+
+export interface DepletionForecastRow {
+  productId: string
+  productName: string
+  sku: string | null
+  barcode: string | null
+  inventoryType: InventoryType
+  currentBalance: number
+  dailyUsage: number
+  daysRemaining: number | null
+  projectedStockoutDate: string | null
+  minLevel: number
+  leadTimeDays: number
+  urgency: DepletionUrgency
+}
+
+export interface DayOfWeekPattern {
+  dayOfWeek: number
+  dayName: string
+  totalQuantity: number
+  sharePercent: number
+  multiplier: number
+}
+
+export interface HourlyPattern {
+  hour: number
+  totalQuantity: number
+}
+
+export interface ConsumptionPattern {
+  totalConsumed: number
+  averagePerDay: number
+  busiestDay: string
+  peakHour: number
+  daysAnalyzed: number
+  dayOfWeek: DayOfWeekPattern[]
+  hourly: HourlyPattern[]
+}
+
 export interface PriceHistoryEntry {
   id: string
   product_id: string
