@@ -5,6 +5,7 @@ import { useState } from 'react'
 interface CountCardProps {
   productName: string
   productSku: string | null
+  productBarcode: string | null
   expectedQuantity: number | null
   initialQuantity: number
   productIndex: number
@@ -18,6 +19,7 @@ interface CountCardProps {
 export function CountCard({
   productName,
   productSku,
+  productBarcode,
   expectedQuantity,
   initialQuantity,
   productIndex,
@@ -90,7 +92,13 @@ export function CountCard({
       </div>
 
       <h2 className="text-xl font-semibold mb-1">{productName}</h2>
-      {productSku && <p className="text-sm text-gray-400 mb-4">SKU: {productSku}</p>}
+      {(productSku || productBarcode) && (
+        <p className="text-sm text-gray-400 mb-4">
+          {productSku && <>SKU: {productSku}</>}
+          {productSku && productBarcode && ' · '}
+          {productBarcode && <span className="font-mono">Barcode: {productBarcode}</span>}
+        </p>
+      )}
 
       <div className="bg-gray-50 rounded-lg p-4 mb-4">
         <div className="text-sm text-gray-500 mb-1">Expected Balance</div>

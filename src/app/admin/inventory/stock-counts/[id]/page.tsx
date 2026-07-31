@@ -26,6 +26,8 @@ export default function StockCountDetailPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [mode, setMode] = useState<'count' | 'review'>('count')
   const [approving, setApproving] = useState(false)
+  const [scanValue, setScanValue] = useState('')
+  const [scanMessage, setScanMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const id = params?.id as string
@@ -135,6 +137,32 @@ export default function StockCountDetailPage() {
 
   const totalForCounting = countItems.length + uncountedProducts.length
 
+  function handleScan() {
+    const code = scanValue.trim()
+    if (!code) return
+    const product = products.find((p: any) => p.barcode && p.barcode === code)
+    if (!product) {
+      setScanMessage(`No product with barcode ${code}`)
+      setScanValue('')
+      return
+    }
+    const countedIdx = countItems.findIndex((i: any) => i.product_id === product.id)
+    let targetIndex = -1
+    if (countedIdx >= 0) {
+      targetIndex = countedIdx
+    } else {
+      const uncountedIdx = uncountedProducts.findIndex((p: any) => p.id === product.id)
+      if (uncountedIdx >= 0) targetIndex = countItems.length + uncountedIdx
+    }
+    if (targetIndex >= 0) {
+      setCurrentIndex(targetIndex)
+      setScanMessage(`Jumped to ${product.name}`)
+    } else {
+      setScanMessage(`Product ${product.name} is not part of this count`)
+    }
+    setScanValue('')
+  }
+
   return (
     <AdminPage title={`Stock Count — ${new Date(stockCount.created_at).toLocaleDateString()}`} actions={<><Badge variant={STATUS_VARIANTS[stockCount.status]}>{stockCount.status.replace('_', ' ')}</Badge>
       {(isSubmitted && !isApproved) && (
@@ -156,6 +184,24 @@ export default function StockCountDetailPage() {
         Counted: {countItems.length} / {totalForCounting} products
       </div>
 
+      {isInProgress && mode === 'count' && (
+        <div className="max-w-lg mx-auto mb-4">
+          <div className="flex items-center gap-2 bg-white border rounded-lg p-3">
+            <span className="text-gray-400">🔍</span>
+            <input
+              className="flex-1 text-sm outline-none font-mono"
+              placeholder="Scan barcode to jump to product…"
+              value={scanValue}
+              onChange={e => { setScanValue(e.target.value); setScanMessage(null) }}
+              onKeyDown={e => { if (e.key === 'Enter') handleScan() }}
+              autoComplete="off"
+            />
+            <button onClick={handleScan} className="px-3 py-1 text-xs rounded bg-gray-800 text-white hover:bg-gray-900">Go</button>
+          </div>
+          {scanMessage && <p className="text-xs text-gray-500 mt-1 text-center">{scanMessage}</p>}
+        </div>
+      )}
+
       {isApproved && (
         <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-4 mb-4 text-sm">
           This stock count has been approved. Adjustments have been applied to inventory.
@@ -167,6 +213,7 @@ export default function StockCountDetailPage() {
           <CountCard
             productName={currentProduct.name}
             productSku={currentProduct.sku}
+            productBarcode={currentProduct.barcode ?? null}
             expectedQuantity={currentItem?.expected_quantity ?? null}
             initialQuantity={currentItem?.physical_quantity ?? 0}
             productIndex={currentIndex}
