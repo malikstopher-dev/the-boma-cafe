@@ -15,8 +15,34 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
   },
-  headers: async () => [
+  redirects: async () => [
     {
+      source: '/admin/inventory/checklist/history',
+      destination: '/admin/operations/history',
+      permanent: true,
+    },
+    {
+      source: '/admin/inventory/checklist',
+      destination: '/admin/operations',
+      permanent: true,
+    },
+    {
+      source: '/admin/inventory/containers',
+      destination: '/admin/operations/beverage/containers',
+      permanent: true,
+    },
+    {
+      source: '/admin/inventory/:path*',
+      destination: '/admin/operations/:path*',
+      permanent: true,
+    },
+    {
+      source: '/admin/inventory',
+      destination: '/admin/operations',
+      permanent: true,
+    },
+  ],
+  headers: async () => [    {
       source: '/:path*',
       headers: [
         { key: 'X-DNS-Prefetch-Control', value: 'on' },

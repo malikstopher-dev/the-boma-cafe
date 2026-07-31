@@ -13,18 +13,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantMap: Record<ButtonVariant, string> = {
-  primary: styles.btnPrimary,
-  secondary: styles.btnSecondary,
-  ghost: styles.btnGhost,
-  danger: styles.btnDanger,
+  primary: styles.btnPrimary ?? '',
+  secondary: styles.btnSecondary ?? '',
+  ghost: styles.btnGhost ?? '',
+  danger: styles.btnDanger ?? '',
 }
 
 const sizeMap: Record<ButtonSize, string> = {
-  sm: styles.btnSm,
-  md: styles.btnMd,
-  lg: styles.btnLg,
-  icon: styles.btnIcon,
-  iconSm: styles.btnIconSm,
+  sm: styles.btnSm ?? '',
+  md: styles.btnMd ?? '',
+  lg: styles.btnLg ?? '',
+  icon: styles.btnIcon ?? '',
+  iconSm: styles.btnIconSm ?? '',
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(

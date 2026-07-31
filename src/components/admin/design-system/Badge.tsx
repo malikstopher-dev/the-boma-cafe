@@ -5,14 +5,14 @@ import styles from './DesignSystem.module.css'
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'accent' | 'kitchen' | 'bar'
 
 const variantMap: Record<BadgeVariant, string> = {
-  default: styles.badgeDefault,
-  success: styles.badgeSuccess,
-  warning: styles.badgeWarning,
-  danger: styles.badgeDanger,
-  info: styles.badgeInfo,
-  accent: styles.badgeAccent,
-  kitchen: styles.badgeKitchen,
-  bar: styles.badgeBar,
+  default: styles.badgeDefault ?? '',
+  success: styles.badgeSuccess ?? '',
+  warning: styles.badgeWarning ?? '',
+  danger: styles.badgeDanger ?? '',
+  info: styles.badgeInfo ?? '',
+  accent: styles.badgeAccent ?? '',
+  kitchen: styles.badgeKitchen ?? '',
+  bar: styles.badgeBar ?? '',
 }
 
 export default function Badge({ variant = 'default', children, className }: {

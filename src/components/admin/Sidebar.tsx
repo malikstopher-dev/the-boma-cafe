@@ -42,33 +42,67 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Inventory',
+    label: 'Operations · Open',
     items: [
-      { label: 'Opening Checklist', icon: '✅', href: '/admin/inventory/checklist' },
-      { label: 'Notifications', icon: '🔔', href: '/admin/inventory/notifications' },
-      { label: 'Reconciliation', icon: '📊', href: '/admin/inventory/reconciliation' },
-      { label: 'Dashboard', icon: '📦', href: '/admin/inventory' },
-      { label: 'Products', icon: '🏷️', href: '/admin/inventory/products' },
-      { label: 'Containers', icon: '📦', href: '/admin/inventory/containers' },
-      { label: 'Recipes', icon: '📖', href: '/admin/inventory/recipes' },
-      { label: 'Production Runs', icon: '🏭', href: '/admin/inventory/production-runs' },
-      { label: 'Waste & Breakage', icon: '🗑️', href: '/admin/inventory/waste' },
-      { label: 'Order Items', icon: '🧾', href: '/admin/inventory/order-items' },
-      { label: 'Purchase Orders', icon: '📋', href: '/admin/inventory/purchase-orders' },
-      { label: 'Price History', icon: '💰', href: '/admin/inventory/price-history' },
-      { label: 'Suppliers', icon: '🚚', href: '/admin/inventory/suppliers' },
-      { label: 'Supplier Performance', icon: '📈', href: '/admin/inventory/supplier-performance' },
-      { label: 'Locations', icon: '📍', href: '/admin/inventory/locations' },
-      { label: 'Menu Integration', icon: '🔗', href: '/admin/inventory/menu-items' },
-      { label: 'Transactions', icon: '🔄', href: '/admin/inventory/transactions' },
-      { label: 'Imports', icon: '📥', href: '/admin/inventory/imports' },
-      { label: 'Stock Counts', icon: '📋', href: '/admin/inventory/stock-counts' },
-      { label: 'Reorder Suggestions', icon: '🔄', href: '/admin/inventory/reorder' },
-      { label: 'Forecasting', icon: '🔮', href: '/admin/inventory/forecast' },
-      { label: 'Analytics', icon: '📈', href: '/admin/inventory/analytics' },
-      { label: 'Variance Report', icon: '📉', href: '/admin/inventory/variance' },
-      { label: 'Reports', icon: '📊', href: '/admin/inventory/reports' },
-      { label: 'Settings', icon: '⚙️', href: '/admin/inventory/settings' },
+      { label: 'Opening Checklist', icon: '✅', href: '/admin/operations' },
+      { label: 'Reconcile — Food', icon: '🥗', href: '/admin/operations/food/reconcile' },
+      { label: 'Reconcile — Beverage', icon: '🍺', href: '/admin/operations/beverage/reconcile' },
+      { label: 'Stock Counts', icon: '📋', href: '/admin/operations/stock-counts' },
+      { label: 'Variance Report', icon: '📉', href: '/admin/operations/variance' },
+    ],
+  },
+  {
+    label: 'Operations · Inventory',
+    items: [
+      { label: 'Dashboard', icon: '📊', href: '/admin/operations/dashboard' },
+      { label: 'All Products', icon: '🏷️', href: '/admin/operations/products' },
+      { label: 'Food Products', icon: '🥗', href: '/admin/operations/food/products' },
+      { label: 'Beverage Products', icon: '🍺', href: '/admin/operations/beverage/products' },
+      { label: 'Containers', icon: '📦', href: '/admin/operations/beverage/containers' },
+      { label: 'Reorder Suggestions', icon: '🔄', href: '/admin/operations/reorder' },
+      { label: 'Forecasting', icon: '🔮', href: '/admin/operations/forecast' },
+      { label: 'Analytics', icon: '📈', href: '/admin/operations/analytics' },
+    ],
+  },
+  {
+    label: 'Operations · Purchasing',
+    items: [
+      { label: 'Purchase Orders', icon: '📋', href: '/admin/operations/purchase-orders' },
+      { label: 'Receiving', icon: '📦', href: '/admin/operations/receiving' },
+      { label: 'Suppliers', icon: '🚚', href: '/admin/operations/suppliers' },
+      { label: 'Supplier Performance', icon: '📈', href: '/admin/operations/supplier-performance' },
+      { label: 'Price History', icon: '💰', href: '/admin/operations/price-history' },
+    ],
+  },
+  {
+    label: 'Operations · Production',
+    items: [
+      { label: 'Recipes', icon: '📖', href: '/admin/operations/recipes' },
+      { label: 'Production Runs', icon: '🏭', href: '/admin/operations/production-runs' },
+      { label: 'Waste & Breakage', icon: '🗑️', href: '/admin/operations/waste' },
+      { label: 'Order Items', icon: '🧾', href: '/admin/operations/order-items' },
+      { label: 'Menu Integration', icon: '🔗', href: '/admin/operations/menu-items' },
+    ],
+  },
+  {
+    label: 'Operations · Records',
+    items: [
+      { label: 'Locations', icon: '📍', href: '/admin/operations/locations' },
+      { label: 'Transactions', icon: '🔄', href: '/admin/operations/transactions' },
+      { label: 'Imports', icon: '📥', href: '/admin/operations/imports' },
+      { label: 'Notifications', icon: '🔔', href: '/admin/operations/notifications' },
+    ],
+  },
+  {
+    label: 'Operations · Reports',
+    items: [
+      { label: 'Reports', icon: '📊', href: '/admin/operations/reports' },
+    ],
+  },
+  {
+    label: 'Operations · Settings',
+    items: [
+      { label: 'Settings', icon: '⚙️', href: '/admin/operations/settings' },
     ],
   },
   {
@@ -206,7 +240,7 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
-                  {item.href === '/admin/inventory/notifications' && inventoryUnread > 0 && (
+                  {item.href === '/admin/operations/notifications' && inventoryUnread > 0 && (
                     <span style={{
                       marginLeft: 'auto', padding: '1px 6px', borderRadius: 9999,
                       background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
