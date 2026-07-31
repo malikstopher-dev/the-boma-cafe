@@ -484,10 +484,46 @@ Re-architect the inventory system into The Boma Cafe Operations Platform — foc
 | Milestone | Focus | Status |
 |-----------|-------|--------|
 | M1 — Foundation | Movement engine, types, daily snapshots, imports, inventory_type, cost_centres, reason_type, manager_notes | ✅ Complete (2026-07-30) |
-| M2 — Operations | Opening Checklist, Reconciliation, Dashboards, Container Tracking, Variance | 🔜 Next |
-| M3 — Purchasing | POs, Receiving, Suppliers, Price History, Reorder Suggestions | 🔒 |
+| M2 — Operations | Opening Checklist, Reconciliation, Dashboards, Container Tracking, Variance | ✅ Complete (2026-07-30) |
+| M3 — Purchasing | POs, Receiving, Suppliers, Price History, Reorder Suggestions | ✅ Complete |
 | M4 — Production | Recipes, Auto-deduction, Production Runs, Waste, Order Items | ✅ Complete (2026-07-31) |
-| M5 — Automation | Forecasting, Barcode, Notifications, Analytics | 🔒 |
+| M5 — Automation | Forecasting, Barcode, Notifications, Analytics | ✅ Complete (2026-07-31) |
+
+### Milestone 5 — Automation — Complete (2026-07-31)
+
+All four M5 components delivered, verified (TypeScript clean, 61/61 tests passing), and committed in 4 commits: `209746a` (M5a), `f85d383` (M5b), `3cb8513` (M5c), `e8afe7b` (M5d).
+
+**M5a — Forecasting** (`src/inventory/engine/forecasting.ts`):
+- `getDepletionForecast(locationId, inventoryType?)` — per-product: current balance, 30-day daily usage (SALE txns), days remaining, projected stock-out date, urgency (`out_of_stock`/`critical`/`warning`/`ok`, critical = within lead time from reorder rules); sorted by urgency then days left
+- `getConsumptionPattern(locationId, days, inventoryType?)` — day-of-week × hour-of-day buckets with share %, multiplier vs average, busiest day, peak hour
+- API: `GET /api/inventory/forecast/depletion`, `GET /api/inventory/forecast/patterns` (+ proxies)
+- UI: `/admin/inventory/forecast` — KPI cards, type tabs, depletion table with urgency badges, day-of-week bars + 24h profile (pure CSS, no chart lib)
+- Sidebar: "Forecasting" 🔮
+
+**M5b — Barcode** (no schema change — `barcode` existed since migration 039, `UNIQUE`, already searched server-side):
+- Products list: inline "Add Product" form (name, SKU, barcode, inventory_type), Barcode column, search placeholder covers barcode
+- `CountCard` (`src/inventory/components/count-card.tsx`): optional `productBarcode` prop shown under SKU
+- Stock count page: scan bar (Enter/Go) jumps to product by barcode — resolves index across counted items then uncounted products; feedback message
+- Sidebar: unchanged
+
+**M5c — Notifications** (`src/inventory/engine/notifications.ts`):
+- Reuses `staff_notifications` (migration 000/027) with fixed `user_id = 'admin'` convention (admin auth is role-only, no staff id); service client bypasses RLS
+- `generateLowStockAlerts(locationId, inventoryType?)` — idempotent: skips products with existing unread alert (`type:product_id` key), **auto-resolves** (marks read) alerts whose product recovered above threshold; thresholds: `inventory_products.reorder_threshold` ?? `inventory_reorder_rules.min_level`; out-of-stock always alerts
+- `listNotifications` (location-scoped via `metadata->>location_id`), `getUnreadNotificationCount`, `markNotificationRead`, `markAllNotificationsRead`
+- API: `GET/POST /api/inventory/notifications` (list / check stock now), `GET .../unread-count`, `POST .../[id]/read`, `POST .../read-all` + proxies
+- UI: `/admin/inventory/notifications` — unread/total/out-of-stock KPIs, alert cards with mark-read, "Check Stock Now" button, 60s auto-refresh; Sidebar 🔔 with live unread badge (60s poll, same pattern as messages badge)
+
+**M5d — Analytics** (`src/inventory/engine/analytics.ts`):
+- `getConsumptionTrend` — daily SALE qty over N days, zero-filled, time-series bars
+- `getWasteHeatmap` — waste types (waste/breakage/spillage/comp/expiry_loss/theft/donation) × day-of-week matrix with heatmap cells + type totals
+- `getInventoryValueTrend` — from `inventory_daily_snapshots` (carried forward; flat until snapshots job runs)
+- API: `GET /api/inventory/analytics/consumption-trend`, `.../waste-heatmap`, `.../value-trend` (days 7–180, inventory_type filter) + proxies
+- UI: `/admin/inventory/analytics` — KPI cards, trend bar chart, heatmap table, value chart; range tabs (14/30/90d) + type tabs
+- Sidebar: "Analytics" 📈
+
+**Types added** (types.ts): `DepletionUrgency`, `DepletionForecastRow`, `DayOfWeekPattern`, `HourlyPattern`, `ConsumptionPattern`, `InventoryAlertType`, `InventoryNotification`, `LowStockAlertResult`, `TrendPoint`, `WasteHeatmapCell`, `WasteHeatmap`, `ValueTrendPoint`
+
+**Verification:** `npx tsc --noEmit -p src/inventory/tsconfig.json` clean (strict + noUncheckedIndexedAccess); 61/61 vitest passing; each UI page verified via temp tsconfig at repo settings (strict:false). Pre-existing repo-wide `DataTable<T>` + `interface` TS2344 constraint error tolerated by next build — untouched.
 
 ### Milestone 4 — Production — Complete (2026-07-31)
 
