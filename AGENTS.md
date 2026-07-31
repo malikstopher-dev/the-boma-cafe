@@ -352,6 +352,34 @@ After the initial verification audit revealed 7 HIGH/critical findings, the foll
 - **Audit logging active** at all engine mutation points
 - **Import pipeline now creates ledger transactions**
 
+### M4 Post-Verification Audit Fixes (2026-07-31)
+
+During the M4 completion audit, three real bugs were found and fixed:
+
+1. **Signed-quantity bug in `ledger.ts:createTransaction()`** — non-decrease types (`production`, `physical_count`, `transfer_in`) were forced positive via `Math.abs()`. Production auto-deduction would have INCREASED stock for consumed ingredients, and negative stock-count variances would have been posted as positive adjustments. Fixed: bidirectional types now honor the caller's sign (`actualQuantity = quantity < 0 ? quantity : Math.abs(quantity)`). Decrease types unchanged.
+
+2. **`stock-counts.ts:approveStockCount()`** — passed `Math.abs(variance)`, so negative variances (stock short) increased stock instead of decreasing. Fixed: passes signed variance.
+
+3. **`production-runs.ts:completeProductionRun()`** — no idempotency guard: a partial failure (e.g. insufficient stock mid-loop) left the run `in_progress`, and retry would DOUBLE-DEDUCT already-completed items. Fixed: skips items with `transaction_id` set, applies `wastage_pct` to consumed quantities, collects per-item failures, only marks `completed` when all items succeed (retry is safe).
+
+4. **`location_id=main` resolver** — the entire M2/M3/M4 UI passes `location_id=main`, but `inventory_locations.id` is a generated UUID with no `main` seed and nothing resolved it (all pages returned empty data / mutations failed in production). Fixed: added `src/inventory/lib/location.ts` `resolveLocationId()` ('main'/'default'/null → first active location UUID; explicit UUIDs pass through) and applied it in: dashboard (all sections), checklist GET/POST, checklist history, reorder suggestions GET, reorder rules GET/POST, production-runs GET/POST, waste POST, order-items deduct POST (falls back to default location).
+
+**Verification:** TypeScript clean, 61/61 tests passing after all fixes.
+
+### Remote DB Migration Sync (2026-07-31) — CRITICAL DISCOVERY + FIX
+
+**Discovery:** The production Supabase DB (`lyksqvqtiysjttwpgeyw`) had ZERO migration history records — all schemas through 049 were applied manually via the dashboard SQL editor. Migrations 050–059 (M1+ through M4) were NEVER applied: `cost_centres`, `reason_type`, `daily_snapshots`, checklist, containers, reorder, recipes, production runs, order_items all missing (verified via REST API with service-role key). Every M1–M4 page would have returned empty data or failed in production.
+
+**Fix steps:**
+1. `supabase migration repair --status applied` for versions 001–049 (truthful — schemas already existed)
+2. Renamed `001_staff_system.sql` → `000_staff_system.sql` (git mv) — two files shared version `001`, colliding on the `schema_migrations` PK
+3. **Fixed latent bug in migration 050** — `DEFAULT (SELECT id FROM cost_centres ORDER BY created_at LIMIT 1)` is illegal in PostgreSQL (no subqueries in DEFAULT). Rewrote: add nullable FK → backfill via UPDATE → `SET NOT NULL`. This migration had never run anywhere, so the bug was never caught.
+4. `supabase db push --include-all` — applied 000, 001, 050–059 cleanly
+
+**Post-push verification (all via service-role REST):** 14 new tables OK; columns `inventory_type`, `reason_type`, `cost_centre_id`, `container_type_id` present; seeds present (8 cost centres, 9 container types, 10 checklist templates); 2 active locations (Main Bar `214044c5-ea83-442f-8431-7e2cfc74e302`, Dry Store `0819a0fe-8c6f-46c0-bd9d-3a52f3e309af`); migration history Local == Remote for 000–059.
+
+**Note:** 016a_packing_status_and_prep_time.sql is skipped by the CLI (file name doesn't match `<timestamp>_name.sql`) — pre-existing, harmless, and its objects already exist remotely. Migrations 024–026, 041–044 never existed as files.
+
 ## Session: Phase 2 — Booking ↔ Inventory Integration (2026-07-29)
 
 ### Objective
@@ -435,3 +463,161 @@ Integrate the booking system with the inventory system using a reservation model
 - Direct eslint invocation hangs with flat config from eslint-config-next
 - `npx tsc --noEmit` (global) exceeds 2 min timeout
 - Various deleted/unused components from prior audit pass
+
+---
+
+## Session: Operations Platform — Architecture Reset (2026-07-30)
+
+### Objective
+Re-architect the inventory system into The Boma Cafe Operations Platform — focused on the restaurant manager's daily workflow (morning reconciliation, opening checklist, movement audit trail). Food and Beverage are separate sections sharing one engine. Delivered in independently deployable milestones.
+
+### Governing Architecture (frozen — user rated 9.8/10)
+- **Manager-first design** — primary screen is the Morning Opening Checklist, not Products
+- **`inventory_type`** (FOOD, BEVERAGE, CLEANING, PACKAGING, GENERAL) replaces `product_type`; categories remain orthogonal
+- **Every movement has a structured `reason_type`** (BREAKAGE, WASTE, STAFF_MEAL, PROMOTION, EXPIRED, THEFT, DONATION, COMP, TRANSFER, ADJUSTMENT, SALE, BOOKING, RETURN, OPENING, CLOSING, PRODUCTION, SPILLAGE, DELIVERY) + optional `reason_notes` + `manager_note` + `note_author`
+- **Cost centres required** on every movement (Restaurant, Bar, Kitchen, Events, Private Functions, Takeaway, Delivery, VIP Room), NOT NULL with default
+- **Activity timeline** — reusable engine + component for Product, Supplier, PO, Booking
+- **Milestones:** M1 (Foundation) → M2 (Operations) → M3 (Purchasing) → M4 (Production) → M5 (Automation). Each independently deployable.
+- **No rename** — keep `/admin/inventory/*` routes, may rename later on multi-restaurant
+
+### Milestones
+| Milestone | Focus | Status |
+|-----------|-------|--------|
+| M1 — Foundation | Movement engine, types, daily snapshots, imports, inventory_type, cost_centres, reason_type, manager_notes | ✅ Complete (2026-07-30) |
+| M2 — Operations | Opening Checklist, Reconciliation, Dashboards, Container Tracking, Variance | 🔜 Next |
+| M3 — Purchasing | POs, Receiving, Suppliers, Price History, Reorder Suggestions | 🔒 |
+| M4 — Production | Recipes, Auto-deduction, Production Runs, Waste, Order Items | ✅ Complete (2026-07-31) |
+| M5 — Automation | Forecasting, Barcode, Notifications, Analytics | 🔒 |
+
+### Milestone 4 — Production — Complete (2026-07-31)
+
+**Migration 057** — `inventory_recipes`, `inventory_recipe_ingredients`, `inventory_recipe_outputs` (reusable recipes — no menu_item/bar_item coupling)
+
+**Engine** (`src/inventory/engine/recipes.ts`) — 9 functions:
+- `listRecipes(includeInactive?)`, `getRecipe(id)` (with ingredients + outputs + product/uom names)
+- `createRecipe`, `updateRecipe`
+- `addIngredient`, `removeIngredient`, `addOutput`, `removeOutput`
+
+**API Routes:**
+- `GET/POST /api/inventory/recipes` — list/create
+- `GET/PATCH /api/inventory/recipes/[id]` — detail/update
+- `POST /api/inventory/recipes/[id]/ingredients` + `DELETE [ingredientId]`
+- `POST /api/inventory/recipes/[id]/outputs` + `DELETE [outputId]`
+
+**UI Pages:**
+- `/admin/inventory/recipes` — recipe list, search, inline create form
+- `/admin/inventory/recipes/[id]` — detail with yield/prep/waste info, ingredient + output management
+- Sidebar: "Recipes" added
+
+**Types added:** `Recipe`, `RecipeIngredient`, `RecipeOutput`, `RecipeDetail`
+
+**Production Runs & Auto-Deduction (Migration 058):**
+- `inventory_production_runs` (planned → in_progress → completed/cancelled) + `inventory_production_run_items` (consumed/produced snapshot with transaction links)
+- Updated `inventory_transactions` CHECK constraints to include `production` type + `production_run` reference
+- **Engine** (`src/inventory/engine/production-runs.ts`): `createProductionRun` (snapshots ingredients × scale), `getProductionRun`, `listProductionRuns`, `startProductionRun`, `completeProductionRun` (creates PRODUCTION ledger txns — negative for consumed, positive for produced), `cancelProductionRun`
+- **API:** 6 routes (list/create, detail, start, complete, cancel) + proxies
+- **UI:** list page (status filter tabs, create run from recipe), detail page (start/complete/cancel actions, completion qty scaling, consumed/produced breakdown with ledger checkmarks)
+- Sidebar: "Production Runs" added
+- **Types added:** `ProductionRun`, `ProductionRunItem`, `ProductionRunDetail`, `ProductionRunStatus`; `ReferenceType` extended with `production_run`
+
+**Waste & Breakage module (no new migration — reuses ledger):**
+- **Engine** (`src/inventory/engine/waste.ts`): `recordWaste()` (validates type ∈ waste set, converts positive qty → negative ledger entry, defaults reason_type from type), `listWasteEvents()` (type-filtered with product names), `wasteSummary()` (30-day per-type totals with estimated value)
+- `WasteSummaryRow` type; `WasteValidationError` error class
+- **API:** `GET/POST /api/inventory/waste` (list + single-tap register), `GET /api/inventory/waste/summary` + proxies
+- **UI:** `/admin/inventory/waste` — register form (product search, type, reason, qty, notes) + 30-day summary card + recent events list
+- Sidebar: "Waste & Breakage" added
+
+**Order Items module (Migration 059):**
+- `order_items` table — normalized line items from `orders.items_json` (array or `{items: []}` POS shape), linked to inventory products via bar_items → `bar_item_inventory_links` (fallback: direct product name match), with `base_quantity` (qty × pour_size_ml → litres when base UOM is litres, else qty) + `transaction_id`/`deducted_at` for idempotency
+- **Engine** (`src/inventory/engine/order-items.ts`): `parseOrderItemsJson` (pure), `syncOrderItems` (upsert lines, preserves existing transaction links), `deductOrderItems` (SALE ledger txns per matched line, reference_type `pos_order`, skips already-deducted), `listOrderItems`, `autoDeductCompletedOrder` (default active location + sync + deduct)
+- **API:** `GET /api/inventory/order-items?order_id=`, `POST /sync`, `POST /deduct` + proxies
+- **Hook:** `src/app/api/supabase/orders/route.ts:PATCH` — on `completed` transition, fire-and-forget `autoDeductCompletedOrder` (non-blocking, same pattern as booking hooks)
+- **UI:** `/admin/inventory/order-items` — order list (search), line items with matched/unmatched/deducted badges, Sync + Deduct actions
+- Sidebar: "Order Items" added
+- **Types added:** `ParsedOrderItem`, `OrderItem`, `OrderItemDetail`
+- **Tests:** 5 new parser tests (61 total passing)
+
+### Milestone 2 — Complete (2026-07-30)
+
+**Migration 054** — `inventory_checklist_templates`, `inventory_checklist_instances`, `inventory_checklist_items` + seed data (10 template items across refrigeration, stock, reconciliation, equipment, cleanliness, admin, menu categories)
+
+**Engine** (`src/inventory/engine/checklist.ts`) — 6 functions:
+- `getOrCreateInstance(locationId, date?, openedBy?)` — get today's checklist or create from templates
+- `updateItemStatus(instanceId, itemId, status, completedBy?, notes?)` — mark item done/skip/fail
+- `completeInstance(instanceId, completedBy?, managerNotes?)` — close checklist
+- `updateManagerNotes(instanceId, notes, author?)` — save manager notes via audit log
+- `listInstances(locationId?, from?, to?, limit?)` — history
+
+**API Routes:**
+- `GET/POST /api/inventory/checklist` — get/create today's checklist
+- `PATCH /api/inventory/checklist/[id]` — complete instance or update notes
+- `PATCH /api/inventory/checklist/[id]/items/[itemId]` — update item status
+- `GET /api/inventory/checklist/history` — past instances
+
+**UI Pages:**
+- `/admin/inventory/checklist` — Morning Opening Checklist with category-grouped task cards, progress bar, manager notes textarea
+- `/admin/inventory/checklist/history` — past checklist list with status badges
+- Sidebar: "Opening Checklist" added as first item in Inventory nav group
+
+**Types added** to `src/inventory/engine/types.ts`: `ChecklistStatus`, `ChecklistItemStatus`, `ChecklistTemplate`, `ChecklistInstance`, `ChecklistItem`
+
+**Reconciliation UI:**
+- `/admin/inventory/reconciliation` — morning reconciliation page with date picker, 3 KPI cards (products checked, total variance, variance value), search+filter, editable physical quantity per product with inline Save
+- `src/inventory/engine/reconciliation.ts` — already existed (getReconciliation, getInventoryValue); dashboard already wires it via `section=reconciliation`
+- Sidebar: "Reconciliation" added after Opening Checklist
+
+**Container Tracking (Migration 055):**
+- `inventory_container_types` table — 9 seeded types (bottle, keg, case, crate, box, packet, bag, tub, bucket)
+- `inventory_products` — added `container_type_id` + `units_per_container` columns
+- `inventory_transactions` — added `container_quantity` + `container_type_id` columns
+- API: `GET /api/inventory/container-types` (list, trackable filter), `GET /api/inventory/container-types/[id]`
+- UI: `/admin/inventory/containers` — container type reference page
+- Sidebar: "Containers" added after Products in Inventory nav
+
+**Food & Beverage Dashboards:**
+- Inventory dashboard tabs: All, Food, Beverage, Cleaning, Packaging, General
+- Active tab adds `inventory_type` query param to the combined dashboard API call
+- Existing dashboard engine already accepted `InventoryType` param from M1
+
+**M2 Complete — 5/5 components:**
+- ✅ Opening Checklist (Migration 054, engine, API, 2 UI pages, sidebar)
+- ✅ Reconciliation UI (page with KPI cards, search, inline phys qty editing)
+- ✅ Container Tracking (Migration 055, API, UI page, sidebar)
+- ✅ Variance Report (UI page, stock count selector, sortable table, sidebar)
+- ✅ Food/Beverage Dashboards (type tabs on existing dashboard page)
+
+### Milestone 1 — Complete (2026-07-30)
+
+**Migrations:** 050 (inventory_type + cost_centres), 051 (reason_type + notes), 052 (daily_snapshots), 053 (import_mode)
+
+**Engine:**
+- `types.ts` — `InventoryType`, `MovementReason`, `ImportMode`, `CostCentre`, `DailySnapshot`, `MovementEvent`
+- `ledger.ts` — `createTransaction()` now passes `cost_centre_id`, `reason_type`, `reason_notes`, `manager_note`, `note_author`
+- `dashboard.ts` — all 8 functions accept optional `InventoryType` param
+- `timeline.ts` — `getTimeline()` engine (product/location/PO/booking/date scoping)
+- `reports.ts` — 5 functions accept optional `InventoryType` param
+
+**API:**
+- `api-utils.ts` — `getInventoryTypeFilter()`, `applyInventoryTypeFilter()`
+- Products: inventory_type filter on GET + POST + PATCH
+- Dashboard: inventory_type filter on all 8 sections
+- Transactions: inventory_type filter via inner join
+- Reports: inventory_type filter on daily, waste, fast-movers, slow-movers, valuation
+- Timeline: new route + proxy
+- Imports: `ImportMode` (draft/direct/reconcile), new fields on `ParsedRow`/`ImportDecision`, `directApply()` skips preview, PUT route for JSON direct imports
+
+**Key changes to existing files:**
+- `src/inventory/api/dashboard/route.ts` — inventory_type on all sections
+- `src/inventory/api/transactions/route.ts` — inventory_type via inner join
+- `src/inventory/api/imports/route.ts` — importMode, direct, PUT route
+- `src/inventory/import/ImportTypes.ts` — ImportMode, new fields
+- `src/inventory/import/ImportService.ts` — preview() accepts importMode, directApply()
+- `src/inventory/import/ImportExecutor.ts` — passes cost_centre_id, reason_type, reason_notes
+- `src/inventory/api/reports/{daily,waste,fast-movers,slow-movers,valuation}/route.ts` — inventory_type param
+- `src/inventory/lib/reports.ts` — inventory_type filter on 5 functions
+
+**Verification:**
+- TypeScript strict: clean compile (inventory tsc ~30s)
+- Tests: 56/56 passing
+- Build: next build compiles successfully (5.4min, global tsc times out — pre-existing)
+- Vercel deployment fix: 3 JSX errors in migrated AdminPage files fixed (commit `4ccefdc`)

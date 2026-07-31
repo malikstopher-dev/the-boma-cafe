@@ -187,7 +187,7 @@ export async function approveStockCount(id: string, approvedBy: string): Promise
         product_id: item.product_id,
         location_id: session.stockCount.location_id,
         transaction_type: 'physical_count',
-        quantity: Math.abs(variance),
+        quantity: variance,
         reference_type: 'stock_count',
         reference_id: id,
         performed_by: approvedBy ?? null,

@@ -1,0 +1,1 @@
+export { POST } from '@/inventory/api/recipes/[id]/outputs/route'

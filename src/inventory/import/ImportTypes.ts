@@ -1,4 +1,5 @@
 export type ImportType = 'supplier_delivery' | 'physical_count' | 'adjustment'
+export type ImportMode = 'draft' | 'direct' | 'reconcile'
 
 export type ImportStatus = 'pending' | 'previewed' | 'approved' | 'applied' | 'rolled_back' | 'failed'
 
@@ -18,6 +19,9 @@ export interface ParsedRow {
   tots: number | null
   notes: string | null
   categoryName: string | null
+  costCentreId?: string | null
+  reasonType?: string | null
+  reasonNotes?: string | null
 }
 
 export interface ParseError {
@@ -90,6 +94,7 @@ export interface ImportPreview {
     totalValue: number
   }
   createdAt: string
+  autoApplied?: number
 }
 
 export interface ImportDecision {
@@ -104,6 +109,9 @@ export interface ImportDecision {
   unitCost?: number | null
   transactionType?: string | null
   sourceRow?: string | null
+  costCentreId?: string | null
+  reasonType?: string | null
+  reasonNotes?: string | null
 }
 
 export interface ImportApplyRequest {
@@ -127,6 +135,7 @@ export interface ImportRollbackResult {
 export interface ImportHistoryEntry {
   id: string
   importType: ImportType
+  importMode: ImportMode
   filename: string
   status: ImportStatus
   supplierId: string | null
@@ -148,6 +157,7 @@ export interface ImportDetail extends ImportHistoryEntry {
   decisions?: ImportDecision[] | null
   transactionIds?: string[] | null
   reversalTransactionIds?: string[] | null
+  importMode: ImportMode
 }
 
 export interface ProductMatchRequest {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { createTransaction } from '@/inventory/engine/ledger'
+import { getInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import type { ApiResponse, InventoryTransaction, CreateTransactionInput } from '@/inventory/engine/types'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError } from '@/inventory/lib/errors'
 
@@ -15,16 +16,28 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const to = searchParams.get('to')
     const cursor = searchParams.get('cursor')
     const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 100)
+    const inventoryType = getInventoryTypeFilter(searchParams)
+
+    let selectFields = '*'
+    let extraJoin = ''
+
+    if (inventoryType) {
+      selectFields = '*, inventory_products!inner(inventory_type)'
+    }
 
     let query = supabase
       .from('inventory_transactions')
-      .select('*', { count: 'exact' })
+      .select(selectFields, { count: 'exact' })
 
     if (productId) query = query.eq('product_id', productId)
     if (locationId) query = query.eq('location_id', locationId)
     if (type) query = query.eq('transaction_type', type)
     if (from) query = query.gte('created_at', from)
     if (to) query = query.lte('created_at', to)
+
+    if (inventoryType) {
+      query = query.eq('inventory_products.inventory_type', inventoryType)
+    }
 
     if (cursor) {
       query = query.lt('id', cursor)
@@ -41,7 +54,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       )
     }
 
-    const transactions = (data ?? []) as InventoryTransaction[]
+    const transactions = (data ?? []) as unknown as InventoryTransaction[]
     const lastItem = transactions[transactions.length - 1]
     const hasMore = (count ?? 0) > pageSize
     const nextCursor = hasMore && lastItem ? lastItem.id : null

@@ -1,4 +1,5 @@
 import { getInventoryClient } from './db'
+import type { InventoryType } from '@/inventory/engine/types'
 
 function getClient() {
   return getInventoryClient()
@@ -16,16 +17,19 @@ export interface DailyStockReportRow {
   closingBalance: number
 }
 
-export async function dailyStockReport(date: string, locationId: string): Promise<DailyStockReportRow[]> {
+export async function dailyStockReport(date: string, locationId: string, inventoryType?: InventoryType): Promise<DailyStockReportRow[]> {
   const supabase = getClient()
   const startOfDay = `${date}T00:00:00Z`
   const endOfDay = `${date}T23:59:59Z`
 
-  const { data: products } = await supabase
+  let productQuery = supabase
     .from('inventory_products')
     .select('id, name, sku, inventory_categories(name)')
     .eq('is_active', true)
-    .order('name')
+
+  if (inventoryType) productQuery = productQuery.eq('inventory_type', inventoryType)
+
+  const { data: products } = await productQuery.order('name')
 
   if (!products) return []
 
@@ -118,19 +122,22 @@ export interface WasteReportRow {
   notes: string | null
 }
 
-export async function wasteReport(from: string, to: string, locationId: string): Promise<WasteReportRow[]> {
+export async function wasteReport(from: string, to: string, locationId: string, inventoryType?: InventoryType): Promise<WasteReportRow[]> {
   const supabase = getClient()
 
   const wasteTypes = ['waste', 'breakage', 'spillage', 'comp', 'expiry_loss']
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('inventory_transactions')
     .select('*, inventory_products!inner(id, name)')
     .eq('location_id', locationId)
     .in('transaction_type', wasteTypes)
     .gte('created_at', from)
     .lte('created_at', to)
-    .order('created_at', { ascending: false })
+
+  if (inventoryType) query = query.eq('inventory_products.inventory_type', inventoryType)
+
+  const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error || !data) return []
 
@@ -152,16 +159,20 @@ export interface FastSlowMoverRow {
   transactionCount: number
 }
 
-export async function fastMovers(days: number, limit: number, locationId: string): Promise<FastSlowMoverRow[]> {
+export async function fastMovers(days: number, limit: number, locationId: string, inventoryType?: InventoryType): Promise<FastSlowMoverRow[]> {
   const supabase = getClient()
   const since = new Date(Date.now() - days * 86400000).toISOString()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('inventory_transactions')
     .select('product_id, quantity, inventory_products!inner(id, name)')
     .eq('location_id', locationId)
     .in('transaction_type', ['sale', 'sale_bottle'])
     .gte('created_at', since)
+
+  if (inventoryType) query = query.eq('inventory_products.inventory_type', inventoryType)
+
+  const { data, error } = await query
 
   if (error || !data) return []
 
@@ -182,14 +193,18 @@ export async function fastMovers(days: number, limit: number, locationId: string
     .slice(0, limit)
 }
 
-export async function slowMovers(days: number, limit: number, locationId: string): Promise<FastSlowMoverRow[]> {
+export async function slowMovers(days: number, limit: number, locationId: string, inventoryType?: InventoryType): Promise<FastSlowMoverRow[]> {
   const supabase = getClient()
   const since = new Date(Date.now() - days * 86400000).toISOString()
 
-  const { data: products } = await supabase
+  let productQuery = supabase
     .from('inventory_products')
     .select('id, name')
     .eq('is_active', true)
+
+  if (inventoryType) productQuery = productQuery.eq('inventory_type', inventoryType)
+
+  const { data: products } = await productQuery
 
   if (!products) return []
 
@@ -227,14 +242,18 @@ export interface ValuationRow {
   totalValue: number
 }
 
-export async function valuationReport(locationId: string): Promise<ValuationRow[]> {
+export async function valuationReport(locationId: string, inventoryType?: InventoryType): Promise<ValuationRow[]> {
   const supabase = getClient()
 
-  const { data: balances } = await supabase
+  let balanceQuery = supabase
     .from('inventory_product_balances')
     .select('product_id, balance, inventory_products!inner(id, name, sku)')
     .eq('location_id', locationId)
     .gt('balance', 0)
+
+  if (inventoryType) balanceQuery = balanceQuery.eq('inventory_products.inventory_type', inventoryType)
+
+  const { data: balances } = await balanceQuery
 
   if (!balances) return []
 

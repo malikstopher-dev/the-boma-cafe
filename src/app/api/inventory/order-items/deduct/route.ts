@@ -1,0 +1,1 @@
+export { POST } from '@/inventory/api/order-items/deduct/route'

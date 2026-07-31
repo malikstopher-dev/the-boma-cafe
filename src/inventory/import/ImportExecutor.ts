@@ -52,6 +52,9 @@ export class ImportExecutor {
           performed_by: performedBy ?? null,
           notes: `Import: ${decision.sourceRow ?? 'unknown row'}`,
           import_batch_id: importId,
+          cost_centre_id: decision.costCentreId ?? null,
+          reason_type: (decision.reasonType ?? null) as any,
+          reason_notes: decision.reasonNotes ?? null,
         } satisfies CreateTransactionInput)
         transactionIds.push(txn.id)
         appliedCount++

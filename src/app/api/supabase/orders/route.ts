@@ -414,6 +414,13 @@ export async function PATCH(request: NextRequest) {
           notifyOrderReady(orderRef).catch(() => {})
           break
       }
+
+      // ── Inventory: auto-deduct stock when order completes (non-blocking) ──
+      if (updateBody.status === 'completed') {
+        import('@/inventory/engine/order-items')
+          .then(({ autoDeductCompletedOrder }) => autoDeductCompletedOrder(updated.id))
+          .catch(() => {})
+      }
     }
 
     return NextResponse.json({

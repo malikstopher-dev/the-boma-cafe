@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
+import { getInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import {
   getDashboardSummary,
   getAlerts,
@@ -16,6 +17,7 @@ import {
 } from '@/inventory/engine/dashboard'
 import { getReconciliation, getInventoryValue, type ReconciliationRow } from '@/inventory/engine/reconciliation'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { resolveLocationId } from '@/inventory/lib/location'
 
 async function getOpenPoStats() {
   const supabase = getInventoryClient()
@@ -67,21 +69,22 @@ function missingLocation(): NextResponse<ApiResponse<unknown>> {
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
   try {
     const { searchParams } = new URL(request.url)
-    const locationId = searchParams.get('location_id')
+    const locationId = await resolveLocationId(searchParams.get('location_id'))
     const section = searchParams.get('section') ?? 'summary'
     const limit = Math.min(Number(searchParams.get('limit')) || 10, 100)
     const days = Number(searchParams.get('days')) || 30
+    const inventoryType = getInventoryTypeFilter(searchParams)
 
     if (!locationId) return missingLocation()
 
     switch (section) {
       case 'summary': {
-        const data = await getDashboardSummary(locationId)
+        const data = await getDashboardSummary(locationId, inventoryType)
         return NextResponse.json({ data })
       }
 
       case 'alerts': {
-        const data = await getAlerts(locationId)
+        const data = await getAlerts(locationId, inventoryType)
         return NextResponse.json({ data })
       }
 
@@ -92,17 +95,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       }
 
       case 'recent': {
-        const data = await getRecentActivity(locationId, limit)
+        const data = await getRecentActivity(locationId, limit, inventoryType)
         return NextResponse.json({ data })
       }
 
       case 'fast-movers': {
-        const data = await getFastMovers(locationId, days, limit)
+        const data = await getFastMovers(locationId, days, limit, inventoryType)
         return NextResponse.json({ data })
       }
 
       case 'slow-movers': {
-        const data = await getSlowMovers(locationId, days, limit)
+        const data = await getSlowMovers(locationId, days, limit, inventoryType)
         return NextResponse.json({ data })
       }
 
@@ -112,19 +115,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       }
 
       case 'today': {
-        const data = await getTodayTransactions(locationId)
+        const data = await getTodayTransactions(locationId, inventoryType)
         return NextResponse.json({ data })
       }
 
       case 'combined': {
         const [summary, alerts, recent, fastMovers, slowMovers, value, today, poResult] = await Promise.all([
-          getDashboardSummary(locationId),
-          getAlerts(locationId),
-          getRecentActivity(locationId, 10),
-          getFastMovers(locationId, days, 5),
-          getSlowMovers(locationId, days, 5),
+          getDashboardSummary(locationId, inventoryType),
+          getAlerts(locationId, inventoryType),
+          getRecentActivity(locationId, 10, inventoryType),
+          getFastMovers(locationId, days, 5, inventoryType),
+          getSlowMovers(locationId, days, 5, inventoryType),
           getInventoryValue(locationId),
-          getTodayTransactions(locationId),
+          getTodayTransactions(locationId, inventoryType),
           getOpenPoStats(),
         ])
         return NextResponse.json({

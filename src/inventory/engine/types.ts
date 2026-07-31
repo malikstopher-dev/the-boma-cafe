@@ -7,13 +7,22 @@ export type TransactionType =
   | 'transfer_in' | 'transfer_out' | 'return'
   | 'production' | 'theft' | 'donation'
 
+export type InventoryType = 'FOOD' | 'BEVERAGE' | 'CLEANING' | 'PACKAGING' | 'GENERAL'
+
+export type MovementReason =
+  | 'BREAKAGE' | 'WASTE' | 'STAFF_MEAL' | 'PROMOTION' | 'EXPIRED' | 'THEFT'
+  | 'DONATION' | 'COMP' | 'TRANSFER' | 'ADJUSTMENT' | 'SALE' | 'BOOKING'
+  | 'RETURN' | 'OPENING' | 'CLOSING' | 'PRODUCTION' | 'SPILLAGE' | 'DELIVERY'
+
+export type ImportMode = 'initial' | 'delivery' | 'full_replacement'
+
 export type StockCountStatus = 'in_progress' | 'submitted' | 'approved' | 'cancelled'
 
 export type ImportStatus = 'pending' | 'previewed' | 'approved' | 'applied' | 'rolled_back' | 'failed'
 
 export type ReferenceType =
   | 'import_batch' | 'stock_count' | 'purchase_order'
-  | 'booking' | 'pos_order' | 'manual'
+  | 'booking' | 'pos_order' | 'manual' | 'production_run'
 
 export interface InventoryUom {
   id: string
@@ -85,6 +94,7 @@ export interface InventoryProduct {
   category_id: string | null
   image_url: string | null
   is_active: boolean
+  inventory_type: InventoryType
   deleted_at: string | null
   preferred_supplier_id: string | null
   supplier_code: string | null
@@ -103,6 +113,11 @@ export interface InventoryTransaction {
   transaction_type: TransactionType
   quantity: number
   unit_cost: number | null
+  cost_centre_id: string
+  reason_type: MovementReason | null
+  reason_notes: string | null
+  manager_note: string | null
+  note_author: string | null
   reference_type: ReferenceType | null
   reference_id: string | null
   performed_by: string | null
@@ -137,6 +152,7 @@ export interface InventoryStockCountItem {
 export interface ImportBatch {
   id: string
   import_type: 'supplier_delivery' | 'physical_count' | 'adjustment'
+  import_mode: ImportMode
   filename: string
   storage_path: string
   status: ImportStatus
@@ -172,6 +188,103 @@ export interface InventoryAuditLogEntry {
   changes: Json | null
   performed_by: string | null
   created_at: string
+}
+
+export interface CostCentre {
+  id: string
+  name: string
+  description: string | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface ContainerType {
+  id: string
+  name: string
+  display_name: string
+  description: string | null
+  is_trackable: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface ReorderRule {
+  id: string
+  product_id: string
+  location_id: string
+  min_level: number
+  max_level: number | null
+  par_level: number | null
+  lead_time_days: number
+  auto_suggest: boolean
+  preferred_supplier_id: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ReorderSuggestion {
+  productId: string
+  productName: string
+  sku: string | null
+  inventoryType: InventoryType
+  currentStock: number
+  minLevel: number
+  maxLevel: number | null
+  parLevel: number | null
+  leadTimeDays: number
+  dailyUsage: number
+  suggestedQuantity: number
+  urgency: 'critical' | 'high' | 'medium' | 'low'
+  preferredSupplierId: string | null
+  preferredSupplierName: string | null
+  estimatedDaysUntilStockout: number | null
+}
+
+export interface PriceHistoryEntry {
+  id: string
+  product_id: string
+  supplier_id: string | null
+  unit_cost: number
+  quantity: number | null
+  transaction_id: string | null
+  effective_date: string
+  notes: string | null
+  recorded_by: string | null
+  created_at: string
+}
+
+export interface DailySnapshot {
+  id: string
+  product_id: string
+  location_id: string
+  date: string
+  inventory_type: InventoryType
+  opening_qty: number
+  sales_qty: number
+  waste_qty: number
+  adjustments_qty: number
+  deliveries_qty: number
+  transfers_qty: number
+  closing_qty: number
+  stock_value: number
+  created_at: string
+}
+
+export interface MovementEvent {
+  id: string
+  transaction_type: TransactionType
+  quantity: number
+  reason_type: MovementReason | null
+  reason_notes: string | null
+  manager_note: string | null
+  note_author: string | null
+  cost_centre_name: string | null
+  performed_by: string | null
+  created_at: string
+  reference_type: ReferenceType | null
+  reference_id: string | null
+  notes: string | null
 }
 
 export interface DrinkPackageProduct {
@@ -211,11 +324,178 @@ export interface CreateTransactionInput {
   transaction_type: TransactionType
   quantity: number
   unit_cost?: number | null
+  cost_centre_id?: string | null
+  reason_type?: MovementReason | null
+  reason_notes?: string | null
+  manager_note?: string | null
+  note_author?: string | null
   reference_type?: ReferenceType | null
   reference_id?: string | null
   performed_by?: string | null
   notes?: string | null
   import_batch_id?: string | null
+}
+
+export interface WasteSummaryRow {
+  transaction_type: TransactionType
+  count: number
+  total_quantity: number
+  estimated_value: number
+}
+
+export interface Recipe {
+  id: string
+  name: string
+  description: string | null
+  yield_quantity: number
+  yield_uom_id: string | null
+  category: string | null
+  prep_time_minutes: number | null
+  wastage_pct: number
+  is_active: boolean
+  version: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface RecipeIngredient {
+  id: string
+  recipe_id: string
+  product_id: string
+  quantity: number
+  uom_id: string | null
+  wastage_pct: number
+  substitution_product_id: string | null
+  sort_order: number
+  notes: string | null
+  product_name?: string
+  uom_name?: string
+}
+
+export interface RecipeOutput {
+  id: string
+  recipe_id: string
+  name: string
+  quantity: number
+  uom_id: string | null
+  sort_order: number
+  uom_name?: string
+}
+
+export interface RecipeDetail extends Recipe {
+  ingredients: RecipeIngredient[]
+  outputs: RecipeOutput[]
+}
+
+export type ProductionRunStatus = 'planned' | 'in_progress' | 'completed' | 'cancelled'
+
+export interface ProductionRunItem {
+  id: string
+  production_run_id: string
+  product_id: string
+  direction: 'consumed' | 'produced'
+  quantity: number
+  transaction_id: string | null
+  wastage_pct: number
+  sort_order: number
+  product_name?: string
+}
+
+export interface ProductionRun {
+  id: string
+  recipe_id: string
+  location_id: string
+  status: ProductionRunStatus
+  quantity_planned: number
+  quantity_completed: number | null
+  cost_centre_id: string | null
+  started_by: string | null
+  started_at: string | null
+  completed_by: string | null
+  completed_at: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductionRunDetail extends ProductionRun {
+  recipe_name?: string
+  items: ProductionRunItem[]
+}
+
+export type ChecklistStatus = 'in_progress' | 'completed' | 'skipped'
+export type ChecklistItemStatus = 'pending' | 'completed' | 'skipped' | 'failed'
+
+export interface ChecklistTemplate {
+  id: string
+  title: string
+  description: string | null
+  category: string
+  sort_order: number
+  is_required: boolean
+  inventory_type: InventoryType | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface ChecklistInstance {
+  id: string
+  location_id: string
+  checklist_date: string
+  status: ChecklistStatus
+  opened_by: string | null
+  opened_at: string
+  completed_by: string | null
+  completed_at: string | null
+  manager_notes: string | null
+}
+
+export interface ChecklistItem {
+  id: string
+  instance_id: string
+  template_id: string | null
+  title: string
+  description: string | null
+  category: string
+  sort_order: number
+  is_required: boolean
+  status: ChecklistItemStatus
+  completed_by: string | null
+  completed_at: string | null
+  notes: string | null
+}
+
+export interface ParsedOrderItem {
+  name: string
+  quantity: number
+  unit_price: number
+  selected_size: string | null
+  notes: string | null
+}
+
+export interface OrderItem {
+  id: string
+  order_id: string
+  item_name: string
+  quantity: number
+  unit_price: number
+  selected_size: string | null
+  notes: string | null
+  product_id: string | null
+  pour_size_ml: number | null
+  base_quantity: number | null
+  transaction_id: string | null
+  matched_at: string | null
+  deducted_at: string | null
+  created_at: string
+  inventory_products?: { id: string; name: string; sku: string | null } | null
+}
+
+export interface OrderItemDetail {
+  order_id: string
+  status: string
+  items: OrderItem[]
 }
 
 export interface ApiResponse<T> {

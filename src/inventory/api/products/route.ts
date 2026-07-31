@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { getInventoryTypeFilter, applyInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import type { ApiResponse, InventoryProduct } from '@/inventory/engine/types'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryProduct[]>>> {
@@ -12,6 +13,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const showArchived = searchParams.get('show_archived') === 'true'
     const cursor = searchParams.get('cursor')
     const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 100)
+    const inventoryType = getInventoryTypeFilter(searchParams)
 
     let query = supabase
       .from('inventory_products')
@@ -23,6 +25,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     if (categoryId) {
       query = query.eq('category_id', categoryId)
+    }
+
+    if (inventoryType) {
+      query = query.eq('inventory_type', inventoryType)
     }
 
     if (search) {
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabase = getInventoryClient()
     const body = await request.json()
 
-    const { name, sku, barcode, category_id, preferred_supplier_id, supplier_code, reorder_threshold, reorder_quantity, has_expiry, shelf_life_days, uoms } = body
+    const { name, sku, barcode, category_id, inventory_type, preferred_supplier_id, supplier_code, reorder_threshold, reorder_quantity, has_expiry, shelf_life_days, uoms } = body
 
     if (!name) {
       return NextResponse.json(
@@ -99,6 +105,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         sku: sku ?? null,
         barcode: barcode ?? null,
         category_id: category_id ?? null,
+        inventory_type: inventory_type ?? 'GENERAL',
         preferred_supplier_id: preferred_supplier_id ?? null,
         supplier_code: supplier_code ?? null,
         reorder_threshold: reorder_threshold ?? null,

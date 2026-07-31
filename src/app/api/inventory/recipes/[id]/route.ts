@@ -1,0 +1,1 @@
+export { GET, PATCH } from '@/inventory/api/recipes/[id]/route'

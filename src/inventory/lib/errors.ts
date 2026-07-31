@@ -60,3 +60,10 @@ export class ValidationError extends Error {
     this.details = details ?? {}
   }
 }
+
+export class WasteValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'WasteValidationError'
+  }
+}

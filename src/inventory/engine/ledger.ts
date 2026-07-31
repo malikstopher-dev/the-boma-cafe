@@ -86,9 +86,14 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     }
   }
 
+  // Decrease types are always negative. Bidirectional types (production,
+  // physical_count, transfer_in...) honor the caller's sign — negative
+  // quantities represent stock leaving, positive quantities entering.
   const actualQuantity = isDecreaseType(input.transaction_type)
     ? -Math.abs(input.quantity)
-    : Math.abs(input.quantity)
+    : input.quantity < 0
+      ? input.quantity
+      : Math.abs(input.quantity)
 
   const { data, error } = await supabase
     .from('inventory_transactions')
@@ -98,6 +103,11 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       transaction_type: input.transaction_type,
       quantity: actualQuantity,
       unit_cost: input.unit_cost ?? null,
+      cost_centre_id: input.cost_centre_id ?? undefined,
+      reason_type: input.reason_type ?? null,
+      reason_notes: input.reason_notes ?? null,
+      manager_note: input.manager_note ?? null,
+      note_author: input.note_author ?? null,
       reference_type: input.reference_type ?? null,
       reference_id: input.reference_id ?? null,
       performed_by: input.performed_by ?? null,
@@ -116,6 +126,8 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     location_id: input.location_id,
     transaction_type: input.transaction_type,
     quantity: actualQuantity,
+    cost_centre_id: input.cost_centre_id ?? null,
+    reason_type: input.reason_type ?? null,
     reference_type: input.reference_type,
     reference_id: input.reference_id,
   }, input.performed_by ?? null)

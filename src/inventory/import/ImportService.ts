@@ -6,6 +6,7 @@ import type {
   ParsedRow,
   ProductMatch,
   ImportType,
+  ImportMode,
   ImportHistoryEntry,
   ImportDetail,
 } from './ImportTypes'
@@ -33,6 +34,7 @@ export class ImportService {
     filename: string,
     importType: ImportType,
     supplierId?: string | null,
+    importMode?: ImportMode,
   ): Promise<ImportPreview> {
     const parseResult = this.parser.parse(buffer, importType)
     const validation = this.validator.validate(parseResult.rows, importType)
@@ -47,7 +49,69 @@ export class ImportService {
       }
     }
 
+    if (importMode === 'direct' && validation.isValid) {
+      const allApply: ImportDecision[] = preview.rows
+        .filter(r => r.match?.productId)
+        .map(r => ({
+          rowIndex: r.rowIndex,
+          action: 'apply',
+          productId: r.match!.productId!,
+          quantity: r.parsedQuantity,
+          locationId: null,
+          unitCost: r.unitCost,
+          transactionType: importType === 'adjustment' ? 'adjustment' : 'purchase',
+          sourceRow: r.productName,
+        }))
+      if (allApply.length > 0) {
+        const result = await this.executor.execute(preview.id, allApply)
+        preview.autoApplied = result.rowCount
+      }
+    }
+
     return preview
+  }
+
+  async directApply(
+    buffer: ArrayBuffer,
+    filename: string,
+    importType: ImportType,
+    locationId: string,
+    performedBy?: string | null,
+  ): Promise<ImportApplyResult> {
+    const parseResult = this.parser.parse(buffer, importType)
+    const validation = this.validator.validate(parseResult.rows, importType)
+
+    if (!validation.isValid) {
+      throw new Error(`Cannot apply: ${validation.errors.length} validation errors`)
+    }
+
+    const matches = await this.matcher.match(parseResult.rows, null)
+    const rawDecisions: (ImportDecision | null)[] = parseResult.rows
+      .map((row) => {
+        const match = matches.find(m => m.rowIndex === row.rowIndex)
+        if (!match?.productId) return null
+        return {
+          rowIndex: row.rowIndex,
+          action: 'apply' as const,
+          productId: match.productId,
+          quantity: row.quantity,
+          locationId,
+          unitCost: row.unitCost,
+          transactionType: importType === 'adjustment' ? 'adjustment' : 'purchase',
+          sourceRow: row.productName,
+          costCentreId: row.costCentreId,
+          reasonType: row.reasonType,
+          reasonNotes: row.reasonNotes,
+        }
+      })
+    const decisions = rawDecisions.filter((d): d is ImportDecision => d !== null)
+
+    if (decisions.length === 0) {
+      throw new Error('No products matched — cannot direct apply')
+    }
+
+    const importId = createId()
+    return this.executor.execute(importId, decisions, performedBy)
   }
 
   async apply(
@@ -75,6 +139,7 @@ export class ImportService {
     return (data ?? []).map(row => ({
       id: row.id,
       importType: row.import_type as ImportType,
+      importMode: (row.import_mode ?? 'draft') as ImportMode,
       filename: row.filename,
       status: row.status,
       supplierId: row.supplier_id,
@@ -102,6 +167,7 @@ export class ImportService {
     return {
       id: data.id,
       importType: data.import_type,
+      importMode: (data.import_mode ?? 'draft') as ImportMode,
       filename: data.filename,
       status: data.status,
       supplierId: data.supplier_id,

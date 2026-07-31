@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { ApiResponse } from '@/inventory/engine/types'
+import type { ApiResponse, InventoryType } from '@/inventory/engine/types'
 import { wasteReport } from '@/inventory/lib/reports'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const from = searchParams.get('from') ?? new Date(Date.now() - 30 * 86400000).toISOString()
     const to = searchParams.get('to') ?? new Date().toISOString()
     const locationId = searchParams.get('location_id')
+    const inventoryType = searchParams.get('inventory_type') as InventoryType | null
 
     if (!locationId) {
       return NextResponse.json(
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       )
     }
 
-    const data = await wasteReport(from, to, locationId)
+    const data = await wasteReport(from, to, locationId, inventoryType ?? undefined)
     return NextResponse.json({ data })
   } catch (error) {
     return NextResponse.json(

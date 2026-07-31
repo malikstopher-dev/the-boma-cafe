@@ -47,28 +47,45 @@ export interface TodayTransactionSummary {
   totalQuantity: number
 }
 
-export async function getDashboardSummary(locationId: string): Promise<DashboardSummary> {
+import type { InventoryType } from './types'
+
+export async function getDashboardSummary(locationId: string, inventoryType?: InventoryType | null): Promise<DashboardSummary> {
   const supabase = getInventoryClient()
   const today = new Date().toISOString().split('T')[0]
   const todayStart = `${today}T00:00:00.000Z`
   const todayEnd = `${today}T23:59:59.999Z`
 
-  const { count: totalProducts } = await supabase
+  let productsQuery = supabase
     .from('inventory_products')
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
 
-  const { data: lowStock } = await supabase
+  let lowStockQuery = supabase
     .from('inventory_products')
     .select('id, name, reorder_threshold')
     .eq('is_active', true)
     .not('reorder_threshold', 'is', null)
 
-  const { data: todayTxns } = await supabase
+  if (inventoryType) {
+    productsQuery = productsQuery.eq('inventory_type', inventoryType)
+    lowStockQuery = lowStockQuery.eq('inventory_type', inventoryType)
+  }
+
+  const { count: totalProducts } = await productsQuery
+
+  const { data: lowStock } = await lowStockQuery
+
+  let txnQuery = supabase
     .from('inventory_transactions')
-    .select('transaction_type, quantity')
+    .select('transaction_type, quantity, inventory_products!inner(inventory_type)')
     .gte('created_at', todayStart)
     .lte('created_at', todayEnd)
+
+  if (inventoryType) {
+    txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
+  }
+
+  const { data: todayTxns } = await txnQuery
 
   const todayTxnCount = todayTxns?.length ?? 0
 
@@ -103,14 +120,20 @@ export async function getDashboardSummary(locationId: string): Promise<Dashboard
   }
 }
 
-export async function getAlerts(locationId: string): Promise<AlertItem[]> {
+export async function getAlerts(locationId: string, inventoryType?: InventoryType | null): Promise<AlertItem[]> {
   const supabase = getInventoryClient()
   const alerts: AlertItem[] = []
 
-  const { data: products } = await supabase
+  let prodQuery = supabase
     .from('inventory_products')
     .select('id, name, reorder_threshold')
     .eq('is_active', true)
+
+  if (inventoryType) {
+    prodQuery = prodQuery.eq('inventory_type', inventoryType)
+  }
+
+  const { data: products } = await prodQuery
 
   for (const product of products ?? []) {
     const { data: txns } = await supabase
@@ -146,13 +169,19 @@ export async function getAlerts(locationId: string): Promise<AlertItem[]> {
   })
 }
 
-export async function getRecentActivity(locationId: string, limit = 10): Promise<RecentActivityItem[]> {
+export async function getRecentActivity(locationId: string, limit = 10, inventoryType?: InventoryType | null): Promise<RecentActivityItem[]> {
   const supabase = getInventoryClient()
 
-  const { data } = await supabase
+  let txnQuery = supabase
     .from('inventory_transactions')
-    .select('id, product_id, transaction_type, quantity, created_at')
+    .select('id, product_id, transaction_type, quantity, created_at, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
+
+  if (inventoryType) {
+    txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
+  }
+
+  const { data } = await txnQuery
     .order('created_at', { ascending: false })
     .limit(limit)
 
@@ -175,16 +204,22 @@ export async function getRecentActivity(locationId: string, limit = 10): Promise
   }))
 }
 
-export async function getFastMovers(locationId: string, days = 30, limit = 10): Promise<FastMoverItem[]> {
+export async function getFastMovers(locationId: string, days = 30, limit = 10, inventoryType?: InventoryType | null): Promise<FastMoverItem[]> {
   const supabase = getInventoryClient()
   const since = new Date(Date.now() - days * 86400000).toISOString()
 
-  const { data } = await supabase
+  let saleQuery = supabase
     .from('inventory_transactions')
-    .select('product_id, quantity')
+    .select('product_id, quantity, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
     .eq('transaction_type', 'sale')
     .gte('created_at', since)
+
+  if (inventoryType) {
+    saleQuery = saleQuery.eq('inventory_products.inventory_type', inventoryType)
+  }
+
+  const { data } = await saleQuery
 
   if (!data) return []
 
@@ -210,21 +245,33 @@ export async function getFastMovers(locationId: string, days = 30, limit = 10): 
   }))
 }
 
-export async function getSlowMovers(locationId: string, days = 30, limit = 10): Promise<SlowMoverItem[]> {
+export async function getSlowMovers(locationId: string, days = 30, limit = 10, inventoryType?: InventoryType | null): Promise<SlowMoverItem[]> {
   const supabase = getInventoryClient()
   const since = new Date(Date.now() - days * 86400000).toISOString()
 
-  const { data: allProducts } = await supabase
+  let prodQuery = supabase
     .from('inventory_products')
     .select('id, name')
     .eq('is_active', true)
 
-  const { data: sales } = await supabase
+  if (inventoryType) {
+    prodQuery = prodQuery.eq('inventory_type', inventoryType)
+  }
+
+  const { data: allProducts } = await prodQuery
+
+  let saleQuery = supabase
     .from('inventory_transactions')
-    .select('product_id, quantity')
+    .select('product_id, quantity, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
     .eq('transaction_type', 'sale')
     .gte('created_at', since)
+
+  if (inventoryType) {
+    saleQuery = saleQuery.eq('inventory_products.inventory_type', inventoryType)
+  }
+
+  const { data: sales } = await saleQuery
 
   const salesMap = new Map<string, number>()
   for (const t of sales ?? []) {
@@ -240,18 +287,24 @@ export async function getSlowMovers(locationId: string, days = 30, limit = 10): 
   return withSales.sort((a, b) => a.totalSold - b.totalSold).slice(0, limit)
 }
 
-export async function getTodayTransactions(locationId: string): Promise<TodayTransactionSummary[]> {
+export async function getTodayTransactions(locationId: string, inventoryType?: InventoryType | null): Promise<TodayTransactionSummary[]> {
   const supabase = getInventoryClient()
   const today = new Date().toISOString().split('T')[0]
   const todayStart = `${today}T00:00:00.000Z`
   const todayEnd = `${today}T23:59:59.999Z`
 
-  const { data } = await supabase
+  let txnQuery = supabase
     .from('inventory_transactions')
-    .select('transaction_type, quantity')
+    .select('transaction_type, quantity, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
     .gte('created_at', todayStart)
     .lte('created_at', todayEnd)
+
+  if (inventoryType) {
+    txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
+  }
+
+  const { data } = await txnQuery
 
   if (!data) return []
 

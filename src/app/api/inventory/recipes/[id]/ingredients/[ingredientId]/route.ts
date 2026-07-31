@@ -1,0 +1,1 @@
+export { DELETE } from '@/inventory/api/recipes/[id]/ingredients/[ingredientId]/route'

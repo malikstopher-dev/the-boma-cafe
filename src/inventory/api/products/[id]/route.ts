@@ -50,6 +50,7 @@ export async function PATCH(
 
     const allowedFields = [
       'name', 'sku', 'barcode', 'category_id', 'image_url',
+      'inventory_type',
       'preferred_supplier_id', 'supplier_code',
       'reorder_threshold', 'reorder_quantity',
       'has_expiry', 'shelf_life_days',

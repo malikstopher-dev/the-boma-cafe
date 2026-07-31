@@ -33,13 +33,27 @@ interface DashboardData {
   }
 }
 
+type InventoryTypeFilter = '' | 'FOOD' | 'BEVERAGE' | 'CLEANING' | 'PACKAGING' | 'GENERAL'
+
+const typeTabs: { label: string; value: InventoryTypeFilter }[] = [
+  { label: 'All', value: '' },
+  { label: 'Food', value: 'FOOD' },
+  { label: 'Beverage', value: 'BEVERAGE' },
+  { label: 'Cleaning', value: 'CLEANING' },
+  { label: 'Packaging', value: 'PACKAGING' },
+  { label: 'General', value: 'GENERAL' },
+]
+
 export default function InventoryDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [activeType, setActiveType] = useState<InventoryTypeFilter>('')
 
   const fetchData = useCallback(async () => {
+    setIsLoading(true)
     try {
-      const res = await fetch('/api/inventory/dashboard?section=combined&location_id=main&limit=10&days=30')
+      const typeParam = activeType ? `&inventory_type=${activeType}` : ''
+      const res = await fetch(`/api/inventory/dashboard?section=combined&location_id=main&limit=10&days=30${typeParam}`)
       const json = await res.json()
       setData(json.data)
     } catch {
@@ -47,7 +61,7 @@ export default function InventoryDashboardPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [activeType])
 
   useEffect(() => {
     fetchData()
@@ -101,6 +115,21 @@ export default function InventoryDashboardPage() {
 
   return (
     <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs" actions={<Button onClick={fetchData} variant="secondary" size="sm">Refresh</Button>}>
+      <div className="flex gap-1 mb-6 border-b border-gray-700">
+        {typeTabs.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveType(tab.value)}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeType === tab.value
+                ? 'bg-brand-500/20 text-brand-400 border-b-2 border-brand-500'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {allCards.map(card => (
           <div key={card.label} className="bg-white rounded-lg border p-4">
