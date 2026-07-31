@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
       { label: 'Stock Counts', icon: '📋', href: '/admin/inventory/stock-counts' },
       { label: 'Reorder Suggestions', icon: '🔄', href: '/admin/inventory/reorder' },
       { label: 'Forecasting', icon: '🔮', href: '/admin/inventory/forecast' },
+      { label: 'Analytics', icon: '📈', href: '/admin/inventory/analytics' },
       { label: 'Variance Report', icon: '📉', href: '/admin/inventory/variance' },
       { label: 'Reports', icon: '📊', href: '/admin/inventory/reports' },
       { label: 'Settings', icon: '⚙️', href: '/admin/inventory/settings' },

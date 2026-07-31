@@ -299,6 +299,28 @@ export interface LowStockAlertResult {
   resolved: number
 }
 
+export interface TrendPoint {
+  date: string
+  totalQuantity: number
+}
+
+export interface WasteHeatmapCell {
+  type: string
+  dayOfWeek: number
+  totalQuantity: number
+}
+
+export interface WasteHeatmap {
+  daysAnalyzed: number
+  typeTotals: Array<{ type: string; totalQuantity: number }>
+  cells: WasteHeatmapCell[]
+}
+
+export interface ValueTrendPoint {
+  date: string
+  stockValue: number
+}
+
 export interface PriceHistoryEntry {
   id: string
   product_id: string
