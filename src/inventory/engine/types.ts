@@ -281,6 +281,24 @@ export interface ConsumptionPattern {
   hourly: HourlyPattern[]
 }
 
+export type InventoryAlertType = 'inventory_low_stock' | 'inventory_out_of_stock'
+
+export interface InventoryNotification {
+  id: string
+  userId: string
+  type: InventoryAlertType
+  title: string
+  message: string | null
+  read: boolean
+  metadata: Record<string, unknown>
+  createdAt: string
+}
+
+export interface LowStockAlertResult {
+  created: number
+  resolved: number
+}
+
 export interface PriceHistoryEntry {
   id: string
   product_id: string

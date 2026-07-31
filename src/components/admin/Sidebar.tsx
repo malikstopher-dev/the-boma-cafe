@@ -45,6 +45,7 @@ const navGroups: NavGroup[] = [
     label: 'Inventory',
     items: [
       { label: 'Opening Checklist', icon: '✅', href: '/admin/inventory/checklist' },
+      { label: 'Notifications', icon: '🔔', href: '/admin/inventory/notifications' },
       { label: 'Reconciliation', icon: '📊', href: '/admin/inventory/reconciliation' },
       { label: 'Dashboard', icon: '📦', href: '/admin/inventory' },
       { label: 'Products', icon: '🏷️', href: '/admin/inventory/products' },
@@ -115,8 +116,25 @@ interface SidebarProps {
 export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
   const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
+  const [inventoryUnread, setInventoryUnread] = useState(0)
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
+
+  // Fetch unread inventory alert count
+  useEffect(() => {
+    const fetchInventoryUnread = async () => {
+      try {
+        const res = await fetch('/api/inventory/notifications/unread-count?location_id=main')
+        if (res.ok) {
+          const json = await res.json()
+          setInventoryUnread(json.data?.count ?? 0)
+        }
+      } catch { /* ignore */ }
+    }
+    fetchInventoryUnread()
+    const timer = setInterval(fetchInventoryUnread, 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Fetch unread message count
   useEffect(() => {
@@ -185,6 +203,15 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
                       minWidth: 16, textAlign: 'center',
                     }}>
                       {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                  {item.href === '/admin/inventory/notifications' && inventoryUnread > 0 && (
+                    <span style={{
+                      marginLeft: 'auto', padding: '1px 6px', borderRadius: 9999,
+                      background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
+                      minWidth: 16, textAlign: 'center',
+                    }}>
+                      {inventoryUnread > 99 ? '99+' : inventoryUnread}
                     </span>
                   )}
                 </Link>
