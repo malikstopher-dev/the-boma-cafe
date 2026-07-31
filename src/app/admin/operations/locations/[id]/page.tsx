@@ -1,138 +1,153 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
 import AdminPage from '@/components/admin/design-system/AdminPage'
-import DataTable from '@/components/admin/design-system/DataTable'
-import type { Column } from '@/components/admin/design-system/DataTable'
-import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
+import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
-type Location = {
+interface LocationDetail {
   id: string
   name: string
   code: string
   description: string | null
   is_active: boolean
   deleted_at: string | null
+  productCount?: number
 }
 
-export default function LocationsPage() {
+export default function LocationDetailPage() {
+  const params = useParams()
   const router = useRouter()
-  const [locations, setLocations] = useState<Location[]>([])
+  const [location, setLocation] = useState<LocationDetail | null>(null)
+  const [stockItems, setStockItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [showArchived, setShowArchived] = useState(false)
-  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', code: '', description: '' })
-  const [saving, setSaving] = useState(false)
 
-  function load() {
-    setIsLoading(true)
-    const params = new URLSearchParams()
-    if (showArchived) params.set('show_archived', 'true')
-    params.set('page_size', '100')
+  useEffect(() => {
+    const id = params?.id as string
+    if (!id) return
 
-    fetch(`/api/inventory/locations?${params}`)
-      .then(r => r.json())
-      .then(json => setLocations(json.data || []))
-      .finally(() => setIsLoading(false))
-  }
-
-  useEffect(() => { load() }, [showArchived])
-
-  async function handleCreate() {
-    if (!form.name.trim() || !form.code.trim()) return
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inventory/locations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+    Promise.all([
+      fetch(`/api/inventory/locations/${id}`).then(r => r.json()),
+      fetch(`/api/inventory/locations/${id}/stock?page_size=50`).then(r => r.json()),
+    ])
+      .then(([locJson, stockJson]) => {
+        if (locJson.error) setError(locJson.error.message)
+        else {
+          setLocation(locJson.data)
+          setForm({
+            name: locJson.data.name || '',
+            code: locJson.data.code || '',
+            description: locJson.data.description || '',
+          })
+        }
+        setStockItems(stockJson.data || [])
       })
-      if (res.ok) {
-        setShowCreateForm(false)
-        setForm({ name: '', code: '', description: '' })
-        load()
-      } else {
-        const err = await res.json()
-        alert(err.error?.message || 'Failed to create location')
-      }
-    } finally { setSaving(false) }
+      .catch(() => setError('Failed to load location'))
+      .finally(() => setIsLoading(false))
+  }, [params?.id])
+
+  async function handleSave() {
+    if (!location) return
+    const res = await fetch(`/api/inventory/locations/${location.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    if (res.ok) {
+      setEditing(false)
+      const json = await res.json()
+      setLocation(json.data)
+    }
   }
 
-  const columns: Column<Location>[] = [
-    {
-      key: 'name',
-      header: 'Name',
-      sortable: true,
-      cell: loc => (
-        <span className={!loc.is_active ? 'opacity-50' : ''}>{loc.name}</span>
-      ),
-    },
-    {
-      key: 'code',
-      header: 'Code',
-      cell: loc => (
-        <span className="font-mono text-sm">{loc.code}</span>
-      ),
-    },
-    {
-      key: 'description',
-      header: 'Description',
-      cell: loc => (
-        <span className="text-gray-500">{loc.description || '—'}</span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      cell: loc => (
-        <Badge variant={loc.is_active ? 'success' : 'default'}>{loc.is_active ? 'Active' : 'Archived'}</Badge>
-      ),
-    },
-  ]
+  async function handleArchive() {
+    if (!location || !confirm('Archive this location?')) return
+    const res = await fetch(`/api/inventory/locations/${location.id}`, { method: 'DELETE' })
+    if (res.ok || res.status === 409) {
+      router.push('/admin/operations/locations')
+    }
+  }
+
+  async function handleRestore() {
+    if (!location) return
+    const res = await fetch(`/api/inventory/locations/${location.id}/restore`, { method: 'POST' })
+    if (res.ok) {
+      const json = await res.json()
+      setLocation(json.data)
+    }
+  }
+
+  if (isLoading) return <AdminPage title="Location"><SkeletonCard /></AdminPage>
+  if (error || !location) return <AdminPage title="Location"><EmptyState title="Not found" description={error || ''} /></AdminPage>
 
   return (
-    <AdminPage
-      title="Locations"
-      description="Manage inventory storage locations"
-      actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Location</Button>}
-      filters={
-        <FilterBar>
-          <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer select-none">
-            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
-            Show archived
-          </label>
-        </FilterBar>
-      }
-    >
-      {showCreateForm && (
-        <div className="bg-white rounded-lg border p-4 mb-4">
-          <h3 className="font-semibold mb-3">New Location</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Code * (e.g. MAIN)" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleCreate} disabled={saving || !form.name.trim() || !form.code.trim()}>Create</Button>
-            <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
-          </div>
-        </div>
+    <AdminPage title={location.name} description={`Code: ${location.code}`} actions={<><Badge variant={location.is_active ? 'success' : 'default'}>{location.is_active ? 'Active' : 'Archived'}</Badge>
+      {location.is_active ? (
+        <>
+          <Button onClick={() => setEditing(!editing)} variant="secondary" size="sm">{editing ? 'Cancel' : 'Edit'}</Button>
+          {editing && <Button onClick={handleSave} size="sm">Save</Button>}
+          <Button onClick={handleArchive} variant="danger" size="sm">Archive</Button>
+        </>
+      ) : (
+        <Button onClick={handleRestore} size="sm">Restore</Button>
       )}
+      <Link href="/admin/operations/locations"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
-      <DataTable<Location>
-        columns={columns}
-        data={locations}
-        keyField="id"
-        onRowClick={loc => router.push(`/admin/operations/locations/${loc.id}`)}
-        isLoading={isLoading}
-        emptyState={
-          <EmptyState title="No locations found" description="Add your first location to get started" />
-        }
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg border p-4">
+          <h3 className="font-semibold mb-3">Location Info</h3>
+          <dl className="space-y-2 text-sm">
+            {[
+              ['Name', form.name, 'name'],
+              ['Code', form.code, 'code'],
+              ['Description', form.description, 'description'],
+              ['Products with Stock', location.productCount?.toString() || '0', null],
+            ].map(([label, value, key]) => (
+              <div key={key || label} className="flex justify-between">
+                <dt className="text-gray-500">{label}</dt>
+                <dd className="font-medium text-right">
+                  {editing && key ? (
+                    <input className="border rounded px-2 py-1 text-xs w-40 text-right" value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+                  ) : (
+                    (value as string) || 'ÔÇö'
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="bg-white rounded-lg border p-4 lg:col-span-2">
+          <h3 className="font-semibold mb-3">Stock at this Location</h3>
+          {stockItems.length === 0 ? (
+            <p className="text-sm text-gray-400">No products with stock at this location</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2 font-medium">Product</th>
+                  <th className="text-left p-2 font-medium">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockItems.map((item: any, i: number) => (
+                  <tr key={item.product_id || i} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/operations/products/${item.product_id}`)}>
+                    <td className="p-2">{item.inventory_products?.name || item.product_id}</td>
+                    <td className="p-2 font-mono">{Number(item.balance).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </AdminPage>
   )
 }

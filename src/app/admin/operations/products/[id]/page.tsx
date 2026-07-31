@@ -1,214 +1,146 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import AdminPage from '@/components/admin/design-system/AdminPage'
-import DataTable from '@/components/admin/design-system/DataTable'
-import type { Column } from '@/components/admin/design-system/DataTable'
-import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
+import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import MovementTimeline from '@/inventory/components/movement-timeline'
 
-type Product = {
+interface ProductDetail {
   id: string
   name: string
   sku: string | null
   barcode: string | null
   category_id: string | null
+  image_url: string | null
   is_active: boolean
   deleted_at: string | null
+  preferred_supplier_id: string | null
+  supplier_code: string | null
   reorder_threshold: number | null
-  current_balance?: number | null
+  reorder_quantity: number | null
+  has_expiry: boolean
+  shelf_life_days: number | null
+  created_at: string
+  updated_at: string
+  inventory_product_uoms?: Array<{
+    id: string
+    uom_id: string
+    is_base: boolean
+    is_display: boolean
+    conversion_factor: number
+  }>
 }
 
-const TYPE_OPTIONS = ['FOOD', 'BEVERAGE', 'CLEANING', 'PACKAGING', 'GENERAL']
-
-export default function InventoryProductsPage() {
-  const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
+export default function ProductDetailPage() {
+  const params = useParams()
+  const [product, setProduct] = useState<ProductDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [showArchived, setShowArchived] = useState(false)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ name: '', sku: '', barcode: '', inventory_type: 'GENERAL' })
+  const [error, setError] = useState<string | null>(null)
 
-  const fetchProducts = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (search) params.set('search', search)
-      if (showArchived) params.set('show_archived', 'true')
-      params.set('page_size', '100')
+  useEffect(() => {
+    const id = params?.id as string
+    if (!id) return
 
-      const res = await fetch(`/api/inventory/products?${params}`)
-      const json = await res.json()
-      setProducts(json.data || [])
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false)
-    }
-  }, [search, showArchived])
-
-  useEffect(() => { fetchProducts() }, [fetchProducts])
-
-  async function handleCreate() {
-    if (!form.name.trim()) return
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inventory/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          sku: form.sku.trim() || null,
-          barcode: form.barcode.trim() || null,
-          inventory_type: form.inventory_type,
-        }),
+    fetch(`/api/inventory/products/${id}`)
+      .then(r => r.json())
+      .then(json => {
+        if (json.error) setError(json.error.message)
+        else setProduct(json.data)
       })
-      const json = await res.json()
-      if (!res.ok) {
-        alert(json.error?.message || 'Failed to create product')
-        return
-      }
-      setShowCreateForm(false)
-      setForm({ name: '', sku: '', barcode: '', inventory_type: 'GENERAL' })
-      fetchProducts()
-    } catch {
-      alert('Failed to create product')
-    } finally {
-      setSaving(false)
-    }
+      .catch(() => setError('Failed to load product'))
+      .finally(() => setIsLoading(false))
+  }, [params?.id])
+
+  if (isLoading) {
+    return (
+      <AdminPage title="Product Detail">
+        <SkeletonCard />
+      </AdminPage>
+    )
   }
 
-  const columns: Column<Product>[] = [
-    {
-      key: 'name',
-      header: 'Name',
-      sortable: true,
-      cell: product => (
-        <span className={!product.is_active ? 'opacity-50' : ''}>
-          {product.name}
-        </span>
-      ),
-    },
-    {
-      key: 'sku',
-      header: 'SKU',
-      sortable: true,
-      cell: product => (
-        <span className="text-xs text-gray-500 font-mono">{product.sku || '—'}</span>
-      ),
-    },
-    {
-      key: 'barcode',
-      header: 'Barcode',
-      sortable: true,
-      cell: product => (
-        <span className="text-xs text-gray-500 font-mono">{product.barcode || '—'}</span>
-      ),
-    },
-    {
-      key: 'current_balance',
-      header: 'Balance',
-      sortable: true,
-      cell: product => (
-        <span>{product.current_balance !== null && product.current_balance !== undefined ? product.current_balance : '—'}</span>
-      ),
-    },
-    {
-      key: 'reorder_threshold',
-      header: 'Reorder',
-      sortable: true,
-      cell: product => (
-        <span>{product.reorder_threshold ?? '—'}</span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      cell: product => {
-        if (!product.is_active) return <Badge variant="info">Archived</Badge>
-        if (product.current_balance !== null && product.current_balance !== undefined && product.current_balance <= 0) {
-          return <Badge variant="danger">Out of Stock</Badge>
-        }
-        if (product.reorder_threshold && product.current_balance !== null && product.current_balance !== undefined && product.current_balance <= product.reorder_threshold) {
-          return <Badge variant="warning">Low</Badge>
-        }
-        return <Badge variant="success">Active</Badge>
-      },
-    },
-  ]
+  if (error || !product) {
+    return (
+      <AdminPage title="Product Detail">
+        <EmptyState title="Product not found" description={error || 'The product could not be loaded'} />
+      </AdminPage>
+    )
+  }
 
   return (
-    <AdminPage
-      title="Products"
-      description="Manage inventory products"
-      filters={
-        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search name, SKU, or barcode…">
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
-            Show archived
-          </label>
-          <Button onClick={() => setShowCreateForm(v => !v)} size="sm">
-            {showCreateForm ? 'Cancel' : 'Add Product'}
-          </Button>
-          <Button onClick={fetchProducts} variant="secondary" size="sm">Refresh</Button>
-        </FilterBar>
-      }
-    >
-      {showCreateForm && (
-        <div className="bg-white border rounded-lg p-4 mb-4">
-          <div className="grid grid-cols-4 gap-3 mb-3">
-            <input
-              className="border rounded px-3 py-2 text-sm"
-              placeholder="Product name *"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            />
-            <input
-              className="border rounded px-3 py-2 text-sm"
-              placeholder="SKU"
-              value={form.sku}
-              onChange={e => setForm(f => ({ ...f, sku: e.target.value }))}
-            />
-            <input
-              className="border rounded px-3 py-2 text-sm font-mono"
-              placeholder="Barcode (scan or type)"
-              value={form.barcode}
-              onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))}
-              autoFocus
-            />
-            <select
-              className="border rounded px-3 py-2 text-sm"
-              value={form.inventory_type}
-              onChange={e => setForm(f => ({ ...f, inventory_type: e.target.value }))}
-            >
-              {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+    <AdminPage title={product.name} description={`SKU: ${product.sku || 'ÔÇö'}`} actions={<><Badge variant={product.is_active ? 'success' : 'info'}>{product.is_active ? 'Active' : 'Archived'}</Badge><Link href="/admin/operations/products"><Button variant="secondary" size="sm">Back</Button></Link></>}>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-semibold mb-3">Product Information</h3>
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              <div><dt className="text-gray-500">Name</dt><dd className="font-medium">{product.name}</dd></div>
+              <div><dt className="text-gray-500">SKU</dt><dd className="font-medium">{product.sku || 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">Barcode</dt><dd className="font-medium">{product.barcode || 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">Reorder Threshold</dt><dd className="font-medium">{product.reorder_threshold ?? 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">Reorder Quantity</dt><dd className="font-medium">{product.reorder_quantity ?? 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">Supplier Code</dt><dd className="font-medium">{product.supplier_code || 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">Has Expiry</dt><dd className="font-medium">{product.has_expiry ? 'Yes' : 'No'}</dd></div>
+              <div><dt className="text-gray-500">Shelf Life</dt><dd className="font-medium">{product.shelf_life_days ? `${product.shelf_life_days} days` : 'ÔÇö'}</dd></div>
+            </dl>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handleCreate} disabled={saving || !form.name.trim()}>{saving ? 'Creating...' : 'Create Product'}</Button>
-            <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
+
+          {product.inventory_product_uoms && product.inventory_product_uoms.length > 0 && (
+            <div className="bg-white rounded-lg border p-4">
+              <h3 className="font-semibold mb-3">UOM Configuration</h3>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-2">UOM</th>
+                    <th className="text-left p-2">Role</th>
+                    <th className="text-left p-2">Conversion Factor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {product.inventory_product_uoms.map(uom => (
+                    <tr key={uom.id} className="border-b">
+                      <td className="p-2">{uom.uom_id}</td>
+                      <td className="p-2">
+                        {uom.is_base && <Badge variant="info">Base</Badge>}
+                        {uom.is_display && <Badge variant="success">Display</Badge>}
+                      </td>
+                      <td className="p-2">{uom.conversion_factor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-semibold mb-3">Activity Timeline</h3>
+            <MovementTimeline productId={product.id} />
           </div>
         </div>
-      )}
 
-      <DataTable<Product>
-        columns={columns}
-        data={products}
-        keyField="id"
-        onRowClick={product => router.push(`/admin/operations/products/${product.id}`)}
-        isLoading={isLoading}
-        emptyState={
-          <EmptyState
-            title="No products found"
-            description={search ? 'Try a different search term' : 'Add your first product'}
-          />
-        }
-      />
+        <div className="space-y-4">
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-semibold mb-3">Actions</h3>
+            <div className="space-y-2">
+              <Button className="w-full" variant="primary" size="sm">Edit Product</Button>
+              <Button className="w-full" variant={product.is_active ? 'danger' : 'primary'} size="sm">
+                {product.is_active ? 'Archive' : 'Restore'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-semibold mb-3">Stock Summary</h3>
+            <p className="text-sm text-gray-500">Select a location to view stock</p>
+          </div>
+        </div>
+      </div>
     </AdminPage>
   )
 }

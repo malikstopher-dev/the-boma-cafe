@@ -1,19 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 
-type Recipe = {
+interface RunItem {
   id: string
-  name: string
-  yield_quantity: number
-  category: string | null
+  product_name?: string
+  direction: 'consumed' | 'produced'
+  quantity: number
+  wastage_pct: number
+  transaction_id: string | null
 }
 
-type ProductionRun = {
+interface RunDetail {
   id: string
   recipe_id: string
   recipe_name?: string
@@ -23,7 +25,8 @@ type ProductionRun = {
   quantity_completed: number | null
   started_at: string | null
   completed_at: string | null
-  created_at: string
+  notes: string | null
+  items: RunItem[]
 }
 
 const statusBadge: Record<string, { variant: 'info' | 'warning' | 'success' | 'danger'; label: string }> = {
@@ -33,32 +36,23 @@ const statusBadge: Record<string, { variant: 'info' | 'warning' | 'success' | 'd
   cancelled: { variant: 'danger', label: 'Cancelled' },
 }
 
-export default function ProductionRunsPage() {
-  const [runs, setRuns] = useState<ProductionRun[]>([])
-  const [recipes, setRecipes] = useState<Recipe[]>([])
+export default function ProductionRunDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const [run, setRun] = useState<RunDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showCreate, setShowCreate] = useState(false)
-  const [selRecipe, setSelRecipe] = useState('')
-  const [qty, setQty] = useState('1')
   const [busy, setBusy] = useState(false)
-  const [statusFilter, setStatusFilter] = useState('')
+  const [completeQty, setCompleteQty] = useState('')
 
   useEffect(() => {
-    fetchRuns()
-    fetch('/api/inventory/recipes')
-      .then(r => r.json())
-      .then(json => setRecipes(json.data ?? []))
-      .catch(() => {})
+    fetchRun()
   }, [])
 
-  async function fetchRuns() {
-    setIsLoading(true)
+  async function fetchRun() {
     try {
-      const params = new URLSearchParams({ location_id: 'main' })
-      if (statusFilter) params.set('status', statusFilter)
-      const res = await fetch(`/api/inventory/production-runs?${params}`)
+      const res = await fetch(`/api/inventory/production-runs/${id}`)
       const json = await res.json()
-      setRuns(json.data ?? [])
+      setRun(json.data ?? null)
+      if (json.data) setCompleteQty(String(json.data.quantity_planned ?? ''))
     } catch {
       // ignore
     } finally {
@@ -66,30 +60,15 @@ export default function ProductionRunsPage() {
     }
   }
 
-  useEffect(() => {
-    fetchRuns()
-  }, [statusFilter])
-
-  async function createRun() {
-    if (!selRecipe) return
+  async function action(path: string, body?: object) {
     setBusy(true)
     try {
-      const res = await fetch('/api/inventory/production-runs', {
+      await fetch(`/api/inventory/production-runs/${id}/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipe_id: selRecipe,
-          location_id: 'main',
-          quantity_planned: parseFloat(qty) || 1,
-        }),
+        body: JSON.stringify(body ?? {}),
       })
-      const json = await res.json()
-      if (json.data) {
-        setShowCreate(false)
-        setSelRecipe('')
-        setQty('1')
-        await fetchRuns()
-      }
+      await fetchRun()
     } catch {
       // ignore
     } finally {
@@ -97,82 +76,91 @@ export default function ProductionRunsPage() {
     }
   }
 
+  if (isLoading) return <AdminPage title="Production Run"><div className="p-8 text-gray-400">Loading...</div></AdminPage>
+  if (!run) return <AdminPage title="Production Run"><div className="p-8 text-gray-400">Run not found</div></AdminPage>
+
+  const badge = statusBadge[run.status] ?? { variant: 'info' as const, label: run.status }
+  const consumed = run.items.filter(i => i.direction === 'consumed')
+  const produced = run.items.filter(i => i.direction === 'produced')
+
   return (
     <AdminPage
-      title="Production Runs"
-      description="Track batches of production and auto-deduct ingredients"
+      title={run.recipe_name ?? 'Production Run'}
+      description={`${run.quantity_completed ?? run.quantity_planned} units planned`}
       actions={
-        <Button onClick={() => setShowCreate(v => !v)} size="sm">
-          {showCreate ? 'Cancel' : 'New Production Run'}
-        </Button>
+        <div className="flex gap-2">
+          {run.status === 'planned' && (
+            <Button onClick={() => action('start')} disabled={busy} size="sm">
+              Start Run
+            </Button>
+          )}
+          {(run.status === 'planned' || run.status === 'in_progress') && (
+            <Button onClick={() => action('complete', { quantity_completed: parseFloat(completeQty) || run.quantity_planned })} disabled={busy} size="sm">
+              Complete & Auto-Deduct
+            </Button>
+          )}
+          {(run.status === 'planned' || run.status === 'in_progress') && (
+            <Button onClick={() => action('cancel')} disabled={busy} variant="danger" size="sm">
+              Cancel
+            </Button>
+          )}
+        </div>
       }
     >
-      <div className="p-6">
-        {showCreate && (
-          <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-white mb-3">Start a Production Run</h3>
-            <div className="flex gap-3">
-              <select
-                value={selRecipe}
-                onChange={e => setSelRecipe(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
-              >
-                <option value="">Select recipe...</option>
-                {recipes.map(r => (
-                  <option key={r.id} value={r.id}>{r.name} ({r.category ?? 'uncategorised'})</option>
-                ))}
-              </select>
-              <input
-                type="number"
-                value={qty}
-                onChange={e => setQty(e.target.value)}
-                className="w-32 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
-                placeholder="Qty"
-              />
-              <Button onClick={createRun} disabled={busy || !selRecipe}>
-                {busy ? 'Creating...' : 'Create Run'}
-              </Button>
-            </div>
+      <div className="p-6 max-w-4xl">
+        <div className="flex items-center gap-3 mb-6">
+          <Badge variant={badge.variant}>{badge.label}</Badge>
+          {run.completed_at && (
+            <span className="text-xs text-gray-500">
+              Completed {new Date(run.completed_at).toLocaleString('en-ZA')}
+            </span>
+          )}
+        </div>
+
+        {(run.status === 'planned' || run.status === 'in_progress') && (
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 mb-6">
+            <label className="block text-sm text-gray-400 mb-2">Completion Quantity (scales ingredient deduction)</label>
+            <input
+              type="number"
+              value={completeQty}
+              onChange={e => setCompleteQty(e.target.value)}
+              className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white w-40"
+            />
           </div>
         )}
 
-        <div className="flex gap-2 mb-4">
-          {['', 'planned', 'in_progress', 'completed', 'cancelled'].map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded text-sm ${statusFilter === s ? 'bg-brand-500/20 text-brand-400' : 'text-gray-400 hover:text-white'}`}
-            >
-              {s === '' ? 'All' : s.replace('_', ' ')}
-            </button>
-          ))}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-white mb-3">Consumed Ingredients ({consumed.length})</h2>
+          <div className="space-y-2">
+            {consumed.map(item => (
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-red-900/10 border border-red-800/30">
+                <span className="text-white font-medium flex-1">{item.product_name}</span>
+                <span className="text-red-400">-{item.quantity}</span>
+                {item.wastage_pct > 0 && <Badge variant="warning">{item.wastage_pct}% waste</Badge>}
+                {item.transaction_id && <span className="text-xs text-green-500">Ô£ô ledger</span>}
+              </div>
+            ))}
+            {consumed.length === 0 && <p className="text-gray-500 text-sm">No ingredients</p>}
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
-        ) : runs.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">No production runs found</div>
-        ) : (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-white mb-3">Produced Outputs ({produced.length})</h2>
           <div className="space-y-2">
-            {runs.map(run => {
-              const badge = statusBadge[run.status] ?? { variant: 'info' as const, label: run.status }
-              return (
-                <Link
-                  key={run.id}
-                  href={`/admin/operations/production-runs/${run.id}`}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50 hover:bg-gray-700/50 transition-colors"
-                >
-                  <span className="text-white font-medium flex-1">{run.recipe_name ?? 'Unknown recipe'}</span>
-                  <Badge variant={badge.variant}>{badge.label}</Badge>
-                  <span className="text-sm text-gray-400">
-                    Qty: {run.quantity_completed ?? run.quantity_planned}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(run.created_at).toLocaleDateString('en-ZA')}
-                  </span>
-                </Link>
-              )
-            })}
+            {produced.map(item => (
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-green-900/10 border border-green-800/30">
+                <span className="text-white font-medium flex-1">{item.product_name}</span>
+                <span className="text-green-400">+{item.quantity}</span>
+                {item.transaction_id && <span className="text-xs text-green-500">Ô£ô ledger</span>}
+              </div>
+            ))}
+            {produced.length === 0 && <p className="text-gray-500 text-sm">No outputs</p>}
+          </div>
+        </div>
+
+        {run.notes && (
+          <div className="text-sm text-gray-400 bg-gray-800/50 border border-gray-700/50 rounded-lg p-3">
+            {run.notes}
           </div>
         )}
       </div>

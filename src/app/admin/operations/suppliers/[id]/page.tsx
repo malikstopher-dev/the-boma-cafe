@@ -1,150 +1,164 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
 import AdminPage from '@/components/admin/design-system/AdminPage'
-import DataTable from '@/components/admin/design-system/DataTable'
-import type { Column } from '@/components/admin/design-system/DataTable'
-import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
+import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 
-type Supplier = {
+interface SupplierDetail {
   id: string
   name: string
   contact_person: string | null
   phone: string | null
   email: string | null
+  vat_number: string | null
+  payment_terms: string | null
+  lead_time_days: number | null
+  notes: string | null
   is_active: boolean
   deleted_at: string | null
-  created_at: string
+  products?: { id: string; name: string; sku: string | null; is_active: boolean }[]
 }
 
-export default function SuppliersPage() {
+export default function SupplierDetailPage() {
+  const params = useParams()
   const router = useRouter()
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [supplier, setSupplier] = useState<SupplierDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [showArchived, setShowArchived] = useState(false)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [form, setForm] = useState({ name: '', contact_person: '', phone: '', email: '' })
-  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState<Record<string, string>>({})
 
-  function load() {
-    setIsLoading(true)
-    const params = new URLSearchParams()
-    if (search) params.set('search', search)
-    if (showArchived) params.set('show_archived', 'true')
-    params.set('page_size', '100')
+  useEffect(() => {
+    const id = params?.id as string
+    if (!id) return
 
-    fetch(`/api/inventory/suppliers?${params}`)
+    fetch(`/api/inventory/suppliers/${id}`)
       .then(r => r.json())
-      .then(json => setSuppliers(json.data || []))
-      .finally(() => setIsLoading(false))
-  }
-
-  useEffect(() => { load() }, [search, showArchived])
-
-  async function handleCreate() {
-    if (!form.name.trim()) return
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inventory/suppliers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+      .then(json => {
+        if (json.error) setError(json.error.message)
+        else {
+          setSupplier(json.data)
+          setForm({
+            name: json.data.name || '',
+            contact_person: json.data.contact_person || '',
+            phone: json.data.phone || '',
+            email: json.data.email || '',
+            vat_number: json.data.vat_number || '',
+            payment_terms: json.data.payment_terms || '',
+            notes: json.data.notes || '',
+          })
+        }
       })
-      if (res.ok) {
-        setShowCreateForm(false)
-        setForm({ name: '', contact_person: '', phone: '', email: '' })
-        load()
-      }
-    } finally { setSaving(false) }
+      .catch(() => setError('Failed to load supplier'))
+      .finally(() => setIsLoading(false))
+  }, [params?.id])
+
+  async function handleSave() {
+    if (!supplier) return
+    const res = await fetch(`/api/inventory/suppliers/${supplier.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    if (res.ok) {
+      setEditing(false)
+      const json = await res.json()
+      setSupplier(json.data)
+    }
   }
 
-  const columns: Column<Supplier>[] = [
-    {
-      key: 'name',
-      header: 'Name',
-      sortable: true,
-      cell: supplier => (
-        <span className={!supplier.is_active ? 'opacity-50' : ''}>{supplier.name}</span>
-      ),
-    },
-    {
-      key: 'contact_person',
-      header: 'Contact',
-      cell: supplier => (
-        <span className="text-gray-500">{supplier.contact_person || '—'}</span>
-      ),
-    },
-    {
-      key: 'phone',
-      header: 'Phone',
-      cell: supplier => (
-        <span className="text-gray-500">{supplier.phone || '—'}</span>
-      ),
-    },
-    {
-      key: 'email',
-      header: 'Email',
-      cell: supplier => (
-        <span className="text-gray-500">{supplier.email || '—'}</span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      cell: supplier => (
-        <Badge variant={supplier.is_active ? 'success' : 'default'}>{supplier.is_active ? 'Active' : 'Archived'}</Badge>
-      ),
-    },
-  ]
+  async function handleArchive() {
+    if (!supplier || !confirm('Archive this supplier?')) return
+    const res = await fetch(`/api/inventory/suppliers/${supplier.id}`, { method: 'DELETE' })
+    if (res.ok || res.status === 409) {
+      router.push('/admin/operations/suppliers')
+    }
+  }
+
+  async function handleRestore() {
+    if (!supplier) return
+    const res = await fetch(`/api/inventory/suppliers/${supplier.id}/restore`, { method: 'POST' })
+    if (res.ok) {
+      const json = await res.json()
+      setSupplier(json.data)
+    }
+  }
+
+  if (isLoading) return <AdminPage title="Supplier"><SkeletonCard /></AdminPage>
+  if (error || !supplier) return <AdminPage title="Supplier"><EmptyState title="Not found" description={error || ''} /></AdminPage>
 
   return (
-    <AdminPage
-      title="Suppliers"
-      description="Manage your suppliers and their contact information"
-      actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Supplier</Button>}
-      filters={
-        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search suppliers…">
-          <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer select-none">
-            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
-            Show archived
-          </label>
-        </FilterBar>
-      }
-    >
-      {showCreateForm && (
-        <div className="bg-white rounded-lg border p-4 mb-4">
-          <h3 className="font-semibold mb-3">New Supplier</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Contact Person" value={form.contact_person} onChange={e => setForm(f => ({ ...f, contact_person: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleCreate} disabled={saving || !form.name.trim()}>Create</Button>
-            <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
-          </div>
-        </div>
+    <AdminPage title={supplier.name} description="Supplier details" actions={<><Badge variant={supplier.is_active ? 'success' : 'default'}>{supplier.is_active ? 'Active' : 'Archived'}</Badge>
+      {supplier.is_active ? (
+        <>
+          <Button onClick={() => setEditing(!editing)} variant="secondary" size="sm">{editing ? 'Cancel' : 'Edit'}</Button>
+          {editing && <Button onClick={handleSave} size="sm">Save</Button>}
+          <Button onClick={handleArchive} variant="danger" size="sm">Archive</Button>
+        </>
+      ) : (
+        <Button onClick={handleRestore} size="sm">Restore</Button>
       )}
+      <Link href="/admin/operations/suppliers"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
-      <DataTable<Supplier>
-        columns={columns}
-        data={suppliers}
-        keyField="id"
-        onRowClick={supplier => router.push(`/admin/operations/suppliers/${supplier.id}`)}
-        isLoading={isLoading}
-        emptyState={
-          <EmptyState
-            title="No suppliers found"
-            description={search ? 'Try a different search' : 'Add your first supplier to get started'}
-          />
-        }
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg border p-4">
+          <h3 className="font-semibold mb-3">Contact Information</h3>
+          <dl className="space-y-2 text-sm">
+            {[
+              ['Name', form.name, 'name'],
+              ['Contact Person', form.contact_person, 'contact_person'],
+              ['Phone', form.phone, 'phone'],
+              ['Email', form.email, 'email'],
+              ['VAT Number', form.vat_number, 'vat_number'],
+              ['Payment Terms', form.payment_terms, 'payment_terms'],
+              ['Lead Time (days)', supplier.lead_time_days?.toString() || 'ÔÇö', null],
+              ['Notes', form.notes, 'notes'],
+            ].map(([label, value, key]) => (
+              <div key={key || label} className="flex justify-between">
+                <dt className="text-gray-500">{label}</dt>
+                <dd className="font-medium text-right">
+                  {editing && key ? (
+                    <input className="border rounded px-2 py-1 text-xs w-40 text-right" value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+                  ) : (
+                    (value as string) || 'ÔÇö'
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="bg-white rounded-lg border p-4 lg:col-span-2">
+          <h3 className="font-semibold mb-3">Products from this Supplier</h3>
+          {(!supplier.products || supplier.products.length === 0) ? (
+            <p className="text-sm text-gray-400">No products linked to this supplier</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2 font-medium">Name</th>
+                  <th className="text-left p-2 font-medium">SKU</th>
+                  <th className="text-left p-2 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {supplier.products.map(p => (
+                  <tr key={p.id} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/operations/products/${p.id}`)}>
+                    <td className="p-2">{p.name}</td>
+                    <td className="p-2 text-gray-500">{p.sku || 'ÔÇö'}</td>
+                    <td className="p-2"><Badge variant={p.is_active ? 'success' : 'default'}>{p.is_active ? 'Active' : 'Archived'}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </AdminPage>
   )
 }
