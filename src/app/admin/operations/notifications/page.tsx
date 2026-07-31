@@ -29,6 +29,7 @@ export default function NotificationsPage() {
         fetch('/api/inventory/notifications?location_id=main'),
         fetch('/api/inventory/notifications/unread-count?location_id=main'),
       ])
+      if (!listRes.ok || !countRes.ok) return
       const list = await listRes.json()
       const count = await countRes.json()
       setItems(list.data ?? [])
@@ -66,13 +67,15 @@ export default function NotificationsPage() {
   }
 
   async function handleMarkRead(id: string) {
-    await fetch(`/api/inventory/notifications/${id}/read`, { method: 'POST' })
+    const res = await fetch(`/api/inventory/notifications/${id}/read`, { method: 'POST' })
+    if (!res.ok) return
     setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
     setUnread(prev => Math.max(0, prev - 1))
   }
 
   async function handleMarkAll() {
-    await fetch('/api/inventory/notifications/read-all?location_id=main', { method: 'POST' })
+    const res = await fetch('/api/inventory/notifications/read-all?location_id=main', { method: 'POST' })
+    if (!res.ok) return
     setItems(prev => prev.map(n => ({ ...n, read: true })))
     setUnread(0)
   }

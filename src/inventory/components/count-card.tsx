@@ -71,6 +71,8 @@ export function CountCard({
       await onSave(quantity)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Save failed')
     } finally {
       setSaving(false)
     }
@@ -157,7 +159,10 @@ export function CountCard({
           {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save'}
         </button>
         <button onClick={onSkip} className="px-4 py-2 text-sm rounded border hover:bg-gray-50">Skip</button>
-        <button onClick={onNext} className="px-4 py-2 text-sm rounded bg-gray-800 text-white hover:bg-gray-900 ml-auto">Next →</button>
+        <button
+          onClick={() => { handleSave().then(() => onNext()) }}
+          className="px-4 py-2 text-sm rounded bg-gray-800 text-white hover:bg-gray-900 ml-auto"
+        >Next →</button>
       </div>
     </div>
   )

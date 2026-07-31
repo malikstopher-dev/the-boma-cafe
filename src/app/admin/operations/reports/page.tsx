@@ -26,6 +26,7 @@ export default function ReportsPage() {
   const [stockCounts, setStockCounts] = useState<{ id: string; created_at: string }[]>([])
   const [data, setData] = useState<any[] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<Record<string, string>>({})
 
   const tab = REPORT_TABS.find(t => t.id === activeTab)
@@ -44,17 +45,27 @@ export default function ReportsPage() {
     if (!tab) return
     setIsLoading(true)
     setData(null)
+    setError(null)
 
     const params = new URLSearchParams()
     for (const key of tab.params) {
       if (filters[key]) params.set(key, filters[key])
     }
+    if (tab.params.includes('location_id') && !params.get('location_id')) {
+      params.set('location_id', 'main')
+    }
 
     try {
       const res = await fetch(`/api/inventory/reports/${tab.id}?${params}`)
       const json = await res.json()
+      if (!res.ok) {
+        setError(json.error?.message || 'Report failed to load')
+        setData([])
+        return
+      }
       setData(json.data || [])
     } catch {
+      setError('Failed to load report')
       setData([])
     } finally {
       setIsLoading(false)
@@ -305,6 +316,12 @@ export default function ReportsPage() {
           {isLoading ? 'Loading...' : 'Run Report'}
         </Button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+          {error}
+        </div>
+      )}
 
       {isLoading ? <SkeletonCard /> : data !== null ? (
         <div className="bg-white rounded-lg border overflow-x-auto">{renderTable()}</div>

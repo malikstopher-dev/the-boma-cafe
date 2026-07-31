@@ -25,6 +25,7 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
   const [physMap, setPhysMap] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [sessionId, setSessionId] = useState<string | null>(null)
 
   const fetchReconciliation = useCallback(async () => {
     setIsLoading(true)
@@ -78,12 +79,38 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
     return { variance, varianceValue }
   }
 
+  async function ensureSession(): Promise<string> {
+    if (sessionId) return sessionId
+    const res = await fetch('/api/inventory/stock-counts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location_id: 'main', notes: `Morning reconciliation ${date}` }),
+    })
+    const json = await res.json()
+    const newId = json.data?.stockCount?.id
+    if (!res.ok || !newId) {
+      throw new Error(json.error?.message || 'Failed to create stock count session')
+    }
+    setSessionId(newId)
+    return newId as string
+  }
+
   async function savePhysical(productId: string) {
     setSaving(productId)
     try {
       const val = physMap[productId]
       if (val === undefined || val === '') return
       const physical = parseFloat(val)
+      const id = await ensureSession()
+      const res = await fetch(`/api/inventory/stock-counts/${id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: productId, physical_quantity: physical }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        throw new Error(json.error?.message || 'Save failed')
+      }
       setRows(prev =>
         prev.map(r =>
           r.productId === productId
@@ -91,8 +118,8 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
             : r
         )
       )
-    } catch {
-      // ignore
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save count')
     } finally {
       setSaving(null)
     }

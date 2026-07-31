@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, InventoryStockCount } from '@/inventory/engine/types'
 import { createStockCount, listStockCounts } from '@/inventory/engine/stock-counts'
 
@@ -30,7 +31,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    const result = await createStockCount(location_id, performed_by ?? null, notes ?? null)
+    const resolvedLocationId = await resolveLocationId(location_id)
+    if (!resolvedLocationId) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'No active location found' } },
+        { status: 400 },
+      )
+    }
+
+    const result = await createStockCount(resolvedLocationId, performed_by ?? null, notes ?? null)
     return NextResponse.json({ data: result }, { status: 201 })
   } catch (error) {
     return NextResponse.json(

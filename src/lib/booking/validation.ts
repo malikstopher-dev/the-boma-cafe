@@ -46,6 +46,18 @@ export const statusUpdateSchema = z.object({
   reason: z.string().max(500).optional(),
 })
 
+export const BOOKING_STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft: ['quote_sent', 'cancelled'],
+  quote_sent: ['awaiting_deposit', 'cancelled'],
+  awaiting_deposit: ['deposit_paid', 'cancelled'],
+  deposit_paid: ['confirmed', 'cancelled', 'refunded'],
+  confirmed: ['in_progress', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: ['refunded'],
+  refunded: [],
+}
+
 export const blockedDateSchema = z.object({
   venue_area_id: z.string().uuid().nullable().optional(),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

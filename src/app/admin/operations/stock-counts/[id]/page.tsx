@@ -26,6 +26,7 @@ export default function StockCountDetailPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [mode, setMode] = useState<'count' | 'review'>('count')
   const [approving, setApproving] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [scanValue, setScanValue] = useState('')
   const [scanMessage, setScanMessage] = useState<string | null>(null)
 
@@ -33,17 +34,35 @@ export default function StockCountDetailPage() {
     const id = params?.id as string
     if (!id) return
 
+    let cancelled = false
+
+    async function fetchAllProducts() {
+      const all: any[] = []
+      let cursor: string | null = null
+      do {
+        const url = `/api/inventory/products?page_size=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
+        const json = await (await fetch(url)).json()
+        const page = json.data ?? []
+        all.push(...page)
+        cursor = json.meta?.hasMore ? (json.meta?.cursor ?? null) : null
+      } while (cursor)
+      return all
+    }
+
     Promise.all([
       fetch(`/api/inventory/stock-counts/${id}`).then(r => r.json()),
-      fetch('/api/inventory/products?page_size=200').then(r => r.json()),
+      fetchAllProducts(),
     ])
       .then(([scJson, prodJson]) => {
+        if (cancelled) return
         if (scJson.error) setError(scJson.error.message)
         else setData(scJson.data)
-        setProducts(prodJson.data || [])
+        setProducts(prodJson)
       })
       .catch(() => setError('Failed to load'))
-      .finally(() => setIsLoading(false))
+      .finally(() => { if (!cancelled) setIsLoading(false) })
+
+    return () => { cancelled = true }
   }, [params?.id])
 
   const stockCount = data?.stockCount
@@ -73,18 +92,24 @@ export default function StockCountDetailPage() {
   }
 
   async function handleSubmit() {
+    if (submitting) return
     const id = params?.id as string
-    const res = await fetch(`/api/inventory/stock-counts/${id}/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (res.ok) {
-      const json = await res.json()
-      setData(prev => prev ? { ...prev, stockCount: json.data } : prev)
-      setMode('review')
-    } else {
-      const err = await res.json()
-      alert(err.error?.message || 'Submit failed')
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/inventory/stock-counts/${id}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setData(prev => prev ? { ...prev, stockCount: json.data } : prev)
+        setMode('review')
+      } else {
+        const err = await res.json()
+        alert(err.error?.message || 'Submit failed')
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -115,6 +140,9 @@ export default function StockCountDetailPage() {
     const res = await fetch(`/api/inventory/stock-counts/${id}/cancel`, { method: 'POST' })
     if (res.ok) {
       router.push('/admin/operations/stock-counts')
+    } else {
+      const err = await res.json().catch(() => null)
+      alert(err?.error?.message || 'Cancel failed')
     }
   }
 
@@ -164,7 +192,7 @@ export default function StockCountDetailPage() {
   }
 
   return (
-    <AdminPage title={`Stock Count ÔÇö ${new Date(stockCount.created_at).toLocaleDateString()}`} actions={<><Badge variant={STATUS_VARIANTS[stockCount.status]}>{stockCount.status.replace('_', ' ')}</Badge>
+    <AdminPage title={`Stock Count — ${new Date(stockCount.created_at).toLocaleDateString()}`} actions={<><Badge variant={STATUS_VARIANTS[stockCount.status]}>{stockCount.status.replace('_', ' ')}</Badge>
       {(isSubmitted && !isApproved) && (
         <Button onClick={handleApprove} disabled={approving} size="sm">
           {approving ? 'Approving...' : 'Approve'}
@@ -187,10 +215,10 @@ export default function StockCountDetailPage() {
       {isInProgress && mode === 'count' && (
         <div className="max-w-lg mx-auto mb-4">
           <div className="flex items-center gap-2 bg-white border rounded-lg p-3">
-            <span className="text-gray-400">­ƒöì</span>
+            <span className="text-gray-400">🔍</span>
             <input
               className="flex-1 text-sm outline-none font-mono"
-              placeholder="Scan barcode to jump to productÔÇª"
+              placeholder="Scan barcode to jump to product…"
               value={scanValue}
               onChange={e => { setScanValue(e.target.value); setScanMessage(null) }}
               onKeyDown={e => { if (e.key === 'Enter') handleScan() }}
@@ -208,9 +236,17 @@ export default function StockCountDetailPage() {
         </div>
       )}
 
+      {isInProgress && mode === 'count' && totalForCounting === 0 && (
+        <div className="max-w-lg mx-auto bg-white rounded-lg border p-6 text-center">
+          <p className="text-sm text-gray-600 font-medium mb-1">Nothing to count</p>
+          <p className="text-xs text-gray-400">No uncounted products found at this location. Cancel this count to start over.</p>
+        </div>
+      )}
+
       {isInProgress && mode === 'count' && currentProduct && (
         <div className="max-w-lg mx-auto">
           <CountCard
+            key={currentProduct.id}
             productName={currentProduct.name}
             productSku={currentProduct.sku}
             productBarcode={currentProduct.barcode ?? null}
@@ -220,18 +256,14 @@ export default function StockCountDetailPage() {
             totalProducts={totalForCounting}
             onSave={handleSave}
             onSkip={handleSkip}
-            onNext={() => {
-              handleSave(currentItem?.physical_quantity ?? 0).then(() => {
-                setCurrentIndex(prev => Math.min(prev + 1, totalForCounting - 1))
-              })
-            }}
+            onNext={() => setCurrentIndex(prev => Math.min(prev + 1, totalForCounting - 1))}
             onPrev={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
           />
 
           {(countItems.length > 0 || currentIndex >= totalForCounting - 1) && (
             <div className="mt-4 text-center">
-              <button onClick={handleSubmit} className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium">
-                Submit Count for Review
+              <button onClick={handleSubmit} disabled={submitting} className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium disabled:opacity-50">
+                {submitting ? 'Submitting...' : 'Submit Count for Review'}
               </button>
             </div>
           )}

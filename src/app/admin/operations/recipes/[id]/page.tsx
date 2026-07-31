@@ -77,7 +77,7 @@ export default function RecipeDetailPage() {
 
   async function fetchProducts() {
     try {
-      const res = await fetch('/api/inventory/products?limit=500')
+      const res = await fetch('/api/inventory/products?page_size=100')
       const json = await res.json()
       setProducts(json.data ?? [])
     } catch {
@@ -89,17 +89,22 @@ export default function RecipeDetailPage() {
     if (!selProduct || !selQty) return
     setBusy(true)
     try {
-      await fetch(`/api/inventory/recipes/${id}/ingredients`, {
+      const res = await fetch(`/api/inventory/recipes/${id}/ingredients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: selProduct, quantity: parseFloat(selQty) }),
       })
+      const json = await res.json()
+      if (!res.ok) {
+        alert(json.error?.message || 'Failed to add ingredient')
+        return
+      }
       setSelProduct('')
       setSelQty('1')
       setShowAddIngredient(false)
       await fetchRecipe()
     } catch {
-      // ignore
+      alert('Failed to add ingredient')
     } finally {
       setBusy(false)
     }
@@ -109,17 +114,22 @@ export default function RecipeDetailPage() {
     if (!outputName) return
     setBusy(true)
     try {
-      await fetch(`/api/inventory/recipes/${id}/outputs`, {
+      const res = await fetch(`/api/inventory/recipes/${id}/outputs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: outputName, quantity: parseFloat(outputQty) || 1 }),
       })
+      const json = await res.json()
+      if (!res.ok) {
+        alert(json.error?.message || 'Failed to add output')
+        return
+      }
       setOutputName('')
       setOutputQty('1')
       setShowAddOutput(false)
       await fetchRecipe()
     } catch {
-      // ignore
+      alert('Failed to add output')
     } finally {
       setBusy(false)
     }
@@ -128,20 +138,22 @@ export default function RecipeDetailPage() {
   async function removeIngredient(ingredientId: string) {
     if (!confirm('Remove this ingredient?')) return
     try {
-      await fetch(`/api/inventory/recipes/${id}/ingredients/${ingredientId}`, { method: 'DELETE' })
-      await fetchRecipe()
+      const res = await fetch(`/api/inventory/recipes/${id}/ingredients/${ingredientId}`, { method: 'DELETE' })
+      if (!res.ok) alert('Failed to remove ingredient')
+      else await fetchRecipe()
     } catch {
-      // ignore
+      alert('Failed to remove ingredient')
     }
   }
 
   async function removeOutput(outputId: string) {
     if (!confirm('Remove this output?')) return
     try {
-      await fetch(`/api/inventory/recipes/${id}/outputs/${outputId}`, { method: 'DELETE' })
-      await fetchRecipe()
+      const res = await fetch(`/api/inventory/recipes/${id}/outputs/${outputId}`, { method: 'DELETE' })
+      if (!res.ok) alert('Failed to remove output')
+      else await fetchRecipe()
     } catch {
-      // ignore
+      alert('Failed to remove output')
     }
   }
 
@@ -154,7 +166,7 @@ export default function RecipeDetailPage() {
   }
 
   return (
-    <AdminPage title={recipe.name} description={`${recipe.category ?? 'Uncategorised'} ┬À v${recipe.version}`}>
+    <AdminPage title={recipe.name} description={`${recipe.category ?? 'Uncategorised'} · v${recipe.version}`}>
       <div className="p-6 max-w-4xl">
         <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 mb-6">
           <div className="grid grid-cols-4 gap-4 text-sm">
@@ -164,7 +176,7 @@ export default function RecipeDetailPage() {
             </div>
             <div>
               <span className="text-gray-500 block">Prep Time</span>
-              <span className="text-white font-medium">{recipe.prep_time_minutes ? `${recipe.prep_time_minutes} min` : 'ÔÇö'}</span>
+              <span className="text-white font-medium">{recipe.prep_time_minutes ? `${recipe.prep_time_minutes} min` : '—'}</span>
             </div>
             <div>
               <span className="text-gray-500 block">Expected Waste</span>

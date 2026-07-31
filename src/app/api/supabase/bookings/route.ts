@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
 import { requireAdminOrKitchen } from '@/lib/auth/requireRole'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { releaseAvailability } from '@/lib/booking/availability'
+import { cancelReservationsForBooking } from '@/inventory/engine/reservations'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await getAdminClient()
     .from('bookings')
-    .select('*', { count: 'exact' })
+    .select('*, booking_type:booking_types(name, slug), venue_area:venue_areas(name), customer:customers(id, name), quote:quotes(id, quote_number, total, status)', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -113,6 +115,14 @@ export async function DELETE(request: NextRequest) {
 
   if (!id) {
     return NextResponse.json({ error: 'Booking ID required' }, { status: 400 })
+  }
+
+  // Release inventory reservations + availability hold before hard delete
+  try {
+    await cancelReservationsForBooking(id)
+    await releaseAvailability(id)
+  } catch {
+    // Non-blocking: cleanup failures shouldn't block the delete
   }
 
   const { error } = await getAdminClient()

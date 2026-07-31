@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { getInventoryTypeFilter, applyInventoryTypeFilter } from '@/inventory/lib/api-utils'
+import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, InventoryProduct } from '@/inventory/engine/types'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryProduct[]>>> {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('category_id')
     const search = searchParams.get('search')
-    const locationId = searchParams.get('location_id')
+    const locationId = await resolveLocationId(searchParams.get('location_id'))
     const showArchived = searchParams.get('show_archived') === 'true'
     const cursor = searchParams.get('cursor')
     const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 100)

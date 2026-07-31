@@ -30,13 +30,15 @@ export default function NewPurchaseOrderPage() {
   useEffect(() => {
     Promise.all([
       fetch('/api/inventory/suppliers?page_size=100').then(r => r.json()),
-      fetch('/api/inventory/products?page_size=200').then(r => r.json()),
+      fetch('/api/inventory/products?page_size=100').then(r => r.json()),
       fetch('/api/inventory/locations?page_size=50').then(r => r.json()),
     ]).then(([supJson, prodJson, locJson]) => {
       setSuppliers((supJson.data || []).map((s: any) => ({ id: s.id, name: s.name })))
       setProducts((prodJson.data || []).map((p: any) => ({ id: p.id, name: p.name, sku: p.sku })))
       setLocations((locJson.data || []).map((l: any) => ({ id: l.id, name: l.name })))
       if (locJson.data?.length > 0) setItems([{ product_id: '', location_id: locJson.data[0].id, quantity_ordered: 1, unit_cost: null }])
+    }).catch(() => {
+      // fetch failure — leave empty dropdowns
     }).finally(() => setIsLoading(false))
   }, [])
 

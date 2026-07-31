@@ -41,6 +41,7 @@ export default function SuppliersPage() {
     fetch(`/api/inventory/suppliers?${params}`)
       .then(r => r.json())
       .then(json => setSuppliers(json.data || []))
+      .catch(() => setSuppliers([]))
       .finally(() => setIsLoading(false))
   }
 
@@ -55,10 +56,13 @@ export default function SuppliersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      const json = await res.json()
       if (res.ok) {
         setShowCreateForm(false)
         setForm({ name: '', contact_person: '', phone: '', email: '' })
         load()
+      } else {
+        alert(json.error?.message || 'Failed to create supplier')
       }
     } finally { setSaving(false) }
   }

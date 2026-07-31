@@ -26,7 +26,7 @@ type PurchaseOrder = {
   status: string
   expected_at: string | null
   created_at: string
-  inventory_purchase_order_items?: unknown[]
+  inventory_purchase_order_items?: { count: number }[]
 }
 
 export default function PurchaseOrdersPage() {
@@ -44,6 +44,8 @@ export default function PurchaseOrdersPage() {
     ]).then(([poJson, supJson]) => {
       setPos(poJson.data || [])
       setSuppliers((supJson.data || []).map((s: any) => ({ id: s.id, name: s.name })))
+    }).catch(() => {
+      // fetch failure — leave empty tables and let the empty state render
     }).finally(() => setIsLoading(false))
   }, [])
 
@@ -99,7 +101,7 @@ export default function PurchaseOrdersPage() {
       header: 'Items',
       className: 'text-right',
       cell: po => (
-        <span>{po.inventory_purchase_order_items?.length ?? '—'}</span>
+        <span>{po.inventory_purchase_order_items?.[0]?.count ?? '—'}</span>
       ),
     },
   ]

@@ -9,13 +9,12 @@ import EmptyState from '@/components/admin/design-system/EmptyState'
 
 type PurchaseOrderRow = {
   id: string
-  po_number: string | null
   supplier_id: string | null
   status: string
   expected_at: string | null
   created_at: string
   inventory_suppliers?: { name: string } | null
-  inventory_purchase_order_items?: { count: number } | null
+  inventory_purchase_order_items?: { count: number }[]
 }
 
 const AWAITING_STATUSES = ['ordered', 'partial']
@@ -36,7 +35,7 @@ export default function ReceivingPage() {
   const fetchPending = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await fetch(`/api/inventory/purchase-orders?page_size=50`)
+      const res = await fetch(`/api/inventory/purchase-orders?limit=50`)
       const json = await res.json()
       const all: PurchaseOrderRow[] = json.data || []
       setPos(all.filter(po => AWAITING_STATUSES.includes(po.status)))
@@ -76,11 +75,11 @@ export default function ReceivingPage() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 truncate">
-                    {po.po_number ?? `PO ${po.id.slice(0, 8)}`}
+                    PO {po.id.slice(0, 8)}
                     <span className="text-gray-400 font-normal"> — {po.inventory_suppliers?.name ?? 'Unknown supplier'}</span>
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {po.inventory_purchase_order_items?.count ?? 0} line items
+                    {po.inventory_purchase_order_items?.[0]?.count ?? 0} line items
                     {po.expected_at ? ` · expected ${new Date(po.expected_at).toLocaleDateString('en-ZA')}` : ''}
                   </p>
                 </div>

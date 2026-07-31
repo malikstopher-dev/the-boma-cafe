@@ -52,6 +52,16 @@ const REASONS = [
   'BREAKAGE', 'WASTE', 'SPILLAGE', 'EXPIRED', 'THEFT', 'DONATION', 'COMP', 'STAFF_MEAL', 'PROMOTION',
 ]
 
+const REASON_BY_TYPE: Record<string, string> = {
+  waste: 'WASTE',
+  breakage: 'BREAKAGE',
+  spillage: 'SPILLAGE',
+  comp: 'COMP',
+  expiry_loss: 'EXPIRED',
+  theft: 'THEFT',
+  donation: 'DONATION',
+}
+
 function formatValue(v: number): string {
   return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(v)
 }
@@ -77,7 +87,7 @@ export default function WastePage() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/inventory/products?limit=200&archived=false')
+    fetch('/api/inventory/products?page_size=100&show_archived=false')
       .then(r => r.json())
       .then(json => setProducts(json.data ?? []))
       .catch(() => {})
@@ -104,7 +114,7 @@ export default function WastePage() {
 
   const filteredProducts = productSearch
     ? products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
-    : products.slice(0, 50)
+    : products
 
   async function submit() {
     if (!selProduct || !qty || parseFloat(qty) <= 0) {
@@ -182,7 +192,7 @@ export default function WastePage() {
                     <label className="block text-xs text-gray-400 mb-1">Type</label>
                     <select
                       value={type}
-                      onChange={e => { setType(e.target.value); setReason(e.target.value.toUpperCase()) }}
+                      onChange={e => { setType(e.target.value); setReason(REASON_BY_TYPE[e.target.value] ?? 'WASTE') }}
                       className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
                     >
                       {WASTE_TYPES.map(t => (

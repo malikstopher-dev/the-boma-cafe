@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth/requireRole'
 import { sendEmail, sendEmailToMultiple } from '@/lib/email/resend'
 import { buildCustomerQuotationHtml, buildCustomerQuotationText } from '@/lib/email/templates/customer-quotation'
 import { buildAdminNotificationHtml, buildAdminNotificationText } from '@/lib/email/templates/admin-notification'
@@ -13,6 +14,9 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await requireAdmin(_request)
+  if (authError) return authError
+
   try {
     const client = await getAdminClient()
     const { id: quoteId } = await params
@@ -46,11 +50,29 @@ export async function POST(
         booking.venue_area_id
           ? client.from('venue_areas').select('name').eq('id', booking.venue_area_id).maybeSingle()
           : Promise.resolve(null),
-        Promise.resolve(null),
-        Promise.resolve(null),
+        booking.food_package_id
+          ? client.from('food_packages').select('name').eq('id', booking.food_package_id).maybeSingle()
+          : Promise.resolve(null),
+        booking.drink_package_id
+          ? client.from('drink_packages').select('name').eq('id', booking.drink_package_id).maybeSingle()
+          : Promise.resolve(null),
       ])
       if (btResult?.data) bookingTypeName = btResult.data.name
       if (vaResult?.data) venueAreaName = vaResult.data.name
+      if (fpResult?.data) foodPackageName = fpResult.data.name
+      if (dpResult?.data) drinkPackageName = dpResult.data.name
+    } catch {
+      // Non-critical
+    }
+
+    // Fetch addon names from quote_items
+    try {
+      const { data: addonItems } = await client
+        .from('quote_items')
+        .select('label')
+        .eq('quote_id', quoteId)
+        .eq('item_type', 'addon')
+      addonNames = (addonItems || []).map((i: any) => i.label)
     } catch {
       // Non-critical
     }

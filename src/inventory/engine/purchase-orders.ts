@@ -95,7 +95,7 @@ export async function getPurchaseOrder(id: string) {
 
   const { data: receipts } = await supabase
     .from('inventory_po_receipts')
-    .select('*, inventory_po_receipt_items(*)')
+    .select('*, inventory_po_receipt_items(*, inventory_products(id, name, sku))')
     .eq('po_id', id)
     .order('received_at', { ascending: false })
 

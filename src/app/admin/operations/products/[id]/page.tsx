@@ -27,6 +27,7 @@ interface ProductDetail {
   shelf_life_days: number | null
   created_at: string
   updated_at: string
+  current_balance?: number | null
   inventory_product_uoms?: Array<{
     id: string
     uom_id: string
@@ -41,12 +42,13 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<ProductDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
+  function load() {
     const id = params?.id as string
     if (!id) return
 
-    fetch(`/api/inventory/products/${id}`)
+    fetch(`/api/inventory/products/${id}?location_id=main`)
       .then(r => r.json())
       .then(json => {
         if (json.error) setError(json.error.message)
@@ -54,7 +56,43 @@ export default function ProductDetailPage() {
       })
       .catch(() => setError('Failed to load product'))
       .finally(() => setIsLoading(false))
-  }, [params?.id])
+  }
+
+  useEffect(load, [params?.id])
+
+  async function handleArchive() {
+    const id = params?.id as string
+    if (!confirm('Archive this product? It will no longer appear in active lists.')) return
+    setBusy(true)
+    try {
+      const res = await fetch(`/api/inventory/products/${id}`, { method: 'DELETE' })
+      if (res.ok || res.status === 409) {
+        setProduct(prev => prev ? { ...prev, is_active: false } : prev)
+      } else {
+        const err = await res.json().catch(() => null)
+        alert(err?.error?.message || 'Archive failed')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRestore() {
+    const id = params?.id as string
+    setBusy(true)
+    try {
+      const res = await fetch(`/api/inventory/products/${id}/restore`, { method: 'POST' })
+      if (res.ok) {
+        const json = await res.json()
+        setProduct(json.data)
+      } else {
+        const err = await res.json().catch(() => null)
+        alert(err?.error?.message || 'Restore failed')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -73,7 +111,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <AdminPage title={product.name} description={`SKU: ${product.sku || 'ÔÇö'}`} actions={<><Badge variant={product.is_active ? 'success' : 'info'}>{product.is_active ? 'Active' : 'Archived'}</Badge><Link href="/admin/operations/products"><Button variant="secondary" size="sm">Back</Button></Link></>}>
+    <AdminPage title={product.name} description={`SKU: ${product.sku || '—'}`} actions={<><Badge variant={product.is_active ? 'success' : 'info'}>{product.is_active ? 'Active' : 'Archived'}</Badge><Link href="/admin/operations/products"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -81,13 +119,13 @@ export default function ProductDetailPage() {
             <h3 className="font-semibold mb-3">Product Information</h3>
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div><dt className="text-gray-500">Name</dt><dd className="font-medium">{product.name}</dd></div>
-              <div><dt className="text-gray-500">SKU</dt><dd className="font-medium">{product.sku || 'ÔÇö'}</dd></div>
-              <div><dt className="text-gray-500">Barcode</dt><dd className="font-medium">{product.barcode || 'ÔÇö'}</dd></div>
-              <div><dt className="text-gray-500">Reorder Threshold</dt><dd className="font-medium">{product.reorder_threshold ?? 'ÔÇö'}</dd></div>
-              <div><dt className="text-gray-500">Reorder Quantity</dt><dd className="font-medium">{product.reorder_quantity ?? 'ÔÇö'}</dd></div>
-              <div><dt className="text-gray-500">Supplier Code</dt><dd className="font-medium">{product.supplier_code || 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">SKU</dt><dd className="font-medium">{product.sku || '—'}</dd></div>
+              <div><dt className="text-gray-500">Barcode</dt><dd className="font-medium">{product.barcode || '—'}</dd></div>
+              <div><dt className="text-gray-500">Reorder Threshold</dt><dd className="font-medium">{product.reorder_threshold ?? '—'}</dd></div>
+              <div><dt className="text-gray-500">Reorder Quantity</dt><dd className="font-medium">{product.reorder_quantity ?? '—'}</dd></div>
+              <div><dt className="text-gray-500">Supplier Code</dt><dd className="font-medium">{product.supplier_code || '—'}</dd></div>
               <div><dt className="text-gray-500">Has Expiry</dt><dd className="font-medium">{product.has_expiry ? 'Yes' : 'No'}</dd></div>
-              <div><dt className="text-gray-500">Shelf Life</dt><dd className="font-medium">{product.shelf_life_days ? `${product.shelf_life_days} days` : 'ÔÇö'}</dd></div>
+              <div><dt className="text-gray-500">Shelf Life</dt><dd className="font-medium">{product.shelf_life_days ? `${product.shelf_life_days} days` : '—'}</dd></div>
             </dl>
           </div>
 
@@ -128,16 +166,34 @@ export default function ProductDetailPage() {
           <div className="bg-white rounded-lg border p-4">
             <h3 className="font-semibold mb-3">Actions</h3>
             <div className="space-y-2">
-              <Button className="w-full" variant="primary" size="sm">Edit Product</Button>
-              <Button className="w-full" variant={product.is_active ? 'danger' : 'primary'} size="sm">
-                {product.is_active ? 'Archive' : 'Restore'}
-              </Button>
+              {product.is_active ? (
+                <Button className="w-full" variant="danger" size="sm" onClick={handleArchive} disabled={busy}>
+                  {busy ? 'Working...' : 'Archive'}
+                </Button>
+              ) : (
+                <Button className="w-full" variant="primary" size="sm" onClick={handleRestore} disabled={busy}>
+                  {busy ? 'Working...' : 'Restore'}
+                </Button>
+              )}
             </div>
           </div>
 
           <div className="bg-white rounded-lg border p-4">
             <h3 className="font-semibold mb-3">Stock Summary</h3>
-            <p className="text-sm text-gray-500">Select a location to view stock</p>
+            <div className="text-sm">
+              <div className="flex justify-between py-1">
+                <span className="text-gray-500">Current Balance</span>
+                <span className="font-medium">
+                  {product.current_balance !== null && product.current_balance !== undefined
+                    ? product.current_balance.toFixed(2)
+                    : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-gray-500">Reorder Threshold</span>
+                <span className="font-medium">{product.reorder_threshold ?? '—'}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

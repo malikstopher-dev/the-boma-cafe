@@ -155,7 +155,7 @@ export default function PurchaseOrderDetailPage() {
   )
 
   return (
-    <AdminPage title={`PO ÔÇö ${po.inventory_suppliers?.name ?? 'Unknown Supplier'}`} actions={pageActions}>
+    <AdminPage title={`PO — ${po.inventory_suppliers?.name ?? 'Unknown Supplier'}`} actions={pageActions}>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg border p-3">
           <div className="text-xs text-gray-500">Status</div>
@@ -163,15 +163,15 @@ export default function PurchaseOrderDetailPage() {
         </div>
         <div className="bg-white rounded-lg border p-3">
           <div className="text-xs text-gray-500">Ordered</div>
-          <div className="font-semibold">{po.ordered_at ? new Date(po.ordered_at).toLocaleDateString() : 'ÔÇö'}</div>
+          <div className="font-semibold">{po.ordered_at ? new Date(po.ordered_at).toLocaleDateString() : '—'}</div>
         </div>
         <div className="bg-white rounded-lg border p-3">
           <div className="text-xs text-gray-500">Expected</div>
-          <div className="font-semibold">{po.expected_at ? new Date(po.expected_at).toLocaleDateString() : 'ÔÇö'}</div>
+          <div className="font-semibold">{po.expected_at ? new Date(po.expected_at).toLocaleDateString() : '—'}</div>
         </div>
         <div className="bg-white rounded-lg border p-3">
           <div className="text-xs text-gray-500">Quotation</div>
-          <div className="font-semibold">{po.quotation_ref || 'ÔÇö'}</div>
+          <div className="font-semibold">{po.quotation_ref || '—'}</div>
         </div>
       </div>
 
@@ -201,8 +201,8 @@ export default function PurchaseOrderDetailPage() {
                   <td className={`p-2 text-right font-mono ${outstanding > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
                     {outstanding > 0 ? outstanding.toFixed(2) : '0'}
                   </td>
-                  <td className="p-2 text-right">{item.unit_cost ? `R${Number(item.unit_cost).toFixed(2)}` : 'ÔÇö'}</td>
-                  <td className="p-2 text-gray-500">{item.location_id?.slice(0, 8) || 'ÔÇö'}</td>
+                  <td className="p-2 text-right">{item.unit_cost ? `R${Number(item.unit_cost).toFixed(2)}` : '—'}</td>
+                  <td className="p-2 text-gray-500">{item.location_id?.slice(0, 8) || '—'}</td>
                 </tr>
               )
             })}
@@ -270,7 +270,7 @@ export default function PurchaseOrderDetailPage() {
                       <tr key={ri.id}>
                         <td className="p-1">{ri.inventory_products?.name || ri.product_id}</td>
                         <td className="p-1 text-right">{Number(ri.quantity_received).toFixed(2)}</td>
-                        <td className="p-1 text-right">{ri.unit_cost ? `R${Number(ri.unit_cost).toFixed(2)}` : 'ÔÇö'}</td>
+                        <td className="p-1 text-right">{ri.unit_cost ? `R${Number(ri.unit_cost).toFixed(2)}` : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

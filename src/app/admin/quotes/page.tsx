@@ -84,14 +84,23 @@ export default function AdminQuotes() {
       const res = await fetch(`/api/admin/quotes/${quoteId}/regenerate-pdf`, { method: 'POST' })
       const data = await res.json()
       if (data.success) {
-        setQuotes(quotes.map(q => q.id === quoteId ? {
-          ...q,
-          pdf_path: data.pdf_path,
-          storage_path: data.storage_path,
-          pdf_version: data.pdf_version,
-          version: data.version,
-        } : q))
-        success('PDF regenerated successfully')
+        if (data.queued) {
+          setQuotes(quotes.map(q => q.id === quoteId ? {
+            ...q,
+            pdf_version: data.pdf_version,
+            version: data.version,
+          } : q))
+          success('PDF regeneration queued — it will appear here shortly')
+        } else {
+          setQuotes(quotes.map(q => q.id === quoteId ? {
+            ...q,
+            pdf_path: data.pdf_path,
+            storage_path: data.storage_path,
+            pdf_version: data.pdf_version,
+            version: data.version,
+          } : q))
+          success('PDF regenerated successfully')
+        }
       } else {
         showError(data.error || 'Failed to regenerate PDF')
       }

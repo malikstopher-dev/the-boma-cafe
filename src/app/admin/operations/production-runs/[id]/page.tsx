@@ -41,6 +41,7 @@ export default function ProductionRunDetailPage() {
   const [run, setRun] = useState<RunDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [completeQty, setCompleteQty] = useState('')
 
   useEffect(() => {
@@ -62,15 +63,21 @@ export default function ProductionRunDetailPage() {
 
   async function action(path: string, body?: object) {
     setBusy(true)
+    setError(null)
     try {
-      await fetch(`/api/inventory/production-runs/${id}/${path}`, {
+      const res = await fetch(`/api/inventory/production-runs/${id}/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body ?? {}),
       })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error?.message || 'Action failed')
+        return
+      }
       await fetchRun()
     } catch {
-      // ignore
+      setError('Failed to reach server')
     } finally {
       setBusy(false)
     }
@@ -86,7 +93,7 @@ export default function ProductionRunDetailPage() {
   return (
     <AdminPage
       title={run.recipe_name ?? 'Production Run'}
-      description={`${run.quantity_completed ?? run.quantity_planned} units planned`}
+      description={`${run.quantity_completed ?? run.quantity_planned} units ${run.status === 'completed' ? 'completed' : 'planned'}`}
       actions={
         <div className="flex gap-2">
           {run.status === 'planned' && (
@@ -108,6 +115,12 @@ export default function ProductionRunDetailPage() {
       }
     >
       <div className="p-6 max-w-4xl">
+        {error && (
+          <div className="bg-red-900/40 border border-red-700/50 text-red-300 rounded-lg p-3 mb-4 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="flex items-center gap-3 mb-6">
           <Badge variant={badge.variant}>{badge.label}</Badge>
           {run.completed_at && (
@@ -137,7 +150,7 @@ export default function ProductionRunDetailPage() {
                 <span className="text-white font-medium flex-1">{item.product_name}</span>
                 <span className="text-red-400">-{item.quantity}</span>
                 {item.wastage_pct > 0 && <Badge variant="warning">{item.wastage_pct}% waste</Badge>}
-                {item.transaction_id && <span className="text-xs text-green-500">Ô£ô ledger</span>}
+                {item.transaction_id && <span className="text-xs text-green-500">✓ ledger</span>}
               </div>
             ))}
             {consumed.length === 0 && <p className="text-gray-500 text-sm">No ingredients</p>}
@@ -151,7 +164,7 @@ export default function ProductionRunDetailPage() {
               <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-green-900/10 border border-green-800/30">
                 <span className="text-white font-medium flex-1">{item.product_name}</span>
                 <span className="text-green-400">+{item.quantity}</span>
-                {item.transaction_id && <span className="text-xs text-green-500">Ô£ô ledger</span>}
+                {item.transaction_id && <span className="text-xs text-green-500">✓ ledger</span>}
               </div>
             ))}
             {produced.length === 0 && <p className="text-gray-500 text-sm">No outputs</p>}

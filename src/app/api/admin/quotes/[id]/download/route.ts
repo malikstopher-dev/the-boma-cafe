@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth/requireRole'
 import { downloadPdfBuffer } from '@/lib/pdf/storage'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await requireAdmin(request)
+  if (authError) return authError
+
   try {
     const client = await getAdminClient()
     const { id: quoteId } = await params

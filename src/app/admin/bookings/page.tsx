@@ -9,6 +9,7 @@ import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
 import ConfirmDialog from '@/components/admin/design-system/ConfirmDialog'
 import { useToast } from '@/components/admin/design-system/Toast'
+import { BOOKING_STATUS_TRANSITIONS } from '@/lib/booking/validation'
 
 const STATUSES = ['draft', 'quote_sent', 'awaiting_deposit', 'deposit_paid', 'confirmed', 'in_progress', 'completed', 'cancelled', 'refunded'] as const
 
@@ -46,17 +47,7 @@ const STATUS_VARIANTS: Record<string, 'warning' | 'success' | 'danger' | 'defaul
   refunded: 'danger',
 }
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  draft: ['quote_sent', 'cancelled'],
-  quote_sent: ['awaiting_deposit', 'cancelled'],
-  awaiting_deposit: ['deposit_paid', 'cancelled'],
-  deposit_paid: ['confirmed', 'cancelled', 'refunded'],
-  confirmed: ['in_progress', 'cancelled'],
-  in_progress: ['completed', 'cancelled'],
-  completed: [],
-  cancelled: ['refunded'],
-  refunded: [],
-}
+const VALID_TRANSITIONS = BOOKING_STATUS_TRANSITIONS
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState<BookingFull[]>([])

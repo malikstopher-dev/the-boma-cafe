@@ -1,4 +1,5 @@
 import { getInventoryClient } from '../lib/db'
+import type { InventoryType } from './types'
 
 export interface ReconciliationRow {
   productId: string
@@ -13,14 +14,21 @@ export interface ReconciliationRow {
 export async function getReconciliation(
   locationId: string,
   date?: string,
+  inventoryType?: InventoryType,
 ): Promise<ReconciliationRow[]> {
   const supabase = getInventoryClient()
   const asAt = date ?? new Date().toISOString()
 
-  const { data: products } = await supabase
+  let productQuery = supabase
     .from('inventory_products')
     .select('id, name')
     .eq('is_active', true)
+
+  if (inventoryType) {
+    productQuery = productQuery.eq('inventory_type', inventoryType)
+  }
+
+  const { data: products } = await productQuery
 
   if (!products) return []
 

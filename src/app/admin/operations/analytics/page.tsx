@@ -45,9 +45,11 @@ export default function AnalyticsPage() {
   const [waste, setWaste] = useState<WasteHeatmap | null>(null)
   const [valueTrend, setValueTrend] = useState<ValueTrendPoint[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchAll = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const typeParam = typeTab ? `&inventory_type=${typeTab}` : ''
       const base = `location_id=main&days=${rangeDays}`
@@ -56,11 +58,15 @@ export default function AnalyticsPage() {
         fetch(`/api/inventory/analytics/waste-heatmap?${base}${typeParam}`),
         fetch(`/api/inventory/analytics/value-trend?${base}${typeParam}`),
       ])
+      if (!trendRes.ok || !wasteRes.ok || !valueRes.ok) {
+        setError('Failed to load analytics data')
+        return
+      }
       setTrend((await trendRes.json()).data ?? [])
       setWaste((await wasteRes.json()).data ?? null)
       setValueTrend((await valueRes.json()).data ?? [])
     } catch {
-      // ignore
+      setError('Failed to load analytics data')
     } finally {
       setIsLoading(false)
     }
@@ -110,6 +116,11 @@ export default function AnalyticsPage() {
       }
     >
       <div className="p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
             <p className="text-sm text-gray-400">Units Sold ({rangeDays}d)</p>

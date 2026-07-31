@@ -65,10 +65,12 @@ export default function SupplierDetailPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
+    const json = await res.json()
     if (res.ok) {
       setEditing(false)
-      const json = await res.json()
-      setSupplier(json.data)
+      setSupplier(prev => prev ? { ...json.data, products: prev.products } : json.data)
+    } else {
+      alert(json.error?.message || 'Failed to save supplier')
     }
   }
 
@@ -116,7 +118,7 @@ export default function SupplierDetailPage() {
               ['Email', form.email, 'email'],
               ['VAT Number', form.vat_number, 'vat_number'],
               ['Payment Terms', form.payment_terms, 'payment_terms'],
-              ['Lead Time (days)', supplier.lead_time_days?.toString() || 'ÔÇö', null],
+              ['Lead Time (days)', supplier.lead_time_days?.toString() || '—', null],
               ['Notes', form.notes, 'notes'],
             ].map(([label, value, key]) => (
               <div key={key || label} className="flex justify-between">
@@ -125,7 +127,7 @@ export default function SupplierDetailPage() {
                   {editing && key ? (
                     <input className="border rounded px-2 py-1 text-xs w-40 text-right" value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
                   ) : (
-                    (value as string) || 'ÔÇö'
+                    (value as string) || '—'
                   )}
                 </dd>
               </div>
@@ -150,7 +152,7 @@ export default function SupplierDetailPage() {
                 {supplier.products.map(p => (
                   <tr key={p.id} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/operations/products/${p.id}`)}>
                     <td className="p-2">{p.name}</td>
-                    <td className="p-2 text-gray-500">{p.sku || 'ÔÇö'}</td>
+                    <td className="p-2 text-gray-500">{p.sku || '—'}</td>
                     <td className="p-2"><Badge variant={p.is_active ? 'success' : 'default'}>{p.is_active ? 'Active' : 'Archived'}</Badge></td>
                   </tr>
                 ))}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, InventoryProduct } from '@/inventory/engine/types'
 
 export async function GET(
@@ -28,6 +29,17 @@ export async function GET(
         { error: { code: 'NOT_FOUND', message: `Product not found: ${id}` } },
         { status: 404 },
       )
+    }
+
+    const locationId = await resolveLocationId(new URL(request.url).searchParams.get('location_id'))
+    if (locationId) {
+      const { data: balance } = await supabase
+        .rpc('inventory_get_balance', {
+          p_product_id: id,
+          p_location_id: locationId,
+        })
+        .single()
+      ;(data as unknown as Record<string, unknown>).current_balance = (balance as { balance?: number } | null)?.balance ?? null
     }
 
     return NextResponse.json({ data: data as InventoryProduct })

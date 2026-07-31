@@ -42,6 +42,7 @@ export interface PdfGenerationPayload {
   notificationEmails: string[]
   company: string | null
   specialRequests: string | null
+  skipCustomerEmail?: boolean
 }
 
 export async function pdfGenerationHandler(job: BackgroundJob): Promise<Record<string, unknown>> {
@@ -126,7 +127,11 @@ export async function pdfGenerationHandler(job: BackgroundJob): Promise<Record<s
 
   const emailAlreadySent = existingQuote?.quotation_email_sent_at && existingQuote?.quotation_email_recipient === payload.customerEmail
 
-  if (emailAlreadySent) {
+  if (payload.skipCustomerEmail) {
+    logger.info('customer email skipped (skipCustomerEmail flag)', {
+      quote_id: payload.quoteId,
+    })
+  } else if (emailAlreadySent) {
     logger.info('customer email already sent, skipping', {
       quote_id: payload.quoteId,
       sent_at: existingQuote.quotation_email_sent_at,

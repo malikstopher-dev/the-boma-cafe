@@ -208,6 +208,11 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single()
 
+    if (jobError || !job) {
+      console.error('Failed to enqueue PDF generation job:', jobError?.message)
+      return NextResponse.json({ error: 'Failed to queue PDF generation' }, { status: 500 })
+    }
+
     return NextResponse.json({
       success: true,
       booking_id: booking.id,

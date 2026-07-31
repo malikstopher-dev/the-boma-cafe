@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/auth/requireRole'
-import { statusUpdateSchema } from '@/lib/booking/validation'
+import { statusUpdateSchema, BOOKING_STATUS_TRANSITIONS } from '@/lib/booking/validation'
 import { createAuditEntry } from '@/lib/booking/audit'
 import { releaseAvailability } from '@/lib/booking/availability'
 import { autoReserveForBooking, cancelReservationsForBooking, consumeReservationsForBooking } from '@/inventory/engine/reservations'
@@ -36,6 +36,14 @@ export async function PATCH(request: NextRequest) {
 
     const previousStatus = booking.status
 
+    const allowedTransitions = BOOKING_STATUS_TRANSITIONS[previousStatus] ?? []
+    if (!allowedTransitions.includes(new_status)) {
+      return NextResponse.json(
+        { error: `Cannot transition booking from ${previousStatus} to ${new_status}` },
+        { status: 400 },
+      )
+    }
+
     // Update status
     const { error: updateError } = await client
       .from('bookings')
@@ -56,8 +64,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (new_status === 'cancelled' || new_status === 'refunded') {
-      await releaseAvailability(booking_id)
       try {
+        await releaseAvailability(booking_id)
         await cancelReservationsForBooking(booking_id)
       } catch {
         // Non-blocking

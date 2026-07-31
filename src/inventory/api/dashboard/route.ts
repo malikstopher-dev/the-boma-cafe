@@ -90,7 +90,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
       case 'reconciliation': {
         const date = searchParams.get('date') ?? undefined
-        const data = await getReconciliation(locationId, date)
+        const data = await getReconciliation(locationId, date, inventoryType ?? undefined)
         return NextResponse.json({ data })
       }
 

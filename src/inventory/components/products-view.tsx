@@ -46,6 +46,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       if (search) params.set('search', search)
       if (showArchived) params.set('show_archived', 'true')
       if (forcedType) params.set('inventory_type', forcedType)
+      params.set('location_id', 'main')
       params.set('page_size', '100')
 
       const res = await fetch(`/api/inventory/products?${params}`)
