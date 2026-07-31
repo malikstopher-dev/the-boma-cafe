@@ -32,6 +32,12 @@ interface WasteSummaryRow {
   estimated_value: number
 }
 
+interface CostCentreOption {
+  id: string
+  name: string
+  is_active: boolean
+}
+
 const WASTE_TYPES: Array<{ value: string; label: string }> = [
   { value: 'waste', label: 'Waste' },
   { value: 'breakage', label: 'Breakage' },
@@ -60,6 +66,8 @@ export default function WastePage() {
   const [reason, setReason] = useState('WASTE')
   const [qty, setQty] = useState('')
   const [notes, setNotes] = useState('')
+  const [costCentres, setCostCentres] = useState<CostCentreOption[]>([])
+  const [selCostCentre, setSelCostCentre] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -72,6 +80,10 @@ export default function WastePage() {
     fetch('/api/inventory/products?limit=200&archived=false')
       .then(r => r.json())
       .then(json => setProducts(json.data ?? []))
+      .catch(() => {})
+    fetch('/api/inventory/cost-centres')
+      .then(r => r.json())
+      .then(json => setCostCentres(json.data ?? []))
       .catch(() => {})
   }, [])
 
@@ -113,6 +125,7 @@ export default function WastePage() {
           quantity: parseFloat(qty),
           reason_type: reason,
           reason_notes: notes || null,
+          cost_centre_id: selCostCentre || null,
         }),
       })
       const json = await res.json()
@@ -135,7 +148,7 @@ export default function WastePage() {
   return (
     <AdminPage
       title="Waste & Breakage"
-      subtitle="Single-tap registration of stock loss — each entry writes to the ledger"
+      description="Single-tap registration of stock loss — each entry writes to the ledger"
     >
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -196,6 +209,19 @@ export default function WastePage() {
                   >
                     {REASONS.map(r => (
                       <option key={r} value={r}>{r.replace('_', ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Cost Centre</label>
+                  <select
+                    value={selCostCentre}
+                    onChange={e => setSelCostCentre(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                  >
+                    <option value="">Default</option>
+                    {costCentres.map(cc => (
+                      <option key={cc.id} value={cc.id}>{cc.name}</option>
                     ))}
                   </select>
                 </div>

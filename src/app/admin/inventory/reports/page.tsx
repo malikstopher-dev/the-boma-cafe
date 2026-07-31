@@ -12,12 +12,12 @@ interface ReportTab {
 }
 
 const REPORT_TABS: ReportTab[] = [
-  { id: 'daily', label: 'Daily Stock', params: ['date', 'location_id'] },
-  { id: 'variance', label: 'Variance', params: ['stock_count_id'] },
-  { id: 'waste', label: 'Waste & Breakage', params: ['from', 'to', 'location_id'] },
-  { id: 'fast-movers', label: 'Fast Movers', params: ['days', 'limit', 'location_id'] },
-  { id: 'slow-movers', label: 'Slow Movers', params: ['days', 'limit', 'location_id'] },
-  { id: 'valuation', label: 'Valuation', params: ['location_id'] },
+  { id: 'daily', label: 'What did we use?', params: ['date', 'location_id'] },
+  { id: 'variance', label: 'What doesn\'t balance?', params: ['stock_count_id'] },
+  { id: 'waste', label: 'Where are we losing stock?', params: ['from', 'to', 'location_id'] },
+  { id: 'fast-movers', label: 'What sells fastest?', params: ['days', 'limit', 'location_id'] },
+  { id: 'slow-movers', label: 'What isn\'t moving?', params: ['days', 'limit', 'location_id'] },
+  { id: 'valuation', label: 'What is my stock worth?', params: ['location_id'] },
 ]
 
 export default function ReportsPage() {

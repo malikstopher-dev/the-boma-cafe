@@ -8,6 +8,7 @@ import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import MovementTimeline from '@/inventory/components/movement-timeline'
 
 interface ProductDetail {
   id: string
@@ -116,6 +117,11 @@ export default function ProductDetailPage() {
               </table>
             </div>
           )}
+
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-semibold mb-3">Activity Timeline</h3>
+            <MovementTimeline productId={product.id} />
+          </div>
         </div>
 
         <div className="space-y-4">

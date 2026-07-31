@@ -9,6 +9,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       supplier_id: searchParams.get('supplier_id') ?? undefined,
       status: searchParams.get('status') ?? undefined,
       overdue: searchParams.get('overdue') === 'true' || undefined,
+      inventory_type: searchParams.get('inventory_type') ?? undefined,
       limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
     }
 

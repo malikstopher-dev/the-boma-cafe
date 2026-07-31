@@ -106,6 +106,7 @@ export async function listPurchaseOrders(filters?: {
   supplier_id?: string
   status?: string
   overdue?: boolean
+  inventory_type?: string
   limit?: number
 }) {
   const supabase = getInventoryClient()
@@ -121,6 +122,19 @@ export async function listPurchaseOrders(filters?: {
   if (filters?.overdue) {
     query = query.in('status', ['ordered', 'partial'])
     query = query.lt('expected_at', new Date().toISOString().slice(0, 10))
+  }
+
+  if (filters?.inventory_type) {
+    const { data: items } = await supabase
+      .from('inventory_purchase_order_items')
+      .select('purchase_order_id, inventory_products!inner(inventory_type)')
+    const matching = new Set(
+      (items ?? [])
+        .filter(i => (i.inventory_products as { inventory_type?: string } | null)?.inventory_type === filters.inventory_type)
+        .map(i => i.purchase_order_id),
+    )
+    if (matching.size === 0) return []
+    query = query.in('id', [...matching])
   }
 
   const { data, error } = await query
