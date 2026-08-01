@@ -22,7 +22,7 @@ const STATUS_VARIANTS: Record<string, 'warning' | 'success' | 'danger' | 'defaul
   cancelled: 'info',
 }
 
-interface BackgroundJob {
+type BackgroundJob = {
   id: string
   job_type: string
   status: string
