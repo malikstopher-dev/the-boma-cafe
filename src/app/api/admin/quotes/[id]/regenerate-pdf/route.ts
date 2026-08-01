@@ -72,62 +72,91 @@ export async function POST(
       ? `https://the-boma-cafe.vercel.app/booking/${quote.quote_number}?token=${quote.access_token}`
       : `https://the-boma-cafe.vercel.app/booking/${quote.quote_number}`
 
-    const { error: jobError } = await client
-      .from('background_jobs')
-      .insert({
-        job_type: 'pdf_generation',
-        payload: {
-          quoteId: quote.id,
-          quoteNumber: quote.quote_number,
-          version: newVersion,
-          customerName: booking.name || 'Customer',
-          customerEmail: booking.email || '',
-          customerPhone: booking.phone || '',
-          bookingReference: booking.id,
-          bookingType: bookingTypeName,
-          venueArea: venueAreaName,
-          foodPackage: foodPackageName,
-          drinkPackage: drinkPackageName,
-          addons: '',
-          addonNames: [],
-          bookingDate: booking.booking_date || '',
-          bookingTime: booking.booking_time || '',
-          guests: booking.guests || 0,
-          lineItems: (items || []).map((item: any) => ({
-            label: item.label,
-            quantity: item.quantity,
-            unitPrice: Number(item.unit_price),
-            total: Number(item.total_price),
-          })),
-          subtotal: Number(quote.subtotal),
-          taxRate: Number(quote.tax_rate),
-          taxAmount: Number(quote.tax_amount),
-          total: Number(quote.total),
-          depositPercentage: Number(quote.deposit_percentage),
-          depositAmount: Number(quote.deposit_amount),
-          balanceAmount: Number(quote.balance_amount),
-          validUntil: quote.valid_until,
-          portalUrl,
-          notificationEmails: [],
-          company: booking.company || null,
-          specialRequests: booking.special_requests || booking.notes || null,
-          skipCustomerEmail: true,
-        },
-        idempotency_key: `regenerate-${quote.id}-v${newVersion}`,
-        priority: 2,
-        max_retries: 2,
-      })
-      .select('id')
-      .single()
+    const jobPayload = {
+      quoteId: quote.id,
+      quoteNumber: quote.quote_number,
+      version: newVersion,
+      customerName: booking.name || 'Customer',
+      customerEmail: booking.email || '',
+      customerPhone: booking.phone || '',
+      bookingReference: booking.id,
+      bookingType: bookingTypeName,
+      venueArea: venueAreaName,
+      foodPackage: foodPackageName,
+      drinkPackage: drinkPackageName,
+      addons: '',
+      addonNames: [],
+      bookingDate: booking.booking_date || '',
+      bookingTime: booking.booking_time || '',
+      guests: booking.guests || 0,
+      lineItems: (items || []).map((item: any) => ({
+        label: item.label,
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price),
+        total: Number(item.total_price),
+      })),
+      subtotal: Number(quote.subtotal),
+      taxRate: Number(quote.tax_rate),
+      taxAmount: Number(quote.tax_amount),
+      total: Number(quote.total),
+      depositPercentage: Number(quote.deposit_percentage),
+      depositAmount: Number(quote.deposit_amount),
+      balanceAmount: Number(quote.balance_amount),
+      validUntil: quote.valid_until,
+      portalUrl,
+      notificationEmails: [],
+      company: booking.company || null,
+      specialRequests: booking.special_requests || booking.notes || null,
+      skipCustomerEmail: true,
+    }
 
-    if (jobError) {
-      console.error('[regenerate-pdf] background_jobs insert failed:', jobError.message)
+    // Atomic enqueue: the idempotency decision (insert / replay / replace
+    // dead-letter) and the row mutation all happen inside one Postgres
+    // transaction under a FOR UPDATE lock on the existing key — so two
+    // simultaneous Regenerate requests on the same quote+version can never
+    // delete-and-double-insert. See migration 060.
+    const { data: enqueueResult, error: enqueueError } = await client.rpc(
+      'enqueue_background_job',
+      {
+        p_job_type: 'pdf_generation',
+        p_payload: jobPayload,
+        p_idempotency_key: `regenerate-${quote.id}-v${newVersion}`,
+        p_priority: 2,
+        p_max_retries: 2,
+      }
+    )
+
+    if (enqueueError || !enqueueResult) {
+      console.error('[regenerate-pdf] enqueue_background_job failed:', enqueueError?.message)
       return NextResponse.json({ error: 'Failed to queue PDF regeneration' }, { status: 500 })
     }
 
+    // enqueueResult is a single-row table: { id, status, outcome }
+    const outcome: string = enqueueResult.outcome
+    const finalStatus: string = enqueueResult.status
+
+    if (outcome === 'already_completed') {
+      // The PDF for this version was already produced (a prior job completed
+      // but pdf_version advanced *exactly* to this version). No new work to
+      // queue; tell the UI it's done so the manager isn't blocked.
+      return NextResponse.json({
+        success: true,
+        queued: false,
+        duplicate: true,
+        pdf_version: newVersion,
+        version: newVersion,
+      })
+    }
+
+    // 'inserted' | 'already_queued' | 'replaced' — in all three a runnable
+    // job now exists for this version.
     return NextResponse.json({
       success: true,
       queued: true,
+      duplicate: outcome === 'already_queued',
+      recovered: outcome === 'replaced',
+      job_id: enqueueResult.id,
+      job_status: finalStatus,
       pdf_version: newVersion,
       version: newVersion,
     })

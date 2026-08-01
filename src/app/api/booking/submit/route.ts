@@ -182,75 +182,75 @@ export async function POST(request: NextRequest) {
     // producing two jobs/quotes for the same reservation request.
     const idempotencyKey = `booking-submit:${data.email}:${data.booking_date}:${data.booking_time}:${data.venue_area_id}`
 
-    const jobPayload = {
-      job_type: 'pdf_generation',
-      payload: {
-        quoteId,
-        quoteNumber,
-        version: 1,
-        customerName: data.name,
-        customerEmail: data.email,
-        customerPhone: data.phone,
-        bookingReference: booking.id,
-        bookingType: bookingTypeName,
-        venueArea: venueAreaName,
-        foodPackage: foodPackageName,
-        drinkPackage: drinkPackageName,
-        addons: addonsDisplayText,
-        addonNames,
-        bookingDate: data.booking_date,
-        bookingTime: data.booking_time,
-        guests,
-        lineItems: calculation.line_items.filter((i: any) => i.total > 0),
-        subtotal: calculation.subtotal,
-        taxRate: calculation.tax_rate,
-        taxAmount: calculation.tax_amount,
-        total: calculation.total,
-        depositPercentage: calculation.deposit_percentage,
-        depositAmount: calculation.deposit_amount,
-        balanceAmount: calculation.balance_amount,
-        validUntil: validUntil.toISOString().split('T')[0],
-        portalUrl,
-        notificationEmails: settings.notification_emails,
-        company: data.company || null,
-        specialRequests: data.special_requests || null,
-      },
-      idempotency_key: idempotencyKey,
-      priority: 1,
-      max_retries: 3,
+    const jobPayloadObject = {
+      quoteId,
+      quoteNumber,
+      version: 1,
+      customerName: data.name,
+      customerEmail: data.email,
+      customerPhone: data.phone,
+      bookingReference: booking.id,
+      bookingType: bookingTypeName,
+      venueArea: venueAreaName,
+      foodPackage: foodPackageName,
+      drinkPackage: drinkPackageName,
+      addons: addonsDisplayText,
+      addonNames,
+      bookingDate: data.booking_date,
+      bookingTime: data.booking_time,
+      guests,
+      lineItems: calculation.line_items.filter((i: any) => i.total > 0),
+      subtotal: calculation.subtotal,
+      taxRate: calculation.tax_rate,
+      taxAmount: calculation.tax_amount,
+      total: calculation.total,
+      depositPercentage: calculation.deposit_percentage,
+      depositAmount: calculation.deposit_amount,
+      balanceAmount: calculation.balance_amount,
+      validUntil: validUntil.toISOString().split('T')[0],
+      portalUrl,
+      notificationEmails: settings.notification_emails,
+      company: data.company || null,
+      specialRequests: data.special_requests || null,
     }
 
-    const { data: job, error: jobError } = await client
-      .from('background_jobs')
-      .insert(jobPayload)
-      .select('id')
-      .single()
+    // Atomic enqueue: the duplicate-decision and any row mutation happen in a
+    // single Postgres transaction under a FOR UPDATE lock on the idempotency
+    // key (migration 060). A double-submit can no longer race between the
+    // INSERT and the SELECT-after-23505 that the old client-side replay used.
+    const { data: enqueueResult, error: enqueueError } = await client.rpc(
+      'enqueue_background_job',
+      {
+        p_job_type: 'pdf_generation',
+        p_payload: jobPayloadObject,
+        p_idempotency_key: idempotencyKey,
+        p_priority: 1,
+        p_max_retries: 3,
+      }
+    )
 
-    // Handle duplicate submission: same content already enqueued/processed.
-    // Replay the existing job id so a double-click never creates duplicate work.
-    if (jobError && jobError.code === '23505') {
-      const { data: existingJob } = await client
-        .from('background_jobs')
-        .select('id, payload')
-        .eq('idempotency_key', idempotencyKey)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+    if (enqueueError || !enqueueResult) {
+      console.error('Failed to enqueue PDF generation job:', enqueueError?.message)
+      return NextResponse.json({ error: 'Failed to queue PDF generation' }, { status: 500 })
+    }
 
+    const outcome: string = enqueueResult.outcome
+
+    // A duplicate submission is one whose prior job is still queued/running or
+    // already completed (no new work performed). 'replaced' means the prior job
+    // was dead and we legitimately created a fresh one — NOT a duplicate.
+    const isDuplicate = outcome === 'already_queued' || outcome === 'already_completed'
+
+    if (isDuplicate) {
       return NextResponse.json({
         success: true,
         booking_id: booking.id,
         quote_id: quoteId,
         quote_number: quoteNumber,
         quotation: calculation,
-        job_id: existingJob?.id || null,
+        job_id: enqueueResult.id || null,
         duplicate: true,
       }, { status: 200 })
-    }
-
-    if (jobError || !job) {
-      console.error('Failed to enqueue PDF generation job:', jobError?.message)
-      return NextResponse.json({ error: 'Failed to queue PDF generation' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
       quote_id: quoteId,
       quote_number: quoteNumber,
       quotation: calculation,
-      job_id: job?.id || null,
+      job_id: enqueueResult.id || null,
     }, { status: 201 })
   } catch (error) {
     console.error('Submit booking error:', error)
