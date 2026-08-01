@@ -234,7 +234,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to queue PDF generation' }, { status: 500 })
     }
 
-    const outcome: string = enqueueResult.outcome
+    // Supabase JS v2 returns an ARRAY for RETURNS TABLE functions, so
+    // normalize to the single row we expect. Belt-and-braces: handle both
+    // shapes in case the client's rpc() behavior ever changes.
+    const resultRow: any = Array.isArray(enqueueResult)
+      ? enqueueResult[0]
+      : enqueueResult
+
+    if (!resultRow) {
+      console.error('Failed to enqueue PDF generation job: RPC returned no row')
+      return NextResponse.json({ error: 'Failed to queue PDF generation' }, { status: 500 })
+    }
+
+    const outcome: string = resultRow.outcome
 
     // A duplicate submission is one whose prior job is still queued/running or
     // already completed (no new work performed). 'replaced' means the prior job
@@ -248,7 +260,7 @@ export async function POST(request: NextRequest) {
         quote_id: quoteId,
         quote_number: quoteNumber,
         quotation: calculation,
-        job_id: enqueueResult.id || null,
+        job_id: resultRow.id || null,
         duplicate: true,
       }, { status: 200 })
     }
@@ -259,7 +271,7 @@ export async function POST(request: NextRequest) {
       quote_id: quoteId,
       quote_number: quoteNumber,
       quotation: calculation,
-      job_id: enqueueResult.id || null,
+      job_id: resultRow.id || null,
     }, { status: 201 })
   } catch (error) {
     console.error('Submit booking error:', error)

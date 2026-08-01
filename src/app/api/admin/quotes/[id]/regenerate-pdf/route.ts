@@ -131,9 +131,20 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to queue PDF regeneration' }, { status: 500 })
     }
 
-    // enqueueResult is a single-row table: { id, status, outcome }
-    const outcome: string = enqueueResult.outcome
-    const finalStatus: string = enqueueResult.status
+    // Supabase JS v2 returns an ARRAY for RETURNS TABLE functions, so
+    // normalize to the single row we expect. Belt-and-braces: handle both
+    // shapes in case the client's rpc() behavior ever changes.
+    const resultRow: any = Array.isArray(enqueueResult)
+      ? enqueueResult[0]
+      : enqueueResult
+
+    if (!resultRow) {
+      console.error('[regenerate-pdf] enqueue_background_job returned no row')
+      return NextResponse.json({ error: 'Failed to queue PDF regeneration' }, { status: 500 })
+    }
+
+    const outcome: string = resultRow.outcome
+    const finalStatus: string = resultRow.status
 
     if (outcome === 'already_completed') {
       // The PDF for this version was already produced (a prior job completed
@@ -155,7 +166,7 @@ export async function POST(
       queued: true,
       duplicate: outcome === 'already_queued',
       recovered: outcome === 'replaced',
-      job_id: enqueueResult.id,
+      job_id: resultRow.id,
       job_status: finalStatus,
       pdf_version: newVersion,
       version: newVersion,
