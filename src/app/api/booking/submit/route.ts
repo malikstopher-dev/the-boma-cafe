@@ -37,6 +37,68 @@ export async function POST(request: NextRequest) {
 
     const client = await getAdminClient()
 
+    // ===================================================================
+    // EARLY IDEMPOTENCY CHECK (before any DB writes).
+    // The idempotency key is derived only from validated request fields,
+    // so we can compute it here and ask the queue whether a prior submit
+    // with the same content already produced a job. If so, replay the
+    // existing quote's reference so the customer sees their original
+    // quotation — and skip every downstream side effect (customer row,
+    // booking row, quote row, audit, availability, enqueue).
+    //
+    // Why upfront: a double-submit previously created a SECOND booking +
+    // quote (e.g. BMC-2026-0015) because the duplicate decision happened
+    // at the very end of the route, after all side-effect inserts. This
+    // short-circuit makes those rows impossible to duplicate.
+    // ===================================================================
+    const idempotencyKey = `booking-submit:${data.email}:${data.booking_date}:${data.booking_time}:${data.venue_area_id}`
+
+    const { data: existingJobRow } = await client
+      .from('background_jobs')
+      .select('id, status, payload')
+      .eq('idempotency_key', idempotencyKey)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (existingJobRow && (existingJobRow.status === 'pending' || existingJobRow.status === 'processing' || existingJobRow.status === 'completed')) {
+      // Replay the prior quote so the success page can render. If the prior
+      // payload is missing the quotation fields (legacy row or hand-edited),
+      // fall through to the full submit path below rather than hand the UI a
+      // malformed success response that would crash SuccessContent.
+      const priorPayload = (existingJobRow.payload as any) || {}
+      const hasFullQuotation = priorPayload.subtotal !== undefined
+        && priorPayload.total !== undefined
+        && priorPayload.depositAmount !== undefined
+        && priorPayload.balanceAmount !== undefined
+        && typeof priorPayload.quoteNumber === 'string'
+
+      if (hasFullQuotation) {
+        return NextResponse.json({
+          success: true,
+          booking_id: priorPayload.bookingReference || null,
+          quote_id: priorPayload.quoteId || null,
+          quote_number: priorPayload.quoteNumber,
+          quotation: {
+            line_items: priorPayload.lineItems || [],
+            subtotal: priorPayload.subtotal,
+            tax_rate: priorPayload.taxRate,
+            tax_amount: priorPayload.taxAmount,
+            total: priorPayload.total,
+            deposit_percentage: priorPayload.depositPercentage,
+            deposit_amount: priorPayload.depositAmount,
+            balance_amount: priorPayload.balanceAmount,
+          },
+          job_id: existingJobRow.id,
+          duplicate: true,
+        }, { status: 200 })
+      }
+      // Malformed prior payload — fall through and create a fresh booking
+      // (duplicate row is preferable to a 200 response that crashes the UI).
+    }
+
+    // (dead_letter / failed / cancelled, malformed prior payload, or no prior row) -> proceed with full submit.
+
     // 1. Find or create customer
     let customerId: string | null = null
     const { data: existingCustomer } = await client
@@ -177,10 +239,8 @@ export async function POST(request: NextRequest) {
     const validUntil = new Date()
     validUntil.setDate(validUntil.getDate() + (settings.quote_validity_days || 14))
 
-    // Idempotency key derived from stable booking content so a double-submit
-    // (e.g. double-click) collides at the DB UNIQUE constraint rather than
-    // producing two jobs/quotes for the same reservation request.
-    const idempotencyKey = `booking-submit:${data.email}:${data.booking_date}:${data.booking_time}:${data.venue_area_id}`
+    // idempotencyKey was computed at the top of this handler (early
+    // duplicate-detection). See the EARLY IDEMPOTENCY CHECK block above.
 
     const jobPayloadObject = {
       quoteId,
