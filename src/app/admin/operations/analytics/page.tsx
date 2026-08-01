@@ -86,27 +86,29 @@ export default function AnalyticsPage() {
       description="Consumption trends, waste patterns, and inventory value"
       actions={
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-gray-700/50 overflow-hidden">
+          <div className="flex rounded-lg overflow-hidden" style={{border:'1px solid #3A3428'}}>
             {RANGES.map(r => (
               <button
                 key={r.days}
                 onClick={() => setRangeDays(r.days)}
                 className={`px-3 py-1.5 text-sm transition-colors ${
-                  rangeDays === r.days ? 'bg-brand-600/20 text-brand-300' : 'text-gray-400 hover:text-white'
+                  rangeDays === r.days ? 'text-white' : 'text-gray-400 hover:text-white'
                 }`}
+                style={rangeDays === r.days ? {background:'rgba(200,160,78,0.2)',color:'#C8A04E'} : {}}
               >
                 {r.label}
               </button>
             ))}
           </div>
-          <div className="flex rounded-lg border border-gray-700/50 overflow-hidden">
+          <div className="flex rounded-lg overflow-hidden" style={{border:'1px solid #3A3428'}}>
             {TYPE_TABS.map(t => (
               <button
                 key={t.value}
                 onClick={() => setTypeTab(t.value)}
                 className={`px-3 py-1.5 text-sm transition-colors ${
-                  typeTab === t.value ? 'bg-brand-600/20 text-brand-300' : 'text-gray-400 hover:text-white'
+                  typeTab === t.value ? 'text-white' : 'text-gray-400 hover:text-white'
                 }`}
+                style={typeTab === t.value ? {background:'rgba(200,160,78,0.2)',color:'#C8A04E'} : {}}
               >
                 {t.label}
               </button>
@@ -117,34 +119,34 @@ export default function AnalyticsPage() {
     >
       <div className="p-6">
         {error && (
-          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <div className="mb-4 rounded-lg px-4 py-3 text-sm" style={{border:'1px solid rgba(232,84,84,0.4)',background:'rgba(232,84,84,0.1)',color:'#E85454'}}>
             {error}
           </div>
         )}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Units Sold ({rangeDays}d)</p>
-            <p className="text-2xl font-bold text-white mt-1">{totalConsumed.toFixed(1)}</p>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:14,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Units Sold ({rangeDays}d)</p>
+            <p style={{fontSize:24,fontWeight:700,color:'#F0EBE3',marginTop:4,fontFamily:'Inter, sans-serif'}}>{totalConsumed.toFixed(1)}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Waste ({rangeDays}d)</p>
-            <p className="text-2xl font-bold text-orange-400 mt-1">{totalWaste.toFixed(1)}</p>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:14,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Waste ({rangeDays}d)</p>
+            <p style={{fontSize:24,fontWeight:700,color:'#FF9800',marginTop:4,fontFamily:'Inter, sans-serif'}}>{totalWaste.toFixed(1)}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Current Stock Value</p>
-            <p className="text-2xl font-bold text-white mt-1">
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:14,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Current Stock Value</p>
+            <p style={{fontSize:24,fontWeight:700,color:'#F0EBE3',marginTop:4,fontFamily:'Inter, sans-serif'}}>
               {valueTrend.length > 0 ? formatCurrency(valueTrend[valueTrend.length - 1].stockValue) : '—'}
             </p>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Loading analytics...</div>
+          <div style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>Loading analytics...</div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-gray-900/40 border border-gray-800/50 rounded-lg p-5">
-              <h3 className="text-white font-semibold mb-1">Consumption Trend</h3>
-              <p className="text-xs text-gray-500 mb-4">Daily units sold — {rangeDays} days</p>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:20}}>
+              <h3 style={{color:'#F0EBE3',fontWeight:600,marginBottom:4,fontFamily:'Inter, sans-serif'}}>Consumption Trend</h3>
+              <p style={{fontSize:12,color:'#A09888',marginBottom:16,fontFamily:'Inter, sans-serif'}}>Daily units sold — {rangeDays} days</p>
               <div className="flex items-end gap-1 h-40">
                 {trend.map(p => {
                   const height = p.totalQuantity > 0 ? (p.totalQuantity / maxTrend) * 100 : 2
@@ -152,28 +154,28 @@ export default function AnalyticsPage() {
                   return (
                     <div key={p.date} className="flex-1 flex flex-col items-center gap-1 group" title={`${p.date}: ${p.totalQuantity.toFixed(1)}`}>
                       <div
-                        className={`w-full rounded-t transition-colors ${today ? 'bg-brand-400' : 'bg-brand-700/60 group-hover:bg-brand-500'}`}
+                        className={`w-full rounded-t transition-colors ${today ? 'bg-amber-600' : 'bg-amber-800/60 group-hover:bg-amber-600'}`}
                         style={{ height: `${Math.max(height, 2)}%` }}
                       />
                     </div>
                   )
                 })}
               </div>
-              <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+              <div className="flex justify-between text-[10px] mt-1" style={{color:'#6B6358'}}>
                 <span>{trend[0]?.date}</span>
                 <span>Today</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-gray-900/40 border border-gray-800/50 rounded-lg p-5">
-                <h3 className="text-white font-semibold mb-1">Waste Heatmap</h3>
-                <p className="text-xs text-gray-500 mb-4">Waste types by day of week (last {waste?.daysAnalyzed ?? rangeDays} days)</p>
+              <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:20}}>
+                <h3 style={{color:'#F0EBE3',fontWeight:600,marginBottom:4,fontFamily:'Inter, sans-serif'}}>Waste Heatmap</h3>
+                <p style={{fontSize:12,color:'#A09888',marginBottom:16,fontFamily:'Inter, sans-serif'}}>Waste types by day of week (last {waste?.daysAnalyzed ?? rangeDays} days)</p>
                 {waste && waste.cells.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left text-gray-500 border-b border-gray-800">
+                        <tr style={{textAlign:'left',color:'#A09888',borderBottom:'1px solid #3A3428'}}>
                           <th className="py-2 pr-3">Type</th>
                           {DAY_NAMES.map(d => <th key={d} className="py-2 px-2 text-center">{d}</th>)}
                           <th className="py-2 pl-2 text-right">Total</th>
@@ -184,7 +186,7 @@ export default function AnalyticsPage() {
                           const rowCells = waste.cells.filter(c => c.type === tt.type)
                           return (
                             <tr key={tt.type} className="border-b border-gray-800/40">
-                              <td className="py-2 pr-3 text-white capitalize">{tt.type.replace('_', ' ')}</td>
+                              <td style={{padding:8,paddingRight:12,textTransform:'capitalize',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{tt.type.replace('_', ' ')}</td>
                               {DAY_NAMES.map((_, dow) => {
                                 const cell = rowCells.find(c => c.dayOfWeek === dow)
                                 const opacity = cell ? 0.25 + 0.75 * (cell.totalQuantity / maxWasteCell) : 0
@@ -200,7 +202,7 @@ export default function AnalyticsPage() {
                                   </td>
                                 )
                               })}
-                              <td className="py-2 pl-2 text-right text-orange-300 font-medium">{tt.totalQuantity.toFixed(1)}</td>
+                              <td style={{padding:8,paddingLeft:8,textAlign:'right',color:'#FF9800',fontWeight:500,fontFamily:'Inter, sans-serif'}}>{tt.totalQuantity.toFixed(1)}</td>
                             </tr>
                           )
                         })}
@@ -208,13 +210,13 @@ export default function AnalyticsPage() {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-gray-500 py-8 text-center text-sm">No waste events in this period.</div>
+                  <div style={{color:'#A09888',padding:'32px 0',textAlign:'center',fontSize:14,fontFamily:'Inter, sans-serif'}}>No waste events in this period.</div>
                 )}
               </div>
 
-              <div className="bg-gray-900/40 border border-gray-800/50 rounded-lg p-5">
-                <h3 className="text-white font-semibold mb-1">Inventory Value Trend</h3>
-                <p className="text-xs text-gray-500 mb-4">Daily snapshot value (carried forward)</p>
+              <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:20}}>
+                <h3 style={{color:'#F0EBE3',fontWeight:600,marginBottom:4,fontFamily:'Inter, sans-serif'}}>Inventory Value Trend</h3>
+                <p style={{fontSize:12,color:'#A09888',marginBottom:16,fontFamily:'Inter, sans-serif'}}>Daily snapshot value (carried forward)</p>
                 <div className="flex items-end gap-1 h-40">
                   {valueTrend.map(p => {
                     const height = p.stockValue > 0 ? (p.stockValue / maxValue) * 100 : 2
@@ -228,12 +230,12 @@ export default function AnalyticsPage() {
                     )
                   })}
                 </div>
-                <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+              <div className="flex justify-between text-[10px] mt-1" style={{color:'#6B6358'}}>
                   <span>{valueTrend[0]?.date}</span>
                   <span>{valueTrend[valueTrend.length - 1]?.date}</span>
                 </div>
                 {valueTrend.every(v => v.stockValue === 0) && (
-                  <p className="text-xs text-gray-500 mt-3">
+                  <p style={{fontSize:12,color:'#A09888',marginTop:12,fontFamily:'Inter, sans-serif'}}>
                     No daily snapshots yet — value appears once the daily snapshot job has run.
                   </p>
                 )}

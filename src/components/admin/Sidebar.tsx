@@ -5,10 +5,58 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createBrowserClient } from '@/lib/supabase'
 import styles from './Sidebar.module.css'
+import {
+  LayoutDashboard,
+  Zap,
+  ClipboardList,
+  ChefHat,
+  Calendar,
+  FileText,
+  DollarSign,
+  CalendarDays,
+  CheckCircle,
+  Salad,
+  Beer,
+  TrendingDown,
+  Tag,
+  Package,
+  RefreshCw,
+  Sparkles,
+  Truck,
+  Receipt,
+  BookOpen,
+  Factory,
+  Trash2,
+  ReceiptText,
+  LinkIcon,
+  MapPin,
+  Download,
+  Bell,
+  BarChart3,
+  Settings,
+  UtensilsCrossed,
+  FolderOpen,
+  PartyPopper,
+  Gift,
+  Image,
+  Film,
+  Megaphone,
+  MessageCircle,
+  Mail,
+  Users,
+  Target,
+  Palette,
+  ExternalLink,
+  LogOut,
+  Home,
+  Utensils,
+  FileEdit,
+  ShoppingCart,
+} from 'lucide-react'
 
 interface NavItem {
   label: string
-  icon: string
+  icon: React.ReactNode
   href: string
 }
 
@@ -21,123 +69,123 @@ const navGroups: NavGroup[] = [
   {
     label: 'Overview',
     items: [
-      { label: 'Dashboard', icon: '📊', href: '/admin/dashboard' },
-      { label: 'Background Jobs', icon: '⚡', href: '/admin/background-jobs' },
+      { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/dashboard' },
+      { label: 'Background Jobs', icon: <Zap size={18} />, href: '/admin/background-jobs' },
     ],
   },
   {
     label: 'Orders',
     items: [
-      { label: 'Orders', icon: '📋', href: '/admin/orders' },
-      { label: 'Kitchen', icon: '👨‍🍳', href: '/admin/kitchen' },
+      { label: 'Orders', icon: <ClipboardList size={18} />, href: '/admin/orders' },
+      { label: 'Kitchen', icon: <ChefHat size={18} />, href: '/admin/kitchen' },
     ],
   },
   {
     label: 'Bookings',
     items: [
-      { label: 'Bookings', icon: '📅', href: '/admin/bookings' },
-      { label: 'Quotes', icon: '📄', href: '/admin/quotes' },
-      { label: 'Pricing', icon: '💰', href: '/admin/pricing' },
-      { label: 'Availability', icon: '🗓️', href: '/admin/availability' },
+      { label: 'Bookings', icon: <Calendar size={18} />, href: '/admin/bookings' },
+      { label: 'Quotes', icon: <FileText size={18} />, href: '/admin/quotes' },
+      { label: 'Pricing', icon: <DollarSign size={18} />, href: '/admin/pricing' },
+      { label: 'Availability', icon: <CalendarDays size={18} />, href: '/admin/availability' },
     ],
   },
   {
     label: 'Operations · Open',
     items: [
-      { label: 'Opening Checklist', icon: '✅', href: '/admin/operations' },
-      { label: 'Reconcile — Food', icon: '🥗', href: '/admin/operations/food/reconcile' },
-      { label: 'Reconcile — Beverage', icon: '🍺', href: '/admin/operations/beverage/reconcile' },
-      { label: 'Stock Counts', icon: '📋', href: '/admin/operations/stock-counts' },
-      { label: 'Variance Report', icon: '📉', href: '/admin/operations/variance' },
+      { label: 'Opening Checklist', icon: <CheckCircle size={18} />, href: '/admin/operations' },
+      { label: 'Reconcile — Food', icon: <Salad size={18} />, href: '/admin/operations/food/reconcile' },
+      { label: 'Reconcile — Beverage', icon: <Beer size={18} />, href: '/admin/operations/beverage/reconcile' },
+      { label: 'Stock Counts', icon: <ClipboardList size={18} />, href: '/admin/operations/stock-counts' },
+      { label: 'Variance Report', icon: <TrendingDown size={18} />, href: '/admin/operations/variance' },
     ],
   },
   {
     label: 'Operations · Inventory',
     items: [
-      { label: 'Dashboard', icon: '📊', href: '/admin/operations/dashboard' },
-      { label: 'All Products', icon: '🏷️', href: '/admin/operations/products' },
-      { label: 'Food Products', icon: '🥗', href: '/admin/operations/food/products' },
-      { label: 'Beverage Products', icon: '🍺', href: '/admin/operations/beverage/products' },
-      { label: 'Containers', icon: '📦', href: '/admin/operations/beverage/containers' },
-      { label: 'Reorder Suggestions', icon: '🔄', href: '/admin/operations/reorder' },
-      { label: 'Forecasting', icon: '🔮', href: '/admin/operations/forecast' },
-      { label: 'Analytics', icon: '📈', href: '/admin/operations/analytics' },
+      { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/operations/dashboard' },
+      { label: 'All Products', icon: <Tag size={18} />, href: '/admin/operations/products' },
+      { label: 'Food Products', icon: <Salad size={18} />, href: '/admin/operations/food/products' },
+      { label: 'Beverage Products', icon: <Beer size={18} />, href: '/admin/operations/beverage/products' },
+      { label: 'Containers', icon: <Package size={18} />, href: '/admin/operations/beverage/containers' },
+      { label: 'Reorder Suggestions', icon: <RefreshCw size={18} />, href: '/admin/operations/reorder' },
+      { label: 'Forecasting', icon: <Sparkles size={18} />, href: '/admin/operations/forecast' },
+      { label: 'Analytics', icon: <BarChart3 size={18} />, href: '/admin/operations/analytics' },
     ],
   },
   {
     label: 'Operations · Purchasing',
     items: [
-      { label: 'Purchase Orders', icon: '📋', href: '/admin/operations/purchase-orders' },
-      { label: 'Receiving', icon: '📦', href: '/admin/operations/receiving' },
-      { label: 'Suppliers', icon: '🚚', href: '/admin/operations/suppliers' },
-      { label: 'Supplier Performance', icon: '📈', href: '/admin/operations/supplier-performance' },
-      { label: 'Price History', icon: '💰', href: '/admin/operations/price-history' },
+      { label: 'Purchase Orders', icon: <ClipboardList size={18} />, href: '/admin/operations/purchase-orders' },
+      { label: 'Receiving', icon: <Package size={18} />, href: '/admin/operations/receiving' },
+      { label: 'Suppliers', icon: <Truck size={18} />, href: '/admin/operations/suppliers' },
+      { label: 'Supplier Performance', icon: <BarChart3 size={18} />, href: '/admin/operations/supplier-performance' },
+      { label: 'Price History', icon: <DollarSign size={18} />, href: '/admin/operations/price-history' },
     ],
   },
   {
     label: 'Operations · Production',
     items: [
-      { label: 'Recipes', icon: '📖', href: '/admin/operations/recipes' },
-      { label: 'Production Runs', icon: '🏭', href: '/admin/operations/production-runs' },
-      { label: 'Waste & Breakage', icon: '🗑️', href: '/admin/operations/waste' },
-      { label: 'Order Items', icon: '🧾', href: '/admin/operations/order-items' },
-      { label: 'Menu Integration', icon: '🔗', href: '/admin/operations/menu-items' },
+      { label: 'Recipes', icon: <BookOpen size={18} />, href: '/admin/operations/recipes' },
+      { label: 'Production Runs', icon: <Factory size={18} />, href: '/admin/operations/production-runs' },
+      { label: 'Waste & Breakage', icon: <Trash2 size={18} />, href: '/admin/operations/waste' },
+      { label: 'Order Items', icon: <ReceiptText size={18} />, href: '/admin/operations/order-items' },
+      { label: 'Menu Integration', icon: <LinkIcon size={18} />, href: '/admin/operations/menu-items' },
     ],
   },
   {
     label: 'Operations · Records',
     items: [
-      { label: 'Locations', icon: '📍', href: '/admin/operations/locations' },
-      { label: 'Transactions', icon: '🔄', href: '/admin/operations/transactions' },
-      { label: 'Imports', icon: '📥', href: '/admin/operations/imports' },
-      { label: 'Notifications', icon: '🔔', href: '/admin/operations/notifications' },
+      { label: 'Locations', icon: <MapPin size={18} />, href: '/admin/operations/locations' },
+      { label: 'Transactions', icon: <RefreshCw size={18} />, href: '/admin/operations/transactions' },
+      { label: 'Imports', icon: <Download size={18} />, href: '/admin/operations/imports' },
+      { label: 'Notifications', icon: <Bell size={18} />, href: '/admin/operations/notifications' },
     ],
   },
   {
     label: 'Operations · Reports',
     items: [
-      { label: 'Reports', icon: '📊', href: '/admin/operations/reports' },
+      { label: 'Reports', icon: <BarChart3 size={18} />, href: '/admin/operations/reports' },
     ],
   },
   {
     label: 'Operations · Settings',
     items: [
-      { label: 'Settings', icon: '⚙️', href: '/admin/operations/settings' },
+      { label: 'Settings', icon: <Settings size={18} />, href: '/admin/operations/settings' },
     ],
   },
   {
     label: 'Menu',
     items: [
-      { label: 'Menu Items', icon: '🍽️', href: '/admin/menu' },
-      { label: 'Categories', icon: '🗂️', href: '/admin/categories' },
-      { label: 'Bar Menu', icon: '🍹', href: '/admin/bar-menu' },
+      { label: 'Menu Items', icon: <UtensilsCrossed size={18} />, href: '/admin/menu' },
+      { label: 'Categories', icon: <FolderOpen size={18} />, href: '/admin/categories' },
+      { label: 'Bar Menu', icon: <Beer size={18} />, href: '/admin/bar-menu' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { label: 'Site Settings', icon: '⚙️', href: '/admin/site-settings' },
-      { label: 'Events', icon: '🎉', href: '/admin/events' },
-      { label: 'Promotions', icon: '🎁', href: '/admin/promotions' },
-      { label: 'Gallery', icon: '🖼️', href: '/admin/gallery' },
-      { label: 'Media Library', icon: '📁', href: '/admin/media' },
-      { label: 'Popup', icon: '🔔', href: '/admin/popup' },
-      { label: 'Announcement', icon: '📢', href: '/admin/announcement' },
+      { label: 'Site Settings', icon: <Settings size={18} />, href: '/admin/site-settings' },
+      { label: 'Events', icon: <PartyPopper size={18} />, href: '/admin/events' },
+      { label: 'Promotions', icon: <Gift size={18} />, href: '/admin/promotions' },
+      { label: 'Gallery', icon: <Image size={18} />, href: '/admin/gallery' },
+      { label: 'Media Library', icon: <Film size={18} />, href: '/admin/media' },
+      { label: 'Popup', icon: <Megaphone size={18} />, href: '/admin/popup' },
+      { label: 'Announcement', icon: <Megaphone size={18} />, href: '/admin/announcement' },
     ],
   },
   {
     label: 'People',
     items: [
-      { label: 'Messages', icon: '💬', href: '/admin/messages' },
-      { label: 'Inquiries', icon: '✉️', href: '/admin/inquiries' },
-      { label: 'Waiters', icon: '👤', href: '/admin/waiters' },
+      { label: 'Messages', icon: <MessageCircle size={18} />, href: '/admin/messages' },
+      { label: 'Inquiries', icon: <Mail size={18} />, href: '/admin/inquiries' },
+      { label: 'Waiters', icon: <Users size={18} />, href: '/admin/waiters' },
     ],
   },
   {
     label: 'Growth',
     items: [
-      { label: 'Analytics', icon: '📈', href: '/admin/analytics' },
-      { label: 'Marketing', icon: '🎨', href: '/admin/marketing' },
+      { label: 'Analytics', icon: <BarChart3 size={18} />, href: '/admin/analytics' },
+      { label: 'Marketing', icon: <Palette size={18} />, href: '/admin/marketing' },
     ],
   },
 ]
@@ -155,7 +203,6 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
-  // Fetch unread inventory alert count
   useEffect(() => {
     const fetchInventoryUnread = async () => {
       try {
@@ -171,7 +218,6 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
     return () => clearInterval(timer)
   }, [])
 
-  // Fetch unread message count
   useEffect(() => {
     const fetchUnread = async () => {
       try {
@@ -190,7 +236,6 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
     }
     fetchUnread()
 
-    // Realtime subscription for new messages
     const supabase = createBrowserClient()
     const channel = supabase
       .channel('sidebar-unread')
@@ -204,12 +249,9 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay */}
       {open && <div className={styles.overlay} onClick={onClose} />}
 
-      {/* Sidebar */}
       <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ''}`}>
-        {/* Logo */}
         <div className={styles.header}>
           <Link href="/admin/dashboard" className={styles.logo} onClick={onClose}>
             <span className={styles.logoText}>The Boma Café</span>
@@ -217,7 +259,6 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
           <span className={styles.logoSub}>Admin</span>
         </div>
 
-        {/* Navigation */}
         <nav className={styles.nav}>
           {navGroups.map(group => (
             <div key={group.label} className={styles.navGroup}>
@@ -232,20 +273,12 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
                   <span className={styles.navIcon}>{item.icon}</span>
                   <span className={styles.navLabel}>{item.label}</span>
                   {item.href === '/admin/messages' && unreadCount > 0 && (
-                    <span style={{
-                      marginLeft: 'auto', padding: '1px 6px', borderRadius: 9999,
-                      background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
-                      minWidth: 16, textAlign: 'center',
-                    }}>
+                    <span className={styles.navBadge}>
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                   {item.href === '/admin/operations/notifications' && inventoryUnread > 0 && (
-                    <span style={{
-                      marginLeft: 'auto', padding: '1px 6px', borderRadius: 9999,
-                      background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
-                      minWidth: 16, textAlign: 'center',
-                    }}>
+                    <span className={styles.navBadge}>
                       {inventoryUnread > 99 ? '99+' : inventoryUnread}
                     </span>
                   )}
@@ -255,14 +288,13 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className={styles.footer}>
           <Link href="/" className={styles.footerLink} target="_blank" rel="noopener noreferrer">
-            <span>🌐</span>
+            <ExternalLink size={16} />
             View Website
           </Link>
           <button onClick={onLogout} className={styles.footerButton}>
-            <span>🚪</span>
+            <LogOut size={16} />
             Logout
           </button>
         </div>
@@ -271,16 +303,15 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
   )
 }
 
-// Mobile bottom navigation
 export function BottomNav({ onMoreClick }: { onMoreClick?: () => void }) {
   const pathname = usePathname()
 
   const tabs = [
-    { label: 'Home', icon: '🏠', href: '/admin/dashboard' },
-    { label: 'Orders', icon: '📋', href: '/admin/orders' },
-    { label: 'Menu', icon: '🍽️', href: '/admin/menu' },
-    { label: 'Content', icon: '📝', href: '/admin/events' },
-    { label: 'More', icon: '⋯', href: '#' },
+    { label: 'Home', icon: <Home size={20} />, href: '/admin/dashboard' },
+    { label: 'Orders', icon: <ClipboardList size={20} />, href: '/admin/orders' },
+    { label: 'Menu', icon: <Utensils size={20} />, href: '/admin/menu' },
+    { label: 'Content', icon: <FileEdit size={20} />, href: '/admin/events' },
+    { label: 'More', icon: <ShoppingCart size={20} />, href: '#' },
   ]
 
   return (

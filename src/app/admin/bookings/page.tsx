@@ -151,15 +151,15 @@ export default function AdminBookings() {
             onClick={() => setActiveTab(tab.id)}
             style={{
               padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: activeTab === tab.id ? '#0F766E' : '#F1F3F7',
-              color: activeTab === tab.id ? '#fff' : '#475569',
+              background: activeTab === tab.id ? '#D4A843' : '#1A1A25',
+              color: activeTab === tab.id ? '#0A0A0F' : '#8A8694',
               fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
               display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
             {tab.label}
             <span style={{
-              background: activeTab === tab.id ? 'rgba(255,255,255,0.2)' : '#E5E7EB',
+              background: activeTab === tab.id ? 'rgba(10,10,15,0.2)' : '#1E1E2A',
               padding: '1px 6px', borderRadius: 9999, fontSize: 11,
             }}>
               {tab.count}
@@ -196,32 +196,32 @@ export default function AdminBookings() {
             const transitions = VALID_TRANSITIONS[booking.status] || []
             return (
               <div key={booking.id} style={{
-                background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20,
+                background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 20,
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{booking.name}</span>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: '#F0EDE8' }}>{booking.name}</span>
                       <Badge variant={STATUS_VARIANTS[booking.status] || 'default'}>
                         {booking.status.replace(/_/g, ' ')}
                       </Badge>
                       {booking.quote && (
-                        <span style={{ padding: '2px 8px', borderRadius: 4, background: '#EFF6FF', color: '#1E40AF', fontSize: 12, fontWeight: 500 }}>
+                        <span style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(96,165,250,0.08)', color: '#60A5FA', fontSize: 12, fontWeight: 500 }}>
                           #{booking.quote.quote_number}
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: 13, color: '#94A3B8' }}>
+                    <span style={{ fontSize: 13, color: '#5A5666' }}>
                       {booking.email} · {booking.phone}
                       {booking.source && ` · via ${booking.source}`}
                     </span>
                   </div>
                   {booking.quote && (
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#F0EDE8' }}>
                         R {Number(booking.quote.total).toLocaleString()}
                       </div>
-                      <div style={{ fontSize: 11, color: '#94A3B8' }}>
+                      <div style={{ fontSize: 11, color: '#5A5666' }}>
                         {booking.quote.status}
                       </div>
                     </div>
@@ -230,7 +230,7 @@ export default function AdminBookings() {
 
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                  gap: 8, marginBottom: 12, fontSize: 13, color: '#475569',
+                  gap: 8, marginBottom: 12, fontSize: 13, color: '#8A8694',
                 }}>
                   <div><strong>Date:</strong> {booking.booking_date}</div>
                   <div><strong>Time:</strong> {booking.booking_time}{booking.duration_hours ? ` (${booking.duration_hours}h)` : ''}</div>
@@ -241,7 +241,7 @@ export default function AdminBookings() {
                 </div>
 
                 {(booking.notes || booking.special_requests) && (
-                  <p style={{ fontSize: 13, color: '#475569', fontStyle: 'italic', marginBottom: 12 }}>
+                  <p style={{ fontSize: 13, color: '#8A8694', fontStyle: 'italic', marginBottom: 12 }}>
                     Notes: {booking.special_requests || booking.notes}
                   </p>
                 )}
@@ -253,14 +253,14 @@ export default function AdminBookings() {
                       variant={status === 'cancelled' ? 'ghost' : 'primary'}
                       size="sm"
                       onClick={() => setStatusTarget({ booking, status })}
-                      style={status === 'cancelled' ? { color: '#EF4444' } : undefined}
+                      style={status === 'cancelled' ? { color: '#F87171' } : undefined}
                     >
                       {status === 'cancelled' ? 'Cancel' :
                        status === 'refunded' ? 'Refund' :
                        `Mark ${status.replace(/_/g, ' ')}`}
                     </Button>
                   ))}
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(booking)} style={{ color: '#EF4444', marginLeft: 'auto' }}>
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(booking)} style={{ color: '#F87171', marginLeft: 'auto' }}>
                     Delete
                   </Button>
                 </div>

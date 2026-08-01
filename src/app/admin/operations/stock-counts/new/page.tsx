@@ -52,10 +52,10 @@ export default function NewStockCountPage() {
   return (
     <AdminPage title="New Stock Count" description="Start a physical inventory count session" actions={<Link href="/admin/operations/stock-counts"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
-      <div className="max-w-md bg-white rounded-lg border p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+      <div style={{maxWidth:'md',background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:24}}>
+        <label style={{display:'block',fontSize:14,fontWeight:500,color:'#A09888',marginBottom:8}}>Location</label>
         <select
-          className="border rounded px-3 py-2 text-sm w-full mb-4"
+          style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',marginBottom:16,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
           value={selectedLocation}
           onChange={e => setSelectedLocation(e.target.value)}
         >
@@ -67,7 +67,7 @@ export default function NewStockCountPage() {
           {isCreating ? 'Creating...' : 'Start Count'}
         </Button>
 
-        <p className="text-xs text-gray-400 mt-3">
+        <p style={{fontSize:12,color:'#6B6358',marginTop:12,fontFamily:'Inter, sans-serif'}}>
           This will create a new stock count session. You will count each product one by one.
         </p>
       </div>

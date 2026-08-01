@@ -57,30 +57,31 @@ export default function AdminPopup() {
   return (
     <AdminPage title="Weekend Popup" description="Configure the weekend breakfast buffet popup">
 
-      <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24 }}>
+      <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>Popup Settings</h2>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#475569' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3' }}>Popup Settings</h2>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#A09888' }}>
             <input type="checkbox" checked={formData.isEnabled} onChange={e => setFormData({ ...formData, isEnabled: e.target.checked })} />
             Enable Popup
           </label>
         </div>
 
-        <div style={{ background: '#F8F9FB', border: '1px solid #E5E7EB', borderRadius: 8, padding: 14, marginBottom: 24 }}>
-          <p style={{ fontSize: 13, color: '#475569' }}>
-            <strong style={{ color: '#0F172A' }}>Note:</strong> Shows on {formData.activeDays.map(d => dayNames[d]).join(', ')} between {formData.startTime}–{formData.endTime}.
+        <div style={{ background: '#242018', border: '1px solid #3A3428', borderRadius: 8, padding: 14, marginBottom: 24 }}>
+          <p style={{ fontSize: 13, color: '#A09888' }}>
+            <strong style={{ color: '#F0EBE3' }}>Note:</strong> Shows on {formData.activeDays.map(d => dayNames[d]).join(', ')} between {formData.startTime}–{formData.endTime}.
           </p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           <div style={{ gridColumn: '1 / -1' }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#0F172A', marginBottom: 6 }}>Active Days</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#F0EBE3', marginBottom: 6 }}>Active Days</label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {[6, 0, 1, 2, 3, 4, 5].map(day => (
                 <button key={day} type="button" onClick={() => toggleDay(day)} style={{
-                  padding: '6px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                  background: formData.activeDays.includes(day) ? '#0F766E' : '#FFFFFF',
-                  color: formData.activeDays.includes(day) ? '#FFFFFF' : '#475569',
+                  padding: '6px 12px', borderRadius: 8,
+                  border: formData.activeDays.includes(day) ? '1px solid #C8A04E' : '1px solid #3A3428',
+                  background: formData.activeDays.includes(day) ? '#C8A04E' : '#1E1A14',
+                  color: formData.activeDays.includes(day) ? '#1A1610' : '#A09888',
                   fontWeight: 500, fontSize: 13, cursor: 'pointer',
                 }}>{dayNames[day]}</button>
               ))}

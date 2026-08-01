@@ -81,7 +81,7 @@ export default function StockCountsPage() {
       key: 'completed_at',
       header: 'Completed',
       cell: count => (
-        <span className="text-gray-500">{count.completed_at ? new Date(count.completed_at).toLocaleDateString() : '—'}</span>
+        <span style={{color:'#A09888'}}>{count.completed_at ? new Date(count.completed_at).toLocaleDateString() : '—'}</span>
       ),
     },
   ]
@@ -93,7 +93,7 @@ export default function StockCountsPage() {
       actions={<Link href="/admin/operations/stock-counts/new"><Button size="sm">New Count</Button></Link>}
       filters={
         <FilterBar>
-          <select className="border rounded px-3 py-2 text-sm" value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
+          <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
             <option value="">All Locations</option>
             {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>

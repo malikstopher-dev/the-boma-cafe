@@ -88,7 +88,7 @@ export default function PurchaseOrdersPage() {
       key: 'expected_at',
       header: 'Expected',
       cell: po => (
-        <span className="text-gray-500">
+        <span style={{color:'#A09888'}}>
           {po.expected_at ? new Date(po.expected_at).toLocaleDateString() : '—'}
           {po.expected_at && po.expected_at < today && ['ordered', 'partial'].includes(po.status) && (
             <span className="ml-2 text-red-500 text-xs font-semibold">OVERDUE</span>
@@ -113,7 +113,7 @@ export default function PurchaseOrdersPage() {
       actions={<Link href="/admin/operations/purchase-orders/new"><Button size="sm">New PO</Button></Link>}
       filters={
         <FilterBar>
-          <select className="border rounded px-3 py-2 text-sm" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="">All Statuses</option>
             <option value="draft">Draft</option>
             <option value="approved">Approved</option>
@@ -122,7 +122,7 @@ export default function PurchaseOrdersPage() {
             <option value="received">Received</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <select className="border rounded px-3 py-2 text-sm" value={supplierFilter} onChange={e => setSupplierFilter(e.target.value)}>
+          <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={supplierFilter} onChange={e => setSupplierFilter(e.target.value)}>
             <option value="">All Suppliers</option>
             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>

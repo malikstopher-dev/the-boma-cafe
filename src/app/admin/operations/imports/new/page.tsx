@@ -143,14 +143,14 @@ export default function NewImportPage() {
       <AdminPage title="New Import" description="Upload a supplier spreadsheet or stock count file" actions={<Link href="/admin/operations/imports"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{error}</div>
+        <div className="mb-4 p-3 rounded text-sm" style={{ background: '#3A1A1A', border: '1px solid #5A2020', color: '#E85454' }}>{error}</div>
       )}
 
       {!preview ? (
-        <div className="max-w-lg bg-white rounded-lg border p-6 space-y-4">
+        <div className="max-w-lg rounded-lg border p-6 space-y-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Import Type</label>
-            <select value={importType} onChange={e => setImportType(e.target.value)} className="border rounded px-3 py-2 text-sm w-full">
+            <label className="block text-sm font-medium mb-1" style={{ color: '#A09888' }}>Import Type</label>
+            <select value={importType} onChange={e => setImportType(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }}>
               <option value="supplier_delivery">Supplier Delivery</option>
               <option value="physical_count">Physical Stock Count</option>
               <option value="adjustment">Manual Adjustment</option>
@@ -159,8 +159,8 @@ export default function NewImportPage() {
 
           {importType === 'supplier_delivery' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier (optional)</label>
-              <select value={supplierId} onChange={e => setSupplierId(e.target.value)} className="border rounded px-3 py-2 text-sm w-full">
+              <label className="block text-sm font-medium mb-1" style={{ color: '#A09888' }}>Supplier (optional)</label>
+              <select value={supplierId} onChange={e => setSupplierId(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }}>
                 <option value="">Auto-detect from data</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -168,8 +168,8 @@ export default function NewImportPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Excel File (.xlsx or .csv)</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400" onClick={() => fileInputRef.current?.click()}>
+            <label className="block text-sm font-medium mb-1" style={{ color: '#A09888' }}>Excel File (.xlsx or .csv)</label>
+            <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer" style={{ borderColor: '#3A3428' }} onClick={() => fileInputRef.current?.click()}>
               {file ? (
                 <div>
                   <p className="font-medium text-sm">{file.name}</p>
@@ -192,34 +192,34 @@ export default function NewImportPage() {
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="bg-white rounded-lg border p-3 text-center">
+            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
               <p className="text-2xl font-bold">{preview.totalRows}</p>
-              <p className="text-xs text-gray-500">Total Rows</p>
+              <p className="text-xs" style={{ color: '#A09888' }}>Total Rows</p>
             </div>
-            <div className="bg-white rounded-lg border p-3 text-center">
-              <p className="text-2xl font-bold text-green-600">{preview.matchedRows}</p>
-              <p className="text-xs text-gray-500">Matched</p>
+            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+              <p className="text-2xl font-bold" style={{ color: '#4CAF50' }}>{preview.matchedRows}</p>
+              <p className="text-xs" style={{ color: '#A09888' }}>Matched</p>
             </div>
-            <div className="bg-white rounded-lg border p-3 text-center">
-              <p className="text-2xl font-bold text-yellow-600">{preview.unknownRows}</p>
-              <p className="text-xs text-gray-500">Unknown</p>
+            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+              <p className="text-2xl font-bold" style={{ color: '#FF9800' }}>{preview.unknownRows}</p>
+              <p className="text-xs" style={{ color: '#A09888' }}>Unknown</p>
             </div>
-            <div className="bg-white rounded-lg border p-3 text-center">
-              <p className="text-2xl font-bold text-red-600">{preview.errorRows}</p>
-              <p className="text-xs text-gray-500">Errors</p>
+            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+              <p className="text-2xl font-bold" style={{ color: '#E85454' }}>{preview.errorRows}</p>
+              <p className="text-xs" style={{ color: '#A09888' }}>Errors</p>
             </div>
-            <div className="bg-white rounded-lg border p-3 text-center">
+            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
               <p className="text-2xl font-bold">{preview.summary.totalQuantity}</p>
-              <p className="text-xs text-gray-500">Total Qty</p>
+              <p className="text-xs" style={{ color: '#A09888' }}>Total Qty</p>
             </div>
           </div>
 
           {preview.rows.length > 0 && (
-            <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="rounded-lg border overflow-hidden" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
               <div className="overflow-x-auto max-h-80">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b bg-gray-50 sticky top-0">
+                    <tr className="border-b sticky top-0" style={{ background: '#242018' }}>
                       <th className="text-left p-2 font-medium">#</th>
                       <th className="text-left p-2 font-medium">Product</th>
                       <th className="text-right p-2 font-medium">Qty</th>
@@ -230,7 +230,7 @@ export default function NewImportPage() {
                   </thead>
                   <tbody>
                     {preview.rows.map(row => (
-                      <tr key={row.rowIndex} className={`border-b ${row.errors.length > 0 ? 'bg-red-50' : !row.match || row.match.matchSource === 'none' ? 'bg-yellow-50' : ''}`}>
+                      <tr key={row.rowIndex} className={`border-b ${row.errors.length > 0 ? '' : !row.match || row.match.matchSource === 'none' ? '' : ''}`} style={row.errors.length > 0 ? { background: '#3A1A1A' } : !row.match || row.match.matchSource === 'none' ? { background: '#2A2210' } : undefined}>
                         <td className="p-2 text-xs text-gray-500">{row.rowIndex}</td>
                         <td className="p-2 font-medium">{row.productName || '—'}</td>
                         <td className="p-2 text-right">{row.parsedQuantity ?? '—'}</td>
@@ -244,7 +244,7 @@ export default function NewImportPage() {
                            row.match.productId ? <Badge variant="info">Matched</Badge> :
                            <Badge>—</Badge>}
                         </td>
-                        <td className="p-2 text-xs text-red-600">{row.errors.map(e => typeof e === 'string' ? e : e.message).join(', ') || ''}</td>
+                        <td className="p-2 text-xs" style={{ color: '#E85454' }}>{row.errors.map(e => typeof e === 'string' ? e : e.message).join(', ') || ''}</td>
                       </tr>
                     ))}
                   </tbody>

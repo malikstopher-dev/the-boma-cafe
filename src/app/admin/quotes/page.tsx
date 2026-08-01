@@ -155,21 +155,21 @@ export default function AdminQuotes() {
         <div style={{ display: 'grid', gap: 8 }}>
           {filtered.map(quote => (
             <div key={quote.id} style={{
-              background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20,
+              background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 20,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>#{quote.quote_number}</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: '#F0EDE8' }}>#{quote.quote_number}</span>
                     <Badge variant={STATUS_VARIANTS[quote.status] || 'default'}>{quote.status}</Badge>
                     {quote.storage_path && (
-                      <span style={{ padding: '2px 6px', borderRadius: 4, background: '#F0FDF4', color: '#166534', fontSize: 11, fontWeight: 500 }}>
+                      <span style={{ padding: '2px 6px', borderRadius: 4, background: 'rgba(212,168,67,0.08)', color: '#D4A843', fontSize: 11, fontWeight: 500 }}>
                         PDF v{quote.pdf_version || 1}
                       </span>
                     )}
                   </div>
                   {quote.booking && (
-                    <span style={{ fontSize: 13, color: '#94A3B8' }}>
+                    <span style={{ fontSize: 13, color: '#5A5666' }}>
                       {quote.booking.name} · {quote.booking.email}
                     </span>
                   )}
@@ -177,15 +177,15 @@ export default function AdminQuotes() {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
                     {quote.is_expired && quote.status === 'sent' && (
-                      <span style={{ padding: '2px 6px', borderRadius: 4, background: '#FEF2F2', color: '#DC2626', fontSize: 11, fontWeight: 500 }}>
+                      <span style={{ padding: '2px 6px', borderRadius: 4, background: 'rgba(248,113,113,0.08)', color: '#F87171', fontSize: 11, fontWeight: 500 }}>
                         EXPIRED
                       </span>
                     )}
-                    <span style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: '#F0EDE8' }}>
                       R {Number(quote.total).toLocaleString()}
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>
+                  <div style={{ fontSize: 12, color: '#5A5666' }}>
                     Deposit: R {Number(quote.deposit_amount).toLocaleString()}
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export default function AdminQuotes() {
 
               <div style={{
                 display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: 8, marginBottom: 12, fontSize: 13, color: '#475569',
+                gap: 8, marginBottom: 12, fontSize: 13, color: '#8A8694',
               }}>
                 {quote.booking && (
                   <>
@@ -203,7 +203,7 @@ export default function AdminQuotes() {
                 )}
                 <div>
                   <strong>Valid until:</strong> {quote.valid_until}
-                  {quote.is_expired && <span style={{ color: '#DC2626', fontWeight: 600 }}> (expired)</span>}
+                  {quote.is_expired && <span style={{ color: '#F87171', fontWeight: 600 }}> (expired)</span>}
                 </div>
                 <div><strong>Created:</strong> {new Date(quote.created_at).toLocaleDateString()}</div>
                 {quote.version_count > 0 && (

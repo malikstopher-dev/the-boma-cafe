@@ -52,13 +52,13 @@ export function BackButton({ href = '/admin/dashboard', label = 'Back' }: {
       gap: '6px',
       fontSize: '13px',
       fontWeight: 500,
-      color: '#94A3B8',
+      color: '#A09888',
       textDecoration: 'none',
       marginBottom: '12px',
       transition: 'color 0.15s',
     }}
-    onMouseEnter={e => (e.currentTarget.style.color = '#0F766E')}
-    onMouseLeave={e => (e.currentTarget.style.color = '#94A3B8')}
+    onMouseEnter={e => (e.currentTarget.style.color = '#C8A04E')}
+    onMouseLeave={e => (e.currentTarget.style.color = '#A09888')}
     >
       ← {label}
     </Link>

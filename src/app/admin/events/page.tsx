@@ -155,18 +155,18 @@ export default function AdminEvents() {
     <AdminPage title="Events" description={`${events.length} total events`}>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#F1F3F7', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#1A1A25', borderRadius: 10, padding: 4 }}>
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => { setActiveTab(tab.key); resetForm(); }}
             style={{
               flex: 1, padding: '8px 16px', borderRadius: 8, border: 'none',
-              background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
-              color: activeTab === tab.key ? '#0F172A' : '#94A3B8',
+              background: activeTab === tab.key ? '#1A1A25' : 'transparent',
+              color: activeTab === tab.key ? '#D4A843' : '#5A5666',
               fontWeight: activeTab === tab.key ? 600 : 500,
               fontSize: 14, cursor: 'pointer',
-              boxShadow: activeTab === tab.key ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              boxShadow: activeTab === tab.key ? '0 1px 2px rgba(0,0,0,0.4)' : 'none',
               transition: 'all 0.15s',
             }}
           >
@@ -177,8 +177,8 @@ export default function AdminEvents() {
 
       {/* Edit Form */}
       {isEditing && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', marginBottom: 20 }}>
+        <div style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#F0EDE8', marginBottom: 20 }}>
             {editEvent ? 'Edit Event' : 'Add New Event'}
           </h2>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
@@ -208,12 +208,12 @@ export default function AdminEvents() {
               </div>
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
-                <input type="checkbox" checked={formData.showOnHomepage} onChange={e => setFormData({ ...formData, showOnHomepage: e.target.checked })} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#8A8694', cursor: 'pointer' }}>
+                <input type="checkbox" checked={formData.showOnHomepage} onChange={e => setFormData({ ...formData, showOnHomepage: e.target.checked })} style={{ background: '#0A0A0F', border: '1px solid #2A2A3A', color: '#F0EDE8', borderRadius: 8 }} />
                 Show on Homepage
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
-                <input type="checkbox" checked={formData.visible} onChange={e => setFormData({ ...formData, visible: e.target.checked })} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#8A8694', cursor: 'pointer' }}>
+                <input type="checkbox" checked={formData.visible} onChange={e => setFormData({ ...formData, visible: e.target.checked })} style={{ background: '#0A0A0F', border: '1px solid #2A2A3A', color: '#F0EDE8', borderRadius: 8 }} />
                 Visible
               </label>
             </div>
@@ -230,9 +230,9 @@ export default function AdminEvents() {
         <div style={{ display: 'grid', gap: 12 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
       ) : activeTab === 'highlight' ? (
         /* Last Week Highlight */
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>Last Week Highlight</h2>
-          <p style={{ fontSize: 14, color: '#94A3B8', marginBottom: 20 }}>Video section displayed on the Events page</p>
+        <div style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#F0EDE8', marginBottom: 8 }}>Last Week Highlight</h2>
+          <p style={{ fontSize: 14, color: '#5A5666', marginBottom: 20 }}>Video section displayed on the Events page</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <Input label="Section Title" value={highlightForm.title} onChange={e => setHighlightForm({ ...highlightForm, title: e.target.value })} placeholder="Last Week at The Boma Café" />
@@ -246,8 +246,8 @@ export default function AdminEvents() {
             <Input label="CTA Link" value={highlightForm.ctaLink} onChange={e => setHighlightForm({ ...highlightForm, ctaLink: e.target.value })} />
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {(['visible', 'autoplay', 'muted', 'loop'] as const).map(key => (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={highlightForm[key]} onChange={e => setHighlightForm({ ...highlightForm, [key]: e.target.checked })} />
+                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#8A8694', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={highlightForm[key]} onChange={e => setHighlightForm({ ...highlightForm, [key]: e.target.checked })} style={{ background: '#0A0A0F', border: '1px solid #2A2A3A', color: '#F0EDE8', borderRadius: 8 }} />
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </label>
               ))}
@@ -276,24 +276,24 @@ export default function AdminEvents() {
               {(activeTab === 'upcoming' ? upcomingEvents : pastEvents).map((event: any) => (
                 <div key={event.id} style={{
                   display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '14px 16px', background: '#FFFFFF',
-                  border: '1px solid #E5E7EB', borderRadius: 12,
+                  padding: '14px 16px', background: '#12121A',
+                  border: '1px solid #1E1E2A', borderRadius: 12,
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{event.title}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8' }}>{event.title}</span>
                       <Badge variant={event.status === 'featured' ? 'accent' : event.isUpcoming ? 'success' : 'default'}>
                         {event.status || (event.isUpcoming ? 'upcoming' : 'past')}
                       </Badge>
                       {event.category && <Badge variant="default">{event.category}</Badge>}
                     </div>
-                    <span style={{ fontSize: 13, color: '#94A3B8' }}>
+                    <span style={{ fontSize: 13, color: '#5A5666' }}>
                       {event.date} · {event.time} · {event.location}
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <Button variant="ghost" size="sm" onClick={() => openEdit(event)}>Edit</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(event)} style={{ color: '#EF4444' }}>Delete</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(event)} style={{ color: '#F87171' }}>Delete</Button>
                   </div>
                 </div>
               ))}

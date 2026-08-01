@@ -163,9 +163,9 @@ export default function AdminBackgroundJobs() {
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           {Object.entries(stats).map(([status, count]) => (
-            <div key={status} className="bg-white rounded-lg border p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500 capitalize">{status.replace('_', ' ')}</span>
+            <div key={status} style={{ background: '#1E1A14', borderRadius: 8, border: '1px solid #3A3428', padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 14, color: '#A09888', textTransform: 'capitalize' }}>{status.replace('_', ' ')}</span>
                 <Badge variant={STATUS_VARIANTS[status] || 'default'}>{count as number}</Badge>
               </div>
               <p className="text-2xl font-bold mt-2">{count as number}</p>

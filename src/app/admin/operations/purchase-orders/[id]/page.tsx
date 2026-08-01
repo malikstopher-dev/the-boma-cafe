@@ -157,52 +157,52 @@ export default function PurchaseOrderDetailPage() {
   return (
     <AdminPage title={`PO — ${po.inventory_suppliers?.name ?? 'Unknown Supplier'}`} actions={pageActions}>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border p-3">
-          <div className="text-xs text-gray-500">Status</div>
-          <div className="font-semibold capitalize">{po.status.replace('_', ' ')}</div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
+          <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Status</div>
+          <div style={{fontWeight:600,textTransform:'capitalize',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{po.status.replace('_', ' ')}</div>
         </div>
-        <div className="bg-white rounded-lg border p-3">
-          <div className="text-xs text-gray-500">Ordered</div>
-          <div className="font-semibold">{po.ordered_at ? new Date(po.ordered_at).toLocaleDateString() : '—'}</div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
+          <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Ordered</div>
+          <div style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{po.ordered_at ? new Date(po.ordered_at).toLocaleDateString() : '—'}</div>
         </div>
-        <div className="bg-white rounded-lg border p-3">
-          <div className="text-xs text-gray-500">Expected</div>
-          <div className="font-semibold">{po.expected_at ? new Date(po.expected_at).toLocaleDateString() : '—'}</div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
+          <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Expected</div>
+          <div style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{po.expected_at ? new Date(po.expected_at).toLocaleDateString() : '—'}</div>
         </div>
-        <div className="bg-white rounded-lg border p-3">
-          <div className="text-xs text-gray-500">Quotation</div>
-          <div className="font-semibold">{po.quotation_ref || '—'}</div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
+          <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Quotation</div>
+          <div style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{po.quotation_ref || '—'}</div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b font-semibold flex justify-between">
+      <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',overflow:'hidden',marginBottom:24}}>
+        <div style={{padding:'12px 16px',borderBottom:'1px solid #3A3428',fontWeight:600,display:'flex',justifyContent:'space-between',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>
           <span>Line Items ({totalOrdered.toFixed(0)} ordered, {totalReceived.toFixed(0)} received)</span>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="text-left p-2">Product</th>
-              <th className="text-right p-2">Ordered</th>
-              <th className="text-right p-2">Received</th>
-              <th className="text-right p-2">Outstanding</th>
-              <th className="text-right p-2">Unit Cost</th>
-              <th className="text-left p-2">Location</th>
+            <tr style={{borderBottom:'1px solid #3A3428',background:'#242018'}}>
+              <th style={{textAlign:'left',padding:8,color:'#A09888',fontWeight:500,fontFamily:'Inter, sans-serif'}}>Product</th>
+              <th style={{textAlign:'right',padding:8,color:'#A09888',fontWeight:500,fontFamily:'Inter, sans-serif'}}>Ordered</th>
+              <th style={{textAlign:'right',padding:8,color:'#A09888',fontWeight:500,fontFamily:'Inter, sans-serif'}}>Received</th>
+              <th style={{textAlign:'right',padding:8,color:'#A09888',fontWeight:500,fontFamily:'Inter, sans-serif'}}>Outstanding</th>
+              <th style={{textAlign:'right',padding:8,color:'#A09888',fontWeight:500,fontFamily:'Inter, sans-serif'}}>Unit Cost</th>
+              <th style={{textAlign:'left',padding:8,color:'#A09888',fontWeight:500,fontFamily:'Inter, sans-serif'}}>Location</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item: any) => {
               const outstanding = Number(item.quantity_ordered) - Number(item.quantity_received ?? 0)
               return (
-                <tr key={item.id} className="border-b">
-                  <td className="p-2 font-medium">{item.inventory_products?.name || item.product_id}</td>
-                  <td className="p-2 text-right">{Number(item.quantity_ordered).toFixed(2)}</td>
-                  <td className="p-2 text-right text-green-600">{Number(item.quantity_received ?? 0).toFixed(2)}</td>
-                  <td className={`p-2 text-right font-mono ${outstanding > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
+                <tr key={item.id} style={{borderBottom:'1px solid #3A3428'}}>
+                  <td style={{padding:8,fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{item.inventory_products?.name || item.product_id}</td>
+                  <td style={{padding:8,textAlign:'right',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{Number(item.quantity_ordered).toFixed(2)}</td>
+                  <td style={{padding:8,textAlign:'right',color:'#4CAF50',fontFamily:'Inter, sans-serif'}}>{Number(item.quantity_received ?? 0).toFixed(2)}</td>
+                  <td style={{padding:8,textAlign:'right',fontFamily:'monospace',color:outstanding > 0 ? '#FF9800' : '#6B6358'}}>
                     {outstanding > 0 ? outstanding.toFixed(2) : '0'}
                   </td>
-                  <td className="p-2 text-right">{item.unit_cost ? `R${Number(item.unit_cost).toFixed(2)}` : '—'}</td>
-                  <td className="p-2 text-gray-500">{item.location_id?.slice(0, 8) || '—'}</td>
+                  <td style={{padding:8,textAlign:'right',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{item.unit_cost ? `R${Number(item.unit_cost).toFixed(2)}` : '—'}</td>
+                  <td style={{padding:8,color:'#A09888',fontFamily:'Inter, sans-serif'}}>{item.location_id?.slice(0, 8) || '—'}</td>
                 </tr>
               )
             })}
@@ -211,28 +211,28 @@ export default function PurchaseOrderDetailPage() {
       </div>
 
       {receiving && canReceive && (
-        <div className="bg-white rounded-lg border p-4 mb-6">
-          <h3 className="font-semibold mb-3">Receive Items</h3>
-          <div className="mb-3">
-            <label className="text-xs font-medium text-gray-600 block mb-1">Invoice Number</label>
-            <input className="border rounded px-3 py-2 text-sm w-64" placeholder="Optional" value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} />
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,marginBottom:24}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Receive Items</h3>
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Invoice Number</label>
+            <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:256,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Optional" value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} />
           </div>
 
           {items.filter((i: any) => Number(i.quantity_ordered) - Number(i.quantity_received ?? 0) > 0).map((item: any) => {
             const outstanding = Number(item.quantity_ordered) - Number(item.quantity_received ?? 0)
             return (
-              <div key={item.id} className="flex gap-3 items-end mb-2 p-2 border rounded">
+              <div key={item.id} className="flex gap-3 items-end mb-2 p-2" style={{border:'1px solid #3A3428',borderRadius:6}}>
                 <div className="flex-1">
-                  <div className="text-sm font-medium">{item.inventory_products?.name || item.product_id}</div>
-                  <div className="text-xs text-gray-500">{outstanding.toFixed(2)} outstanding</div>
+                  <div style={{fontSize:14,fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{item.inventory_products?.name || item.product_id}</div>
+                  <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>{outstanding.toFixed(2)} outstanding</div>
                 </div>
                 <div className="w-20">
-                  <label className="text-xs text-gray-500 block mb-1">Receiving</label>
-                  <input className="border rounded px-3 py-2 text-sm w-full" type="number" min="0" step="0.01" value={receiveForm[item.id]?.qty ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], qty: e.target.value } }))} />
+                  <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Receiving</label>
+                  <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0" step="0.01" value={receiveForm[item.id]?.qty ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], qty: e.target.value } }))} />
                 </div>
                 <div className="w-24">
-                  <label className="text-xs text-gray-500 block mb-1">Unit Cost</label>
-                  <input className="border rounded px-3 py-2 text-sm w-full" type="number" min="0" step="0.01" placeholder="R" value={receiveForm[item.id]?.cost ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], cost: e.target.value } }))} />
+                  <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Unit Cost</label>
+                  <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0" step="0.01" placeholder="R" value={receiveForm[item.id]?.cost ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], cost: e.target.value } }))} />
                 </div>
               </div>
             )
@@ -241,28 +241,28 @@ export default function PurchaseOrderDetailPage() {
           <Button onClick={handleReceive} disabled={actionLoading} size="lg">
             {actionLoading ? 'Receiving...' : 'Receive & Update Stock'}
           </Button>
-          <p className="text-xs text-gray-400 mt-2">
+          <p style={{fontSize:12,color:'#6B6358',marginTop:8,fontFamily:'Inter, sans-serif'}}>
             This will create inventory transactions (type: purchase) and update stock balances automatically.
           </p>
         </div>
       )}
 
       {receipts.length > 0 && (
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="px-4 py-3 border-b font-semibold">Receiving History ({receipts.length})</div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',overflow:'hidden'}}>
+          <div style={{padding:'12px 16px',borderBottom:'1px solid #3A3428',fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Receiving History ({receipts.length})</div>
           {receipts.map((receipt: any) => (
-            <div key={receipt.id} className="border-b p-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="font-medium">{new Date(receipt.received_at).toLocaleString()}</span>
-                {receipt.invoice_number && <span className="text-gray-500">Invoice: {receipt.invoice_number}</span>}
+            <div key={receipt.id} style={{borderBottom:'1px solid #3A3428',padding:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:14,marginBottom:4}}>
+                <span style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{new Date(receipt.received_at).toLocaleString()}</span>
+                {receipt.invoice_number && <span style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}>Invoice: {receipt.invoice_number}</span>}
               </div>
               {(receipt.inventory_po_receipt_items ?? []).length > 0 && (
                 <table className="w-full text-xs mt-1">
                   <thead>
-                    <tr className="border-b text-gray-500">
-                      <th className="text-left p-1">Product</th>
-                      <th className="text-right p-1">Qty</th>
-                      <th className="text-right p-1">Cost</th>
+                    <tr style={{borderBottom:'1px solid #3A3428',color:'#A09888'}}>
+                      <th style={{textAlign:'left',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Product</th>
+                      <th style={{textAlign:'right',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Qty</th>
+                      <th style={{textAlign:'right',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Cost</th>
                     </tr>
                   </thead>
                   <tbody>

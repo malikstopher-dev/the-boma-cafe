@@ -124,14 +124,14 @@ export default function AdminGallery() {
     <AdminPage title="Gallery" description={`${gallery.length} items`} actions={<Button variant="primary" onClick={() => { closeForm(); setIsEditing(true); }}>+ Add Item</Button>}>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#F1F3F7', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#1A1A25', borderRadius: 10, padding: 4 }}>
         {tabs.map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
             flex: 1, padding: '8px 16px', borderRadius: 8, border: 'none',
-            background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
-            color: activeTab === tab.key ? '#0F172A' : '#94A3B8',
+            background: activeTab === tab.key ? '#1A1A25' : 'transparent',
+            color: activeTab === tab.key ? '#D4A843' : '#5A5666',
             fontWeight: activeTab === tab.key ? 600 : 500, fontSize: 14, cursor: 'pointer',
-            boxShadow: activeTab === tab.key ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+            boxShadow: activeTab === tab.key ? '0 1px 2px rgba(0,0,0,0.4)' : 'none',
           }}>{tab.label}</button>
         ))}
       </div>
@@ -139,8 +139,8 @@ export default function AdminGallery() {
       {activeTab === 'main' ? (
         <>
           {isEditing && (
-            <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, marginBottom: 24, maxWidth: 480 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', marginBottom: 20 }}>{editItem ? 'Edit Item' : 'Add Item'}</h2>
+            <div style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 24, marginBottom: 24, maxWidth: 480 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: '#F0EDE8', marginBottom: 20 }}>{editItem ? 'Edit Item' : 'Add Item'}</h2>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <Select label="Type" options={[{ value: 'image', label: 'Image' }, { value: 'video', label: 'Video' }]} value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} />
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -151,8 +151,8 @@ export default function AdminGallery() {
                 </div>
                 <Input label="Title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Optional title" />
                 <Select label="Category" options={categories.map(c => ({ value: c, label: c }))} value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={formData.isFeatured} onChange={e => setFormData({ ...formData, isFeatured: e.target.checked })} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#8A8694', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.isFeatured} onChange={e => setFormData({ ...formData, isFeatured: e.target.checked })} style={{ background: '#0A0A0F', border: '1px solid #2A2A3A', color: '#F0EDE8', borderRadius: 8 }} />
                   Featured on Homepage
                 </label>
                 <div style={{ display: 'flex', gap: 12 }}>
@@ -168,18 +168,18 @@ export default function AdminGallery() {
           : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {gallery.map((item: any) => (
-                <div key={item.id} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-                  <div style={{ height: 150, background: item.url ? `url(${item.url}) center/cover` : '#F1F3F7', position: 'relative' }}>
+                <div key={item.id} style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ height: 150, background: item.url ? `url(${item.url}) center/cover` : '#1A1A25', position: 'relative' }}>
                     {item.isFeatured && <span style={{ position: 'absolute', top: 8, right: 8 }}><Badge variant="accent">★</Badge></span>}
                     {item.type === 'video' && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 24 }}>▶</div>}
                   </div>
                   <div style={{ padding: 12 }}>
-                    <p style={{ fontWeight: 600, color: '#0F172A', fontSize: 14, marginBottom: 4 }}>{item.title || 'Untitled'}</p>
-                    <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 8 }}>{item.category}</p>
+                    <p style={{ fontWeight: 600, color: '#F0EDE8', fontSize: 14, marginBottom: 4 }}>{item.title || 'Untitled'}</p>
+                    <p style={{ fontSize: 12, color: '#5A5666', marginBottom: 8 }}>{item.category}</p>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <Button variant="ghost" size="sm" onClick={() => toggleFeatured(item)}>{item.isFeatured ? 'Unfeature' : 'Feature'}</Button>
                       <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>Edit</Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} style={{ color: '#EF4444' }}>Del</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} style={{ color: '#F87171' }}>Del</Button>
                     </div>
                   </div>
                 </div>
@@ -194,16 +194,16 @@ export default function AdminGallery() {
             {categories.map(cat => (
               <button key={cat} onClick={() => { setLocalCategory(cat); loadLocalImages(cat); }} style={{
                 padding: '6px 14px', borderRadius: 20, border: 'none',
-                background: localCategory === cat ? '#0F766E' : '#F1F3F7',
-                color: localCategory === cat ? '#FFFFFF' : '#475569',
+                background: localCategory === cat ? '#D4A843' : '#1A1A25',
+                color: localCategory === cat ? '#0A0A0F' : '#8A8694',
                 fontWeight: 500, fontSize: 13, cursor: 'pointer',
               }}>{cat}</button>
             ))}
           </div>
 
-          <div style={{ background: '#F8F9FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>Upload to {localCategory}</h3>
-            <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>Upload images to <code style={{ background: '#E5E7EB', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>public/gallery/{categoryFolders[localCategory]}</code></p>
+          <div style={{ background: '#0A0A0F', border: '1px solid #1E1E2A', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 8 }}>Upload to {localCategory}</h3>
+            <p style={{ fontSize: 13, color: '#5A5666', marginBottom: 12 }}>Upload images to <code style={{ background: '#1E1E2A', color: '#8A8694', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>public/gallery/{categoryFolders[localCategory]}</code></p>
             <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
             <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()} loading={isUploading}>+ Upload Images</Button>
           </div>
@@ -213,11 +213,11 @@ export default function AdminGallery() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {localImages.map((img, idx) => (
-                <div key={idx} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+                <div key={idx} style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, overflow: 'hidden' }}>
                   <div style={{ height: 150, background: `url(${img.url}) center/cover` }} />
                   <div style={{ padding: 10 }}>
-                    <p style={{ fontSize: 11, color: '#94A3B8', wordBreak: 'break-all', marginBottom: 8 }}>{img.name}</p>
-                    <Button variant="ghost" size="sm" style={{ color: '#EF4444' }} onClick={() => showError('Delete not available in production')}>Delete</Button>
+                    <p style={{ fontSize: 11, color: '#5A5666', wordBreak: 'break-all', marginBottom: 8 }}>{img.name}</p>
+                    <Button variant="ghost" size="sm" style={{ color: '#F87171' }} onClick={() => showError('Delete not available in production')}>Delete</Button>
                   </div>
                 </div>
               ))}

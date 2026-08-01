@@ -101,8 +101,8 @@ export default function LocationDetailPage() {
       <Link href="/admin/operations/locations"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Location Info</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Location Info</h3>
           <dl className="space-y-2 text-sm">
             {[
               ['Name', form.name, 'name'],
@@ -111,10 +111,10 @@ export default function LocationDetailPage() {
               ['Products with Stock', location.productCount?.toString() || '0', null],
             ].map(([label, value, key]) => (
               <div key={key || label} className="flex justify-between">
-                <dt className="text-gray-500">{label}</dt>
+                <dt style={{color:'#A09888'}}>{label}</dt>
                 <dd className="font-medium text-right">
                   {editing && key ? (
-                    <input className="border rounded px-2 py-1 text-xs w-40 text-right" value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+                    <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:4,padding:'4px 8px',fontSize:12,width:160,textAlign:'right',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
                   ) : (
                     (value as string) || 'ÔÇö'
                   )}
@@ -124,23 +124,23 @@ export default function LocationDetailPage() {
           </dl>
         </div>
 
-        <div className="bg-white rounded-lg border p-4 lg:col-span-2">
-          <h3 className="font-semibold mb-3">Stock at this Location</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,gridColumn:'span 2'}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Stock at this Location</h3>
           {stockItems.length === 0 ? (
-            <p className="text-sm text-gray-400">No products with stock at this location</p>
+            <p style={{fontSize:14,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>No products with stock at this location</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2 font-medium">Product</th>
-                  <th className="text-left p-2 font-medium">Balance</th>
+                <tr style={{borderBottom:'1px solid #3A3428'}}>
+                  <th style={{textAlign:'left',padding:8,fontWeight:500,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Product</th>
+                  <th style={{textAlign:'left',padding:8,fontWeight:500,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Balance</th>
                 </tr>
               </thead>
               <tbody>
                 {stockItems.map((item: any, i: number) => (
-                  <tr key={item.product_id || i} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/operations/products/${item.product_id}`)}>
-                    <td className="p-2">{item.inventory_products?.name || item.product_id}</td>
-                    <td className="p-2 font-mono">{Number(item.balance).toFixed(2)}</td>
+                  <tr key={item.product_id || i} style={{borderBottom:'1px solid #3A3428',cursor:'pointer'}} onClick={() => router.push(`/admin/operations/products/${item.product_id}`)}>
+                    <td style={{padding:8,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{item.inventory_products?.name || item.product_id}</td>
+                    <td style={{padding:8,fontFamily:'monospace',color:'#F0EBE3'}}>{Number(item.balance).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

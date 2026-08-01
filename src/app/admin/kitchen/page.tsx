@@ -8,7 +8,7 @@ export default function KitchenDisplay() {
         station="kitchen"
         title="Kitchen Display"
         icon="👨‍🍳"
-        primaryColor="#f59e0b"
+        primaryColor="#C8A04E"
         loginRole="kitchen"
         accentBgLight="rgba(245,158,11,0.1)"
       />

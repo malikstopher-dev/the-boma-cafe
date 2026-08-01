@@ -75,35 +75,35 @@ export default function ImportDetailPage() {
       <Link href="/admin/operations/imports"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Summary</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Summary</h3>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-gray-500">Total Rows</dt>
-              <dd className="font-medium">{importData.rowCount ?? 'ÔÇö'}</dd>
+              <dt style={{color:'#A09888'}}>Total Rows</dt>
+              <dd style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{importData.rowCount ?? 'ÔÇö'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">Matched</dt>
-              <dd className="font-medium text-green-600">{importData.matchedCount ?? 'ÔÇö'}</dd>
+              <dt style={{color:'#A09888'}}>Matched</dt>
+              <dd style={{fontWeight:500,color:'#4CAF50',fontFamily:'Inter, sans-serif'}}>{importData.matchedCount ?? 'ÔÇö'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">Unknown</dt>
-              <dd className="font-medium text-yellow-600">{importData.unknownCount ?? 'ÔÇö'}</dd>
+              <dt style={{color:'#A09888'}}>Unknown</dt>
+              <dd style={{fontWeight:500,color:'#FF9800',fontFamily:'Inter, sans-serif'}}>{importData.unknownCount ?? 'ÔÇö'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">Errors</dt>
-              <dd className="font-medium text-red-600">{importData.errorCount ?? 'ÔÇö'}</dd>
+              <dt style={{color:'#A09888'}}>Errors</dt>
+              <dd style={{fontWeight:500,color:'#E85454',fontFamily:'Inter, sans-serif'}}>{importData.errorCount ?? 'ÔÇö'}</dd>
             </div>
           </dl>
         </div>
 
-        <div className="bg-white rounded-lg border p-4 lg:col-span-2">
-          <h3 className="font-semibold mb-3">Import Details</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,gridColumn:'span 2'}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Import Details</h3>
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div><dt className="text-gray-500">File</dt><dd className="font-medium">{importData.filename}</dd></div>
-            <div><dt className="text-gray-500">Type</dt><dd className="font-medium capitalize">{importData.importType?.replace('_', ' ') || 'ÔÇö'}</dd></div>
-            <div><dt className="text-gray-500">Status</dt><dd className="font-medium">{importData.status}</dd></div>
-            <div><dt className="text-gray-500">Applied At</dt><dd className="font-medium">{importData.appliedAt || importData.applied_at ? new Date(importData.appliedAt || importData.applied_at).toLocaleString() : 'ÔÇö'}</dd></div>
+            <div><dt style={{color:'#A09888'}}>File</dt><dd style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{importData.filename}</dd></div>
+            <div><dt style={{color:'#A09888'}}>Type</dt><dd style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif',textTransform:'capitalize'}}>{importData.importType?.replace('_', ' ') || 'ÔÇö'}</dd></div>
+            <div><dt style={{color:'#A09888'}}>Status</dt><dd style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{importData.status}</dd></div>
+            <div><dt style={{color:'#A09888'}}>Applied At</dt><dd style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{importData.appliedAt || importData.applied_at ? new Date(importData.appliedAt || importData.applied_at).toLocaleString() : 'ÔÇö'}</dd></div>
           </dl>
         </div>
       </div>

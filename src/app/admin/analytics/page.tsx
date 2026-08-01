@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#ef4444', padding: '3rem', textAlign: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#0f0f1a',       color: '#E85454', padding: '3rem', textAlign: 'center' }}>
         {error}
       </div>
     )
@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0f0f1a',
+      background: '#1A1610',
       color: '#fff',
       padding: '2rem',
       maxWidth: '1200px',
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
             <option value={30}>30 days</option>
             <option value={90}>90 days</option>
           </select>
-          <Link href="/admin" style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>
+          <Link href="/admin" style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', color: '#C8A04E', fontSize: '0.85rem', textDecoration: 'none' }}>
             ← Back
           </Link>
         </div>
@@ -105,17 +105,17 @@ export default function AnalyticsPage() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Revenue</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#10b981' }}>R{data.revenue.toFixed(2)}</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800,           color: '#4CAF50' }}>R{data.revenue.toFixed(2)}</div>
         </div>
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Total Orders</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f59e0b' }}>{data.totalOrders}</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#C8A04E' }}>{data.totalOrders}</div>
         </div>
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Avg Order Value</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#8b5cf6' }}>
+          <div style={{ fontSize: '2rem', fontWeight: 800,           color: '#C8A04E' }}>
             R{data.totalOrders > 0 ? (data.revenue / data.totalOrders).toFixed(2) : '0.00'}
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
         {/* Revenue Chart */}
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)' }}>Daily Revenue</h3>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '120px' }}>
             {data.dailyRevenue.map((d, i) => (
@@ -133,7 +133,7 @@ export default function AnalyticsPage() {
                 style={{
                   flex: 1,
                   height: `${Math.max((d.revenue / maxRev) * 100, 2)}%`,
-                  background: '#10b981',
+                  background: '#4CAF50',
                   borderRadius: '3px 3px 0 0',
                   opacity: 0.7 + 0.3 * (d.revenue / maxRev),
                   minWidth: '4px',
@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Order Frequency Chart */}
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)' }}>Orders per Day</h3>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '120px' }}>
             {data.orderFrequency.map((d, i) => (
@@ -157,7 +157,7 @@ export default function AnalyticsPage() {
                 style={{
                   flex: 1,
                   height: `${Math.max((d.count / maxFreq) * 100, 2)}%`,
-                  background: '#f59e0b',
+                  background: '#C8A04E',
                   borderRadius: '3px 3px 0 0',
                   opacity: 0.7 + 0.3 * (d.count / maxFreq),
                   minWidth: '4px',
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         {/* Top Products */}
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)' }}>Top Products</h3>
           {data.topProducts.length === 0 && (
             <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.85rem' }}>No completed orders yet</div>
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Order Type Breakdown */}
-        <div style={{ background: '#16162a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{         background: '#242018', borderRadius: '16px', padding: '1.5rem', border: '1px solid #3A3428' }}>
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)' }}>Order Type</h3>
           {Object.entries(data.orderTypeBreakdown).map(([type, count]) => {
             const pct = data.totalOrders > 0 ? (count / data.totalOrders * 100).toFixed(1) : '0'
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
                 <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '999px', height: '8px', overflow: 'hidden' }}>
                   <div style={{
                     width: `${pct}%`, height: '100%',
-                    background: type === 'delivery' ? '#8b5cf6' : type === 'pickup' ? '#f59e0b' : '#3b82f6',
+                    background: type === 'delivery' ? '#C8A04E' : type === 'pickup' ? '#FF9800' : '#C8A04E',
                     borderRadius: '999px',
                     transition: 'width 0.3s',
                   }} />

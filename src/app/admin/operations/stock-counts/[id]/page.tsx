@@ -208,38 +208,38 @@ export default function StockCountDetailPage() {
       )}
       <Link href="/admin/operations/stock-counts"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
-      <div className="text-sm text-gray-500 mb-4">
+      <div style={{fontSize:14,color:'#A09888',marginBottom:16,fontFamily:'Inter, sans-serif'}}>
         Counted: {countItems.length} / {totalForCounting} products
       </div>
 
       {isInProgress && mode === 'count' && (
         <div className="max-w-lg mx-auto mb-4">
-          <div className="flex items-center gap-2 bg-white border rounded-lg p-3">
-            <span className="text-gray-400">🔍</span>
+          <div style={{display:'flex',alignItems:'center',gap:8,background:'#1E1A14',border:'1px solid #3A3428',borderRadius:8,padding:12}}>
+            <span style={{color:'#6B6358'}}>🔍</span>
             <input
-              className="flex-1 text-sm outline-none font-mono"
+              style={{flex:1,fontSize:14,outline:'none',fontFamily:'monospace',background:'transparent',border:'none',color:'#F0EBE3'}}
               placeholder="Scan barcode to jump to product…"
               value={scanValue}
               onChange={e => { setScanValue(e.target.value); setScanMessage(null) }}
               onKeyDown={e => { if (e.key === 'Enter') handleScan() }}
               autoComplete="off"
             />
-            <button onClick={handleScan} className="px-3 py-1 text-xs rounded bg-gray-800 text-white hover:bg-gray-900">Go</button>
+            <button onClick={handleScan} style={{padding:'4px 12px',fontSize:12,borderRadius:4,background:'#C8A04E',color:'#1A1610',border:'none',cursor:'pointer',fontWeight:600}}>Go</button>
           </div>
-          {scanMessage && <p className="text-xs text-gray-500 mt-1 text-center">{scanMessage}</p>}
+          {scanMessage && <p style={{fontSize:12,color:'#A09888',marginTop:4,textAlign:'center',fontFamily:'Inter, sans-serif'}}>{scanMessage}</p>}
         </div>
       )}
 
       {isApproved && (
-        <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-4 mb-4 text-sm">
+        <div style={{background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)',color:'#4CAF50',borderRadius:8,padding:16,marginBottom:16,fontSize:14,fontFamily:'Inter, sans-serif'}}>
           This stock count has been approved. Adjustments have been applied to inventory.
         </div>
       )}
 
       {isInProgress && mode === 'count' && totalForCounting === 0 && (
-        <div className="max-w-lg mx-auto bg-white rounded-lg border p-6 text-center">
-          <p className="text-sm text-gray-600 font-medium mb-1">Nothing to count</p>
-          <p className="text-xs text-gray-400">No uncounted products found at this location. Cancel this count to start over.</p>
+        <div style={{maxWidth:'lg',margin:'0 auto',background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:24,textAlign:'center'}}>
+          <p style={{fontSize:14,color:'#A09888',fontWeight:500,marginBottom:4,fontFamily:'Inter, sans-serif'}}>Nothing to count</p>
+          <p style={{fontSize:12,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>No uncounted products found at this location. Cancel this count to start over.</p>
         </div>
       )}
 
@@ -262,7 +262,7 @@ export default function StockCountDetailPage() {
 
           {(countItems.length > 0 || currentIndex >= totalForCounting - 1) && (
             <div className="mt-4 text-center">
-              <button onClick={handleSubmit} disabled={submitting} className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium disabled:opacity-50">
+              <button onClick={handleSubmit} disabled={submitting} style={{padding:'12px 24px',background:'#4CAF50',color:'white',borderRadius:8,border:'none',fontSize:14,fontWeight:500,cursor:'pointer',fontFamily:'Inter, sans-serif',opacity:submitting?0.5:1}}>
                 {submitting ? 'Submitting...' : 'Submit Count for Review'}
               </button>
             </div>

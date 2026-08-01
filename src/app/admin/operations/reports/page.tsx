@@ -96,7 +96,7 @@ export default function ReportsPage() {
       return (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-gray-50">
+            <tr className="border-b" style={{ background: '#242018' }}>
               <th className="text-left p-2">Product</th>
               <th className="text-right p-2">Opening</th>
               <th className="text-right p-2">Purchases</th>
@@ -110,8 +110,8 @@ export default function ReportsPage() {
               <tr key={row.productId} className="border-b">
                 <td className="p-2">{row.productName}</td>
                 <td className="p-2 text-right">{row.openingBalance.toFixed(2)}</td>
-                <td className="p-2 text-right text-green-600">+{row.purchases.toFixed(2)}</td>
-                <td className="p-2 text-right text-red-600">-{row.sales.toFixed(2)}</td>
+                <td className="p-2 text-right" style={{ color: '#4CAF50' }}>+{row.purchases.toFixed(2)}</td>
+                <td className="p-2 text-right" style={{ color: '#E85454' }}>-{row.sales.toFixed(2)}</td>
                 <td className="p-2 text-right">{row.adjustments > 0 ? '+' : ''}{row.adjustments.toFixed(2)}</td>
                 <td className="p-2 text-right font-semibold">{row.closingBalance.toFixed(2)}</td>
               </tr>
@@ -125,7 +125,7 @@ export default function ReportsPage() {
       return (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-gray-50">
+            <tr className="border-b" style={{ background: '#242018' }}>
               <th className="text-left p-2">Product</th>
               <th className="text-right p-2">Expected</th>
               <th className="text-right p-2">Physical</th>
@@ -156,7 +156,7 @@ export default function ReportsPage() {
       return (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-gray-50">
+            <tr className="border-b" style={{ background: '#242018' }}>
               <th className="text-left p-2">Date</th>
               <th className="text-left p-2">Type</th>
               <th className="text-left p-2">Product</th>
@@ -170,7 +170,7 @@ export default function ReportsPage() {
                 <td className="p-2 text-xs">{new Date(row.date).toLocaleDateString()}</td>
                 <td className="p-2 capitalize">{row.transactionType.replace('_', ' ')}</td>
                 <td className="p-2">{row.productName}</td>
-                <td className="p-2 text-right text-red-600">{row.quantity.toFixed(2)}</td>
+                <td className="p-2 text-right" style={{ color: '#E85454' }}>{row.quantity.toFixed(2)}</td>
                 <td className="p-2 text-gray-500 text-xs">{row.notes || '—'}</td>
               </tr>
             ))}
@@ -184,7 +184,7 @@ export default function ReportsPage() {
       return (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-gray-50">
+            <tr className="border-b" style={{ background: '#242018' }}>
               <th className="text-left p-2">#</th>
               <th className="text-left p-2">Product</th>
               <th className="text-right p-2">Total Sold</th>
@@ -200,8 +200,8 @@ export default function ReportsPage() {
                 <td className="p-2 text-right font-mono">{row.totalQuantity.toFixed(2)}</td>
                 <td className="p-2 text-right">{row.transactionCount}</td>
                 <td className="p-2">
-                  <div className="w-24 h-2 bg-gray-100 rounded-full">
-                    <div className="h-2 bg-emerald-500 rounded-full" style={{ width: `${(row.totalQuantity / maxQty) * 100}%` }} />
+                  <div className="w-24 h-2 rounded-full" style={{ background: '#2A261E' }}>
+                    <div className="h-2 rounded-full" style={{ background: '#4CAF50', width: `${(row.totalQuantity / maxQty) * 100}%` }} />
                   </div>
                 </td>
               </tr>
@@ -219,7 +219,7 @@ export default function ReportsPage() {
           <div className="text-2xl font-bold mb-4">Total Value: {formatCurrency(total)}</div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-gray-50">
+              <tr className="border-b" style={{ background: '#242018' }}>
                 <th className="text-left p-2">Product</th>
                 <th className="text-right p-2">Balance</th>
                 <th className="text-right p-2">Unit Cost</th>
@@ -235,8 +235,8 @@ export default function ReportsPage() {
                   <td className="p-2 text-right">{row.unitCost ? formatCurrency(row.unitCost) : '—'}</td>
                   <td className="p-2 text-right font-semibold">{formatCurrency(row.totalValue)}</td>
                   <td className="p-2 pr-4">
-                    <div className="w-24 h-2 bg-gray-100 rounded-full ml-auto">
-                      <div className="h-2 bg-emerald-500 rounded-full" style={{ width: `${(row.totalValue / maxVal) * 100}%` }} />
+                    <div className="w-24 h-2 rounded-full ml-auto" style={{ background: '#2A261E' }}>
+                      <div className="h-2 rounded-full" style={{ background: '#4CAF50', width: `${(row.totalValue / maxVal) * 100}%` }} />
                     </div>
                   </td>
                 </tr>
@@ -263,7 +263,7 @@ export default function ReportsPage() {
 
       <div className="flex gap-2 mb-6 border-b overflow-x-auto">
         {REPORT_TABS.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === t.id ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+          <button key={t.id} onClick={() => setActiveTab(t.id)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === t.id ? 'border-[#C8A04E] text-[#C8A04E]' : 'border-transparent text-gray-400 hover:text-[#F0EBE3]'}`}>
             {t.label}
           </button>
         ))}
@@ -272,8 +272,8 @@ export default function ReportsPage() {
       <div className="flex flex-wrap gap-3 items-end mb-6">
         {tab?.params.includes('location_id') && (
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Location</label>
-            <select className="border rounded px-3 py-2 text-sm" value={filters.location_id || ''} onChange={e => setFilters(f => ({ ...f, location_id: e.target.value }))}>
+            <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>Location</label>
+            <select className="border rounded px-3 py-2 text-sm" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} value={filters.location_id || ''} onChange={e => setFilters(f => ({ ...f, location_id: e.target.value }))}>
               <option value="">Select...</option>
               {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
@@ -281,14 +281,14 @@ export default function ReportsPage() {
         )}
         {tab?.params.includes('date') && (
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Date</label>
-            <input className="border rounded px-3 py-2 text-sm" type="date" value={filters.date || ''} onChange={e => setFilters(f => ({ ...f, date: e.target.value }))} />
+            <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>Date</label>
+            <input className="border rounded px-3 py-2 text-sm" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} type="date" value={filters.date || ''} onChange={e => setFilters(f => ({ ...f, date: e.target.value }))} />
           </div>
         )}
         {tab?.params.includes('stock_count_id') && (
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Stock Count</label>
-            <select className="border rounded px-3 py-2 text-sm" value={filters.stock_count_id || ''} onChange={e => setFilters(f => ({ ...f, stock_count_id: e.target.value }))}>
+            <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>Stock Count</label>
+            <select className="border rounded px-3 py-2 text-sm" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} value={filters.stock_count_id || ''} onChange={e => setFilters(f => ({ ...f, stock_count_id: e.target.value }))}>
               <option value="">Select...</option>
               {stockCounts.map(sc => <option key={sc.id} value={sc.id}>{new Date(sc.created_at).toLocaleDateString()}</option>)}
             </select>
@@ -297,19 +297,19 @@ export default function ReportsPage() {
         {(tab?.params.includes('from') || tab?.params.includes('to')) && (
           <>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">From</label>
-              <input className="border rounded px-3 py-2 text-sm" type="date" value={filters.from?.slice(0, 10) || ''} onChange={e => setFilters(f => ({ ...f, from: e.target.value }))} />
+              <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>From</label>
+              <input className="border rounded px-3 py-2 text-sm" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} type="date" value={filters.from?.slice(0, 10) || ''} onChange={e => setFilters(f => ({ ...f, from: e.target.value }))} />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">To</label>
-              <input className="border rounded px-3 py-2 text-sm" type="date" value={filters.to?.slice(0, 10) || ''} onChange={e => setFilters(f => ({ ...f, to: e.target.value }))} />
+              <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>To</label>
+              <input className="border rounded px-3 py-2 text-sm" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} type="date" value={filters.to?.slice(0, 10) || ''} onChange={e => setFilters(f => ({ ...f, to: e.target.value }))} />
             </div>
           </>
         )}
         {tab?.params.includes('days') && (
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Days</label>
-            <input className="border rounded px-3 py-2 text-sm w-20" type="number" min="1" value={filters.days || '7'} onChange={e => setFilters(f => ({ ...f, days: e.target.value }))} />
+            <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>Days</label>
+            <input className="border rounded px-3 py-2 text-sm w-20" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} type="number" min="1" value={filters.days || '7'} onChange={e => setFilters(f => ({ ...f, days: e.target.value }))} />
           </div>
         )}
         <Button onClick={runReport} disabled={isLoading} size="sm">
@@ -318,13 +318,13 @@ export default function ReportsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+        <div className="rounded-lg p-3 mb-4 text-sm" style={{ background: '#3A1A1A', border: '1px solid #5A2020', color: '#E85454' }}>
           {error}
         </div>
       )}
 
       {isLoading ? <SkeletonCard /> : data !== null ? (
-        <div className="bg-white rounded-lg border overflow-x-auto">{renderTable()}</div>
+        <div className="rounded-lg border overflow-x-auto" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>{renderTable()}</div>
       ) : (
         <div className="text-center py-12 text-gray-400 text-sm">Select filters and click "Run Report"</div>
       )}

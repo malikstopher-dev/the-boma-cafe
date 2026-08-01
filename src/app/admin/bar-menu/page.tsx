@@ -214,9 +214,9 @@ export default function AdminBarMenu() {
     setShowItemForm(true);
   };
 
-  const inputStyle = { padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)', width: '100%', boxSizing: 'border-box' as const };
-  const labelStyle = { fontSize: '0.85rem', fontWeight: 600, color: 'var(--dark-brown)', marginBottom: '0.25rem' };
-  const formSectionStyle = { background: 'var(--white)', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem', boxShadow: 'var(--shadow-md)' };
+  const inputStyle = { padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', width: '100%', boxSizing: 'border-box' as const, background: '#2A261E', color: '#F0EBE3' };
+  const labelStyle = { fontSize: '0.85rem', fontWeight: 600, color: '#F0EBE3', marginBottom: '0.25rem' };
+  const formSectionStyle = { background: '#1E1A14', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' };
 
   if (isLoading) return <div style={{ padding: '2rem' }}>Loading...</div>;
 
@@ -227,8 +227,8 @@ export default function AdminBarMenu() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
           <BackButton />
-          <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Bar Menu</h1>
-          <p style={{ color: 'var(--text-light)' }}>{items.length} drinks in {categories.length} categories</p>
+          <h1 style={{ fontSize: '2rem', color: '#F0EBE3' }}>Bar Menu</h1>
+          <p style={{ color: '#A09888' }}>{items.length} drinks in {categories.length} categories</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button onClick={() => { resetCatForm(); setShowCategoryForm(true); }} className="btn btn-secondary">+ Category</button>
@@ -237,7 +237,7 @@ export default function AdminBarMenu() {
       </div>
 
       {saveError && (
-        <div style={{ padding: '0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        <div style={{ padding: '0.75rem', background: 'rgba(232,84,84,0.15)', color: '#E85454', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>
           {saveError}
         </div>
       )}
@@ -311,22 +311,22 @@ export default function AdminBarMenu() {
 
       {categories.filter(c => c.isActive).map(cat => (
         <div key={cat.id} style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--cream)', borderRadius: '12px 12px 0 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#242018', borderRadius: '12px 12px 0 0' }}>
             <div>
-              <strong style={{ fontSize: '1.1rem', color: 'var(--dark-brown)' }}>{cat.name}</strong>
-              <span style={{ marginLeft: '0.75rem', fontSize: '0.8rem', color: 'var(--text-light)' }}>{itemsByCategory(cat.id).length} items</span>
+              <strong style={{ fontSize: '1.1rem', color: '#F0EBE3' }}>{cat.name}</strong>
+              <span style={{ marginLeft: '0.75rem', fontSize: '0.8rem', color: '#A09888' }}>{itemsByCategory(cat.id).length} items</span>
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button onClick={() => editCatHandler(cat)} style={{ padding: '0.3rem 0.6rem', background: 'var(--white)', border: '1px solid var(--cream)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>Edit</button>
-              <button onClick={() => handleCatDelete(cat.id)} style={{ padding: '0.3rem 0.6rem', background: '#fee2e2', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#dc2626', fontSize: '0.75rem' }}>Delete</button>
+              <button onClick={() => editCatHandler(cat)} style={{ padding: '0.3rem 0.6rem', background: '#1E1A14', border: '1px solid #3A3428', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', color: '#F0EBE3' }}>Edit</button>
+              <button onClick={() => handleCatDelete(cat.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(232,84,84,0.15)', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#E85454', fontSize: '0.75rem' }}>Delete</button>
             </div>
           </div>
-          <div style={{ background: 'var(--white)', borderRadius: '0 0 12px 12px', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ background: '#1E1A14', borderRadius: '0 0 12px 12px', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
             {itemsByCategory(cat.id).map(item => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--cream)', gap: '1rem' }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid #3A3428', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--dark-brown)', fontSize: '0.95rem' }}>{item.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ fontWeight: 600, color: '#F0EBE3', fontSize: '0.95rem' }}>{item.name}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#A09888', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {item.price && <span>{item.price}</span>}
                     {!item.price && (
                       <>
@@ -336,17 +336,17 @@ export default function AdminBarMenu() {
                         {item.shotPrice && <span>Shot R{item.shotPrice}</span>}
                       </>
                     )}
-                    {!item.isAvailable && <span style={{ color: '#dc2626' }}>● Unavailable</span>}
+                    {!item.isAvailable && <span style={{ color: '#E85454' }}>● Unavailable</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                  <button onClick={() => editItemHandler(item)} style={{ padding: '0.3rem 0.6rem', background: 'var(--cream)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>Edit</button>
-                  <button onClick={() => handleItemDelete(item.id)} style={{ padding: '0.3rem 0.6rem', background: '#fee2e2', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#dc2626', fontSize: '0.75rem' }}>Delete</button>
+                  <button onClick={() => editItemHandler(item)} style={{ padding: '0.3rem 0.6rem', background: '#242018', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', color: '#F0EBE3' }}>Edit</button>
+                  <button onClick={() => handleItemDelete(item.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(232,84,84,0.15)', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#E85454', fontSize: '0.75rem' }}>Delete</button>
                 </div>
               </div>
             ))}
             {itemsByCategory(cat.id).length === 0 && (
-              <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.85rem' }}>No drinks in this category</div>
+              <div style={{ padding: '1rem', textAlign: 'center', color: '#A09888', fontSize: '0.85rem' }}>No drinks in this category</div>
             )}
           </div>
         </div>
@@ -354,10 +354,10 @@ export default function AdminBarMenu() {
 
       {categories.filter(c => !c.isActive).length > 0 && (
         <details style={{ marginTop: '2rem' }}>
-          <summary style={{ cursor: 'pointer', color: 'var(--text-light)', fontWeight: 600 }}>Hidden Categories ({categories.filter(c => !c.isActive).length})</summary>
+          <summary style={{ cursor: 'pointer', color: '#A09888', fontWeight: 600 }}>Hidden Categories ({categories.filter(c => !c.isActive).length})</summary>
           {categories.filter(c => !c.isActive).map(cat => (
-            <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--white)', borderRadius: '8px', marginTop: '0.5rem', boxShadow: 'var(--shadow-sm)' }}>
-              <span style={{ color: 'var(--text-light)' }}>{cat.name}</span>
+            <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#1E1A14', borderRadius: '8px', marginTop: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+              <span style={{ color: '#A09888' }}>{cat.name}</span>
               <button onClick={() => handleCatToggle(cat)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>Show</button>
             </div>
           ))}

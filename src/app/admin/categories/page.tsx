@@ -80,13 +80,13 @@ export default function AdminCategories() {
     <AdminPage title="Menu Categories" description={`${categories.length} categories`} actions={<Button variant="primary" onClick={() => { setFormData({ name: '', description: '', isActive: true }); setIsEditing(true); }}>+ Add Category</Button>}>
 
       {isEditing && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, marginBottom: 24, maxWidth: 480 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', marginBottom: 20 }}>{editCategory ? 'Edit Category' : 'Add Category'}</h2>
+        <div style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 24, marginBottom: 24, maxWidth: 480 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#F0EDE8', marginBottom: 20 }}>{editCategory ? 'Edit Category' : 'Add Category'}</h2>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Input label="Category Name" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Flame Grilled" />
             <Textarea label="Description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Optional description..." />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#8A8694', cursor: 'pointer' }}>
+              <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} style={{ background: '#0A0A0F', border: '1px solid #2A2A3A', color: '#F0EDE8', borderRadius: 8 }} />
               Active (visible on menu)
             </label>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -102,18 +102,18 @@ export default function AdminCategories() {
       : (
         <div style={{ display: 'grid', gap: 8 }}>
           {categories.map((cat: any) => (
-            <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12 }}>
+            <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{cat.name}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8' }}>{cat.name}</span>
                   <Badge variant={cat.isActive ? 'success' : 'danger'}>{cat.isActive ? 'Active' : 'Inactive'}</Badge>
                 </div>
-                {cat.description && <span style={{ fontSize: 13, color: '#94A3B8' }}>{cat.description}</span>}
+                {cat.description && <span style={{ fontSize: 13, color: '#5A5666' }}>{cat.description}</span>}
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <Button variant="ghost" size="sm" onClick={() => toggleActive(cat)}>{cat.isActive ? 'Disable' : 'Enable'}</Button>
                 <Button variant="ghost" size="sm" onClick={() => openEdit(cat)}>Edit</Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(cat)} style={{ color: '#EF4444' }}>Delete</Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(cat)} style={{ color: '#F87171' }}>Delete</Button>
               </div>
             </div>
           ))}

@@ -100,25 +100,25 @@ export default function WaitersPage() {
           {sorted.map(w => (
             <div key={w.id} style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px', background: '#FFFFFF',
-              border: '1px solid #E5E7EB', borderRadius: 10,
+              padding: '10px 14px', background: '#1E1A14',
+              border: '1px solid #3A3428', borderRadius: 10,
               opacity: w.active ? 1 : 0.6,
             }}>
               <span style={{
                 width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 700, fontSize: 13,
-                background: w.active ? 'rgba(16,185,129,0.12)' : '#F1F3F7',
-                color: w.active ? '#10B981' : '#94A3B8',
+                background: w.active ? 'rgba(76,175,80,0.12)' : '#242018',
+                color: w.active ? '#4CAF50' : '#6B6358',
               }}>{w.name.charAt(0).toUpperCase()}</span>
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 {editId === w.id ? (
-                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') updateName(w.id); if (e.key === 'Escape') setEditId(null) }} onBlur={() => updateName(w.id)} autoFocus style={{ width: '100%', padding: '4px 8px', borderRadius: 6, border: '2px solid #0F766E', fontSize: 14 }} />
+                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') updateName(w.id); if (e.key === 'Escape') setEditId(null) }} onBlur={() => updateName(w.id)} autoFocus style={{ width: '100%', padding: '4px 8px', borderRadius: 6, border: '2px solid #C8A04E', fontSize: 14, background: '#2A261E', color: '#F0EBE3' }} />
                 ) : (
                   <>
-                    <span style={{ fontWeight: 600, color: '#0F172A', fontSize: 14, display: 'block' }}>{w.name}</span>
-                    <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                    <span style={{ fontWeight: 600, color: '#F0EBE3', fontSize: 14, display: 'block' }}>{w.name}</span>
+                    <span style={{ fontSize: 11, color: '#6B6358' }}>
                       {w.employee_id ? `${w.employee_id} · ` : ''}Added {new Date(w.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </>
@@ -130,7 +130,7 @@ export default function WaitersPage() {
               <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                 <Button variant="ghost" size="iconSm" onClick={() => { setEditId(w.id); setEditName(w.name) }} title="Edit">✏️</Button>
                 <Button variant="ghost" size="iconSm" onClick={() => toggleActive(w.id, w.active)} title={w.active ? 'Off duty' : 'On duty'}>{w.active ? '🔴' : '🟢'}</Button>
-                <Button variant="ghost" size="iconSm" onClick={() => setDeleteTarget(w)} title="Delete" style={{ color: '#EF4444' }}>🗑️</Button>
+                <Button variant="ghost" size="iconSm" onClick={() => setDeleteTarget(w)} title="Delete" style={{ color: '#E85454' }}>🗑️</Button>
               </div>
             </div>
           ))}

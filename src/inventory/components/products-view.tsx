@@ -9,6 +9,7 @@ import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
 type Product = {
   id: string
@@ -96,7 +97,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       header: 'Name',
       sortable: true,
       cell: product => (
-        <span className={!product.is_active ? 'opacity-50' : ''}>
+        <span style={!product.is_active ? { opacity: 0.5 } : {}}>
           {product.name}
         </span>
       ),
@@ -106,7 +107,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       header: 'SKU',
       sortable: true,
       cell: product => (
-        <span className="text-xs text-gray-500 font-mono">{product.sku || '—'}</span>
+        <span style={{ fontSize: 12, color: '#5A5666', fontFamily: "'JetBrains Mono', monospace" }}>{product.sku || '—'}</span>
       ),
     },
     {
@@ -114,7 +115,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       header: 'Barcode',
       sortable: true,
       cell: product => (
-        <span className="text-xs text-gray-500 font-mono">{product.barcode || '—'}</span>
+        <span style={{ fontSize: 12, color: '#5A5666', fontFamily: "'JetBrains Mono', monospace" }}>{product.barcode || '—'}</span>
       ),
     },
     {
@@ -149,18 +150,27 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
     },
   ]
 
+  const titleLabel = forcedType
+    ? `${forcedType.charAt(0) + forcedType.slice(1).toLowerCase()} Products`
+    : 'Products'
+
+  const descLabel = forcedType
+    ? `${forcedType.charAt(0) + forcedType.slice(1).toLowerCase()} products only — see all in Products`
+    : 'Manage inventory products'
+
   return (
     <AdminPage
-      title={forcedType ? `${forcedType.charAt(0) + forcedType.slice(1).toLowerCase()} Products` : 'Products'}
-      description={
-        forcedType
-          ? `${forcedType.charAt(0) + forcedType.slice(1).toLowerCase()} products only — see all in Products`
-          : 'Manage inventory products'
-      }
+      title={titleLabel}
+      description={descLabel}
       filters={
         <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search name, SKU, or barcode…">
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#8A8694', cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={e => setShowArchived(e.target.checked)}
+              style={{ accentColor: '#D4A843' }}
+            />
             Show archived
           </label>
           <Button onClick={() => setShowCreateForm(v => !v)} size="sm">
@@ -171,22 +181,23 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       }
     >
       {showCreateForm && (
-        <div className="bg-white border rounded-lg p-4 mb-4">
-          <div className="grid grid-cols-4 gap-3 mb-3">
+        <div className={styles.card} style={{ marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
             <input
-              className="border rounded px-3 py-2 text-sm"
+              className={styles.input}
               placeholder="Product name *"
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             />
             <input
-              className="border rounded px-3 py-2 text-sm"
+              className={styles.input}
               placeholder="SKU"
               value={form.sku}
               onChange={e => setForm(f => ({ ...f, sku: e.target.value }))}
             />
             <input
-              className="border rounded px-3 py-2 text-sm font-mono"
+              className={styles.input}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
               placeholder="Barcode (scan or type)"
               value={form.barcode}
               onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))}
@@ -194,14 +205,15 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
             />
             {forcedType ? (
               <input
-                className="border rounded px-3 py-2 text-sm bg-gray-100 text-gray-600"
+                className={styles.input}
                 value={form.inventory_type}
                 readOnly
                 tabIndex={-1}
+                disabled
               />
             ) : (
               <select
-                className="border rounded px-3 py-2 text-sm"
+                className={styles.input + ' ' + styles.select}
                 value={form.inventory_type}
                 onChange={e => setForm(f => ({ ...f, inventory_type: e.target.value }))}
               >
@@ -209,7 +221,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
               </select>
             )}
           </div>
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: 8 }}>
             <Button onClick={handleCreate} disabled={saving || !form.name.trim()}>{saving ? 'Creating...' : 'Create Product'}</Button>
             <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
           </div>

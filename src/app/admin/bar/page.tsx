@@ -8,7 +8,7 @@ export default function BarDisplay() {
         station="bar"
         title="Bar Display"
         icon="🍸"
-        primaryColor="#8b5cf6"
+        primaryColor="#C8A04E"
         loginRole="bar"
         accentBgLight="rgba(139,92,246,0.1)"
       />

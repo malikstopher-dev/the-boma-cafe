@@ -146,13 +146,13 @@ export default function TransactionsPage() {
             type="date"
             value={dateFrom}
             onChange={e => setDateFrom(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm"
+            style={{padding:'6px 12px',border:'1px solid #3A3428',borderRadius:8,fontSize:14,background:'#2A261E',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
           />
           <input
             type="date"
             value={dateTo}
             onChange={e => setDateTo(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm"
+            style={{padding:'6px 12px',border:'1px solid #3A3428',borderRadius:8,fontSize:14,background:'#2A261E',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
           />
           <Button onClick={fetchTransactions} variant="secondary" size="sm">Filter</Button>
         </FilterBar>

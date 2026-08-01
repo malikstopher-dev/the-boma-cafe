@@ -48,8 +48,8 @@ function TableGrid({
               style={{
                 padding: '0.6rem 0.4rem',
                 borderRadius: '10px',
-                border: selectedTable === t.tableNumber ? '2px solid #f59e0b' : isOccupied ? '2px solid rgba(59,130,246,0.4)' : '2px solid rgba(255,255,255,0.12)',
-                background: selectedTable === t.tableNumber ? '#f59e0b' : '#1c1c2e',
+                border: selectedTable === t.tableNumber ? '2px solid #C8A04E' : isOccupied ? '2px solid rgba(200,160,78,0.4)' : '2px solid rgba(255,255,255,0.12)',
+                background: selectedTable === t.tableNumber ? '#C8A04E' : '#1E1A14',
                 cursor: 'pointer',
                 color: selectedTable === t.tableNumber ? '#000000' : '#ffffff',
                 textAlign: 'center',
@@ -75,12 +75,12 @@ function TableGrid({
 
 function PaymentBadge({ paymentStatus }: { paymentStatus: string }) {
   if (paymentStatus === 'paid') {
-    return <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(16,185,129,0.2)', color: '#10b981' }}>Paid</span>
+    return <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(16,185,129,0.2)', color: '#4CAF50' }}>Paid</span>
   }
   if (paymentStatus === 'refunded') {
-    return <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(239,68,68,0.2)', color: '#ef4444' }}>Refunded</span>
+    return <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(239,68,68,0.2)', color: '#E85454' }}>Refunded</span>
   }
-  return <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }}>Pending Payment</span>
+  return <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(245,158,11,0.2)', color: '#C8A04E' }}>Pending Payment</span>
 }
 
 function OrderCard({
@@ -107,7 +107,7 @@ function OrderCard({
   const [showTableDropdown, setShowTableDropdown] = useState(false)
   const items = parseOrderItems(order.items_json)
   const status = order.status as any
-  const color = STATUS_COLORS[status] || '#6b7280'
+  const color = STATUS_COLORS[status] || '#A09888'
   const label = STATUS_LABELS[status] || status
   const displayRef = order.order_ref || `#${order.id.slice(0, 8).toUpperCase()}`
   const tn = getOrderTableNumber(order)
@@ -118,7 +118,7 @@ function OrderCard({
     <div
       onClick={onClick}
       style={{
-        background: selected ? '#1e1e38' : '#16162a',
+        background: selected ? '#242018' : '#242018',
         borderRadius: '12px',
         padding: '1rem',
         border: selected ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.04)',
@@ -150,11 +150,11 @@ function OrderCard({
         <span>{order.order_type === 'pickup' ? '📦 Pickup' : order.order_type === 'delivery' ? '🚚 Delivery' : '🍽️ Dine-in'}</span>
         <span>⏱ {timeSince(order.created_at)}</span>
         {tn && <span>🪑 Table {tn}</span>}
-        {order.waiter_name && <span style={{ color: '#dc2626', fontWeight: 600 }}>🍽️ {order.waiter_name}</span>}
+        {order.waiter_name && <span style={{ color: '#E85454', fontWeight: 600 }}>🍽️ {order.waiter_name}</span>}
         <span style={{ color: 'rgba(255,255,255,0.3)' }}>📋 {itemCount} item{itemCount !== 1 ? 's' : ''}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981' }}>R{order.total.toFixed(2)}</span>
+        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4CAF50' }}>R{order.total.toFixed(2)}</span>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {/* Waiter order: show Confirm button for admin/FOH (kitchen can still start without confirmation) */}
           {order.source === 'waiter' && order.status === 'pending' && (
@@ -162,7 +162,7 @@ function OrderCard({
               onClick={(e) => { e.stopPropagation(); onConfirmWaiterOrder(order.id) }}
               style={{
                 padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
-                background: '#3b82f6', color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                background: '#C8A04E', color: '#fff', fontSize: '0.75rem', fontWeight: 700,
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}
               title="Confirm waiter order (kitchen can also start without this)"
@@ -176,7 +176,7 @@ function OrderCard({
                 onClick={(e) => { e.stopPropagation(); onConfirmPayment(order.id) }}
                 style={{
                   padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
-                  background: '#10b981', color: '#000', fontSize: '0.75rem', fontWeight: 700,
+                  background: '#4CAF50', color: '#000', fontSize: '0.75rem', fontWeight: 700,
                   cursor: 'pointer', whiteSpace: 'nowrap',
                 }}
               >
@@ -185,8 +185,8 @@ function OrderCard({
               <button
                 onClick={(e) => { e.stopPropagation(); onAcceptNoPayment(order.id) }}
                 style={{
-                  padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid #f59e0b',
-                  background: 'transparent', color: '#f59e0b', fontSize: '0.7rem', fontWeight: 600,
+                  padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid #C8A04E',
+                  background: 'transparent', color: '#C8A04E', fontSize: '0.7rem', fontWeight: 600,
                   cursor: 'pointer', whiteSpace: 'nowrap',
                 }}
               >
@@ -199,7 +199,7 @@ function OrderCard({
               onClick={(e) => { e.stopPropagation(); onCancel?.(order.id) }}
               style={{
                 padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
-                background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 700,
+                background: '#E85454', color: '#fff', fontSize: '0.7rem', fontWeight: 700,
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
@@ -221,7 +221,7 @@ function OrderCard({
             {showTableDropdown && (
               <div style={{
                 position: 'absolute', bottom: '100%', right: 0, zIndex: 100,
-                background: '#2a2a3e', borderRadius: '10px', padding: '0.25rem',
+                background: '#2A261E', borderRadius: '10px', padding: '0.25rem',
                 border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                 minWidth: '140px', marginBottom: '4px',
               }}>
@@ -248,7 +248,7 @@ function OrderCard({
       </div>
       {order.status === 'cancelled' && order.cancellation_reason && (
         <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.6rem', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#fca5a5' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#E85454' }}>
             Cancel reason: {order.cancellation_reason}
           </span>
         </div>
@@ -336,7 +336,7 @@ function CheckoutPanel({
     <div style={{
       width: isMobile ? '100%' : '380px',
       maxHeight: isMobile ? '50vh' : 'none',
-      background: '#12121e',
+      background: '#1E1A14',
       borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.06)',
       borderTop: isMobile ? '1px solid rgba(255,255,255,0.06)' : 'none',
       display: 'flex',
@@ -353,8 +353,8 @@ function CheckoutPanel({
         <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem' }}>
           <span>🕐 {formatTime(order.created_at)}</span>
           <span>📋 {order.order_type}</span>
-        {tn && <span style={{ color: '#dc2626', fontWeight: 700 }}>🪑 Table {tn}</span>}
-        {order.waiter_name && <span style={{ color: '#dc2626', fontWeight: 600 }}>🍽️ {order.waiter_name}</span>}
+        {tn && <span style={{ color: '#E85454', fontWeight: 700 }}>🪑 Table {tn}</span>}
+        {order.waiter_name && <span style={{ color: '#E85454', fontWeight: 600 }}>🍽️ {order.waiter_name}</span>}
         </div>
 
         {!tn && (
@@ -392,7 +392,7 @@ function CheckoutPanel({
                 <span><strong>{item.quantity}x</strong> {item.name}</span>
                 <span style={{ color: 'rgba(255,255,255,0.6)' }}>R{(item.price * item.quantity).toFixed(2)}</span>
               </div>
-              {item.notes && <div style={{ fontSize: '0.8rem', color: '#fbbf24', marginTop: '0.15rem' }}>⚠️ {item.notes}</div>}
+              {item.notes && <div style={{ fontSize: '0.8rem', color: '#C8A04E', marginTop: '0.15rem' }}>⚠️ {item.notes}</div>}
             </div>
           ))}
         </div>
@@ -400,7 +400,7 @@ function CheckoutPanel({
         <div style={{ borderTop: '2px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 700 }}>
             <span>Total</span>
-            <span style={{ color: '#10b981' }}>R{order.total.toFixed(2)}</span>
+            <span style={{ color: '#4CAF50' }}>R{order.total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -413,9 +413,9 @@ function CheckoutPanel({
                 onClick={() => setMethod(m)}
                 style={{
                   flex: 1, padding: '0.6rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600,
-                  border: method === m ? '2px solid #f59e0b' : '2px solid rgba(255,255,255,0.1)',
+                  border: method === m ? '2px solid #C8A04E' : '2px solid rgba(255,255,255,0.1)',
                   background: method === m ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)',
-                  color: method === m ? '#f59e0b' : 'rgba(255,255,255,0.6)',
+                  color: method === m ? '#C8A04E' : 'rgba(255,255,255,0.6)',
                   cursor: 'pointer', textTransform: 'capitalize',
                 }}
               >
@@ -432,7 +432,7 @@ function CheckoutPanel({
           disabled={paying || !canPay}
           style={{
             width: '100%', padding: '1rem', border: 'none', borderRadius: '10px',
-            background: canPay ? '#10b981' : 'rgba(255,255,255,0.05)',
+            background: canPay ? '#4CAF50' : 'rgba(255,255,255,0.05)',
             color: canPay ? '#000' : 'rgba(255,255,255,0.3)',
             fontSize: '1.1rem', fontWeight: 800,
             cursor: canPay && !paying ? 'pointer' : 'not-allowed',
@@ -731,14 +731,14 @@ export default function OrdersPOS() {
       paddingTop: 60,
       display: 'flex',
       flexDirection: 'column',
-      background: '#0f0f1a',
+      background: '#1A1610',
       color: '#fff',
       fontFamily: "'Inter', -apple-system, sans-serif",
       overflow: 'hidden',
       boxSizing: 'border-box',
     }}>
       {(connectionError || authExpired) && (
-        <div style={{ padding: '0.5rem 1.5rem', background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.85rem', textAlign: 'center', flexShrink: 0 }}>
+        <div style={{ padding: '0.5rem 1.5rem', background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.3)', color: '#E85454', fontSize: '0.85rem', textAlign: 'center', flexShrink: 0 }}>
           {authExpired ? '⚠ Session expired — please log out and log in again' : '⚠ Connection lost — showing cached data. Retrying...'}
         </div>
       )}
@@ -746,7 +746,7 @@ export default function OrdersPOS() {
         <div style={{
           position: 'fixed', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
           padding: '0.75rem 1.5rem', borderRadius: '12px',
-          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          background: toast.type === 'success' ? '#4CAF50' : '#E85454',
           color: '#000', fontSize: '0.9rem', fontWeight: 600,
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           animation: 'fadeIn 0.2s ease',
@@ -764,7 +764,7 @@ export default function OrdersPOS() {
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
-        background: '#0a0a14',
+        background: '#151210',
         overflowY: isMobile ? 'auto' : 'visible',
       }}>
         <div style={{
@@ -820,7 +820,7 @@ export default function OrdersPOS() {
               <span style={{
                 padding: '0.15rem 0.5rem', borderRadius: '6px',
                 fontSize: '0.75rem', fontWeight: 600,
-                background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+                background: 'rgba(245,158,11,0.15)', color: '#C8A04E',
               }}>
                 {visibleOrders.length}
               </span>
@@ -830,7 +830,7 @@ export default function OrdersPOS() {
               style={{
                 padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
                 background: showHistory ? 'rgba(245,158,11,0.15)' : 'transparent',
-                color: showHistory ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                color: showHistory ? '#C8A04E' : 'rgba(255,255,255,0.5)',
                 fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
               }}
             >
@@ -897,7 +897,7 @@ export default function OrdersPOS() {
         background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
       }}>
         <div style={{
-          background: '#1e1e38', borderRadius: '16px', padding: '1.5rem',
+          background: '#242018', borderRadius: '16px', padding: '1.5rem',
           width: '400px', maxWidth: '90vw', boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
         }}>
           <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', color: '#fff' }}>Cancel Order</h3>
@@ -911,12 +911,12 @@ export default function OrdersPOS() {
             rows={3}
             style={{
               width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)',
-              background: '#16162a', color: '#fff', fontSize: '0.85rem', outline: 'none',
+              background: '#242018', color: '#fff', fontSize: '0.85rem', outline: 'none',
               resize: 'vertical', boxSizing: 'border-box',
             }}
           />
           {cancelReason.trim().length > 0 && cancelReason.trim().length < 3 && (
-            <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#f59e0b' }}>
+            <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#C8A04E' }}>
               Reason must be at least 3 characters
             </p>
           )}
@@ -935,7 +935,7 @@ export default function OrdersPOS() {
               disabled={cancelling || cancelReason.trim().length < 3}
               style={{
                 padding: '0.5rem 1rem', borderRadius: '10px', border: 'none',
-                background: cancelling || cancelReason.trim().length < 3 ? 'rgba(239,68,68,0.3)' : '#ef4444',
+                background: cancelling || cancelReason.trim().length < 3 ? 'rgba(239,68,68,0.3)' : '#E85454',
                 color: cancelling || cancelReason.trim().length < 3 ? 'rgba(255,255,255,0.4)' : '#fff',
                 fontSize: '0.85rem', fontWeight: 700, cursor: cancelling || cancelReason.trim().length < 3 ? 'not-allowed' : 'pointer',
               }}

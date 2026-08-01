@@ -106,8 +106,8 @@ export default function AdminPricing() {
             onClick={() => setActiveTab(tab.id)}
             style={{
               padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: activeTab === tab.id ? '#0F766E' : '#F1F3F7',
-              color: activeTab === tab.id ? '#fff' : '#475569',
+              background: activeTab === tab.id ? '#D4A843' : '#1A1A25',
+              color: activeTab === tab.id ? '#0A0A0F' : '#8A8694',
               fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap',
             }}
           >
@@ -195,12 +195,12 @@ export default function AdminPricing() {
 
       {/* Settings */}
       {activeTab === 'settings' && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, maxWidth: 500 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0F172A', marginBottom: 20 }}>Booking Settings</h3>
+        <div style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 24, maxWidth: 500 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: '#F0EDE8', marginBottom: 20 }}>Booking Settings</h3>
           <div style={{ display: 'grid', gap: 16 }}>
             {settingFields.map(field => (
               <div key={field.key}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#475569', marginBottom: 6 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#8A8694', marginBottom: 6 }}>
                   {field.label}
                 </label>
                 {field.type === 'number' ? (
@@ -210,8 +210,8 @@ export default function AdminPricing() {
                       value={settings[field.key] ?? field.default ?? ''}
                       onChange={e => setSettings(prev => ({ ...prev, [field.key]: e.target.value }))}
                       style={{
-                        flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                        fontSize: 14, background: '#F8F9FB',
+                        flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #2A2A3A',
+                        fontSize: 14, background: '#0A0A0F', color: '#F0EDE8',
                       }}
                     />
                     <Button size="sm" onClick={() => handleSettingUpdate(field.key, settings[field.key] ?? '')}>
@@ -225,8 +225,8 @@ export default function AdminPricing() {
                       value={settings[field.key] ?? field.default ?? ''}
                       onChange={e => setSettings(prev => ({ ...prev, [field.key]: e.target.value }))}
                       style={{
-                        flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                        fontSize: 14, background: '#F8F9FB',
+                        flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #2A2A3A',
+                        fontSize: 14, background: '#0A0A0F', color: '#F0EDE8',
                       }}
                     />
                     <Button size="sm" onClick={() => handleSettingUpdate(field.key, settings[field.key] ?? '')}>
@@ -268,12 +268,12 @@ function EntityEditor({
     <div style={{ display: 'grid', gap: 12 }}>
       {entities.map(entity => (
         <div key={entity.id} style={{
-          background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20,
+          background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 20,
         }}>
-          <h4 style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 16 }}>
+          <h4 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 16 }}>
             {entity[labelField]}
-            {entity.venue && <span style={{ color: '#94A3B8', fontWeight: 400, marginLeft: 8 }}>{entity.venue.name}</span>}
-            {entity.category && <span style={{ color: '#94A3B8', fontWeight: 400, marginLeft: 8 }}>{entity.category.name}</span>}
+            {entity.venue && <span style={{ color: '#5A5666', fontWeight: 400, marginLeft: 8 }}>{entity.venue.name}</span>}
+            {entity.category && <span style={{ color: '#5A5666', fontWeight: 400, marginLeft: 8 }}>{entity.category.name}</span>}
           </h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
             {fields.map(field => {
@@ -284,15 +284,15 @@ function EntityEditor({
               if (field.type === 'select') {
                 return (
                   <div key={field.key}>
-                    <label style={{ display: 'block', fontSize: 11, color: '#94A3B8', marginBottom: 4, fontWeight: 500 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: '#5A5666', marginBottom: 4, fontWeight: 500 }}>
                       {field.label}
                     </label>
                     <select
                       value={String(entity[field.key] ?? '')}
                       onChange={e => onEdit(entityType, entity.id, field.key, e.target.value)}
                       style={{
-                        width: '100%', padding: '6px 10px', borderRadius: 6, border: '1px solid #E5E7EB',
-                        fontSize: 13, background: '#F8F9FB',
+                        width: '100%', padding: '6px 10px', borderRadius: 6, border: '1px solid #2A2A3A',
+                        fontSize: 13, background: '#0A0A0F', color: '#F0EDE8',
                       }}
                     >
                       {(field.options || []).map(opt => (
@@ -305,7 +305,7 @@ function EntityEditor({
 
               return (
                 <div key={field.key}>
-                  <label style={{ display: 'block', fontSize: 11, color: '#94A3B8', marginBottom: 4, fontWeight: 500 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#5A5666', marginBottom: 4, fontWeight: 500 }}>
                     {field.label}
                   </label>
                   <div style={{ display: 'flex', gap: 4 }}>
@@ -315,8 +315,8 @@ function EntityEditor({
                       onChange={e => setEditing(prev => ({ ...prev, [editKey]: e.target.value }))}
                       onFocus={() => setEditing(prev => ({ ...prev, [editKey]: String(entity[field.key] ?? '') }))}
                       style={{
-                        flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #E5E7EB',
-                        fontSize: 13, background: '#F8F9FB', width: '100%', boxSizing: 'border-box',
+                        flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #2A2A3A',
+                        fontSize: 13, background: '#0A0A0F', color: '#F0EDE8', width: '100%', boxSizing: 'border-box',
                       }}
                     />
                     {editing[editKey] !== undefined && editing[editKey] !== String(entity[field.key]) && (
@@ -325,7 +325,7 @@ function EntityEditor({
                         disabled={isSaving}
                         style={{
                           padding: '6px 12px', borderRadius: 6, border: 'none',
-                          background: isSaving ? '#94A3B8' : '#0F766E', color: '#fff',
+                          background: isSaving ? '#5A5666' : '#D4A843', color: '#0A0A0F',
                           fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap',
                         }}
                       >

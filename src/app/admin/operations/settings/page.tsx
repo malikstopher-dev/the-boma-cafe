@@ -15,10 +15,10 @@ export default function SettingsHubPage() {
           <Link
             key={section.href}
             href={section.href}
-            className="bg-white border rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition-all group"
+            style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:8,padding:20,display:'block',transition:'all 0.2s',color:'#F0EBE3'}}
           >
-            <h3 className="font-semibold text-gray-800 group-hover:text-brand-700">{section.title}</h3>
-            <p className="text-sm text-gray-500 mt-1">{section.description}</p>
+            <h3 style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{section.title}</h3>
+            <p style={{fontSize:14,color:'#A09888',marginTop:4,fontFamily:'Inter, sans-serif'}}>{section.description}</p>
           </Link>
         ))}
       </div>

@@ -158,29 +158,29 @@ export default function RecipeDetailPage() {
   }
 
   if (isLoading) {
-    return <AdminPage title="Recipe"><div className="p-8 text-gray-400">Loading...</div></AdminPage>
+    return <AdminPage title="Recipe"><div style={{padding:32,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Loading...</div></AdminPage>
   }
 
   if (!recipe) {
-    return <AdminPage title="Recipe"><div className="p-8 text-gray-400">Recipe not found</div></AdminPage>
+    return <AdminPage title="Recipe"><div style={{padding:32,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Recipe not found</div></AdminPage>
   }
 
   return (
     <AdminPage title={recipe.name} description={`${recipe.category ?? 'Uncategorised'} · v${recipe.version}`}>
       <div className="p-6 max-w-4xl">
-        <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 mb-6">
+        <div style={{background:'#242018',border:'1px solid #3A3428',borderRadius:12,padding:16,marginBottom:24}}>
           <div className="grid grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-gray-500 block">Yield</span>
-              <span className="text-white font-medium">{recipe.yield_quantity}</span>
+              <span style={{color:'#A09888',display:'block',fontFamily:'Inter, sans-serif'}}>Yield</span>
+              <span style={{color:'#F0EBE3',fontWeight:500,fontFamily:'Inter, sans-serif'}}>{recipe.yield_quantity}</span>
             </div>
             <div>
-              <span className="text-gray-500 block">Prep Time</span>
-              <span className="text-white font-medium">{recipe.prep_time_minutes ? `${recipe.prep_time_minutes} min` : '—'}</span>
+              <span style={{color:'#A09888',display:'block',fontFamily:'Inter, sans-serif'}}>Prep Time</span>
+              <span style={{color:'#F0EBE3',fontWeight:500,fontFamily:'Inter, sans-serif'}}>{recipe.prep_time_minutes ? `${recipe.prep_time_minutes} min` : '—'}</span>
             </div>
             <div>
-              <span className="text-gray-500 block">Expected Waste</span>
-              <span className="text-white font-medium">{recipe.wastage_pct}%</span>
+              <span style={{color:'#A09888',display:'block',fontFamily:'Inter, sans-serif'}}>Expected Waste</span>
+              <span style={{color:'#F0EBE3',fontWeight:500,fontFamily:'Inter, sans-serif'}}>{recipe.wastage_pct}%</span>
             </div>
             <div>
               <span className="text-gray-500 block">Status</span>
@@ -188,7 +188,7 @@ export default function RecipeDetailPage() {
             </div>
           </div>
           {recipe.description && (
-            <p className="text-sm text-gray-400 mt-3">{recipe.description}</p>
+            <p style={{fontSize:14,color:'#A09888',marginTop:12,fontFamily:'Inter, sans-serif'}}>{recipe.description}</p>
           )}
         </div>
 
@@ -201,11 +201,11 @@ export default function RecipeDetailPage() {
           </div>
 
           {showAddIngredient && (
-            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3 mb-3 flex gap-3">
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,marginBottom:12,display:'flex',gap:12}}>
               <select
                 value={selProduct}
                 onChange={e => setSelProduct(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white"
+                style={{flex:1,background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 8px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
               >
                 <option value="">Select product...</option>
                 {products.map(p => (
@@ -216,7 +216,7 @@ export default function RecipeDetailPage() {
                 type="number"
                 value={selQty}
                 onChange={e => setSelQty(e.target.value)}
-                className="w-24 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white"
+                style={{width:96,background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 8px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                 placeholder="Qty"
               />
               <Button onClick={addIngredient} disabled={busy || !selProduct || !selQty} size="sm">
@@ -226,15 +226,15 @@ export default function RecipeDetailPage() {
           )}
 
           {recipe.ingredients.length === 0 ? (
-            <p className="text-gray-500 text-sm">No ingredients yet</p>
+            <p style={{color:'#A09888',fontSize:14,fontFamily:'Inter, sans-serif'}}>No ingredients yet</p>
           ) : (
             <div className="space-y-2">
               {recipe.ingredients.map(ing => (
-                <div key={ing.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50">
-                  <span className="text-white font-medium flex-1">{ing.product_name}</span>
-                  <span className="text-gray-300">{ing.quantity} {ing.uom_name ?? ''}</span>
+                <div key={ing.id} className="flex items-center gap-3 p-3 rounded-lg" style={{background:'#242018',border:'1px solid #3A3428'}}>
+                  <span style={{color:'#F0EBE3',fontWeight:500,flex:1,fontFamily:'Inter, sans-serif'}}>{ing.product_name}</span>
+                  <span style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}>{ing.quantity} {ing.uom_name ?? ''}</span>
                   {ing.wastage_pct > 0 && <Badge variant="warning">{ing.wastage_pct}% waste</Badge>}
-                  <button onClick={() => removeIngredient(ing.id)} className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                  <button onClick={() => removeIngredient(ing.id)} style={{fontSize:12,color:'#E85454',background:'none',border:'none',cursor:'pointer',fontFamily:'Inter, sans-serif'}}>Remove</button>
                 </div>
               ))}
             </div>
@@ -250,18 +250,18 @@ export default function RecipeDetailPage() {
           </div>
 
           {showAddOutput && (
-            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3 mb-3 flex gap-3">
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,marginBottom:12,display:'flex',gap:12}}>
               <input
                 value={outputName}
                 onChange={e => setOutputName(e.target.value)}
                 placeholder="Output name (e.g. Finished sauce)"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white placeholder-gray-500"
+                style={{flex:1,background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 8px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
               />
               <input
                 type="number"
                 value={outputQty}
                 onChange={e => setOutputQty(e.target.value)}
-                className="w-24 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white"
+                style={{width:96,background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 8px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                 placeholder="Qty"
               />
               <Button onClick={addOutput} disabled={busy || !outputName} size="sm">
@@ -271,14 +271,14 @@ export default function RecipeDetailPage() {
           )}
 
           {recipe.outputs.length === 0 ? (
-            <p className="text-gray-500 text-sm">No outputs defined</p>
+            <p style={{color:'#A09888',fontSize:14,fontFamily:'Inter, sans-serif'}}>No outputs defined</p>
           ) : (
             <div className="space-y-2">
               {recipe.outputs.map(out => (
-                <div key={out.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50">
-                  <span className="text-white font-medium flex-1">{out.name}</span>
-                  <span className="text-gray-300">{out.quantity} {out.uom_name ?? ''}</span>
-                  <button onClick={() => removeOutput(out.id)} className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                <div key={out.id} className="flex items-center gap-3 p-3 rounded-lg" style={{background:'#242018',border:'1px solid #3A3428'}}>
+                  <span style={{color:'#F0EBE3',fontWeight:500,flex:1,fontFamily:'Inter, sans-serif'}}>{out.name}</span>
+                  <span style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}>{out.quantity} {out.uom_name ?? ''}</span>
+                  <button onClick={() => removeOutput(out.id)} style={{fontSize:12,color:'#E85454',background:'none',border:'none',cursor:'pointer',fontFamily:'Inter, sans-serif'}}>Remove</button>
                 </div>
               ))}
             </div>

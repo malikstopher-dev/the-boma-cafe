@@ -1,66 +1,65 @@
-// Design tokens for The Boma Café Admin Dashboard
-// Based on MiniMax M3 redesign plan — Stripe/Linear/Vercel aesthetic
+// Design tokens — Warm Gold Dark Theme
+// The Boma Cafe Operations Platform
 
 export const tokens = {
   colors: {
-    // Light theme (admin pages)
     bg: {
-      primary: '#FFFFFF',
-      secondary: '#F8F9FB',
-      tertiary: '#F1F3F7',
-      inverse: '#0F172A',
+      primary: '#1A1610',
+      secondary: '#242018',
+      tertiary: '#2A261E',
+      inverse: '#F0EBE3',
     },
     surface: {
-      default: '#FFFFFF',
-      raised: '#FFFFFF',
-      overlay: 'rgba(0,0,0,0.5)',
+      default: '#242018',
+      raised: '#2A261E',
+      overlay: 'rgba(0,0,0,0.6)',
     },
     border: {
-      default: '#E5E7EB',
-      strong: '#D1D5DB',
-      focus: '#0F766E',
+      default: '#3A3428',
+      strong: '#4A4438',
+      focus: '#C8A04E',
     },
     text: {
-      primary: '#0F172A',
-      secondary: '#475569',
-      muted: '#94A3B8',
-      inverse: '#FFFFFF',
-      link: '#0F766E',
+      primary: '#F0EBE3',
+      secondary: '#A09888',
+      muted: '#6B6358',
+      inverse: '#1A1610',
+      link: '#C8A04E',
     },
     accent: {
-      default: '#0F766E',
-      hover: '#0D5C56',
-      bg: '#ECFDF5',
-      text: '#065F46',
+      default: '#C8A04E',
+      hover: '#B8923E',
+      bg: 'rgba(200,160,78,0.10)',
+      text: '#C8A04E',
     },
     success: {
-      default: '#10B981',
-      bg: '#ECFDF5',
-      text: '#065F46',
+      default: '#4CAF50',
+      bg: 'rgba(76,175,80,0.10)',
+      text: '#4CAF50',
     },
     warning: {
-      default: '#F59E0B',
-      bg: '#FFFBEB',
-      text: '#92400E',
+      default: '#FBBF24',
+      bg: 'rgba(251,191,36,0.10)',
+      text: '#FBBF24',
     },
     danger: {
-      default: '#EF4444',
-      bg: '#FEF2F2',
-      text: '#991B1B',
+      default: '#E85454',
+      bg: 'rgba(232,84,84,0.10)',
+      text: '#E85454',
     },
     info: {
-      default: '#3B82F6',
-      bg: '#EFF6FF',
-      text: '#1E40AF',
+      default: '#60A5FA',
+      bg: 'rgba(96,165,250,0.10)',
+      text: '#60A5FA',
     },
-    // Station colors
-    kitchen: '#10B981',
-    bar: '#8B5CF6',
-    waiter: '#F59E0B',
+    kitchen: '#4CAF50',
+    bar: '#A78BFA',
+    waiter: '#FBBF24',
   },
 
   typography: {
     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontFamilyDisplay: "'Playfair Display', Georgia, serif",
     fontFamilyMono: "'JetBrains Mono', 'SF Mono', monospace",
     fontSize: {
       xs: '11px',
@@ -70,7 +69,7 @@ export const tokens = {
       lg: '18px',
       xl: '20px',
       '2xl': '24px',
-      '3xl': '32px',
+      '3xl': '28px',
     },
     fontWeight: {
       normal: 400,
@@ -107,10 +106,10 @@ export const tokens = {
   },
 
   shadow: {
-    sm: '0 1px 2px rgba(0,0,0,0.04)',
-    md: '0 4px 12px rgba(0,0,0,0.08)',
-    lg: '0 8px 24px rgba(0,0,0,0.12)',
-    xl: '0 16px 48px rgba(0,0,0,0.16)',
+    sm: '0 1px 2px rgba(0,0,0,0.15)',
+    md: '0 4px 12px rgba(0,0,0,0.25)',
+    lg: '0 8px 32px rgba(0,0,0,0.4)',
+    xl: '0 16px 64px rgba(0,0,0,0.5)',
   },
 
   transition: {

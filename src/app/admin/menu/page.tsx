@@ -176,10 +176,10 @@ export default function AdminMenu() {
       {/* Edit Form */}
       {isEditing && (
         <div style={{
-          background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12,
+          background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12,
           padding: 24, marginBottom: 24,
         }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#F0EBE3', marginBottom: 20 }}>
             {editItem ? 'Edit Item' : 'Add New Item'}
           </h2>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
@@ -194,15 +194,15 @@ export default function AdminMenu() {
               <ImageUpload module="food" value={formData.image} onChange={url => setFormData({ ...formData, image: url })} label="Item Image" />
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#A09888', cursor: 'pointer' }}>
                 <input type="checkbox" checked={formData.isFeatured} onChange={e => setFormData({ ...formData, isFeatured: e.target.checked })} />
                 Featured
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#A09888', cursor: 'pointer' }}>
                 <input type="checkbox" checked={formData.isOnPromo} onChange={e => setFormData({ ...formData, isOnPromo: e.target.checked })} />
                 On Promo
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#A09888', cursor: 'pointer' }}>
                 <input type="checkbox" checked={formData.isOutOfStock} onChange={e => setFormData({ ...formData, isOutOfStock: e.target.checked })} />
                 Out of Stock
               </label>
@@ -235,18 +235,18 @@ export default function AdminMenu() {
           {filteredItems.map((item: any) => (
             <div key={item.id} style={{
               display: 'flex', alignItems: 'center', gap: 16,
-              padding: '14px 16px', background: '#FFFFFF',
-              border: '1px solid #E5E7EB', borderRadius: 12,
+              padding: '14px 16px', background: '#1E1A14',
+              border: '1px solid #3A3428', borderRadius: 12,
               transition: 'border-color 0.15s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = '#D1D5DB')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5E7EB')}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = '#A09888')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = '#3A3428')}
             >
               {/* Thumbnail */}
               {item.image ? (
                 <img src={item.image} alt={item.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#F1F3F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#94A3B8', flexShrink: 0 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#242018', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#A09888', flexShrink: 0 }}>
                   {item.name?.charAt(0) || '?'}
                 </div>
               )}
@@ -254,12 +254,12 @@ export default function AdminMenu() {
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F0EBE3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
                   {item.isFeatured && <Badge variant="accent">Featured</Badge>}
                   {item.isOnPromo && item.promoBadge && <Badge variant="warning">{item.promoBadge}</Badge>}
                   {!item.isAvailable && <Badge variant="danger">Out of Stock</Badge>}
                 </div>
-                <span style={{ fontSize: 13, color: '#94A3B8' }}>
+                <span style={{ fontSize: 13, color: '#A09888' }}>
                   {item.category || 'Uncategorized'} · R{item.price}
                 </span>
               </div>
@@ -267,7 +267,7 @@ export default function AdminMenu() {
               {/* Actions */}
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>Edit</Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} style={{ color: '#EF4444' }}>Delete</Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} style={{ color: '#E85454' }}>Delete</Button>
               </div>
             </div>
           ))}

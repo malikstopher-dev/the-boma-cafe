@@ -6,6 +6,7 @@ import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
 type DashboardData = {
   summary: {
@@ -44,6 +45,8 @@ const typeTabs: { label: string; value: InventoryTypeFilter }[] = [
   { label: 'General', value: 'GENERAL' },
 ]
 
+const kpiColors = ['#D4A843', '#60A5FA', '#FBBF24', '#F87171', '#34D399', '#A78BFA', '#F87171', '#38BDF8']
+
 export default function InventoryDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -72,15 +75,11 @@ export default function InventoryDashboardPage() {
   if (isLoading) {
     return (
       <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={styles.kpiGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-lg border p-4">
-              <div className="skeleton-shimmer h-4 w-24 mb-2 rounded" />
-              <div className="skeleton-shimmer h-8 w-16 rounded" />
-            </div>
+            <div key={i} className={`${styles.skeleton} ${styles.skeletonCard}`} />
           ))}
         </div>
-        <style>{`.skeleton-shimmer { background: linear-gradient(90deg, #F1F3F7 25%, #E5E7EB 50%, #F1F3F7 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; } @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
       </AdminPage>
     )
   }
@@ -96,59 +95,71 @@ export default function InventoryDashboardPage() {
   const { summary, alerts, recent, fastMovers, slowMovers, todayTransactions, purchaseOrders } = data
 
   const cards = [
-    { label: 'Inventory Value', value: `R${summary.inventoryValue.toLocaleString()}`, color: '#0F766E' },
-    { label: 'Products', value: summary.totalProducts.toString(), color: '#2563EB' },
-    { label: 'Low Stock', value: summary.lowStockCount.toString(), color: '#D97706' },
-    { label: 'Out of Stock', value: summary.outOfStockCount.toString(), color: '#DC2626' },
-    { label: "Today's Purchases", value: summary.todayPurchases.toString(), color: '#059669' },
-    { label: "Today's Sales", value: summary.todaySales.toString(), color: '#7C3AED' },
-    { label: "Today's Loss", value: summary.todayLoss.toString(), color: '#DC2626' },
-    { label: "Today's Txns", value: summary.todayTransactions.toString(), color: '#0891B2' },
+    { label: 'Inventory Value', value: `R${summary.inventoryValue.toLocaleString()}`, color: '#D4A843' },
+    { label: 'Products', value: summary.totalProducts.toString(), color: '#60A5FA' },
+    { label: 'Low Stock', value: summary.lowStockCount.toString(), color: '#FBBF24' },
+    { label: 'Out of Stock', value: summary.outOfStockCount.toString(), color: '#F87171' },
+    { label: "Today's Purchases", value: summary.todayPurchases.toString(), color: '#34D399' },
+    { label: "Today's Sales", value: summary.todaySales.toString(), color: '#A78BFA' },
+    { label: "Today's Loss", value: summary.todayLoss.toString(), color: '#F87171' },
+    { label: "Today's Txns", value: summary.todayTransactions.toString(), color: '#38BDF8' },
   ]
 
   const poCards = purchaseOrders ? [
-    { label: 'Open POs', value: purchaseOrders.openCount.toString(), color: '#0F766E' },
-    { label: 'Overdue', value: purchaseOrders.overdueCount.toString(), color: '#DC2626' },
+    { label: 'Open POs', value: purchaseOrders.openCount.toString(), color: '#D4A843' },
+    { label: 'Overdue', value: purchaseOrders.overdueCount.toString(), color: '#F87171' },
   ] : []
 
   const allCards = [...cards, ...poCards]
 
+  const sectionCard: React.CSSProperties = {
+    background: '#12121A',
+    border: '1px solid #1E1E2A',
+    borderRadius: 12,
+    padding: 20,
+  }
+
   return (
     <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs" actions={<Button onClick={fetchData} variant="secondary" size="sm">Refresh</Button>}>
-      <div className="flex gap-1 mb-6 border-b border-gray-700">
+      <div className={styles.tabBar} style={{ marginBottom: 24 }}>
         {typeTabs.map(tab => (
           <button
             key={tab.value}
             onClick={() => setActiveType(tab.value)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-              activeType === tab.value
-                ? 'bg-brand-500/20 text-brand-400 border-b-2 border-brand-500'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
-            }`}
+            className={`${styles.tabItem} ${activeType === tab.value ? styles.tabItemActive : ''}`}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {allCards.map(card => (
-          <div key={card.label} className="bg-white rounded-lg border p-4">
-            <p className="text-sm text-gray-500 mb-1">{card.label}</p>
-            <p className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</p>
+
+      <div className={styles.kpiGrid} style={{ marginBottom: 24 }}>
+        {allCards.map((card, i) => (
+          <div key={card.label} className={styles.statCard}>
+            <span className={styles.statCardLabel}>{card.label}</span>
+            <span className={styles.statCardValue}>{card.value}</span>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Alerts ({alerts.length})</h3>
+      <div className={styles.twoCol} style={{ marginBottom: 24 }}>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Alerts ({alerts.length})</h3>
           {alerts.length === 0 ? (
-            <p className="text-sm text-gray-400">No alerts</p>
+            <p style={{ fontSize: 13, color: '#5A5666' }}>No alerts</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {alerts.slice(0, 10).map(a => (
-                <div key={a.productId} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                  <span className="truncate flex-1">{a.productName}</span>
+                <div key={a.productId} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: 13,
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: '#0E0E16',
+                }}>
+                  <span style={{ color: '#F0EDE8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.productName}</span>
                   <Badge variant={a.type === 'negative_balance' || a.type === 'out_of_stock' ? 'danger' : 'warning'}>
                     {a.type.replace('_', ' ')} ({a.currentBalance})
                   </Badge>
@@ -158,16 +169,24 @@ export default function InventoryDashboardPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Today's Transactions</h3>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Today's Transactions</h3>
           {todayTransactions.length === 0 ? (
-            <p className="text-sm text-gray-400">No transactions today</p>
+            <p style={{ fontSize: 13, color: '#8A8694' }}>No transactions today</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {todayTransactions.map(t => (
-                <div key={t.type} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                  <span className="capitalize">{t.type.replace('_', ' ')}</span>
-                  <span className="font-medium">{t.count} ({t.totalQuantity > 0 ? '+' : ''}{t.totalQuantity})</span>
+                <div key={t.type} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: 13,
+                  padding: '8px 12px',
+                  background: '#0E0E16',
+                  borderRadius: 8,
+                }}>
+                  <span style={{ color: '#8A8694', textTransform: 'capitalize' }}>{t.type.replace('_', ' ')}</span>
+                  <span style={{ fontWeight: 600, color: '#F0EDE8' }}>{t.count} ({t.totalQuantity > 0 ? '+' : ''}{t.totalQuantity})</span>
                 </div>
               ))}
             </div>
@@ -175,18 +194,26 @@ export default function InventoryDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Recent Activity</h3>
+      <div className={styles.twoCol} style={{ marginBottom: 24 }}>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Recent Activity</h3>
           {recent.length === 0 ? (
-            <p className="text-sm text-gray-400">No recent activity</p>
+            <p style={{ fontSize: 13, color: '#8A8694' }}>No recent activity</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {recent.map(r => (
-                <div key={r.id} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                  <span className="truncate flex-1">{r.productName}</span>
-                  <span className="text-xs text-gray-400 capitalize">{r.transactionType}</span>
-                  <span className={`ml-2 font-medium ${r.quantity < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                <div key={r.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: 13,
+                  padding: '8px 12px',
+                  background: '#0E0E16',
+                  borderRadius: 8,
+                }}>
+                  <span style={{ color: '#F0EDE8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.productName}</span>
+                  <span style={{ fontSize: 12, color: '#5A566C', textTransform: 'capitalize', marginLeft: 8 }}>{r.transactionType}</span>
+                  <span style={{ marginLeft: 8, fontWeight: 600, color: r.quantity < 0 ? '#F87171' : '#34D399' }}>
                     {r.quantity > 0 ? '+' : ''}{r.quantity}
                   </span>
                 </div>
@@ -195,16 +222,26 @@ export default function InventoryDashboardPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Fast Movers</h3>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Fast Movers</h3>
           {fastMovers.length === 0 ? (
-            <p className="text-sm text-gray-400">No data</p>
+            <p style={{ fontSize: 13, color: '#8A8694' }}>No data</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {fastMovers.map((m, i) => (
-                <div key={m.productId} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                  <span className="truncate flex-1"><span className="text-gray-400 mr-2">#{i + 1}</span>{m.productName}</span>
-                  <span className="font-medium">{m.totalSold}</span>
+                <div key={m.productId} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: 13,
+                  padding: '8px 12px',
+                  background: '#0E0E16',
+                  borderRadius: 8,
+                }}>
+                  <span style={{ color: '#F0EDE8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: '#5A566C', marginRight: 8 }}>#{i + 1}</span>{m.productName}
+                  </span>
+                  <span style={{ fontWeight: 600, color: '#F0EDE8' }}>{m.totalSold}</span>
                 </div>
               ))}
             </div>
@@ -212,43 +249,82 @@ export default function InventoryDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Slow Movers</h3>
+      <div className={styles.twoCol} style={{ marginBottom: 24 }}>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Slow Movers</h3>
           {slowMovers.length === 0 ? (
-            <p className="text-sm text-gray-400">No data</p>
+            <p style={{ fontSize: 13, color: '#8A8694' }}>No data</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {slowMovers.map((m, i) => (
-                <div key={m.productId} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                  <span className="truncate flex-1"><span className="text-gray-400 mr-2">#{i + 1}</span>{m.productName}</span>
-                  <span className="font-medium">{m.totalSold}</span>
+                <div key={m.productId} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: 13,
+                  padding: '8px 12px',
+                  background: '#0E0E16',
+                  borderRadius: 8,
+                }}>
+                  <span style={{ color: '#F0EDE8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: '#5A566C', marginRight: 8 }}>#{i + 1}</span>{m.productName}
+                  </span>
+                  <span style={{ fontWeight: 600, color: '#F0EDE8' }}>{m.totalSold}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Purchase Orders</h3>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Purchase Orders</h3>
           {!purchaseOrders || (purchaseOrders.overdue.length === 0 && purchaseOrders.recent.length === 0) ? (
-            <p className="text-sm text-gray-400">No purchase orders</p>
+            <p style={{ fontSize: 13, color: '#8A8694' }}>No purchase orders</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {purchaseOrders.overdue.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-red-600 mb-1">Overdue Deliveries</p>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: '#F87171', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Overdue Deliveries
+                  </p>
                   {purchaseOrders.overdue.map(po => (
-                    <a key={po.id} href={`/admin/operations/purchase-orders/${po.id}`} className="flex items-center justify-between text-sm p-2 bg-red-50 rounded mb-1 hover:bg-red-100">
-                      <span className="truncate flex-1">{po.supplierName}</span>
+                    <a
+                      key={po.id}
+                      href={`/admin/operations/purchase-orders/${po.id}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: 13,
+                        padding: '8px 12px',
+                        background: 'rgba(248,113,113,0.08)',
+                        borderRadius: 8,
+                        marginBottom: 4,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span style={{ color: '#F0EDE8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.supplierName}</span>
                       <Badge variant="danger">Overdue</Badge>
                     </a>
                   ))}
                 </div>
               )}
               {purchaseOrders.recent.map(po => (
-                <a key={po.id} href={`/admin/operations/purchase-orders/${po.id}`} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded hover:bg-gray-100">
-                  <span className="truncate flex-1">{po.supplierName}</span>
+                <a
+                  key={po.id}
+                  href={`/admin/operations/purchase-orders/${po.id}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: 13,
+                    padding: '8px 12px',
+                    background: '#0E0E16',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span style={{ color: '#F0EDE8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.supplierName}</span>
                   <Badge variant={po.status === 'received' ? 'success' : po.status === 'ordered' ? 'info' : 'warning'}>{po.status}</Badge>
                 </a>
               ))}
@@ -257,15 +333,15 @@ export default function InventoryDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/admin/operations/products"><Button variant="secondary" size="sm">Products</Button></Link>
-            <Link href="/admin/operations/transactions"><Button variant="secondary" size="sm">Transactions</Button></Link>
-            <Link href="/admin/operations/imports"><Button variant="secondary" size="sm">Imports</Button></Link>
-            <Link href="/admin/operations/reports"><Button variant="secondary" size="sm">Reports</Button></Link>
-            <Link href="/admin/operations/purchase-orders"><Button variant="secondary" size="sm">Purchase Orders</Button></Link>
+      <div className={styles.twoCol}>
+        <div style={sectionCard}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Quick Actions</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <Link href="/admin/operations/products"><Button variant="secondary" style={{ width: '100%' }} size="sm">Products</Button></Link>
+            <Link href="/admin/operations/transactions"><Button variant="secondary" style={{ width: '100%' }} size="sm">Transactions</Button></Link>
+            <Link href="/admin/operations/imports"><Button variant="secondary" style={{ width: '100%' }} size="sm">Imports</Button></Link>
+            <Link href="/admin/operations/reports"><Button variant="secondary" style={{ width: '100%' }} size="sm">Reports</Button></Link>
+            <Link href="/admin/operations/purchase-orders"><Button variant="secondary" style={{ width: '100%' }} size="sm">Purchase Orders</Button></Link>
           </div>
         </div>
       </div>

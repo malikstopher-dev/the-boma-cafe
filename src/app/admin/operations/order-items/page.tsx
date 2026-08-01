@@ -114,18 +114,21 @@ export default function OrderItemsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search customer / order ref..."
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white mb-3"
+              style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',marginBottom:12,fontFamily:'Inter, sans-serif'}}
             />
             <div className="max-h-[70vh] overflow-y-auto space-y-2">
               {filteredOrders.map(o => (
                 <button
                   key={o.id}
                   onClick={() => setSelOrderId(o.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    selOrderId === o.id
-                      ? 'bg-brand-500/20 border-brand-500/50'
-                      : 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50'
+                  className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    selOrderId === o.id ? '' : ''
                   }`}
+                  style={{
+                    background: selOrderId === o.id ? 'rgba(200,160,78,0.15)' : '#242018',
+                    border: selOrderId === o.id ? '1px solid rgba(200,160,78,0.4)' : '1px solid #3A3428',
+                    color:'#F0EBE3'
+                  }}
                 >
                   <div className="text-white font-medium text-sm">{o.customer_name || 'Unknown'}</div>
                   <div className="text-xs text-gray-400 flex justify-between mt-1">
@@ -156,7 +159,7 @@ export default function OrderItemsPage() {
                   </span>
                 </div>
 
-                {message && <div className="mb-4 text-sm text-gray-300 bg-gray-800/60 border border-gray-700 rounded p-3">{message}</div>}
+                {message && <div style={{marginBottom:16,fontSize:14,color:'#A09888',background:'rgba(200,160,78,0.08)',border:'1px solid #3A3428',borderRadius:6,padding:12,fontFamily:'Inter, sans-serif'}}>{message}</div>}
 
                 <div className="flex gap-2 mb-4">
                   <Button size="sm" onClick={() => post('sync', 'Sync')} disabled={busy}>
@@ -169,7 +172,7 @@ export default function OrderItemsPage() {
 
                 <div className="space-y-2">
                   {detail.items.map(item => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50">
+                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg" style={{background:'#242018',border:'1px solid #3A3428'}}>
                       <span className="text-white font-medium flex-1">
                         {item.quantity}x {item.item_name}
                       </span>

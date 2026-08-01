@@ -319,7 +319,7 @@ export default function ProjectEditor() {
   if (!project) {
     return (
       <div style={{ textAlign: 'center', padding: '3rem' }}>
-        <p style={{ color: 'var(--text-light)' }}>Project not found</p>
+            <p style={{ color: '#A09888' }}>Project not found</p>
         <button onClick={() => router.push('/admin/marketing')} className="btn btn-primary" style={{ marginTop: '1rem' }}>
           Back to Marketing Studio
         </button>
@@ -349,14 +349,14 @@ export default function ProjectEditor() {
             style={{
               fontSize: '1.5rem',
               fontWeight: 700,
-              color: 'var(--dark-brown)',
+              color: '#F0EBE3',
               border: 'none',
               background: 'transparent',
               outline: 'none',
               borderBottom: '2px solid transparent',
               width: '300px',
             }}
-            onFocus={e => { e.target.style.borderBottomColor = 'var(--primary)' }}
+            onFocus={e => { e.target.style.borderBottomColor = '#C8A04E' }}
             onBlur={e => { e.target.style.borderBottomColor = 'transparent' }}
           />
           <span style={{
@@ -364,8 +364,8 @@ export default function ProjectEditor() {
             borderRadius: '8px',
             fontSize: '0.8rem',
             fontWeight: 600,
-            background: project.status === 'draft' ? '#fef3c7' : project.status === 'published' ? '#dcfce7' : '#f3f4f6',
-            color: project.status === 'draft' ? '#92400e' : project.status === 'published' ? '#166534' : '#6b7280',
+            background: project.status === 'draft' ? 'rgba(200,160,78,0.2)' : project.status === 'published' ? 'rgba(76,175,80,0.2)' : '#242018',
+            color: project.status === 'draft' ? '#C8A04E' : project.status === 'published' ? '#4CAF50' : '#A09888',
             textTransform: 'capitalize',
           }}>
             {project.status}
@@ -378,14 +378,14 @@ export default function ProjectEditor() {
               padding: '0.4rem 0.75rem',
               borderRadius: '6px',
               fontSize: '0.8rem',
-              background: saveMessage.includes('fail') ? '#fee2e2' : '#dcfce7',
-              color: saveMessage.includes('fail') ? '#dc2626' : '#16a34a',
+              background: saveMessage.includes('fail') ? 'rgba(232,84,84,0.15)' : 'rgba(76,175,80,0.15)',
+              color: saveMessage.includes('fail') ? '#E85454' : '#4CAF50',
             }}>
               {saveMessage}
             </span>
           )}
           {isLocked && (
-            <span style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', background: '#fee2e2', color: '#dc2626' }}>
+            <span style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', background: 'rgba(232,84,84,0.15)', color: '#E85454' }}>
               🔒 Locked by {lockedBy}
             </span>
           )}
@@ -409,10 +409,10 @@ export default function ProjectEditor() {
         {/* Canvas Preview */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            background: 'var(--white)',
+            background: '#1E1A14',
             borderRadius: '16px',
             padding: '1rem',
-            boxShadow: 'var(--shadow-md)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -435,17 +435,17 @@ export default function ProjectEditor() {
         <div style={{ width: '320px', flexShrink: 0 }}>
           {/* Elements Panel */}
           <div style={{
-            background: 'var(--white)',
+            background: '#1E1A14',
             borderRadius: '16px',
             padding: '1.25rem',
-            boxShadow: 'var(--shadow-md)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
             marginBottom: '1rem',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Elements</h3>
+              <h3 style={{ fontSize: '1rem', color: '#F0EBE3' }}>Elements</h3>
               <div style={{ display: 'flex', gap: '0.25rem' }}>
-                <button onClick={() => handleAddElement('text')} title="Add Text" style={{ padding: '0.3rem 0.5rem', background: 'var(--cream)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>T</button>
-                <button onClick={() => handleAddElement('shape')} title="Add Shape" style={{ padding: '0.3rem 0.5rem', background: 'var(--cream)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>□</button>
+                <button onClick={() => handleAddElement('text')} title="Add Text" style={{                     padding: '0.3rem 0.5rem', background: '#242018', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>T</button>
+                <button onClick={() => handleAddElement('shape')} title="Add Shape" style={{ padding: '0.3rem 0.5rem', background: '#242018', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>□</button>
               </div>
             </div>
 
@@ -456,8 +456,8 @@ export default function ProjectEditor() {
                   onClick={() => setEditingElement(el.id === editingElement ? null : el.id)}
                   style={{
                     padding: '0.5rem 0.75rem',
-                    background: editingElement === el.id ? 'var(--cream)' : 'transparent',
-                    border: '1px solid var(--cream)',
+                    background: editingElement === el.id ? '#242018' : 'transparent',
+                    border: '1px solid #3A3428',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -467,13 +467,13 @@ export default function ProjectEditor() {
                     width: '100%',
                   }}
                 >
-                  <span style={{ fontSize: '0.85rem', color: 'var(--dark-brown)' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#F0EBE3' }}>
                     {el.type === 'text' ? '🔤 ' : el.type === 'shape' ? '🔲 ' : el.type === 'image' ? '🖼️ ' : '📷 '}
                     {el.type === 'text' ? (el.props as any).content?.substring(0, 30) || 'Text' : el.type}
                   </span>
                   <button
                     onClick={e => { e.stopPropagation(); handleDeleteElement(el.id) }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.8rem', padding: '0.2rem' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E85454', fontSize: '0.8rem', padding: '0.2rem' }}
                   >
                     ✕
                   </button>
@@ -489,34 +489,34 @@ export default function ProjectEditor() {
             const p = el.props as any
             return (
               <div style={{
-                background: 'var(--white)',
+                background: '#1E1A14',
                 borderRadius: '16px',
                 padding: '1.25rem',
-                boxShadow: 'var(--shadow-md)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
               }}>
-                <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)', marginBottom: '0.75rem', textTransform: 'capitalize' }}>
+                <h3 style={{ fontSize: '1rem', color: '#F0EBE3', marginBottom: '0.75rem', textTransform: 'capitalize' }}>
                   {el.type} Properties
                 </h3>
 
                 {el.type === 'text' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Content</label>
+                      <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Content</label>
                       <textarea
                         value={p.content || ''}
                         onChange={e => handleElementUpdate(el.id, 'content', e.target.value)}
                         rows={3}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--cream)', fontSize: '0.85rem' }}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #3A3428', fontSize: '0.85rem', background: '#2A261E', color: '#F0EBE3' }}
                       />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                       <div>
-                        <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Font Size</label>
-                        <input type="number" value={p.fontSize} onChange={e => handleElementUpdate(el.id, 'fontSize', Number(e.target.value))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--cream)' }} />
+                        <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Font Size</label>
+                        <input type="number" value={p.fontSize} onChange={e => handleElementUpdate(el.id, 'fontSize', Number(e.target.value))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }} />
                       </div>
                       <div>
-                        <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Weight</label>
-                        <select value={p.fontWeight} onChange={e => handleElementUpdate(el.id, 'fontWeight', Number(e.target.value))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--cream)' }}>
+                        <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Weight</label>
+                        <select value={p.fontWeight} onChange={e => handleElementUpdate(el.id, 'fontWeight', Number(e.target.value))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }}>
                           <option value={300}>Light</option>
                           <option value={400}>Regular</option>
                           <option value={500}>Medium</option>
@@ -526,14 +526,14 @@ export default function ProjectEditor() {
                       </div>
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Color</label>
+                      <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Color</label>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input type="color" value={p.color || '#000000'} onChange={e => handleElementUpdate(el.id, 'color', e.target.value)} style={{ width: '40px', height: '40px', borderRadius: '6px', border: '1px solid var(--cream)', cursor: 'pointer' }} />
-                        <input type="text" value={p.color || ''} onChange={e => handleElementUpdate(el.id, 'color', e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--cream)', fontSize: '0.85rem' }} />
+                        <input type="color" value={p.color || '#000000'} onChange={e => handleElementUpdate(el.id, 'color', e.target.value)} style={{ width: '40px', height: '40px', borderRadius: '6px', border: '1px solid #3A3428', cursor: 'pointer' }} />
+                        <input type="text" value={p.color || ''} onChange={e => handleElementUpdate(el.id, 'color', e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #3A3428', fontSize: '0.85rem', background: '#2A261E', color: '#F0EBE3' }} />
                       </div>
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Text Align</label>
+                      <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Text Align</label>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
                         {(['left', 'center', 'right'] as const).map(a => (
                           <button
@@ -541,8 +541,8 @@ export default function ProjectEditor() {
                             onClick={() => handleElementUpdate(el.id, 'textAlign', a)}
                             style={{
                               padding: '0.4rem 0.75rem',
-                              background: p.textAlign === a ? 'var(--primary)' : 'var(--cream)',
-                              color: p.textAlign === a ? 'var(--white)' : 'var(--text)',
+                              background: p.textAlign === a ? '#C8A04E' : '#242018',
+                              color: p.textAlign === a ? '#F0EBE3' : '#F0EBE3',
                               border: 'none',
                               borderRadius: '4px',
                               cursor: 'pointer',
@@ -560,18 +560,18 @@ export default function ProjectEditor() {
                 {el.type === 'shape' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Type</label>
-                      <select value={p.shapeType} onChange={e => handleElementUpdate(el.id, 'shapeType', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--cream)' }}>
+                      <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Type</label>
+                      <select value={p.shapeType} onChange={e => handleElementUpdate(el.id, 'shapeType', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }}>
                         <option value="rectangle">Rectangle</option>
                         <option value="rounded-rect">Rounded Rectangle</option>
                         <option value="circle">Circle</option>
                       </select>
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', marginBottom: '0.25rem' }}>Fill Color</label>
+                      <label style={{ fontSize: '0.8rem', color: '#A09888', display: 'block', marginBottom: '0.25rem' }}>Fill Color</label>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input type="color" value={p.fillColor || '#000000'} onChange={e => handleElementUpdate(el.id, 'fillColor', e.target.value)} style={{ width: '40px', height: '40px', borderRadius: '6px', border: '1px solid var(--cream)' }} />
-                        <input type="text" value={p.fillColor || ''} onChange={e => handleElementUpdate(el.id, 'fillColor', e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--cream)' }} />
+                        <input type="color" value={p.fillColor || '#000000'} onChange={e => handleElementUpdate(el.id, 'fillColor', e.target.value)} style={{ width: '40px', height: '40px', borderRadius: '6px', border: '1px solid #3A3428' }} />
+                        <input type="text" value={p.fillColor || ''} onChange={e => handleElementUpdate(el.id, 'fillColor', e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }} />
                       </div>
                     </div>
                   </div>
@@ -597,18 +597,18 @@ export default function ProjectEditor() {
         >
           <div
             style={{
-              background: 'var(--white)',
+              background: '#1E1A14',
               borderRadius: '16px',
               padding: '2rem',
               width: '400px',
-              boxShadow: 'var(--shadow-xl)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)', marginBottom: '1.25rem' }}>Export Design</h2>
+            <h2 style={{ fontSize: '1.25rem', color: '#F0EBE3', marginBottom: '1.25rem' }}>Export Design</h2>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>Format</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: '#A09888', marginBottom: '0.5rem' }}>Format</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                 {(['png', 'jpg', 'svg', 'pdf', 'html', 'print'] as ExportFormat[]).map(f => (
                   <button
@@ -616,8 +616,8 @@ export default function ProjectEditor() {
                     onClick={() => setExportFormat(f)}
                     style={{
                       padding: '0.75rem 0.5rem',
-                      background: exportFormat === f ? 'var(--primary)' : 'var(--cream)',
-                      color: exportFormat === f ? 'var(--white)' : 'var(--text)',
+                      background: exportFormat === f ? '#C8A04E' : '#242018',
+                      color: exportFormat === f ? '#F0EBE3' : '#F0EBE3',
                       border: 'none',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -634,7 +634,7 @@ export default function ProjectEditor() {
 
             {exportFormat === 'jpg' && (
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: '#A09888', marginBottom: '0.5rem' }}>
                   Quality: {Math.round(exportQuality * 100)}%
                 </label>
                 <input
@@ -680,20 +680,20 @@ export default function ProjectEditor() {
         >
           <div
             style={{
-              background: 'var(--white)',
+              background: '#1E1A14',
               borderRadius: '16px',
               padding: '2rem',
               width: '500px',
               maxHeight: '70vh',
               overflow: 'auto',
-              boxShadow: 'var(--shadow-xl)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)', marginBottom: '1.25rem' }}>Version History</h2>
+            <h2 style={{ fontSize: '1.25rem', color: '#F0EBE3', marginBottom: '1.25rem' }}>Version History</h2>
 
             {versions.length === 0 ? (
-              <p style={{ color: 'var(--text-light)' }}>No versions yet. Save to create a version.</p>
+              <p style={{ color: '#A09888' }}>No versions yet. Save to create a version.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {versions.map(version => (
@@ -701,7 +701,7 @@ export default function ProjectEditor() {
                     key={version.id}
                     style={{
                       padding: '1rem',
-                      background: 'var(--cream)',
+                      background: '#242018',
                       borderRadius: '10px',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -709,14 +709,14 @@ export default function ProjectEditor() {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--dark-brown)' }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#F0EBE3' }}>
                         Version {version.versionNumber}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#A09888' }}>
                         {new Date(version.createdAt).toLocaleString()}
                       </div>
                       {version.description && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#A09888', marginTop: '0.25rem' }}>
                           {version.description}
                         </div>
                       )}
@@ -725,8 +725,8 @@ export default function ProjectEditor() {
                       onClick={() => handleRestoreVersion(version)}
                       style={{
                         padding: '0.4rem 0.75rem',
-                        background: 'var(--primary)',
-                        color: 'var(--white)',
+                        background: '#C8A04E',
+                        color: '#F0EBE3',
                         border: 'none',
                         borderRadius: '6px',
                         cursor: 'pointer',

@@ -12,10 +12,10 @@ import { getAssetUrl } from '@/lib/storage'
 type Tab = 'generator' | 'projects' | 'templates' | 'assets'
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: '#f59e0b',
-  published: '#10b981',
-  archived: '#6b7280',
-  deleted: '#ef4444',
+  draft: '#C8A04E',
+  published: '#4CAF50',
+  archived: '#6B6358',
+  deleted: '#E85454',
 }
 
 export default function MarketingStudio() {
@@ -175,19 +175,19 @@ export default function MarketingStudio() {
     <div>
       <div style={{ marginBottom: '2rem' }}>
         <BackButton />
-        <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Marketing Studio</h1>
-        <p style={{ color: 'var(--text-light)' }}>Create and manage marketing assets</p>
+        <h1 style={{ fontSize: '2rem', color: '#F0EBE3' }}>Marketing Studio</h1>
+        <p style={{ color: '#A09888' }}>Create and manage marketing assets</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--cream)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid #3A3428', paddingBottom: '0.5rem', overflowX: 'auto' }}>
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
               padding: '0.75rem 1.5rem',
-              background: activeTab === tab.id ? 'var(--primary)' : 'transparent',
-              color: activeTab === tab.id ? 'var(--white)' : 'var(--text)',
+              background: activeTab === tab.id ? '#C8A04E' : 'transparent',
+              color: activeTab === tab.id ? '#F0EBE3' : '#F0EBE3',
               border: 'none',
               borderRadius: '8px 8px 0 0',
               cursor: 'pointer',
@@ -207,28 +207,28 @@ export default function MarketingStudio() {
       {/* GENERATOR TAB */}
       {activeTab === 'generator' && (
         <div>
-          <h2 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)', marginBottom: '1rem' }}>Choose a Generator</h2>
+          <h2 style={{ fontSize: '1.25rem', color: '#F0EBE3', marginBottom: '1rem' }}>Choose a Generator</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
             {GENERATOR_TYPES.map(gt => (
               <button
                 key={gt.id}
                 onClick={() => handleCreateBlank(gt)}
                 style={{
-                  background: 'var(--white)',
+                  background: '#1E1A14',
                   padding: '1.5rem',
                   borderRadius: '16px',
-                  boxShadow: 'var(--shadow-sm)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                   border: 'none',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s ease',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.transform = 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'; e.currentTarget.style.transform = 'none' }}
               >
                 <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{gt.icon}</div>
-                <h3 style={{ fontSize: '1.1rem', color: 'var(--dark-brown)', marginBottom: '0.25rem' }}>{gt.label}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{gt.description}</p>
+                <h3 style={{ fontSize: '1.1rem', color: '#F0EBE3', marginBottom: '0.25rem' }}>{gt.label}</h3>
+                <p style={{ fontSize: '0.85rem', color: '#A09888' }}>{gt.description}</p>
               </button>
             ))}
           </div>
@@ -244,12 +244,12 @@ export default function MarketingStudio() {
               placeholder="Search projects..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)', fontSize: '0.95rem' }}
+              style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', fontSize: '0.95rem', background: '#2A261E', color: '#F0EBE3' }}
             />
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }}
             >
               <option value="">All Types</option>
               {GENERATOR_TYPES.map(gt => (
@@ -259,7 +259,7 @@ export default function MarketingStudio() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }}
             >
               <option value="">All Status</option>
               <option value="draft">Draft</option>
@@ -269,7 +269,7 @@ export default function MarketingStudio() {
             <select
               value={campaignFilter}
               onChange={e => setCampaignFilter(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }}
             >
               <option value="">All Campaigns</option>
               {campaigns.map(c => <option key={c} value={c}>{c}</option>)}
@@ -277,9 +277,9 @@ export default function MarketingStudio() {
           </div>
 
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)' }}>Loading...</div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#A09888' }}>Loading...</div>
           ) : projects.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--cream)', borderRadius: '12px', color: 'var(--text-light)' }}>
+            <div style={{ textAlign: 'center', padding: '3rem', background: '#242018', borderRadius: '12px', color: '#A09888' }}>
               No projects found. Create one from the Generator tab.
             </div>
           ) : (
@@ -288,13 +288,13 @@ export default function MarketingStudio() {
                 <div
                   key={project.id}
                   style={{
-                    background: 'var(--white)',
+                    background: '#1E1A14',
                     padding: '1.25rem',
                     borderRadius: '12px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    boxShadow: 'var(--shadow-sm)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
@@ -303,7 +303,7 @@ export default function MarketingStudio() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                         <a
                           href={`/admin/marketing/${project.id}`}
-                          style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--dark-brown)', textDecoration: 'none', cursor: 'pointer' }}
+                          style={{ fontSize: '1.05rem', fontWeight: 600,                           color: '#F0EBE3', textDecoration: 'none', cursor: 'pointer' }}
                           onClick={e => { e.preventDefault(); router.push(`/admin/marketing/${project.id}`) }}
                         >
                           {project.name}
@@ -319,10 +319,10 @@ export default function MarketingStudio() {
                           {project.status}
                         </span>
                         {project.lockedBy && (
-                          <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>🔒 {project.lockedBy}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#E85454' }}>🔒 {project.lockedBy}</span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#A09888' }}>
                         <span>{GENERATOR_TYPES.find(g => g.id === project.type)?.label || project.type}</span>
                         {project.campaign && <span>📢 {project.campaign}</span>}
                         <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
@@ -333,7 +333,7 @@ export default function MarketingStudio() {
                     <select
                       value={project.status}
                       onChange={e => handleStatusChange(project.id, e.target.value)}
-                      style={{ padding: '0.4rem 0.5rem', borderRadius: '6px', border: '1px solid var(--cream)', fontSize: '0.8rem' }}
+                      style={{ padding: '0.4rem 0.5rem', borderRadius: '6px', border: '1px solid #3A3428', fontSize: '0.8rem', background: '#2A261E', color: '#F0EBE3' }}
                     >
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
@@ -341,14 +341,14 @@ export default function MarketingStudio() {
                     </select>
                     <button
                       onClick={() => handleDuplicate(project)}
-                      style={{ padding: '0.4rem 0.75rem', background: 'var(--cream)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                      style={{ padding: '0.4rem 0.75rem', background: '#242018', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
                       title="Duplicate"
                     >
                       📋
                     </button>
                     <button
                       onClick={() => handleSoftDelete(project.id)}
-                      style={{ padding: '0.4rem 0.75rem', background: '#fee2e2', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                      style={{ padding: '0.4rem 0.75rem', background: 'rgba(232,84,84,0.15)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
                       title="Archive"
                     >
                       🗑️
@@ -370,12 +370,12 @@ export default function MarketingStudio() {
               placeholder="Search templates..."
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setActiveTab('templates') }}
-              style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)', fontSize: '0.95rem' }}
+              style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', fontSize: '0.95rem', background: '#2A261E', color: '#F0EBE3' }}
             />
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--cream)' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #3A3428', background: '#2A261E', color: '#F0EBE3' }}
             >
               <option value="">All Types</option>
               {GENERATOR_TYPES.map(gt => (
@@ -389,10 +389,10 @@ export default function MarketingStudio() {
               <div
                 key={template.id}
                 style={{
-                  background: 'var(--white)',
+                  background: '#1E1A14',
                   borderRadius: '16px',
                   overflow: 'hidden',
-                  boxShadow: 'var(--shadow-sm)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                 }}
               >
                 <div
@@ -410,7 +410,7 @@ export default function MarketingStudio() {
                   <div style={{
                     fontSize: '3rem',
                     opacity: 0.5,
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: "'Poppins', sans-serif",
                     fontWeight: 700,
                     textAlign: 'center',
                     padding: '1rem',
@@ -425,8 +425,8 @@ export default function MarketingStudio() {
                       position: 'absolute',
                       top: '0.75rem',
                       right: '0.75rem',
-                      background: 'var(--primary)',
-                      color: 'var(--white)',
+                      background: '#C8A04E',
+                      color: '#F0EBE3',
                       padding: '0.2rem 0.5rem',
                       borderRadius: '8px',
                       fontSize: '0.7rem',
@@ -437,13 +437,13 @@ export default function MarketingStudio() {
                   )}
                 </div>
                 <div style={{ padding: '1rem' }}>
-                  <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)', marginBottom: '0.25rem' }}>{template.name}</h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.75rem' }}>{template.description}</p>
+                  <h3 style={{ fontSize: '1rem', color: '#F0EBE3', marginBottom: '0.25rem' }}>{template.name}</h3>
+                  <p style={{ fontSize: '0.85rem', color: '#A09888', marginBottom: '0.75rem' }}>{template.description}</p>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                    <span style={{ background: 'var(--cream)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem' }}>
+                    <span style={{ background: '#242018', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem' }}>
                       {GENERATOR_TYPES.find(g => g.id === template.type)?.label || template.type}
                     </span>
-                    <span style={{ background: 'var(--cream)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem' }}>
+                    <span style={{ background: '#242018', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem' }}>
                       {template.category}
                     </span>
                   </div>
@@ -465,12 +465,12 @@ export default function MarketingStudio() {
       {activeTab === 'assets' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.25rem', color: 'var(--dark-brown)' }}>Brand Asset Library</h2>
+            <h2 style={{ fontSize: '1.25rem', color: '#F0EBE3' }}>Brand Asset Library</h2>
             <MediaPicker module="marketing" type="campaign_image" onChange={() => fetchAssets()} label="+ Add Asset" />
           </div>
 
           {assets.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--cream)', borderRadius: '12px', color: 'var(--text-light)' }}>
+            <div style={{ textAlign: 'center', padding: '3rem', background: '#242018', borderRadius: '12px', color: '#A09888' }}>
               No brand assets yet. Add your logos, colors, and fonts.
             </div>
           ) : (
@@ -479,15 +479,15 @@ export default function MarketingStudio() {
                 <div
                   key={asset.id}
                   style={{
-                    background: 'var(--white)',
+                    background: '#1E1A14',
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    boxShadow: 'var(--shadow-sm)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                   }}
                 >
                   <div style={{
                     height: '120px',
-                    background: asset.type === 'color' ? asset.value || '#F5EDE3' : 'var(--cream)',
+                    background: asset.type === 'color' ? asset.value || '#F5EDE3' : '#242018',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -500,7 +500,7 @@ export default function MarketingStudio() {
                       ) : asset.type === 'color' ? (
                         <span style={{ color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', fontWeight: 600 }}>{asset.value}</span>
                       ) : (
-                        <span style={{ fontSize: '2rem', color: 'var(--text-light)' }}>{asset.type === 'font' ? 'Aa' : '📄'}</span>
+                        <span style={{ fontSize: '2rem', color: '#A09888' }}>{asset.type === 'font' ? 'Aa' : '📄'}</span>
                       )
                     })()}
                     <span style={{
@@ -517,8 +517,8 @@ export default function MarketingStudio() {
                     </span>
                   </div>
                   <div style={{ padding: '0.75rem' }}>
-                    <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--dark-brown)', marginBottom: '0.15rem' }}>{asset.name}</p>
-                    {asset.category && <p style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>{asset.category}</p>}
+                    <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F0EBE3', marginBottom: '0.15rem' }}>{asset.name}</p>
+                    {asset.category && <p style={{ fontSize: '0.75rem', color: '#A09888' }}>{asset.category}</p>}
                   </div>
                 </div>
               ))}

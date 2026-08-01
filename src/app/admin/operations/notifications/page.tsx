@@ -102,32 +102,32 @@ export default function NotificationsPage() {
     >
       <div className="p-6">
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Unread</p>
-            <p className="text-2xl font-bold text-white mt-1">{unread}</p>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:14,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Unread</p>
+            <p style={{fontSize:24,fontWeight:700,color:'#F0EBE3',marginTop:4,fontFamily:'Inter, sans-serif'}}>{unread}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Total Alerts</p>
-            <p className="text-2xl font-bold text-white mt-1">{items.length}</p>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:14,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Total Alerts</p>
+            <p style={{fontSize:24,fontWeight:700,color:'#F0EBE3',marginTop:4,fontFamily:'Inter, sans-serif'}}>{items.length}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Out of Stock</p>
-            <p className="text-2xl font-bold text-red-400 mt-1">
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:14,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Out of Stock</p>
+            <p style={{fontSize:24,fontWeight:700,color:'#E85454',marginTop:4,fontFamily:'Inter, sans-serif'}}>
               {items.filter(n => n.type === 'inventory_out_of_stock' && !n.read).length}
             </p>
           </div>
         </div>
 
         {lastCheck && (
-          <div className="bg-brand-950/40 border border-brand-800/50 text-brand-300 rounded-lg p-3 mb-4 text-sm">
+          <div style={{background:'rgba(200,160,78,0.1)',border:'1px solid rgba(200,160,78,0.3)',color:'#C8A04E',borderRadius:8,padding:12,marginBottom:16,fontSize:14,fontFamily:'Inter, sans-serif'}}>
             {lastCheck}
           </div>
         )}
 
         {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Loading notifications...</div>
+          <div style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>Loading notifications...</div>
         ) : items.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">
+          <div style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>
             No notifications. Run a stock check to scan for low stock.
           </div>
         ) : (
@@ -135,13 +135,14 @@ export default function NotificationsPage() {
             {items.map(n => (
               <div
                 key={n.id}
-                className={`bg-gray-900/40 border rounded-lg p-4 flex items-start gap-3 ${
-                  n.read ? 'border-gray-800/40 opacity-60' : 'border-gray-700/60'
+                className={`rounded-lg p-4 flex items-start gap-3 ${
+                  n.read ? 'opacity-60' : ''
                 }`}
+                style={{background:'#242018',border:'1px solid #3A3428'}}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-brand-400" />}
+                    {!n.read && <span style={{width:8,height:8,borderRadius:'50%',background:'#C8A04E',display:'inline-block'}} />}
                     <span className="text-white font-medium text-sm">{n.title}</span>
                     <Badge variant={badgeVariant(n.type)}>
                       {n.type === 'inventory_out_of_stock' ? 'Out of stock' : 'Low stock'}
@@ -155,7 +156,8 @@ export default function NotificationsPage() {
                 {!n.read && (
                   <button
                     onClick={() => handleMarkRead(n.id)}
-                    className="px-3 py-1 text-xs rounded border border-gray-600 text-gray-300 hover:bg-gray-700/40"
+                    className="px-3 py-1 text-xs rounded"
+                    style={{border:'1px solid #3A3428',color:'#A09888',background:'transparent',cursor:'pointer',fontFamily:'Inter, sans-serif'}}
                   >
                     Mark read
                   </button>

@@ -59,25 +59,25 @@ export default function AdminInquiries() {
         <div style={{ display: 'grid', gap: 8 }}>
           {messages.map(msg => (
             <div key={msg.id} style={{
-              background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20,
-              borderLeft: msg.is_read ? '1px solid #E5E7EB' : '4px solid #0F766E',
+              background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 20,
+              borderLeft: msg.is_read ? '1px solid #3A3428' : '4px solid #C8A04E',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{msg.name}</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: '#F0EBE3' }}>{msg.name}</span>
                     {!msg.is_read && <Badge variant="accent">New</Badge>}
                     {msg.subject && <Badge variant="default">{msg.subject}</Badge>}
                   </div>
-                  <span style={{ fontSize: 13, color: '#94A3B8' }}>{msg.email}{msg.phone ? ` · ${msg.phone}` : ''}</span>
+                  <span style={{ fontSize: 13, color: '#6B6358' }}>{msg.email}{msg.phone ? ` · ${msg.phone}` : ''}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {!msg.is_read && <Button variant="ghost" size="sm" onClick={() => markAsRead(msg.id)}>Mark Read</Button>}
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(msg)} style={{ color: '#EF4444' }}>Delete</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(msg)} style={{ color: '#E85454' }}>Delete</Button>
                 </div>
               </div>
-              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 8 }}>{msg.message}</p>
-              <p style={{ fontSize: 12, color: '#94A3B8' }}>
+              <p style={{ fontSize: 14, color: '#A09888', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 8 }}>{msg.message}</p>
+              <p style={{ fontSize: 12, color: '#6B6358' }}>
                 {new Date(msg.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>

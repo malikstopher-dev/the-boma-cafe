@@ -75,8 +75,8 @@ export default function ContentMapPage() {
   return (
     <div style={{ padding: '0 0.5rem' }}>
       <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 700, color: 'var(--dark-brown)', marginBottom: '0.5rem' }}>Content Map</h1>
-        <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>Navigate to manage website content</p>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#F0EBE3', marginBottom: '0.5rem' }}>Content Map</h1>
+        <p style={{ color: '#A09888', fontSize: '1rem' }}>Navigate to manage website content</p>
       </div>
 
       <div style={{ display: 'grid', gap: '2rem' }}>
@@ -84,20 +84,20 @@ export default function ContentMapPage() {
           <div 
             key={section.title}
             style={{ 
-              background: 'var(--white)', 
-              borderRadius: '18px', 
+              background: '#1E1A14', 
+              border: '1px solid #3A3428',
+              borderRadius: '12px', 
               padding: '1.75rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease'
             }}
           >
             <h2 style={{ 
-              fontSize: '1.35rem', 
+              fontSize: 18, 
               fontWeight: 600,
-              color: 'var(--dark-brown)', 
+              color: '#F0EBE3', 
               marginBottom: '1.25rem',
               paddingBottom: '0.875rem',
-              borderBottom: '2px solid var(--cream)'
+              borderBottom: '1px solid #3A3428'
             }}>
               {section.title}
             </h2>
@@ -112,17 +112,18 @@ export default function ContentMapPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     padding: '1rem 1.25rem',
-                    background: hoveredItem === item.label ? 'var(--primary)' : 'var(--cream)',
+                    background: hoveredItem === item.label ? '#C8A04E' : '#242018',
+                    border: '1px solid #3A3428',
                     borderRadius: '12px',
                     textDecoration: 'none',
                     transform: hoveredItem === item.label ? 'translateY(-2px)' : 'translateY(0)',
                     transition: 'all 0.2s ease',
-                    boxShadow: hoveredItem === item.label ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                    boxShadow: hoveredItem === item.label ? '0 4px 12px rgba(0,0,0,0.4)' : 'none'
                   }}
                 >
                   <span style={{ 
                     fontWeight: 600, 
-                    color: hoveredItem === item.label ? 'var(--white)' : 'var(--dark-brown)',
+                    color: hoveredItem === item.label ? '#1A1610' : '#F0EBE3',
                     fontSize: '1rem',
                     marginBottom: '0.25rem'
                   }}>
@@ -130,7 +131,7 @@ export default function ContentMapPage() {
                   </span>
                   <span style={{ 
                     fontSize: '0.85rem', 
-                    color: hoveredItem === item.label ? 'rgba(255,255,255,0.8)' : 'var(--text-light)'
+                    color: hoveredItem === item.label ? 'rgba(26,22,16,0.75)' : '#A09888'
                   }}>
                     {item.description}
                   </span>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Badge from '@/components/admin/design-system/Badge'
+import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
 type StockCount = {
   id: string
@@ -27,6 +28,13 @@ const statusBadge: Record<string, { variant: 'success' | 'warning' | 'info' | 'd
   submitted: { variant: 'warning', label: 'Submitted' },
   in_progress: { variant: 'info', label: 'In Progress' },
   cancelled: { variant: 'danger', label: 'Cancelled' },
+}
+
+const kpiCard: React.CSSProperties = {
+  background: '#12121A',
+  border: '1px solid #1E1E2A',
+  borderRadius: 12,
+  padding: 20,
 }
 
 export default function VarianceReportPage() {
@@ -87,7 +95,8 @@ export default function VarianceReportPage() {
         <select
           value={selectedCount ?? ''}
           onChange={e => setSelectedCount(e.target.value || null)}
-          className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white"
+          className={styles.input + ' ' + styles.select}
+          style={{ width: 280 }}
         >
           {stockCounts.map(sc => (
             <option key={sc.id} value={sc.id}>
@@ -97,68 +106,88 @@ export default function VarianceReportPage() {
         </select>
       }
     >
-      <div className="p-6">
+      <div style={{ padding: '0 24px' }}>
         {isLoading ? (
-          <div className="text-gray-400">Loading stock counts...</div>
+          <div style={{ color: '#8A8694', padding: '48px 0', textAlign: 'center' }}>Loading stock counts...</div>
         ) : stockCounts.length === 0 ? (
-          <div className="text-gray-500 text-center py-12">No stock counts found. Complete a stock count first.</div>
+          <div style={{ color: '#5A5666', padding: '48px 0', textAlign: 'center' }}>No stock counts found. Complete a stock count first.</div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-                <p className="text-sm text-gray-400">Total Variance</p>
-                <p className="text-2xl font-bold text-yellow-400 mt-1">{totalVariance.toFixed(2)}</p>
+            <div className={styles.kpiGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 24 }}>
+              <div style={kpiCard}>
+                <p style={{ fontSize: 12, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Variance</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: '#FBBF24' }}>{totalVariance.toFixed(2)}</p>
               </div>
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-                <p className="text-sm text-gray-400">Items Counted</p>
-                <p className="text-2xl font-bold text-white mt-1">{varianceData.length}</p>
+              <div style={kpiCard}>
+                <p style={{ fontSize: 12, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Items Counted</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: '#F0EDE8' }}>{varianceData.length}</p>
               </div>
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-                <p className="text-sm text-gray-400">Significant Variances (&gt;5%)</p>
-                <p className={`text-2xl font-bold mt-1 ${significantVariance > 0 ? 'text-red-400' : 'text-green-400'}`}>
+              <div style={kpiCard}>
+                <p style={{ fontSize: 12, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Significant Variances (&gt;5%)</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: significantVariance > 0 ? '#F87171' : '#34D399' }}>
                   {significantVariance}
                 </p>
               </div>
             </div>
 
             {loadingVariance ? (
-              <div className="text-gray-400 py-8 text-center">Loading variance data...</div>
+              <div style={{ color: '#8A8694', padding: '32px 0', textAlign: 'center' }}>Loading variance data...</div>
             ) : sorted.length === 0 ? (
-              <div className="text-gray-500 text-center py-8">No variance data for this stock count</div>
+              <div style={{ color: '#5A5666', padding: '32px 0', textAlign: 'center' }}>No variance data for this stock count</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className={styles.dataTableWrapper}>
+                <table className={styles.dataTableElement}>
                   <thead>
-                    <tr className="text-gray-400 border-b border-gray-700">
-                      <th className="text-left py-2 px-3 cursor-pointer hover:text-white" onClick={() => handleSort('productName')}>
-                        Product {sortField === 'productName' && (sortDir === 'asc' ? '↑' : '↓')}
+                    <tr>
+                      <th
+                        className={`${styles.dataTableHeader} ${styles.dataTableHeaderSortable}`}
+                        onClick={() => handleSort('productName')}
+                      >
+                        <span className={styles.dataTableHeaderContent}>
+                          Product {sortField === 'productName' && <span className={styles.dataTableSortIcon}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                        </span>
                       </th>
-                      <th className="text-right py-2 px-3">Expected</th>
-                      <th className="text-right py-2 px-3">Physical</th>
-                      <th className="text-right py-2 px-3 cursor-pointer hover:text-white" onClick={() => handleSort('variance')}>
-                        Variance {sortField === 'variance' && (sortDir === 'asc' ? '↑' : '↓')}
+                      <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Expected</th>
+                      <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Physical</th>
+                      <th
+                        className={`${styles.dataTableHeader} ${styles.dataTableHeaderSortable}`}
+                        style={{ textAlign: 'right' }}
+                        onClick={() => handleSort('variance')}
+                      >
+                        <span className={styles.dataTableHeaderContent}>
+                          Variance {sortField === 'variance' && <span className={styles.dataTableSortIcon}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                        </span>
                       </th>
-                      <th className="text-right py-2 px-3 cursor-pointer hover:text-white" onClick={() => handleSort('variancePct')}>
-                        % {sortField === 'variancePct' && (sortDir === 'asc' ? '↑' : '↓')}
+                      <th
+                        className={`${styles.dataTableHeader} ${styles.dataTableHeaderSortable}`}
+                        style={{ textAlign: 'right' }}
+                        onClick={() => handleSort('variancePct')}
+                      >
+                        <span className={styles.dataTableHeaderContent}>
+                          % {sortField === 'variancePct' && <span className={styles.dataTableSortIcon}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                        </span>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sorted.map(row => (
-                      <tr key={row.productId} className="border-b border-gray-800 hover:bg-gray-800/30">
-                        <td className="py-2 px-3 text-white">{row.productName}</td>
-                        <td className="py-2 px-3 text-right text-gray-300">{row.expectedQuantity.toFixed(2)}</td>
-                        <td className="py-2 px-3 text-right text-gray-300">{row.physicalQuantity.toFixed(2)}</td>
-                        <td className={`py-2 px-3 text-right ${row.variance === 0 ? 'text-green-400' : Math.abs(row.variancePct) > 5 ? 'text-red-400' : 'text-yellow-400'}`}>
-                          {row.variance > 0 ? '+' : ''}{row.variance.toFixed(2)}
-                        </td>
-                        <td className="py-2 px-3 text-right">
-                          <Badge variant={Math.abs(row.variancePct) > 5 ? 'danger' : row.variance === 0 ? 'success' : 'warning'}>
-                            {row.variancePct >= 0 ? '+' : ''}{row.variancePct.toFixed(1)}%
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
+                    {sorted.map(row => {
+                      const varianceColor = row.variance === 0 ? '#34D399' : Math.abs(row.variancePct) > 5 ? '#F87171' : '#FBBF24'
+                      return (
+                        <tr key={row.productId} className={styles.dataTableRow}>
+                          <td className={styles.dataTableCell}>{row.productName}</td>
+                          <td className={styles.dataTableCell} style={{ textAlign: 'right' }}>{row.expectedQuantity.toFixed(2)}</td>
+                          <td className={styles.dataTableCell} style={{ textAlign: 'right' }}>{row.physicalQuantity.toFixed(2)}</td>
+                          <td className={styles.dataTableCell} style={{ textAlign: 'right', color: varianceColor }}>
+                            {row.variance > 0 ? '+' : ''}{row.variance.toFixed(2)}
+                          </td>
+                          <td className={styles.dataTableCell} style={{ textAlign: 'right' }}>
+                            <Badge variant={Math.abs(row.variancePct) > 5 ? 'danger' : row.variance === 0 ? 'success' : 'warning'}>
+                              {row.variancePct >= 0 ? '+' : ''}{row.variancePct.toFixed(1)}%
+                            </Badge>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

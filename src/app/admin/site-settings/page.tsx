@@ -252,15 +252,17 @@ export default function AdminSiteSettings() {
     width: '100%',
     padding: '0.75rem',
     borderRadius: '8px',
-    border: '1px solid var(--cream)',
-    background: 'var(--cream)',
-    fontSize: '0.95rem'
+    border: '1px solid #3A3428',
+    background: '#2A261E',
+    color: '#F0EBE3',
+    fontSize: '0.95rem',
+    fontFamily: 'Inter, sans-serif'
   };
 
   const labelStyle = {
     display: 'block',
     marginBottom: '0.5rem',
-    color: 'var(--dark-brown)',
+    color: '#A09888',
     fontWeight: 500
   };
 
@@ -268,14 +270,14 @@ export default function AdminSiteSettings() {
     <div>
       <div style={{ marginBottom: '2rem' }}>
         <BackButton />
-        <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)' }}>Site Settings</h1>
-        <p style={{ color: 'var(--text-light)' }}>Manage all website content from here</p>
+        <h1 style={{ fontSize: '2rem', color: '#F0EBE3' }}>Site Settings</h1>
+        <p style={{ color: '#A09888' }}>Manage all website content from here</p>
       </div>
 
       {saveMessage && (
         <div style={{ 
-          background: saveMessage.includes('Error') ? '#fee2e2' : '#dcfce7', 
-          color: saveMessage.includes('Error') ? '#dc2626' : '#16a34a',
+          background: saveMessage.includes('Error') ? 'rgba(232,84,84,0.15)' : 'rgba(76,175,80,0.15)', 
+          color: saveMessage.includes('Error') ? '#E85454' : '#4CAF50',
           padding: '1rem',
           borderRadius: '8px',
           marginBottom: '1.5rem'
@@ -300,8 +302,8 @@ export default function AdminSiteSettings() {
               padding: '0.75rem 1.25rem',
               borderRadius: '8px',
               border: 'none',
-              background: activeTab === tab.id ? 'var(--primary)' : 'var(--white)',
-              color: activeTab === tab.id ? 'var(--white)' : 'var(--text)',
+              background: activeTab === tab.id ? '#C8A04E' : '#1E1A14',
+              color: activeTab === tab.id ? '#1A1610' : '#F0EBE3',
               fontWeight: 600,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
@@ -318,7 +320,7 @@ export default function AdminSiteSettings() {
 
       {/* Homepage Tab */}
       {activeTab === 'homepage' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Homepage Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
@@ -373,7 +375,7 @@ export default function AdminSiteSettings() {
 
       {/* About Tab */}
       {activeTab === 'about' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>About Page Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -442,7 +444,7 @@ export default function AdminSiteSettings() {
 
       {/* Experience Tab */}
       {activeTab === 'experience' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Experience Page Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
@@ -453,8 +455,8 @@ export default function AdminSiteSettings() {
               <label style={labelStyle}>Hero Subtitle</label>
               <input type="text" value={experience.heroSubtitle} onChange={e => setExperience({...experience, heroSubtitle: e.target.value})} style={inputStyle} />
             </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
-            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Dining Section</h3>
+            <hr style={{ border: 'none', borderTop: '1px solid #3A3428', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: '#F0EBE3' }}>Dining Section</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>Title</label>
@@ -487,8 +489,8 @@ export default function AdminSiteSettings() {
                 <input type="text" value={experience.diningCtaLink} onChange={e => setExperience({...experience, diningCtaLink: e.target.value})} style={inputStyle} />
               </div>
             </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
-            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Bisou El Patrona Section</h3>
+            <hr style={{ border: 'none', borderTop: '1px solid #3A3428', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: '#F0EBE3' }}>Bisou El Patrona Section</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>Title</label>
@@ -521,8 +523,8 @@ export default function AdminSiteSettings() {
                 <input type="text" value={experience.puffCtaLink} onChange={e => setExperience({...experience, puffCtaLink: e.target.value})} style={inputStyle} />
               </div>
             </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
-            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Family & Activities Section</h3>
+            <hr style={{ border: 'none', borderTop: '1px solid #3A3428', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: '#F0EBE3' }}>Family & Activities Section</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>Title</label>
@@ -555,8 +557,8 @@ export default function AdminSiteSettings() {
                 <input type="text" value={experience.familyCtaLink} onChange={e => setExperience({...experience, familyCtaLink: e.target.value})} style={inputStyle} />
               </div>
             </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
-            <h3 style={{ fontSize: '1rem', color: 'var(--dark-brown)' }}>Weekend Buffet Section</h3>
+            <hr style={{ border: 'none', borderTop: '1px solid #3A3428', margin: '1rem 0' }} />
+            <h3 style={{ fontSize: '1rem', color: '#F0EBE3' }}>Weekend Buffet Section</h3>
             <div>
               <label style={labelStyle}>Title</label>
               <input type="text" value={experience.weekendTitle} onChange={e => setExperience({...experience, weekendTitle: e.target.value})} style={inputStyle} />
@@ -576,8 +578,8 @@ export default function AdminSiteSettings() {
               </div>
             </div>
             
-            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--cream)', borderRadius: '8px' }}>
-              <h4 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Video Showcase</h4>
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#242018', borderRadius: '8px' }}>
+              <h4 style={{ marginBottom: '1rem', color: '#C8A04E' }}>Video Showcase</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Enable Video Section</label>
@@ -611,7 +613,7 @@ export default function AdminSiteSettings() {
 
       {/* Entertainment Tab */}
       {activeTab === 'entertainment' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Entertainment Page Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
@@ -687,7 +689,7 @@ export default function AdminSiteSettings() {
 
       {/* Venue Hire Tab */}
       {activeTab === 'venueHire' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Events & Venue Hire Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
@@ -706,7 +708,7 @@ export default function AdminSiteSettings() {
               <label style={labelStyle}>Intro Description</label>
               <textarea value={venueHire.introDescription} onChange={e => setVenueHire({...venueHire, introDescription: e.target.value})} rows={2} style={inputStyle} />
             </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <hr style={{ border: 'none', borderTop: '1px solid #3A3428', margin: '1rem 0' }} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>Meetings Title</label>
@@ -747,7 +749,7 @@ export default function AdminSiteSettings() {
                 <input type="text" value={venueHire.privateDesc} onChange={e => setVenueHire({...venueHire, privateDesc: e.target.value})} style={inputStyle} />
               </div>
             </div>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--cream)', margin: '1rem 0' }} />
+            <hr style={{ border: 'none', borderTop: '1px solid #3A3428', margin: '1rem 0' }} />
             <div>
               <label style={labelStyle}>CTA Title</label>
               <input type="text" value={venueHire.ctaTitle} onChange={e => setVenueHire({...venueHire, ctaTitle: e.target.value})} style={inputStyle} />
@@ -767,9 +769,9 @@ export default function AdminSiteSettings() {
               </div>
             </div>
             
-            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--cream)', borderRadius: '8px' }}>
-              <h4 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Events Slideshow</h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#242018', borderRadius: '8px' }}>
+              <h4 style={{ marginBottom: '1rem', color: '#C8A04E' }}>Events Slideshow</h4>
+              <p style={{ fontSize: '0.85rem', color: '#A09888', marginBottom: '1rem' }}>
                 The slideshow automatically uses images from the public/gallery/events/events-slideshow folder. 
                 Add or remove images from that folder to manage slideshow content.
               </p>
@@ -796,7 +798,7 @@ export default function AdminSiteSettings() {
 
       {/* Contact Tab */}
       {activeTab === 'contact' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Contact Page Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
@@ -840,7 +842,7 @@ export default function AdminSiteSettings() {
 
       {/* Promo Bar Tab */}
       {activeTab === 'promoBar' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Promo Bar Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
@@ -875,7 +877,7 @@ export default function AdminSiteSettings() {
 
       {/* Branding Tab */}
       {activeTab === 'branding' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Branding Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -931,11 +933,11 @@ export default function AdminSiteSettings() {
 
       {/* SEO Tab */}
       {activeTab === 'seo' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>SEO Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
-              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--dark-brown)' }}>Homepage SEO</h3>
+              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: '#F0EBE3' }}>Homepage SEO</h3>
               <div style={{ display: 'grid', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Meta Title</label>
@@ -957,7 +959,7 @@ export default function AdminSiteSettings() {
             </div>
             
             <div>
-              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--dark-brown)' }}>About Page SEO</h3>
+              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: '#F0EBE3' }}>About Page SEO</h3>
               <div style={{ display: 'grid', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Page Title</label>
@@ -971,7 +973,7 @@ export default function AdminSiteSettings() {
             </div>
 
             <div>
-              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--dark-brown)' }}>Contact Page SEO</h3>
+              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: '#F0EBE3' }}>Contact Page SEO</h3>
               <div style={{ display: 'grid', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Page Title</label>
@@ -992,7 +994,7 @@ export default function AdminSiteSettings() {
 
       {/* Booking Tab */}
       {activeTab === 'booking' && (
-        <div style={{ background: 'var(--white)', padding: '2rem', borderRadius: '16px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ background: '#1E1A14', padding: '2rem', borderRadius: '16px', border: '1px solid #3A3428' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Booking System Settings</h2>
           <div style={{ display: 'grid', gap: '1.5rem', maxWidth: 500 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -1048,7 +1050,7 @@ export default function AdminSiteSettings() {
             <div>
               <label style={labelStyle}>Notification Email Recipients</label>
               <input type="text" value={bookingSettings.notification_emails} onChange={e => setBookingSettings({...bookingSettings, notification_emails: e.target.value})} style={{...inputStyle, maxWidth: '100%'}} placeholder="email1@example.com,email2@example.com" />
-              <small style={{ color: 'var(--muted)', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>Comma-separated email addresses that receive new booking notifications.</small>
+              <small style={{ color: '#6B6358', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>Comma-separated email addresses that receive new booking notifications.</small>
             </div>
           </div>
           <button onClick={() => handleSave('booking')} disabled={isSaving} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>

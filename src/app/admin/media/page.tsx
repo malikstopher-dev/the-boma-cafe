@@ -72,7 +72,7 @@ export default function MediaLibrary() {
         <div style={{
           position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999,
           padding: '0.75rem 1.25rem', borderRadius: 10,
-          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          background: toast.type === 'success' ? '#4CAF50' : '#E85454',
           color: '#fff', fontSize: '0.85rem', fontWeight: 600,
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}>
@@ -109,8 +109,8 @@ export default function MediaLibrary() {
               aspectRatio: '1',
               borderRadius: 8,
               overflow: 'hidden',
-              background: '#1a1a2e',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: '#1E1A14',
+              border: '1px solid #3A3428',
               cursor: 'pointer',
             }}
           >
@@ -129,7 +129,7 @@ export default function MediaLibrary() {
                 onClick={() => copyUrl(item.url)}
                 style={{
                   padding: '6px 14px', borderRadius: 6, border: 'none',
-                  background: '#0F766E', color: '#fff',
+                  background: '#C8A04E', color: '#fff',
                   fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
                 }}
               >
@@ -140,7 +140,7 @@ export default function MediaLibrary() {
                 disabled={deleting === item.id}
                 style={{
                   padding: '6px 14px', borderRadius: 6, border: 'none',
-                  background: 'transparent', color: '#f87171',
+                  background: 'transparent',                   color: '#E85454',
                   fontSize: '0.75rem', cursor: 'pointer',
                 }}
               >

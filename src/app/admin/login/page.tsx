@@ -36,11 +36,11 @@ function LoginForm() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
+      background: 'linear-gradient(135deg, #1A1610 0%, #242018 100%)',
       padding: '2rem'
     }}>
       <div style={{
-        background: 'var(--white)',
+        background: '#1E1A14',
         borderRadius: '24px',
         padding: '3rem',
         width: '100%',
@@ -48,13 +48,13 @@ function LoginForm() {
         boxShadow: '0 24px 64px rgba(0,0,0,0.3)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', color: 'var(--dark-brown)', marginBottom: '0.5rem' }}>Admin Login</h1>
-          <p style={{ color: 'var(--text-light)' }}>Enter your password to access the dashboard</p>
+          <h1 style={{ fontSize: '2rem', color: '#F0EBE3', marginBottom: '0.5rem' }}>Admin Login</h1>
+          <p style={{ color: '#A09888' }}>Enter your password to access the dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--dark-brown)', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#F0EBE3', fontWeight: 500 }}>
               Password
             </label>
             <input
@@ -66,8 +66,8 @@ function LoginForm() {
                 width: '100%',
                 padding: '1rem',
                 borderRadius: '12px',
-                border: '2px solid var(--cream)',
-                background: 'var(--cream)',
+                border: '2px solid #3A3428',
+                background: '#2A261E',
                 fontSize: '1rem',
                 transition: 'all 0.3s ease'
               }}
@@ -77,8 +77,8 @@ function LoginForm() {
 
           {error && (
             <div style={{
-              background: '#fee2e2',
-              color: '#dc2626',
+              background: 'rgba(232,84,84,0.15)',
+              color: '#E85454',
               padding: '0.75rem',
               borderRadius: '8px',
               marginBottom: '1rem',
@@ -99,7 +99,7 @@ function LoginForm() {
         </form>
 
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <a href="/" style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>
+          <a href="/" style={{ color: '#A09888', fontSize: '0.9rem' }}>
             ← Back to Website
           </a>
         </div>
@@ -116,8 +116,8 @@ export default function AdminLogin() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, var(--dark-brown) 0%, var(--dark-brown-light) 100%)',
-        color: 'var(--white)',
+        background: 'linear-gradient(135deg, #1A1610 0%, #242018 100%)',
+        color: '#F0EBE3',
         fontSize: '1.2rem'
       }}>
         Loading...

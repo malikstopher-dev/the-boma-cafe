@@ -92,12 +92,12 @@ export default function MenuItemsPage() {
       <AdminPage title="Menu Integration" description="Link bar menu items to inventory products" actions={<><Badge variant="success">{linkedCount} linked</Badge><Badge variant="default">{unlinkedCount} unlinked</Badge></>}>
 
       <div className="flex gap-2 mb-4">
-        <input className="border rounded px-3 py-2 text-sm flex-1 max-w-xs" placeholder="Search menu items..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="border rounded px-3 py-2 text-sm flex-1 max-w-xs" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} placeholder="Search menu items..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border">
-          <div className="px-4 py-3 border-b font-semibold text-sm text-gray-500">Unlinked Items ({unlinkedCount})</div>
+        <div className="rounded-lg border" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+          <div className="px-4 py-3 border-b font-semibold text-sm" style={{ color: '#A09888', borderColor: '#3A3428' }}>Unlinked Items ({unlinkedCount})</div>
           {items.filter(i => !i.has_inventory).filter(i => !search || i.name.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
             <div className="p-6 text-center text-sm text-gray-400">All items are linked</div>
           ) : (
@@ -115,8 +115,8 @@ export default function MenuItemsPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-lg border">
-          <div className="px-4 py-3 border-b font-semibold text-sm text-gray-500">Linked Items ({linkedCount})</div>
+        <div className="rounded-lg border" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+          <div className="px-4 py-3 border-b font-semibold text-sm" style={{ color: '#A09888', borderColor: '#3A3428' }}>Linked Items ({linkedCount})</div>
           {items.filter(i => i.has_inventory).filter(i => !search || i.name.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
             <div className="p-6 text-center text-sm text-gray-400">No linked items</div>
           ) : (
@@ -128,7 +128,7 @@ export default function MenuItemsPage() {
                     <Button variant="danger" size="sm" onClick={() => handleUnlink(item.id)}>Unlink</Button>
                   </div>
                   {item.bar_item_inventory_links?.map(link => (
-                    <div key={link.id} className="mt-1 text-xs text-gray-500">
+                    <div key={link.id} className="mt-1 text-xs" style={{ color: '#6B6358' }}>
                       → {link.inventory_products?.name || link.inventory_product_id} ({Number(link.pour_size_ml).toFixed(0)}ml pour)
                     </div>
                   ))}
@@ -141,21 +141,21 @@ export default function MenuItemsPage() {
 
       {linkModal && productModalOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => { setProductModalOpen(false); setLinkModal(null) }}>
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
+          <div className="rounded-lg p-6 max-w-md w-full mx-4" style={{ background: '#1E1A14' }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold mb-1">Link Product</h3>
-            <p className="text-sm text-gray-500 mb-4">{linkModal.barItemName}</p>
+            <p className="text-sm mb-4" style={{ color: '#A09888' }}>{linkModal.barItemName}</p>
 
             <div className="mb-3">
-              <label className="text-xs font-medium text-gray-600 block mb-1">Search Product</label>
-              <input className="border rounded px-3 py-2 text-sm w-full" placeholder="Type to search..." value={productSearch} onChange={e => setProductSearch(e.target.value)} autoFocus />
+              <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>Search Product</label>
+              <input className="border rounded px-3 py-2 text-sm w-full" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} placeholder="Type to search..." value={productSearch} onChange={e => setProductSearch(e.target.value)} autoFocus />
             </div>
 
-            <div className="mb-3 max-h-40 overflow-y-auto border rounded">
+            <div className="mb-3 max-h-40 overflow-y-auto rounded" style={{ border: '1px solid #3A3428' }}>
               {filteredProducts.length === 0 ? (
-                <div className="p-3 text-sm text-gray-400">No products found</div>
+                <div className="p-3 text-sm" style={{ color: '#A09888' }}>No products found</div>
               ) : (
                 filteredProducts.slice(0, 20).map(p => (
-                  <div key={p.id} className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${selectedProductId === p.id ? 'bg-emerald-50 text-emerald-700 font-medium' : ''}`} onClick={() => setSelectedProductId(p.id)}>
+                  <div key={p.id} className={`px-3 py-2 text-sm cursor-pointer ${selectedProductId === p.id ? 'font-medium' : ''}`} style={{ color: selectedProductId === p.id ? '#C8A04E' : '#F0EBE3', background: selectedProductId === p.id ? '#2A261E' : undefined }} onClick={() => setSelectedProductId(p.id)}>
                     {p.name} {p.sku ? `(${p.sku})` : ''}
                   </div>
                 ))
@@ -163,8 +163,8 @@ export default function MenuItemsPage() {
             </div>
 
             <div className="mb-4">
-              <label className="text-xs font-medium text-gray-600 block mb-1">Pour Size (ml)</label>
-              <input className="border rounded px-3 py-2 text-sm w-full" type="number" min="1" placeholder="e.g. 30" value={pourSize} onChange={e => setPourSize(e.target.value)} />
+              <label className="text-xs font-medium block mb-1" style={{ color: '#A09888' }}>Pour Size (ml)</label>
+              <input className="border rounded px-3 py-2 text-sm w-full" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }} type="number" min="1" placeholder="e.g. 30" value={pourSize} onChange={e => setPourSize(e.target.value)} />
             </div>
 
             <div className="flex gap-2 justify-end">

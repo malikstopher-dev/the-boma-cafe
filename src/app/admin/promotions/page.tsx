@@ -84,8 +84,8 @@ export default function AdminPromotions() {
     <AdminPage title="Promotions" description={`${promotions.length} promotions`} actions={<Button variant="primary" onClick={() => { setFormData(defaultForm); setIsEditing(true); }}>+ Add Promotion</Button>}>
 
       {isEditing && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', marginBottom: 20 }}>{editPromo ? 'Edit Promotion' : 'Add Promotion'}</h2>
+        <div style={{ background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#F0EDE8', marginBottom: 20 }}>{editPromo ? 'Edit Promotion' : 'Add Promotion'}</h2>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
             <div style={{ gridColumn: '1 / -1' }}><Input label="Title" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g., Happy Hour Specials" /></div>
             <div style={{ gridColumn: '1 / -1' }}><Textarea label="Description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Describe this promotion..." /></div>
@@ -103,8 +103,8 @@ export default function AdminPromotions() {
             <Input label="CTA Link" value={formData.ctaLink} onChange={e => setFormData({ ...formData, ctaLink: e.target.value })} placeholder="/menu" />
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {([['isActive', 'Active'], ['isFeatured', 'Featured'], ['displayOnHomepage', 'Homepage'], ['displayAsPopup', 'Popup'], ['displayOnPromotionsPage', 'Promotions Page']] as const).map(([key, label]) => (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#475569', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={(formData as any)[key]} onChange={e => setFormData({ ...formData, [key]: e.target.checked })} />
+                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#8A8694', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={(formData as any)[key]} onChange={e => setFormData({ ...formData, [key]: e.target.checked })} style={{ background: '#0A0A0F', border: '1px solid #2A2A3A', color: '#F0EDE8', borderRadius: 8 }} />
                   {label}
                 </label>
               ))}
@@ -122,19 +122,19 @@ export default function AdminPromotions() {
       : (
         <div style={{ display: 'grid', gap: 8 }}>
           {promotions.map((promo: any) => (
-            <div key={promo.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12 }}>
+            <div key={promo.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{promo.title}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8' }}>{promo.title}</span>
                   {promo.isFeatured && <Badge variant="accent">Featured</Badge>}
                   <Badge variant={promo.isActive ? 'success' : 'danger'}>{promo.isActive ? 'Active' : 'Inactive'}</Badge>
                 </div>
-                <span style={{ fontSize: 13, color: '#94A3B8' }}>{promo.validFrom} — {promo.validUntil}</span>
+                <span style={{ fontSize: 13, color: '#5A5666' }}>{promo.validFrom} — {promo.validUntil}</span>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <Button variant="ghost" size="sm" onClick={() => toggleActive(promo)}>{promo.isActive ? 'Deactivate' : 'Activate'}</Button>
                 <Button variant="ghost" size="sm" onClick={() => openEdit(promo)}>Edit</Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(promo)} style={{ color: '#EF4444' }}>Delete</Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(promo)} style={{ color: '#F87171' }}>Delete</Button>
               </div>
             </div>
           ))}

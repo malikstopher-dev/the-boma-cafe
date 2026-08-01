@@ -116,18 +116,18 @@ export default function AdminAvailability() {
       {/* Create form */}
       {showForm && (
         <div style={{
-          background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20, marginBottom: 20,
+          background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 20, marginBottom: 20,
         }}>
-          <h4 style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 16 }}>New Blocked Date</h4>
+          <h4 style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 16 }}>New Blocked Date</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 12, color: '#475569', marginBottom: 4 }}>Venue Area</label>
+              <label style={{ display: 'block', fontSize: 12, color: '#8A8694', marginBottom: 4 }}>Venue Area</label>
               <select
                 value={form.venue_area_id}
                 onChange={e => setForm(prev => ({ ...prev, venue_area_id: e.target.value }))}
                 style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                  fontSize: 13, background: '#F8F9FB',
+                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #2A2A3A',
+                  fontSize: 13, background: '#0A0A0F', color: '#F0EDE8',
                 }}
               >
                 <option value="">All Areas</option>
@@ -137,39 +137,39 @@ export default function AdminAvailability() {
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 12, color: '#475569', marginBottom: 4 }}>Start Date</label>
+              <label style={{ display: 'block', fontSize: 12, color: '#8A8694', marginBottom: 4 }}>Start Date</label>
               <input
                 type="date"
                 value={form.start_date}
                 onChange={e => setForm(prev => ({ ...prev, start_date: e.target.value }))}
                 style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                  fontSize: 13, background: '#F8F9FB', boxSizing: 'border-box',
+                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #2A2A3A',
+                  fontSize: 13, background: '#0A0A0F', color: '#F0EDE8', boxSizing: 'border-box',
                 }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 12, color: '#475569', marginBottom: 4 }}>End Date</label>
+              <label style={{ display: 'block', fontSize: 12, color: '#8A8694', marginBottom: 4 }}>End Date</label>
               <input
                 type="date"
                 value={form.end_date}
                 onChange={e => setForm(prev => ({ ...prev, end_date: e.target.value }))}
                 style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                  fontSize: 13, background: '#F8F9FB', boxSizing: 'border-box',
+                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #2A2A3A',
+                  fontSize: 13, background: '#0A0A0F', color: '#F0EDE8', boxSizing: 'border-box',
                 }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 12, color: '#475569', marginBottom: 4 }}>Reason</label>
+              <label style={{ display: 'block', fontSize: 12, color: '#8A8694', marginBottom: 4 }}>Reason</label>
               <input
                 type="text"
                 value={form.reason}
                 onChange={e => setForm(prev => ({ ...prev, reason: e.target.value }))}
                 placeholder="e.g. Private event, maintenance"
                 style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB',
-                  fontSize: 13, background: '#F8F9FB', boxSizing: 'border-box',
+                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #2A2A3A',
+                  fontSize: 13, background: '#0A0A0F', color: '#F0EDE8', boxSizing: 'border-box',
                 }}
               />
             </div>
@@ -187,35 +187,35 @@ export default function AdminAvailability() {
         <div style={{ display: 'grid', gap: 8 }}>
           {sortedDates.map(date => (
             <div key={date.id} style={{
-              background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16,
+              background: '#12121A', border: '1px solid #1E1E2A', borderRadius: 12, padding: 16,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
             }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8' }}>
                     {new Date(date.start_date).toLocaleDateString()} – {new Date(date.end_date).toLocaleDateString()}
                   </span>
                   {date.venue_area && (
                     <span style={{
-                      padding: '2px 8px', borderRadius: 4, background: '#F1F3F7',
-                      fontSize: 11, color: '#475569',
+                      padding: '2px 8px', borderRadius: 4, background: '#1A1A25',
+                      fontSize: 11, color: '#8A8694',
                     }}>
                       {date.venue_area.name}
                     </span>
                   )}
                   {!date.venue_area && (
                     <span style={{
-                      padding: '2px 8px', borderRadius: 4, background: '#FEF2F2',
-                      fontSize: 11, color: '#EF4444',
+                      padding: '2px 8px', borderRadius: 4, background: 'rgba(248,113,113,0.08)',
+                      fontSize: 11, color: '#F87171',
                     }}>
                       All Areas
                     </span>
                   )}
                 </div>
-                {date.reason && <p style={{ fontSize: 13, color: '#475569' }}>{date.reason}</p>}
-                {date.is_recurring && <p style={{ fontSize: 12, color: '#94A3B8' }}>Recurring: {date.recurring_pattern || 'Weekly'}</p>}
+                {date.reason && <p style={{ fontSize: 13, color: '#8A8694' }}>{date.reason}</p>}
+                {date.is_recurring && <p style={{ fontSize: 12, color: '#5A5666' }}>Recurring: {date.recurring_pattern || 'Weekly'}</p>}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(date)} style={{ color: '#EF4444' }}>
+              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(date)} style={{ color: '#F87171' }}>
                 Remove
               </Button>
             </div>

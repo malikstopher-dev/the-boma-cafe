@@ -115,26 +115,26 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-lg border p-4">
+          <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
             <h3 className="font-semibold mb-3">Product Information</h3>
             <dl className="grid grid-cols-2 gap-3 text-sm">
-              <div><dt className="text-gray-500">Name</dt><dd className="font-medium">{product.name}</dd></div>
-              <div><dt className="text-gray-500">SKU</dt><dd className="font-medium">{product.sku || '—'}</dd></div>
-              <div><dt className="text-gray-500">Barcode</dt><dd className="font-medium">{product.barcode || '—'}</dd></div>
-              <div><dt className="text-gray-500">Reorder Threshold</dt><dd className="font-medium">{product.reorder_threshold ?? '—'}</dd></div>
-              <div><dt className="text-gray-500">Reorder Quantity</dt><dd className="font-medium">{product.reorder_quantity ?? '—'}</dd></div>
-              <div><dt className="text-gray-500">Supplier Code</dt><dd className="font-medium">{product.supplier_code || '—'}</dd></div>
-              <div><dt className="text-gray-500">Has Expiry</dt><dd className="font-medium">{product.has_expiry ? 'Yes' : 'No'}</dd></div>
-              <div><dt className="text-gray-500">Shelf Life</dt><dd className="font-medium">{product.shelf_life_days ? `${product.shelf_life_days} days` : '—'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Name</dt><dd className="font-medium">{product.name}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>SKU</dt><dd className="font-medium">{product.sku || '—'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Barcode</dt><dd className="font-medium">{product.barcode || '—'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Reorder Threshold</dt><dd className="font-medium">{product.reorder_threshold ?? '—'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Reorder Quantity</dt><dd className="font-medium">{product.reorder_quantity ?? '—'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Supplier Code</dt><dd className="font-medium">{product.supplier_code || '—'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Has Expiry</dt><dd className="font-medium">{product.has_expiry ? 'Yes' : 'No'}</dd></div>
+              <div><dt style={{ color: '#A09888' }}>Shelf Life</dt><dd className="font-medium">{product.shelf_life_days ? `${product.shelf_life_days} days` : '—'}</dd></div>
             </dl>
           </div>
 
           {product.inventory_product_uoms && product.inventory_product_uoms.length > 0 && (
-            <div className="bg-white rounded-lg border p-4">
+          <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
               <h3 className="font-semibold mb-3">UOM Configuration</h3>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b bg-gray-50">
+                  <tr className="border-b" style={{ background: '#242018' }}>
                     <th className="text-left p-2">UOM</th>
                     <th className="text-left p-2">Role</th>
                     <th className="text-left p-2">Conversion Factor</th>
@@ -156,14 +156,14 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg border p-4">
+          <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
             <h3 className="font-semibold mb-3">Activity Timeline</h3>
             <MovementTimeline productId={product.id} />
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white rounded-lg border p-4">
+          <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
             <h3 className="font-semibold mb-3">Actions</h3>
             <div className="space-y-2">
               {product.is_active ? (
@@ -178,11 +178,11 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border p-4">
+          <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
             <h3 className="font-semibold mb-3">Stock Summary</h3>
             <div className="text-sm">
               <div className="flex justify-between py-1">
-                <span className="text-gray-500">Current Balance</span>
+                <span style={{ color: '#A09888' }}>Current Balance</span>
                 <span className="font-medium">
                   {product.current_balance !== null && product.current_balance !== undefined
                     ? product.current_balance.toFixed(2)
@@ -190,7 +190,7 @@ export default function ProductDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-gray-500">Reorder Threshold</span>
+                <span style={{ color: '#A09888' }}>Reorder Threshold</span>
                 <span className="font-medium">{product.reorder_threshold ?? '—'}</span>
               </div>
             </div>

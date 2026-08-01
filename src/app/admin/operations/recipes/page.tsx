@@ -89,26 +89,26 @@ export default function RecipesPage() {
     >
       <div className="p-6">
         {showCreate && (
-          <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-white mb-3">New Recipe</h3>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16,marginBottom:24}}>
+            <h3 style={{fontWeight:600,color:'#F0EBE3',marginBottom:12,fontFamily:'Inter, sans-serif'}}>New Recipe</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 placeholder="Recipe name *"
-                className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
+                style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
               />
               <input
                 value={newCategory}
                 onChange={e => setNewCategory(e.target.value)}
                 placeholder="Category (e.g. sauce, prep)"
-                className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
+                style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
               />
               <input
                 value={newDescription}
                 onChange={e => setNewDescription(e.target.value)}
                 placeholder="Description"
-                className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
+                style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
               />
             </div>
             <div className="mt-3">
@@ -124,29 +124,30 @@ export default function RecipesPage() {
           placeholder="Search recipes..."
           value={filter}
           onChange={e => setFilter(e.target.value)}
-          className="mb-4 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 w-full max-w-xs"
+          style={{marginBottom:16,background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif',width:'100%',maxWidth:320}}
         />
 
         {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
+          <div style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>Loading...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">No recipes found. Create your first recipe.</div>
+          <div style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>No recipes found. Create your first recipe.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map(recipe => (
               <Link
                 key={recipe.id}
                 href={`/admin/operations/recipes/${recipe.id}`}
-                className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
+                className="rounded-lg p-4 transition-colors"
+                style={{background:'#242018',border:'1px solid #3A3428'}}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white font-semibold">{recipe.name}</span>
+                  <span style={{color:'#F0EBE3',fontWeight:600,fontFamily:'Inter, sans-serif'}}>{recipe.name}</span>
                   <Badge variant="info">v{recipe.version}</Badge>
                 </div>
                 {recipe.description && (
-                  <p className="text-sm text-gray-400 mb-2 line-clamp-2">{recipe.description}</p>
+                  <p style={{fontSize:14,color:'#A09888',marginBottom:8,fontFamily:'Inter, sans-serif'}} className="line-clamp-2">{recipe.description}</p>
                 )}
-                <div className="flex gap-4 text-xs text-gray-500">
+                <div className="flex gap-4" style={{fontSize:12,color:'#6B6358'}}>
                   {recipe.category && <span>{recipe.category}</span>}
                   {recipe.prep_time_minutes && <span>{recipe.prep_time_minutes} min prep</span>}
                   <span>Yield: {recipe.yield_quantity}</span>

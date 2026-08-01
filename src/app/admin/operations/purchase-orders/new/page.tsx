@@ -99,62 +99,62 @@ export default function NewPurchaseOrderPage() {
     <AdminPage title="New Purchase Order" description="Create a new order to send to a supplier" actions={<Link href="/admin/operations/purchase-orders"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
       <div className="max-w-3xl">
-        <div className="bg-white rounded-lg border p-4 mb-4">
-          <h3 className="font-semibold mb-3">Order Details</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,marginBottom:16}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Order Details</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Supplier *</label>
-              <select className="border rounded px-3 py-2 text-sm w-full" value={supplierId} onChange={e => setSupplierId(e.target.value)}>
+              <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Supplier *</label>
+              <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={supplierId} onChange={e => setSupplierId(e.target.value)}>
                 <option value="">Select...</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Quotation Reference</label>
-              <input className="border rounded px-3 py-2 text-sm w-full" placeholder="e.g. SUP-2026-0715" value={quotationRef} onChange={e => setQuotationRef(e.target.value)} />
+              <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Quotation Reference</label>
+              <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="e.g. SUP-2026-0715" value={quotationRef} onChange={e => setQuotationRef(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Expected Delivery</label>
-              <input className="border rounded px-3 py-2 text-sm w-full" type="date" value={expectedAt} onChange={e => setExpectedAt(e.target.value)} />
+              <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Expected Delivery</label>
+              <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="date" value={expectedAt} onChange={e => setExpectedAt(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Notes</label>
-              <input className="border rounded px-3 py-2 text-sm w-full" placeholder="Internal notes" value={notes} onChange={e => setNotes(e.target.value)} />
+              <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Notes</label>
+              <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Internal notes" value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Line Items</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+            <h3 style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Line Items</h3>
             <Button onClick={addItem} variant="secondary" size="sm">+ Add Item</Button>
           </div>
 
           {items.map((item, i) => (
-            <div key={i} className="flex gap-2 items-end mb-2 p-2 border rounded">
+            <div key={i} className="flex gap-2 items-end mb-2 p-2" style={{border:'1px solid #3A3428',borderRadius:6}}>
               <div className="flex-1">
-                <label className="text-xs text-gray-500 block mb-1">Product</label>
-                <select className="border rounded px-3 py-2 text-sm w-full" value={item.product_id} onChange={e => updateItem(i, 'product_id', e.target.value)}>
+                <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Product</label>
+                <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={item.product_id} onChange={e => updateItem(i, 'product_id', e.target.value)}>
                   <option value="">Select...</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ''}</option>)}
                 </select>
               </div>
               <div className="w-24">
-                <label className="text-xs text-gray-500 block mb-1">Location</label>
-                <select className="border rounded px-3 py-2 text-sm w-full" value={item.location_id} onChange={e => updateItem(i, 'location_id', e.target.value)}>
+                <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Location</label>
+                <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={item.location_id} onChange={e => updateItem(i, 'location_id', e.target.value)}>
                   {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
               </div>
               <div className="w-20">
-                <label className="text-xs text-gray-500 block mb-1">Qty</label>
-                <input className="border rounded px-3 py-2 text-sm w-full" type="number" min="0.01" step="0.01" value={item.quantity_ordered} onChange={e => updateItem(i, 'quantity_ordered', parseFloat(e.target.value) || 0)} />
+                <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Qty</label>
+                <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0.01" step="0.01" value={item.quantity_ordered} onChange={e => updateItem(i, 'quantity_ordered', parseFloat(e.target.value) || 0)} />
               </div>
               <div className="w-24">
-                <label className="text-xs text-gray-500 block mb-1">Unit Cost</label>
-                <input className="border rounded px-3 py-2 text-sm w-full" type="number" min="0" step="0.01" placeholder="R" value={item.unit_cost ?? ''} onChange={e => updateItem(i, 'unit_cost', e.target.value ? parseFloat(e.target.value) : null)} />
+                <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Unit Cost</label>
+                <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0" step="0.01" placeholder="R" value={item.unit_cost ?? ''} onChange={e => updateItem(i, 'unit_cost', e.target.value ? parseFloat(e.target.value) : null)} />
               </div>
               {items.length > 1 && (
-                <button onClick={() => removeItem(i)} className="text-red-500 text-sm px-2 py-2">✕</button>
+                <button onClick={() => removeItem(i)} style={{color:'#E85454',fontSize:14,padding:'8px',background:'none',border:'none',cursor:'pointer'}}>✕</button>
               )}
             </div>
           ))}

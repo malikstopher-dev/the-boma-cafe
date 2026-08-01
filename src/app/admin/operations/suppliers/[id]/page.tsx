@@ -108,8 +108,8 @@ export default function SupplierDetailPage() {
       <Link href="/admin/operations/suppliers"><Button variant="secondary" size="sm">Back</Button></Link></>}>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border p-4">
-          <h3 className="font-semibold mb-3">Contact Information</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Contact Information</h3>
           <dl className="space-y-2 text-sm">
             {[
               ['Name', form.name, 'name'],
@@ -122,10 +122,10 @@ export default function SupplierDetailPage() {
               ['Notes', form.notes, 'notes'],
             ].map(([label, value, key]) => (
               <div key={key || label} className="flex justify-between">
-                <dt className="text-gray-500">{label}</dt>
+                <dt style={{color:'#A09888'}}>{label}</dt>
                 <dd className="font-medium text-right">
                   {editing && key ? (
-                    <input className="border rounded px-2 py-1 text-xs w-40 text-right" value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+                    <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:4,padding:'4px 8px',fontSize:12,width:160,textAlign:'right',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={value as string} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
                   ) : (
                     (value as string) || '—'
                   )}
@@ -135,24 +135,24 @@ export default function SupplierDetailPage() {
           </dl>
         </div>
 
-        <div className="bg-white rounded-lg border p-4 lg:col-span-2">
-          <h3 className="font-semibold mb-3">Products from this Supplier</h3>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,gridColumn:'span 2'}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Products from this Supplier</h3>
           {(!supplier.products || supplier.products.length === 0) ? (
-            <p className="text-sm text-gray-400">No products linked to this supplier</p>
+            <p style={{fontSize:14,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>No products linked to this supplier</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2 font-medium">Name</th>
-                  <th className="text-left p-2 font-medium">SKU</th>
-                  <th className="text-left p-2 font-medium">Status</th>
+                <tr style={{borderBottom:'1px solid #3A3428'}}>
+                  <th style={{textAlign:'left',padding:8,fontWeight:500,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Name</th>
+                  <th style={{textAlign:'left',padding:8,fontWeight:500,color:'#A09888',fontFamily:'Inter, sans-serif'}}>SKU</th>
+                  <th style={{textAlign:'left',padding:8,fontWeight:500,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {supplier.products.map(p => (
-                  <tr key={p.id} className="border-b cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/operations/products/${p.id}`)}>
-                    <td className="p-2">{p.name}</td>
-                    <td className="p-2 text-gray-500">{p.sku || '—'}</td>
+                  <tr key={p.id} style={{borderBottom:'1px solid #3A3428',cursor:'pointer'}} onClick={() => router.push(`/admin/operations/products/${p.id}`)}>
+                    <td style={{padding:8,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{p.name}</td>
+                    <td style={{padding:8,color:'#A09888',fontFamily:'Inter, sans-serif'}}>{p.sku || '—'}</td>
                     <td className="p-2"><Badge variant={p.is_active ? 'success' : 'default'}>{p.is_active ? 'Active' : 'Archived'}</Badge></td>
                   </tr>
                 ))}

@@ -63,7 +63,7 @@ export default function ReceivingPage() {
       }
     >
       {isLoading ? (
-        <div className="text-gray-400 py-12 text-center">Loading...</div>
+        <div style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>Loading...</div>
       ) : pos.length === 0 ? (
         <EmptyState
           title="No pending deliveries"
@@ -77,20 +77,21 @@ export default function ReceivingPage() {
               <Link
                 key={po.id}
                 href={`/admin/operations/purchase-orders/${po.id}`}
-                className="flex items-center gap-4 p-4 bg-white border rounded-lg hover:border-brand-500 hover:shadow-sm transition-all"
+                className="flex items-center gap-4 p-4 rounded-lg transition-all"
+                style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:8}}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">
+                  <p style={{fontWeight:500,color:'#F0EBE3',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontFamily:'Inter, sans-serif'}}>
                     PO {po.id.slice(0, 8)}
-                    <span className="text-gray-400 font-normal"> — {po.inventory_suppliers?.name ?? 'Unknown supplier'}</span>
+                    <span style={{color:'#A09888',fontWeight:400}}> — {po.inventory_suppliers?.name ?? 'Unknown supplier'}</span>
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p style={{fontSize:12,color:'#A09888',marginTop:2,fontFamily:'Inter, sans-serif'}}>
                     {po.inventory_purchase_order_items?.[0]?.count ?? 0} line items
                     {po.expected_at ? ` · expected ${new Date(po.expected_at).toLocaleDateString('en-ZA')}` : ''}
                   </p>
                 </div>
                 <Badge variant={badge.variant}>{badge.label}</Badge>
-                <span className="text-gray-400 text-sm">Receive →</span>
+                <span style={{color:'#A09888',fontSize:14,fontFamily:'Inter, sans-serif'}}>Receive →</span>
               </Link>
             )
           })}

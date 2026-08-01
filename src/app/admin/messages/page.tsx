@@ -119,19 +119,19 @@ export default function AdminMessagesPage() {
   return (
     <AdminPage title="Messages" description="Chat with staff">
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#1E1A14', borderRadius: 12, border: '1px solid #3A3428' }}>
         {/* Left: Conversation list */}
         <div style={{
-          width: 320, borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column',
+          width: 320, borderRight: '1px solid #3A3428', display: 'flex', flexDirection: 'column',
           flexShrink: 0,
         }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #3A3428' }}>
             <button
               onClick={() => setShowNewChat(!showNewChat)}
               style={{
                 width: '100%', padding: '8px 12px', borderRadius: 8,
-                border: '1px solid #0F766E', background: showNewChat ? '#ECFDF5' : 'transparent',
-                color: '#0F766E', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                border: '1px solid #C8A04E', background: showNewChat ? '#242018' : 'transparent',
+                color: '#C8A04E', fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}
             >
               {showNewChat ? '← New Chat' : '💬 My Conversations'}
@@ -154,7 +154,7 @@ export default function AdminMessagesPage() {
             /* Staff list (default — click to start a conversation) */
             <div style={{ flex: 1, overflowY: 'auto' }}>
               {staffList.filter(s => s.id !== currentUserId).length === 0 ? (
-                <div style={{ padding: 32, textAlign: 'center', color: '#94A3B8' }}>
+                <div style={{ padding: 32, textAlign: 'center', color: '#A09888' }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>
                   <p>No staff found</p>
                 </div>
@@ -185,23 +185,23 @@ export default function AdminMessagesPage() {
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12,
                         padding: '12px 16px', border: 'none', background: 'transparent',
-                        borderBottom: '1px solid #F1F3F7', cursor: 'pointer',
+                        borderBottom: '1px solid #2A261E', cursor: 'pointer',
                         textAlign: 'left', width: '100%',
                       }}
                     >
                       <div style={{
                         width: 40, height: 40, borderRadius: '50%',
-                        background: '#ECFDF5', color: '#0F766E',
+                        background: '#242018', color: '#C8A04E',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 16, fontWeight: 700,
                       }}>
                         {staff.name.charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#F0EBE3' }}>
                           {staff.name}
                         </div>
-                        <div style={{ fontSize: 12, color: '#94A3B8' }}>{staff.role}</div>
+                        <div style={{ fontSize: 12, color: '#A09888' }}>{staff.role}</div>
                       </div>
                     </button>
                   ))
@@ -221,7 +221,7 @@ export default function AdminMessagesPage() {
               onClose={() => setSelectedConversation(null)}
             />
           ) : (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A09888' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>💬</div>
                 <p style={{ fontSize: 16, fontWeight: 600 }}>Select a conversation</p>

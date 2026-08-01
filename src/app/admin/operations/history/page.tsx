@@ -37,9 +37,9 @@ export default function ChecklistHistoryPage() {
     <AdminPage title="Checklist History" description="Past opening checklists">
       <div className="p-6">
         {isLoading ? (
-          <div className="text-gray-400">Loading...</div>
+          <div style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}>Loading...</div>
         ) : entries.length === 0 ? (
-          <div className="text-gray-500 text-center py-12">No checklists found</div>
+          <div style={{color:'#A09888',textAlign:'center',padding:'48px 0',fontFamily:'Inter, sans-serif'}}>No checklists found</div>
         ) : (
           <div className="space-y-2">
             {entries.map(entry => {
@@ -48,20 +48,21 @@ export default function ChecklistHistoryPage() {
                 <Link
                   key={entry.id}
                   href={`/admin/operations`}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50 hover:bg-gray-700/50 transition-colors"
+                  className="flex items-center gap-4 p-3 rounded-lg transition-colors"
+                  style={{background:'#242018',border:'1px solid #3A3428'}}
                 >
-                  <span className="text-white font-medium w-32">
+                  <span style={{color:'#F0EBE3',fontWeight:500,width:128,fontFamily:'Inter, sans-serif'}}>
                     {new Date(entry.checklist_date).toLocaleDateString('en-ZA')}
                   </span>
                   <Badge variant={badge.variant}>{badge.label}</Badge>
-                  <span className="text-xs text-gray-500">
+                  <span style={{fontSize:12,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>
                     {entry.completed_at
                       ? `Completed ${new Date(entry.completed_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}`
                       : `Opened ${new Date(entry.opened_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}`
                     }
                   </span>
                   {entry.manager_notes && (
-                    <span className="text-xs text-gray-400 truncate flex-1 ml-2">{entry.manager_notes}</span>
+                    <span style={{fontSize:12,color:'#A09888',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1,marginLeft:8,fontFamily:'Inter, sans-serif'}}>{entry.manager_notes}</span>
                   )}
                 </Link>
               )

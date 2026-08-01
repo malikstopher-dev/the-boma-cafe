@@ -5,6 +5,7 @@ import Link from 'next/link'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import OperationsPageLayout from '@/components/admin/design-system/OperationsPageLayout'
+import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
 interface ReconciliationRow {
   productId: string
@@ -14,6 +15,16 @@ interface ReconciliationRow {
   variance: number | null
   unitCost: number | null
   varianceValue: number | null
+}
+
+const kpiCard: React.CSSProperties = {
+  background: '#12121A',
+  border: '1px solid #1E1E2A',
+  borderRadius: 12,
+  padding: 20,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
 }
 
 export default function ReconciliationView({ forcedType }: { forcedType?: string }) {
@@ -142,35 +153,34 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
       title={`${typeLabel}Morning Reconciliation`}
       description={`Compare expected vs actual ${forcedType ? typeLabel.toLowerCase().trim() : 'stock'} levels`}
       actions={
-        <div className="flex gap-2">
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white"
-          />
-        </div>
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className={styles.input}
+          style={{ width: 200 }}
+        />
       }
     >
       <OperationsPageLayout
         whatHappened={
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-              <p className="text-sm text-gray-400">Products Checked</p>
-              <p className="text-2xl font-bold text-white mt-1">
+          <div className={styles.kpiGrid} style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div style={kpiCard}>
+              <p style={{ fontSize: 12, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Products Checked</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: '#F0EDE8' }}>
                 {checkedCount}
-                <span className="text-sm text-gray-500 font-normal"> / {rows.length}</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: '#5A5666' }}> / {rows.length}</span>
               </p>
             </div>
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-              <p className="text-sm text-gray-400">Total Variance</p>
-              <p className={`text-2xl font-bold mt-1 ${totalVariance > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+            <div style={kpiCard}>
+              <p style={{ fontSize: 12, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Variance</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: totalVariance > 0 ? '#FBBF24' : '#34D399' }}>
                 {totalVariance.toFixed(2)}
               </p>
             </div>
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-              <p className="text-sm text-gray-400">Variance Value</p>
-              <p className={`text-2xl font-bold mt-1 ${totalVarianceValue < 0 ? 'text-red-400' : 'text-green-400'}`}>
+            <div style={kpiCard}>
+              <p style={{ fontSize: 12, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Variance Value</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: totalVarianceValue < 0 ? '#F87171' : '#34D399' }}>
                 R {totalVarianceValue.toFixed(2)}
               </p>
             </div>
@@ -178,18 +188,22 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
         }
         needsAttention={
           varianceCount > 0 ? (
-            <div className="bg-yellow-950/40 border border-yellow-800/50 text-yellow-300 rounded-lg p-3 text-sm">
-              {varianceCount} product{varianceCount === 1 ? '' : 's'} {varianceCount === 1 ? 'has' : 'have'} a variance
-              — tick the &quot;Variances only&quot; filter below to review them.
+            <div className={styles.alertCard + ' ' + styles.alertCardWarning}>
+              <span className={styles.alertCardIcon}>⚠</span>
+              <span>
+                {varianceCount} product{varianceCount === 1 ? '' : 's'} {varianceCount === 1 ? 'has' : 'have'} a variance
+                — tick the &quot;Variances only&quot; filter below to review them.
+              </span>
             </div>
           ) : (
-            <div className="bg-green-950/40 border border-green-800/50 text-green-300 rounded-lg p-3 text-sm">
-              No variances recorded so far today.
+            <div className={styles.alertCard + ' ' + styles.alertCardSuccess}>
+              <span className={styles.alertCardIcon}>✓</span>
+              <span>No variances recorded so far today.</span>
             </div>
           )
         }
         nextActions={
-          <div className="flex gap-2 flex-wrap">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Button onClick={fetchReconciliation} variant="primary" size="sm">Refresh</Button>
             <Link href="/admin/operations">
               <Button variant="secondary" size="sm">Open Opening Checklist</Button>
@@ -201,44 +215,44 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
         }
       >
         <div>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Reconciliation Detail</h2>
+          <h2 style={{ fontSize: 11, fontWeight: 600, color: '#8A8694', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Reconciliation Detail</h2>
 
-          {/* Filters */}
-          <div className="flex gap-3 mb-4 items-center">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 flex-1 max-w-xs"
-            />
-            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+            <div className={styles.filterBarSearch} style={{ maxWidth: 280 }}>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className={styles.filterBarSearchInput}
+              />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#8A8694', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={showVarianceOnly}
                 onChange={e => setShowVarianceOnly(e.target.checked)}
-                className="rounded border-gray-600"
+                style={{ accentColor: '#D4A843' }}
               />
               Variances only
             </label>
           </div>
 
-          {/* Table */}
           {isLoading ? (
-            <div className="text-gray-400 py-12 text-center">Loading...</div>
+            <div style={{ color: '#8A8694', padding: '48px 0', textAlign: 'center' }}>Loading...</div>
           ) : filteredRows.length === 0 ? (
-            <div className="text-gray-500 py-12 text-center">No products found</div>
+            <div style={{ color: '#5A5666', padding: '48px 0', textAlign: 'center' }}>No products found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className={styles.dataTableWrapper}>
+              <table className={styles.dataTableElement}>
                 <thead>
-                  <tr className="text-gray-400 border-b border-gray-700">
-                    <th className="text-left py-2 px-3">Product</th>
-                    <th className="text-right py-2 px-3">Expected</th>
-                    <th className="text-right py-2 px-3">Physical</th>
-                    <th className="text-right py-2 px-3">Variance</th>
-                    <th className="text-right py-2 px-3">Value</th>
-                    <th className="py-2 px-3"></th>
+                  <tr>
+                    <th className={styles.dataTableHeader}>Product</th>
+                    <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Expected</th>
+                    <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Physical</th>
+                    <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Variance</th>
+                    <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Value</th>
+                    <th className={styles.dataTableHeader}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -246,41 +260,51 @@ export default function ReconciliationView({ forcedType }: { forcedType?: string
                     const { variance, varianceValue } = calculateVariance(row)
                     const hasPhys = physMap[row.productId] !== undefined || row.physicalQuantity !== null
                     return (
-                      <tr key={row.productId} className="border-b border-gray-800 hover:bg-gray-800/30">
-                        <td className="py-2 px-3 text-white">{row.productName}</td>
-                        <td className="py-2 px-3 text-right text-gray-300">{row.expectedQuantity.toFixed(2)}</td>
-                        <td className="py-2 px-3">
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={physMap[row.productId] ?? row.physicalQuantity ?? ''}
-                            onChange={e => updatePhys(row.productId, e.target.value)}
-                            className="w-24 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-right text-white text-sm ml-auto"
-                            placeholder="0"
-                          />
+                      <tr key={row.productId} className={styles.dataTableRow}>
+                        <td className={styles.dataTableCell}>{row.productName}</td>
+                        <td className={styles.dataTableCell} style={{ textAlign: 'right', color: '#8A8694' }}>{row.expectedQuantity.toFixed(2)}</td>
+                        <td className={styles.dataTableCell}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={physMap[row.productId] ?? row.physicalQuantity ?? ''}
+                              onChange={e => updatePhys(row.productId, e.target.value)}
+                              className={styles.input}
+                              style={{ width: 100, height: 32, textAlign: 'right', fontSize: 13 }}
+                              placeholder="0"
+                            />
+                          </div>
                         </td>
-                        <td className="py-2 px-3 text-right">
+                        <td className={styles.dataTableCell} style={{ textAlign: 'right' }}>
                           {hasPhys ? (
-                            <span className={variance === 0 ? 'text-green-400' : variance > 0 ? 'text-yellow-400' : 'text-red-400'}>
+                            <span style={{ color: variance === 0 ? '#34D399' : variance > 0 ? '#FBBF24' : '#F87171' }}>
                               {variance > 0 ? '+' : ''}{variance.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-gray-600">—</span>
+                            <span style={{ color: '#3A3A4A' }}>—</span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-right">
+                        <td className={styles.dataTableCell} style={{ textAlign: 'right' }}>
                           {varianceValue !== null ? (
-                            <span className="text-gray-300">R {varianceValue.toFixed(2)}</span>
+                            <span style={{ color: '#8A8694' }}>R {varianceValue.toFixed(2)}</span>
                           ) : (
-                            <span className="text-gray-600">—</span>
+                            <span style={{ color: '#3A3A4A' }}>—</span>
                           )}
                         </td>
-                        <td className="py-2 px-3">
+                        <td className={styles.dataTableCell}>
                           {physMap[row.productId] !== undefined && physMap[row.productId] !== '' && (
                             <button
                               onClick={() => savePhysical(row.productId)}
                               disabled={saving === row.productId}
-                              className="text-xs text-brand-400 hover:text-brand-300 disabled:text-gray-600"
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 500,
+                                color: saving === row.productId ? '#3A3A4A' : '#D4A843',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
                             >
                               {saving === row.productId ? '...' : 'Save'}
                             </button>

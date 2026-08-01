@@ -32,10 +32,10 @@ export default function AdminAnnouncement() {
   return (
     <AdminPage title="Announcement Bar" description="Configure the announcement that appears at the top of the website">
 
-      <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 24, maxWidth: 560 }}>
+      <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 24, maxWidth: 560 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>Settings</h2>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#475569' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3' }}>Settings</h2>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#A09888' }}>
             <input type="checkbox" checked={formData.isEnabled} onChange={e => setFormData({ ...formData, isEnabled: e.target.checked })} />
             Enable
           </label>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Badge from '@/components/admin/design-system/Badge'
+import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
 type DepletionRow = {
   productId: string
@@ -42,11 +43,11 @@ type ConsumptionPattern = {
   hourly: HourPattern[]
 }
 
-const urgencyConfig = {
-  out_of_stock: { color: 'text-red-400', bg: 'bg-red-900/30 border-red-800/50', label: 'Out of stock' },
-  critical: { color: 'text-orange-400', bg: 'bg-orange-900/30 border-orange-800/50', label: 'Critical' },
-  warning: { color: 'text-yellow-400', bg: 'bg-yellow-900/30 border-yellow-800/50', label: 'Low' },
-  ok: { color: 'text-green-400', bg: 'bg-green-900/30 border-green-800/50', label: 'Healthy' },
+const urgencyBadgeVariant: Record<string, 'success' | 'warning' | 'info' | 'danger'> = {
+  out_of_stock: 'danger',
+  critical: 'danger',
+  warning: 'info',
+  ok: 'success',
 }
 
 const TYPE_TABS = [
@@ -57,6 +58,23 @@ const TYPE_TABS = [
   { value: 'PACKAGING', label: 'Packaging' },
   { value: 'GENERAL', label: 'General' },
 ]
+
+const kpiCard: React.CSSProperties = {
+  background: '#1E1A14',
+  border: '1px solid #3A3428',
+  borderRadius: 12,
+  padding: 20,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+}
+
+const chartCard: React.CSSProperties = {
+  background: '#1E1A14',
+  border: '1px solid #3A3428',
+  borderRadius: 12,
+  padding: 20,
+}
 
 export default function ForecastPage() {
   const [rows, setRows] = useState<DepletionRow[]>([])
@@ -109,150 +127,160 @@ export default function ForecastPage() {
       title="Forecasting"
       description="Predicted stock-out dates and consumption patterns"
       actions={
-        <button onClick={() => { fetchForecast(); fetchPattern() }} className="text-sm text-brand-400 hover:text-brand-300">
+        <button
+          onClick={() => { fetchForecast(); fetchPattern() }}
+          style={{ fontSize: 13, color: '#D4A843', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+        >
           Refresh
         </button>
       }
     >
-      <div className="p-6">
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Products Tracked</p>
-            <p className="text-2xl font-bold text-white mt-1">{rows.length}</p>
+      <div style={{ padding: '0 24px' }}>
+        <div className={styles.kpiGrid} style={{ marginBottom: 24 }}>
+          <div style={kpiCard}>
+            <p style={{ fontSize: 12, color: '#A09888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>Products Tracked</p>
+            <p style={{ fontSize: 28, fontWeight: 700, color: '#F0EBE3', fontFamily: 'Inter, sans-serif' }}>{rows.length}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Out of Stock</p>
-            <p className="text-2xl font-bold text-red-400 mt-1">{outOfStock}</p>
+          <div style={kpiCard}>
+            <p style={{ fontSize: 12, color: '#A09888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>Out of Stock</p>
+            <p style={{ fontSize: 28, fontWeight: 700, color: '#E85454', fontFamily: 'Inter, sans-serif' }}>{outOfStock}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Critical (within lead time)</p>
-            <p className="text-2xl font-bold text-orange-400 mt-1">{critical}</p>
+          <div style={kpiCard}>
+            <p style={{ fontSize: 12, color: '#A09888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>Critical (within lead time)</p>
+            <p style={{ fontSize: 28, fontWeight: 700, color: '#FF9800', fontFamily: 'Inter, sans-serif' }}>{critical}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Low Stock</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">{warning}</p>
+          <div style={kpiCard}>
+            <p style={{ fontSize: 12, color: '#A09888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>Low Stock</p>
+            <p style={{ fontSize: 28, fontWeight: 700, color: '#C8A04E', fontFamily: 'Inter, sans-serif' }}>{warning}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <div className="flex rounded-lg border border-gray-700/50 overflow-hidden">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div className={styles.tabBar}>
             {TYPE_TABS.map(t => (
               <button
                 key={t.value}
                 onClick={() => setTypeTab(t.value)}
-                className={`px-3 py-1.5 text-sm transition-colors ${
-                  typeTab === t.value ? 'bg-brand-600/20 text-brand-300' : 'text-gray-400 hover:text-white'
-                }`}
+                className={`${styles.tabItem} ${typeTab === t.value ? styles.tabItemActive : ''}`}
               >
                 {t.label}
               </button>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-400">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#8A8694', cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={showHealthy}
               onChange={e => setShowHealthy(e.target.checked)}
-              className="accent-brand-500"
+              style={{ accentColor: '#C8A04E' }}
             />
             Show healthy stock
           </label>
         </div>
 
         {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Calculating forecast...</div>
+          <div style={{ color: '#A09888', padding: '48px 0', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Calculating forecast...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">No products match the current filters.</div>
+          <div style={{ color: '#6B6358', padding: '48px 0', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No products match the current filters.</div>
         ) : (
-          <div className="bg-gray-900/40 border border-gray-800/50 rounded-lg overflow-hidden mb-8">
-            <table className="w-full text-sm">
+          <div className={styles.dataTableWrapper} style={{ marginBottom: 32 }}>
+            <table className={styles.dataTableElement}>
               <thead>
-                <tr className="text-left text-gray-500 border-b border-gray-800">
-                  <th className="px-4 py-3">Product</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3 text-right">Balance</th>
-                  <th className="px-4 py-3 text-right">Daily Usage</th>
-                  <th className="px-4 py-3 text-right">Days Left</th>
-                  <th className="px-4 py-3">Projected Stock-out</th>
-                  <th className="px-4 py-3 text-right">Min Level</th>
-                  <th className="px-4 py-3">Status</th>
+                <tr>
+                  <th className={styles.dataTableHeader}>Product</th>
+                  <th className={styles.dataTableHeader}>Type</th>
+                  <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Balance</th>
+                  <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Daily Usage</th>
+                  <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Days Left</th>
+                  <th className={styles.dataTableHeader}>Projected Stock-out</th>
+                  <th className={styles.dataTableHeader} style={{ textAlign: 'right' }}>Min Level</th>
+                  <th className={styles.dataTableHeader}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(r => {
-                  const urg = urgencyConfig[r.urgency]
-                  return (
-                    <tr key={r.productId} className="border-b border-gray-800/50 hover:bg-gray-800/20">
-                      <td className="px-4 py-3">
-                        <p className="text-white font-medium">{r.productName}</p>
-                        {r.sku && <p className="text-xs text-gray-500">SKU: {r.sku}</p>}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">{r.inventoryType}</td>
-                      <td className="px-4 py-3 text-right text-white font-medium">{r.currentBalance.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right text-gray-300">{r.dailyUsage.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right text-gray-300">
-                        {r.daysRemaining !== null ? r.daysRemaining.toFixed(1) : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">
-                        {r.projectedStockoutDate ?? '—'}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-400">{r.minLevel.toFixed(2)}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant={r.urgency === 'ok' ? 'success' : r.urgency === 'warning' ? 'info' : 'danger'}>
-                          {urg.label}
-                        </Badge>
-                      </td>
-                    </tr>
-                  )
-                })}
+                {filtered.map(r => (
+                  <tr key={r.productId} className={styles.dataTableRow}>
+                    <td className={styles.dataTableCell}>
+                      <p style={{ fontWeight: 500, color: '#F0EBE3' }}>{r.productName}</p>
+                      {r.sku && <p style={{ fontSize: 11, color: '#6B6358', marginTop: 2 }}>SKU: {r.sku}</p>}
+                    </td>
+                    <td className={styles.dataTableCell} style={{ color: '#A09888' }}>{r.inventoryType}</td>
+                    <td className={styles.dataTableCell} style={{ textAlign: 'right', fontWeight: 600, color: '#F0EBE3' }}>{r.currentBalance.toFixed(2)}</td>
+                    <td className={styles.dataTableCell} style={{ textAlign: 'right', color: '#A09888' }}>{r.dailyUsage.toFixed(2)}</td>
+                    <td className={styles.dataTableCell} style={{ textAlign: 'right', color: '#A09888' }}>
+                      {r.daysRemaining !== null ? r.daysRemaining.toFixed(1) : '—'}
+                    </td>
+                    <td className={styles.dataTableCell} style={{ color: '#A09888' }}>
+                      {r.projectedStockoutDate ?? '—'}
+                    </td>
+                    <td className={styles.dataTableCell} style={{ textAlign: 'right', color: '#A09888' }}>{r.minLevel.toFixed(2)}</td>
+                    <td className={styles.dataTableCell}>
+                      <Badge variant={urgencyBadgeVariant[r.urgency] ?? 'info'}>
+                        {r.urgency === 'out_of_stock' ? 'Out of stock' : r.urgency === 'critical' ? 'Critical' : r.urgency === 'warning' ? 'Low' : 'Healthy'}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
 
         {pattern && pattern.totalConsumed > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-gray-900/40 border border-gray-800/50 rounded-lg p-5">
-              <h3 className="text-white font-semibold mb-1">Day-of-Week Consumption</h3>
-              <p className="text-xs text-gray-500 mb-4">
+          <div className={styles.twoCol}>
+            <div style={chartCard}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EBE3', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>Day-of-Week Consumption</h3>
+              <p style={{ fontSize: 11, color: '#6B6358', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>
                 Last {pattern.daysAnalyzed} days — busiest: {pattern.busiestDay}, avg {pattern.averagePerDay.toFixed(1)}/day
               </p>
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {pattern.dayOfWeek.map(d => {
                   const width = Math.max((d.totalQuantity / Math.max(pattern.totalConsumed, 1)) * 100, 0.5)
                   const highlight = d.dayName === pattern.busiestDay
                   return (
-                    <div key={d.dayOfWeek} className="flex items-center gap-3">
-                      <span className="w-24 text-xs text-gray-400">{d.dayName}</span>
-                      <div className="flex-1 bg-gray-800 rounded h-5 overflow-hidden">
+                    <div key={d.dayOfWeek} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ width: 96, fontSize: 12, color: '#A09888', fontFamily: 'Inter, sans-serif' }}>{d.dayName}</span>
+                      <div style={{ flex: 1, height: 22, background: '#2A261E', borderRadius: 4, overflow: 'hidden' }}>
                         <div
-                          className={`h-full ${highlight ? 'bg-brand-500' : 'bg-brand-600/50'}`}
-                          style={{ width: `${Math.min(width, 100)}%` }}
+                          style={{
+                            height: '100%',
+                            background: highlight ? '#C8A04E' : 'rgba(200,160,78,0.3)',
+                            borderRadius: 4,
+                            width: `${Math.min(width, 100)}%`,
+                            transition: 'width 0.3s ease',
+                          }}
                         />
                       </div>
-                      <span className="w-20 text-xs text-gray-400 text-right">{d.totalQuantity.toFixed(1)} ({d.sharePercent}%)</span>
+                      <span style={{ width: 80, fontSize: 12, color: '#A09888', textAlign: 'right', fontFamily: 'Inter, sans-serif' }}>
+                        {d.totalQuantity.toFixed(1)} ({d.sharePercent}%)
+                      </span>
                     </div>
                   )
                 })}
               </div>
             </div>
 
-            <div className="bg-gray-900/40 border border-gray-800/50 rounded-lg p-5">
-              <h3 className="text-white font-semibold mb-1">Hour-of-Day Profile</h3>
-              <p className="text-xs text-gray-500 mb-4">Peak consumption hour: {pattern.peakHour}:00</p>
-              <div className="flex items-end gap-0.5 h-40">
+            <div style={chartCard}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#F0EBE3', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>Hour-of-Day Profile</h3>
+              <p style={{ fontSize: 11, color: '#6B6358', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>Peak consumption hour: {pattern.peakHour}:00</p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 160 }}>
                 {pattern.hourly.map(h => {
                   const height = h.totalQuantity > 0 ? (h.totalQuantity / maxHour) * 100 : 2
                   const peak = h.hour === pattern.peakHour
                   return (
-                    <div key={h.hour} className="flex-1 flex flex-col items-center gap-1 group">
+                    <div key={h.hour} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                       <div
-                        className={`w-full rounded-t ${peak ? 'bg-brand-400' : 'bg-brand-700/60'}`}
-                        style={{ height: `${Math.max(height, 2)}%` }}
+                        style={{
+                          width: '100%',
+                          height: `${Math.max(height, 2)}%`,
+                          background: peak ? '#C8A04E' : 'rgba(200,160,78,0.3)',
+                          borderRadius: '2px 2px 0 0',
+                          transition: 'height 0.3s ease',
+                        }}
                         title={`${h.hour}:00 — ${h.totalQuantity.toFixed(1)}`}
                       />
                       {(h.hour % 4 === 0) && (
-                        <span className="text-[10px] text-gray-600">{h.hour}</span>
+                        <span style={{ fontSize: 10, color: '#6B6358' }}>{h.hour}</span>
                       )}
                     </div>
                   )

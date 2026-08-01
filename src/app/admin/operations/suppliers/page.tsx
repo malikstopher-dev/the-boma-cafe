@@ -80,21 +80,21 @@ export default function SuppliersPage() {
       key: 'contact_person',
       header: 'Contact',
       cell: supplier => (
-        <span className="text-gray-500">{supplier.contact_person || '—'}</span>
+        <span style={{color:'#A09888'}}>{supplier.contact_person || '—'}</span>
       ),
     },
     {
       key: 'phone',
       header: 'Phone',
       cell: supplier => (
-        <span className="text-gray-500">{supplier.phone || '—'}</span>
+        <span style={{color:'#A09888'}}>{supplier.phone || '—'}</span>
       ),
     },
     {
       key: 'email',
       header: 'Email',
       cell: supplier => (
-        <span className="text-gray-500">{supplier.email || '—'}</span>
+        <span style={{color:'#A09888'}}>{supplier.email || '—'}</span>
       ),
     },
     {
@@ -113,21 +113,21 @@ export default function SuppliersPage() {
       actions={<Button onClick={() => setShowCreateForm(true)} size="sm">Add Supplier</Button>}
       filters={
         <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search suppliers…">
-          <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer select-none">
-            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded" />
+          <label style={{display:'flex',alignItems:'center',gap:4,fontSize:14,color:'#A09888',cursor:'pointer',userSelect:'none'}}>
+            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} style={{borderRadius:4}} />
             Show archived
           </label>
         </FilterBar>
       }
     >
       {showCreateForm && (
-        <div className="bg-white rounded-lg border p-4 mb-4">
-          <h3 className="font-semibold mb-3">New Supplier</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Contact Person" value={form.contact_person} onChange={e => setForm(f => ({ ...f, contact_person: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-            <input className="border rounded px-3 py-2 text-sm" placeholder="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,marginBottom:16}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>New Supplier</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12,marginBottom:12}}>
+            <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Contact Person" value={form.contact_person} onChange={e => setForm(f => ({ ...f, contact_person: e.target.value }))} />
+            <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
           </div>
           <div className="flex gap-2">
             <Button onClick={handleCreate} disabled={saving || !form.name.trim()}>Create</Button>

@@ -163,23 +163,23 @@ export default function WastePage() {
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-4">
-              <h3 className="font-semibold text-white mb-3">Record Waste</h3>
-              {error && <div className="mb-3 text-sm text-red-400">{error}</div>}
-              {success && <div className="mb-3 text-sm text-green-400">{success}</div>}
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+              <h3 style={{fontWeight:600,color:'#F0EBE3',marginBottom:12,fontFamily:'Inter, sans-serif'}}>Record Waste</h3>
+              {error && <div style={{marginBottom:12,fontSize:14,color:'#E85454',fontFamily:'Inter, sans-serif'}}>{error}</div>}
+              {success && <div style={{marginBottom:12,fontSize:14,color:'#4CAF50',fontFamily:'Inter, sans-serif'}}>{success}</div>}
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Product</label>
+                  <label style={{display:'block',fontSize:12,color:'#A09888',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Product</label>
                   <input
                     value={productSearch}
                     onChange={e => { setProductSearch(e.target.value); setSelProduct('') }}
                     placeholder="Search product..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                   />
                   <select
                     value={selProduct}
                     onChange={e => setSelProduct(e.target.value)}
-                    className="mt-2 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    style={{marginTop:8,width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                   >
                     <option value="">Select...</option>
                     {filteredProducts.map(p => (
@@ -189,11 +189,11 @@ export default function WastePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1">Type</label>
+                    <label style={{display:'block',fontSize:12,color:'#A09888',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Type</label>
                     <select
                       value={type}
                       onChange={e => { setType(e.target.value); setReason(REASON_BY_TYPE[e.target.value] ?? 'WASTE') }}
-                      className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                      style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                     >
                       {WASTE_TYPES.map(t => (
                         <option key={t.value} value={t.value}>{t.label}</option>
@@ -201,21 +201,21 @@ export default function WastePage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1">Quantity</label>
+                    <label style={{display:'block',fontSize:12,color:'#A09888',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Quantity</label>
                     <input
                       type="number"
                       value={qty}
                       onChange={e => setQty(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                      style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Reason</label>
+                  <label style={{display:'block',fontSize:12,color:'#A09888',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Reason</label>
                   <select
                     value={reason}
                     onChange={e => setReason(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                   >
                     {REASONS.map(r => (
                       <option key={r} value={r}>{r.replace('_', ' ')}</option>
@@ -223,11 +223,11 @@ export default function WastePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Cost Centre</label>
+                  <label style={{display:'block',fontSize:12,color:'#A09888',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Cost Centre</label>
                   <select
                     value={selCostCentre}
                     onChange={e => setSelCostCentre(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                   >
                     <option value="">Default</option>
                     {costCentres.map(cc => (
@@ -236,12 +236,12 @@ export default function WastePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Notes</label>
+                  <label style={{display:'block',fontSize:12,color:'#A09888',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Notes</label>
                   <textarea
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     rows={2}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
                   />
                 </div>
                 <Button onClick={submit} disabled={busy} className="w-full">
@@ -250,17 +250,17 @@ export default function WastePage() {
               </div>
             </div>
 
-            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-4">
-              <h3 className="font-semibold text-white mb-3">Summary (30 days)</h3>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+              <h3 style={{fontWeight:600,color:'#F0EBE3',marginBottom:12,fontFamily:'Inter, sans-serif'}}>Summary (30 days)</h3>
               {summary.length === 0 ? (
-                <p className="text-gray-500 text-sm">No waste recorded</p>
+                <p style={{color:'#A09888',fontSize:14,fontFamily:'Inter, sans-serif'}}>No waste recorded</p>
               ) : (
                 <div className="space-y-2">
                   {summary.map(row => (
                     <div key={row.transaction_type} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-300 capitalize">{row.transaction_type.replace('_', ' ')}</span>
-                      <span className="text-gray-400">
-                        {row.count}× · {row.total_quantity} · <span className="text-white">{formatValue(row.estimated_value)}</span>
+                      <span style={{color:'#F0EBE3',textTransform:'capitalize',fontFamily:'Inter, sans-serif'}}>{row.transaction_type.replace('_', ' ')}</span>
+                      <span style={{color:'#A09888'}}>
+                        {row.count}× · {row.total_quantity} · <span style={{color:'#F0EBE3'}}>{formatValue(row.estimated_value)}</span>
                       </span>
                     </div>
                   ))}
@@ -272,19 +272,19 @@ export default function WastePage() {
           <div className="lg:col-span-2">
             <h3 className="font-semibold text-white mb-3">Recent Waste Events</h3>
             {events.length === 0 ? (
-              <p className="text-gray-500 py-12 text-center">No waste events recorded</p>
+              <p style={{color:'#A09888',padding:'48px 0',textAlign:'center',fontFamily:'Inter, sans-serif'}}>No waste events recorded</p>
             ) : (
               <div className="space-y-2">
                 {events.map(ev => (
-                  <div key={ev.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50">
+                  <div key={ev.id} className="flex items-center gap-3 p-3 rounded-lg" style={{background:'#242018',border:'1px solid #3A3428'}}>
                     <Badge variant="danger">{ev.transaction_type.replace('_', ' ')}</Badge>
                     <span className="text-white font-medium flex-1">
                       {ev.inventory_products?.name ?? 'Unknown product'}
                     </span>
-                    <span className="text-red-400">-{Math.abs(ev.quantity)}</span>
-                    {ev.reason_type && <span className="text-xs text-gray-400">{ev.reason_type.replace('_', ' ')}</span>}
-                    {ev.reason_notes && <span className="text-xs text-gray-500 italic">"{ev.reason_notes}"</span>}
-                    <span className="text-xs text-gray-500">
+                    <span style={{color:'#E85454'}}>-{Math.abs(ev.quantity)}</span>
+                    {ev.reason_type && <span style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>{ev.reason_type.replace('_', ' ')}</span>}
+                    {ev.reason_notes && <span style={{fontSize:12,color:'#A09888',fontStyle:'italic',fontFamily:'Inter, sans-serif'}}>"{ev.reason_notes}"</span>}
+                    <span style={{fontSize:12,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>
                       {new Date(ev.created_at).toLocaleString('en-ZA')}
                     </span>
                   </div>

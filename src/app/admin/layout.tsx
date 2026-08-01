@@ -69,20 +69,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#F8F9FB',
+        background: '#1A1610',
         fontFamily: "'Inter', -apple-system, sans-serif",
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
             width: 40,
             height: 40,
-            border: '3px solid #E5E7EB',
-            borderTopColor: '#0F766E',
+            border: '3px solid #3A3428',
+            borderTopColor: '#C8A04E',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
             margin: '0 auto 16px',
           }} />
-          <p style={{ color: '#94A3B8', fontSize: 14 }}>Loading...</p>
+          <p style={{ color: '#A09888', fontSize: 14 }}>Loading...</p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <ToastProvider>
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#F8F9FB', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1610', fontFamily: "'Inter', -apple-system, sans-serif" }}>
         {/* Sidebar */}
         <Sidebar
           open={sidebarOpen}
@@ -160,17 +160,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#FFFFFF',
-            border: '1px solid #E5E7EB',
+            background: '#242018',
+            border: '1px solid #3A3428',
             borderRadius: 8,
             cursor: 'pointer',
             fontSize: 18,
-            color: '#0F172A',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            color: '#F0EBE3',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
           }}
           className="admin-hamburger"
         >
-          ☰
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
         </button>
 
         {/* Main content */}
