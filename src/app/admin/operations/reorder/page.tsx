@@ -23,10 +23,10 @@ type ReorderSuggestion = {
 }
 
 const urgencyConfig = {
-  critical: { color: 'text-red-400', bg: 'bg-red-900/30 border-red-800/50', label: 'Critical' },
-  high: { color: 'text-orange-400', bg: 'bg-orange-900/30 border-orange-800/50', label: 'High' },
-  medium: { color: 'text-yellow-400', bg: 'bg-yellow-900/30 border-yellow-800/50', label: 'Medium' },
-  low: { color: 'text-green-400', bg: 'bg-green-900/30 border-green-800/50', label: 'Low' },
+  critical: { color: '#EF4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)', label: 'Critical' },
+  high: { color: '#F97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.25)', label: 'High' },
+  medium: { color: '#EAB308', bg: 'rgba(234,179,8,0.08)', border: 'rgba(234,179,8,0.25)', label: 'Medium' },
+  low: { color: '#22C55E', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.25)', label: 'Low' },
 }
 
 export default function ReorderPage() {
@@ -66,31 +66,31 @@ export default function ReorderPage() {
       title="Reorder Suggestions"
       description="Products that need restocking based on usage and par levels"
       actions={
-        <button onClick={fetchSuggestions} className="text-sm text-brand-400 hover:text-brand-300">
+        <button onClick={fetchSuggestions} style={{ fontSize: 13, color: '#C8A04E', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
           Refresh
         </button>
       }
     >
-      <div className="p-6">
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Suggestions</p>
-            <p className="text-2xl font-bold text-white mt-1">{suggestions.length}</p>
+      <div style={{ padding: 24, fontFamily: "'Inter', sans-serif" }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 16 }}>
+            <p style={{ fontSize: 13, color: '#A09888', margin: 0 }}>Suggestions</p>
+            <p style={{ fontSize: 24, fontWeight: 700, color: '#F0EBE3', marginTop: 4 }}>{suggestions.length}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Critical</p>
-            <p className="text-2xl font-bold text-red-400 mt-1">{criticalCount}</p>
+          <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 16 }}>
+            <p style={{ fontSize: 13, color: '#A09888', margin: 0 }}>Critical</p>
+            <p style={{ fontSize: 24, fontWeight: 700, color: '#EF4444', marginTop: 4 }}>{criticalCount}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">High Priority</p>
-            <p className="text-2xl font-bold text-orange-400 mt-1">{highCount}</p>
+          <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 16 }}>
+            <p style={{ fontSize: 13, color: '#A09888', margin: 0 }}>High Priority</p>
+            <p style={{ fontSize: 24, fontWeight: 700, color: '#F97316', marginTop: 4 }}>{highCount}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Inventory Type</p>
+          <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, padding: 16 }}>
+            <p style={{ fontSize: 13, color: '#A09888', margin: 0 }}>Inventory Type</p>
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
-              className="mt-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white"
+              style={{ marginTop: 6, background: '#2A261E', border: '1px solid #3A3428', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#F0EBE3', width: '100%', outline: 'none' }}
             >
               <option value="">All</option>
               <option value="FOOD">Food</option>
@@ -103,45 +103,53 @@ export default function ReorderPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Calculating suggestions...</div>
+          <div style={{ color: '#6B6358', padding: '48px 0', textAlign: 'center' }}>Calculating suggestions...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">
+          <div style={{ color: '#6B6358', padding: '48px 0', textAlign: 'center' }}>
             {suggestions.length === 0 ? 'No reorder suggestions — stock levels are healthy.' : 'No suggestions match the selected filters.'}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filtered.map(s => {
               const urg = urgencyConfig[s.urgency]
               return (
-                <div key={s.productId} className={`rounded-lg border p-4 ${urg.bg}`}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-semibold">{s.productName}</span>
+                <div
+                  key={s.productId}
+                  style={{
+                    background: '#1E1A14',
+                    border: '1px solid #3A3428',
+                    borderRadius: 12,
+                    padding: 16,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: '#F0EBE3', fontWeight: 600, fontSize: 15 }}>{s.productName}</span>
                         <Badge variant={s.urgency === 'critical' ? 'danger' : s.urgency === 'high' ? 'warning' : 'info'}>
                           {urg.label}
                         </Badge>
-                        <span className="text-xs text-gray-500">{s.inventoryType}</span>
+                        <span style={{ fontSize: 11, color: '#6B6358' }}>{s.inventoryType}</span>
                       </div>
-                      <div className="mt-2 grid grid-cols-4 gap-4 text-sm">
+                      <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, fontSize: 13 }}>
                         <div>
-                          <span className="text-gray-500">Current Stock</span>
-                          <p className="text-white font-medium">{s.currentStock.toFixed(2)}</p>
+                          <span style={{ color: '#6B6358', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Current Stock</span>
+                          <p style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{s.currentStock.toFixed(2)}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Min Level</span>
-                          <p className="text-white font-medium">{s.minLevel.toFixed(2)}</p>
+                          <span style={{ color: '#6B6358', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Min Level</span>
+                          <p style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{s.minLevel.toFixed(2)}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Daily Usage</span>
-                          <p className="text-white font-medium">{s.dailyUsage.toFixed(2)}</p>
+                          <span style={{ color: '#6B6358', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Daily Usage</span>
+                          <p style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{s.dailyUsage.toFixed(2)}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Suggest Order</span>
-                          <p className="text-brand-400 font-bold text-lg">{s.suggestedQuantity}</p>
+                          <span style={{ color: '#6B6358', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Suggest Order</span>
+                          <p style={{ color: '#C8A04E', fontWeight: 700, fontSize: 18, marginTop: 2 }}>{s.suggestedQuantity}</p>
                         </div>
                       </div>
-                      <div className="mt-2 flex gap-4 text-xs text-gray-500">
+                      <div style={{ marginTop: 10, display: 'flex', gap: 16, fontSize: 12, color: '#6B6358' }}>
                         <span>Lead time: {s.leadTimeDays}d</span>
                         {s.estimatedDaysUntilStockout !== null && (
                           <span>Est. stockout: {s.estimatedDaysUntilStockout.toFixed(1)}d</span>

@@ -26,28 +26,38 @@ export default function ContainerTypesPage() {
 
   return (
     <AdminPage title="Container Types" description="Track products by container (bottle, keg, case, etc.)">
-      <div className="p-6">
+      <div style={{ padding: 24, fontFamily: "'Inter', sans-serif" }}>
         {isLoading ? (
-          <div className="text-gray-400">Loading...</div>
+          <div style={{ color: '#6B6358' }}>Loading...</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {types.map(t => (
-              <div key={t.id} className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg font-semibold text-white">{t.display_name}</span>
-                  {!t.is_trackable && (
-                    <span className="text-xs text-gray-500">(reference only)</span>
+              <div
+                key={t.id}
+                style={{
+                  background: '#1E1A14',
+                  border: '1px solid #3A3428',
+                  borderRadius: 12,
+                  padding: '16px 20px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: '#F0EBE3' }}>{t.display_name}</span>
+                  {t.is_trackable ? (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#C8A04E', background: 'rgba(200,160,78,0.12)', padding: '2px 8px', borderRadius: 9999 }}>Trackable</span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#6B6358' }}>(reference only)</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-400">{t.description ?? t.name}</p>
+                <p style={{ fontSize: 13, color: '#A09888', margin: 0 }}>{t.description ?? t.name}</p>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mt-8 border-t border-gray-700 pt-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Products by Container</h2>
-          <p className="text-sm text-gray-400">
+        <div style={{ marginTop: 32, borderTop: '1px solid #3A3428', paddingTop: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', marginBottom: 12 }}>Products by Container</h2>
+          <p style={{ fontSize: 13, color: '#A09888', margin: 0 }}>
             Container tracking allows you to manage stock by physical containers.
             Assign a container type and units-per-container to each product in the product settings.
           </p>

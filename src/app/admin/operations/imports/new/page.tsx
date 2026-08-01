@@ -147,10 +147,10 @@ export default function NewImportPage() {
       )}
 
       {!preview ? (
-        <div className="max-w-lg rounded-lg border p-6 space-y-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+        <div style={{maxWidth:544,background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:24,display:'flex',flexDirection:'column',gap:16,fontFamily:'Inter, sans-serif'}}>
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: '#A09888' }}>Import Type</label>
-            <select value={importType} onChange={e => setImportType(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }}>
+            <label style={{display:'block',fontSize:13,fontWeight:600,color:'#A09888',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.05em'}}>Import Type</label>
+            <select value={importType} onChange={e => setImportType(e.target.value)} style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:8,padding:'8px 12px',fontSize:14,color:'#F0EBE3',width:'100%',fontFamily:'Inter, sans-serif',outline:'none'}}>
               <option value="supplier_delivery">Supplier Delivery</option>
               <option value="physical_count">Physical Stock Count</option>
               <option value="adjustment">Manual Adjustment</option>
@@ -159,8 +159,8 @@ export default function NewImportPage() {
 
           {importType === 'supplier_delivery' && (
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#A09888' }}>Supplier (optional)</label>
-              <select value={supplierId} onChange={e => setSupplierId(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" style={{ background: '#2A261E', borderColor: '#3A3428', color: '#F0EBE3' }}>
+              <label style={{display:'block',fontSize:13,fontWeight:600,color:'#A09888',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.05em'}}>Supplier (optional)</label>
+              <select value={supplierId} onChange={e => setSupplierId(e.target.value)} style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:8,padding:'8px 12px',fontSize:14,color:'#F0EBE3',width:'100%',fontFamily:'Inter, sans-serif',outline:'none'}}>
                 <option value="">Auto-detect from data</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -168,74 +168,83 @@ export default function NewImportPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: '#A09888' }}>Excel File (.xlsx or .csv)</label>
-            <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer" style={{ borderColor: '#3A3428' }} onClick={() => fileInputRef.current?.click()}>
+            <label style={{display:'block',fontSize:13,fontWeight:600,color:'#A09888',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.05em'}}>Excel File (.xlsx or .csv)</label>
+            <div
+              style={{border:'2px dashed #3A3428',borderRadius:12,padding:40,textAlign:'center',cursor:'pointer',color:'#6B6358',transition:'border-color 0.15s',fontFamily:'Inter, sans-serif'}}
+              onClick={() => fileInputRef.current?.click()}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#C8A04E')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = '#3A3428')}
+            >
               {file ? (
                 <div>
-                  <p className="font-medium text-sm">{file.name}</p>
-                  <p className="text-xs text-gray-500 mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+                  <p style={{fontWeight:500,fontSize:14,color:'#F0EBE3'}}>{file.name}</p>
+                  <p style={{fontSize:12,color:'#6B6358',marginTop:4}}>{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm text-gray-500">Click to select a file</p>
-                  <p className="text-xs text-gray-400 mt-1">.xlsx or .csv</p>
+                  <p style={{fontSize:14,color:'#6B6358'}}>Click to select a file</p>
+                  <p style={{fontSize:12,color:'#6B6358',marginTop:4}}>.xlsx or .csv</p>
                 </div>
               )}
             </div>
             <input ref={fileInputRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={handleFileChange} />
           </div>
 
-          <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full">
+          <button
+            onClick={handleUpload}
+            disabled={!file || isUploading}
+            style={{width:'100%',background:(!file || isUploading) ? '#3A3428' : '#C8A04E',color:(!file || isUploading) ? '#6B6358' : '#1A1610',fontWeight:600,borderRadius:8,padding:'10px 16px',fontSize:14,border:'none',cursor:(!file || isUploading) ? 'not-allowed' : 'pointer',fontFamily:'Inter, sans-serif'}}
+          >
             {isUploading ? 'Uploading & Parsing...' : 'Upload & Preview'}
-          </Button>
+          </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-              <p className="text-2xl font-bold">{preview.totalRows}</p>
-              <p className="text-xs" style={{ color: '#A09888' }}>Total Rows</p>
+        <div style={{display:'flex',flexDirection:'column',gap:16,fontFamily:'Inter, sans-serif'}}>
+          <div className="grid grid-cols-2 lg:grid-cols-5" style={{gap:12}}>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,textAlign:'center'}}>
+              <p style={{fontSize:24,fontWeight:700,color:'#F0EBE3'}}>{preview.totalRows}</p>
+              <p style={{fontSize:11,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em'}}>Total Rows</p>
             </div>
-            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-              <p className="text-2xl font-bold" style={{ color: '#4CAF50' }}>{preview.matchedRows}</p>
-              <p className="text-xs" style={{ color: '#A09888' }}>Matched</p>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,textAlign:'center'}}>
+              <p style={{fontSize:24,fontWeight:700,color:'#4CAF50'}}>{preview.matchedRows}</p>
+              <p style={{fontSize:11,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em'}}>Matched</p>
             </div>
-            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-              <p className="text-2xl font-bold" style={{ color: '#FF9800' }}>{preview.unknownRows}</p>
-              <p className="text-xs" style={{ color: '#A09888' }}>Unknown</p>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,textAlign:'center'}}>
+              <p style={{fontSize:24,fontWeight:700,color:'#FF9800'}}>{preview.unknownRows}</p>
+              <p style={{fontSize:11,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em'}}>Unknown</p>
             </div>
-            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-              <p className="text-2xl font-bold" style={{ color: '#E85454' }}>{preview.errorRows}</p>
-              <p className="text-xs" style={{ color: '#A09888' }}>Errors</p>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,textAlign:'center'}}>
+              <p style={{fontSize:24,fontWeight:700,color:'#E85454'}}>{preview.errorRows}</p>
+              <p style={{fontSize:11,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em'}}>Errors</p>
             </div>
-            <div className="rounded-lg border p-3 text-center" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-              <p className="text-2xl font-bold">{preview.summary.totalQuantity}</p>
-              <p className="text-xs" style={{ color: '#A09888' }}>Total Qty</p>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:12,textAlign:'center'}}>
+              <p style={{fontSize:24,fontWeight:700,color:'#F0EBE3'}}>{preview.summary.totalQuantity}</p>
+              <p style={{fontSize:11,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em'}}>Total Qty</p>
             </div>
           </div>
 
           {preview.rows.length > 0 && (
-            <div className="rounded-lg border overflow-hidden" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
+            <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,overflow:'hidden'}}>
               <div className="overflow-x-auto max-h-80">
-                <table className="w-full text-sm">
+                <table style={{width:'100%',fontSize:14}}>
                   <thead>
-                    <tr className="border-b sticky top-0" style={{ background: '#242018' }}>
-                      <th className="text-left p-2 font-medium">#</th>
-                      <th className="text-left p-2 font-medium">Product</th>
-                      <th className="text-right p-2 font-medium">Qty</th>
-                      <th className="text-right p-2 font-medium">Unit Cost</th>
-                      <th className="text-left p-2 font-medium">Match</th>
-                      <th className="text-left p-2 font-medium">Errors</th>
+                    <tr style={{borderBottom:'1px solid #3A3428',background:'#242018'}}>
+                      <th style={{textAlign:'left',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>#</th>
+                      <th style={{textAlign:'left',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Product</th>
+                      <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Qty</th>
+                      <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Unit Cost</th>
+                      <th style={{textAlign:'left',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Match</th>
+                      <th style={{textAlign:'left',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Errors</th>
                     </tr>
                   </thead>
                   <tbody>
                     {preview.rows.map(row => (
-                      <tr key={row.rowIndex} className={`border-b ${row.errors.length > 0 ? '' : !row.match || row.match.matchSource === 'none' ? '' : ''}`} style={row.errors.length > 0 ? { background: '#3A1A1A' } : !row.match || row.match.matchSource === 'none' ? { background: '#2A2210' } : undefined}>
-                        <td className="p-2 text-xs text-gray-500">{row.rowIndex}</td>
-                        <td className="p-2 font-medium">{row.productName || '—'}</td>
-                        <td className="p-2 text-right">{row.parsedQuantity ?? '—'}</td>
-                        <td className="p-2 text-right">{row.unitCost != null ? `R${row.unitCost.toFixed(2)}` : '—'}</td>
-                        <td className="p-2">
+                      <tr key={row.rowIndex} style={{borderBottom:'1px solid #3A3428',background:row.errors.length > 0 ? '#3A1A1A' : !row.match || row.match.matchSource === 'none' ? '#2A2210' : undefined}}>
+                        <td style={{padding:'12px 16px',fontSize:12,color:'#6B6358'}}>{row.rowIndex}</td>
+                        <td style={{padding:'12px 16px',fontWeight:500,color:'#F0EBE3'}}>{row.productName || '—'}</td>
+                        <td style={{padding:'12px 16px',textAlign:'right',color:'#F0EBE3'}}>{row.parsedQuantity ?? '—'}</td>
+                        <td style={{padding:'12px 16px',textAlign:'right',color:'#F0EBE3'}}>{row.unitCost != null ? `R${row.unitCost.toFixed(2)}` : '—'}</td>
+                        <td style={{padding:'12px 16px'}}>
                           {!row.match || row.match.matchSource === 'none' ? <Badge variant="warning">Unknown</Badge> :
                            row.match.matchSource === 'supplier_sku' ? <Badge variant="success">SKU</Badge> :
                            row.match.matchSource === 'exact_name' || row.match.matchSource === 'name_and_size' ? <Badge variant="info">Name</Badge> :
@@ -244,7 +253,7 @@ export default function NewImportPage() {
                            row.match.productId ? <Badge variant="info">Matched</Badge> :
                            <Badge>—</Badge>}
                         </td>
-                        <td className="p-2 text-xs" style={{ color: '#E85454' }}>{row.errors.map(e => typeof e === 'string' ? e : e.message).join(', ') || ''}</td>
+                        <td style={{padding:'12px 16px',fontSize:12,color:'#E85454'}}>{row.errors.map(e => typeof e === 'string' ? e : e.message).join(', ') || ''}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -253,7 +262,7 @@ export default function NewImportPage() {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div style={{display:'flex',gap:12}}>
             <Button onClick={handleApply} disabled={isApplying || preview.errorRows > 0} variant="primary">
               {isApplying ? 'Applying...' : 'Apply Import'}
             </Button>
@@ -262,7 +271,7 @@ export default function NewImportPage() {
             </Button>
           </div>
           {preview.errorRows > 0 && (
-            <p className="text-xs text-red-500">Fix errors in the spreadsheet before applying.</p>
+            <p style={{fontSize:12,color:'#E85454'}}>Fix errors in the spreadsheet before applying.</p>
           )}
         </div>
       )}

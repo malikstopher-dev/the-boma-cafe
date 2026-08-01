@@ -70,28 +70,33 @@ export default function ReceivingPage() {
           description="Purchase orders that are ordered or partially received will appear here"
         />
       ) : (
-        <div className="space-y-2">
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
           {pos.map(po => {
             const badge = statusBadge[po.status] ?? { variant: 'info' as const, label: po.status }
             return (
               <Link
                 key={po.id}
                 href={`/admin/operations/purchase-orders/${po.id}`}
-                className="flex items-center gap-4 p-4 rounded-lg transition-all"
-                style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:8}}
+                style={{
+                  display:'flex',alignItems:'center',gap:16,padding:'16px 20px',
+                  background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,
+                  textDecoration:'none',transition:'background 0.15s ease',fontFamily:'Inter, sans-serif'
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#2A261E' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#1E1A14' }}
               >
-                <div className="flex-1 min-w-0">
-                  <p style={{fontWeight:500,color:'#F0EBE3',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontFamily:'Inter, sans-serif'}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontWeight:600,color:'#F0EBE3',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:14,margin:0}}>
                     PO {po.id.slice(0, 8)}
                     <span style={{color:'#A09888',fontWeight:400}}> — {po.inventory_suppliers?.name ?? 'Unknown supplier'}</span>
                   </p>
-                  <p style={{fontSize:12,color:'#A09888',marginTop:2,fontFamily:'Inter, sans-serif'}}>
+                  <p style={{fontSize:12,color:'#A09888',marginTop:4,margin:0}}>
                     {po.inventory_purchase_order_items?.[0]?.count ?? 0} line items
                     {po.expected_at ? ` · expected ${new Date(po.expected_at).toLocaleDateString('en-ZA')}` : ''}
                   </p>
                 </div>
                 <Badge variant={badge.variant}>{badge.label}</Badge>
-                <span style={{color:'#A09888',fontSize:14,fontFamily:'Inter, sans-serif'}}>Receive →</span>
+                <span style={{color:'#A09888',fontSize:14}}>Receive →</span>
               </Link>
             )
           })}

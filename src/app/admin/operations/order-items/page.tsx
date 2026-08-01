@@ -106,62 +106,61 @@ export default function OrderItemsPage() {
       title="Order Items"
       description="Normalize order line items and auto-deduct stock when orders complete"
     >
-      <div className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div style={{padding:24,fontFamily:'Inter, sans-serif'}}>
+        <div className="grid grid-cols-1 lg:grid-cols-3" style={{gap:24}}>
           <div className="lg:col-span-1">
-            <h3 className="font-semibold text-white mb-3">Orders</h3>
+            <h3 style={{fontSize:13,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:12,fontFamily:'Inter, sans-serif'}}>Orders</h3>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search customer / order ref..."
-              style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',marginBottom:12,fontFamily:'Inter, sans-serif'}}
+              style={{width:'100%',background:'#2A261E',border:'1px solid #3A3428',borderRadius:8,padding:'8px 12px',fontSize:14,color:'#F0EBE3',marginBottom:12,fontFamily:'Inter, sans-serif',outline:'none'}}
             />
-            <div className="max-h-[70vh] overflow-y-auto space-y-2">
+            <div className="max-h-[70vh] overflow-y-auto" style={{display:'flex',flexDirection:'column',gap:8}}>
               {filteredOrders.map(o => (
                 <button
                   key={o.id}
                   onClick={() => setSelOrderId(o.id)}
-                  className={`w-full text-left p-3 rounded-lg transition-colors ${
-                    selOrderId === o.id ? '' : ''
-                  }`}
                   style={{
-                    background: selOrderId === o.id ? 'rgba(200,160,78,0.15)' : '#242018',
-                    border: selOrderId === o.id ? '1px solid rgba(200,160,78,0.4)' : '1px solid #3A3428',
-                    color:'#F0EBE3'
+                    width:'100%',textAlign:'left',padding:12,borderRadius:8,
+                    background: selOrderId === o.id ? '#1E1A14' : '#1E1A14',
+                    border: selOrderId === o.id ? '1px solid #C8A04E' : '1px solid #3A3428',
+                    color:'#F0EBE3',cursor:'pointer',fontFamily:'Inter, sans-serif',
+                    transition:'border-color 0.15s'
                   }}
                 >
-                  <div className="text-white font-medium text-sm">{o.customer_name || 'Unknown'}</div>
-                  <div className="text-xs text-gray-400 flex justify-between mt-1">
+                  <div style={{fontWeight:500,fontSize:14,color:'#F0EBE3'}}>{o.customer_name || 'Unknown'}</div>
+                  <div style={{fontSize:12,color:'#A09888',display:'flex',justifyContent:'space-between',marginTop:4}}>
                     <span>{o.order_ref}</span>
                     <span>R{o.total?.toFixed?.(2) ?? o.total}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{o.status} · {new Date(o.created_at).toLocaleDateString('en-ZA')}</div>
+                  <div style={{fontSize:12,color:'#6B6358',marginTop:4}}>{o.status} · {new Date(o.created_at).toLocaleDateString('en-ZA')}</div>
                 </button>
               ))}
               {filteredOrders.length === 0 && (
-                <p className="text-gray-500 text-sm py-8 text-center">No orders found</p>
+                <p style={{color:'#6B6358',fontSize:14,paddingTop:32,paddingBottom:32,textAlign:'center',fontFamily:'Inter, sans-serif'}}>No orders found</p>
               )}
             </div>
           </div>
 
           <div className="lg:col-span-2">
             {!selOrderId ? (
-              <p className="text-gray-500 py-12 text-center">Select an order to view its items</p>
+              <p style={{color:'#6B6358',paddingTop:48,paddingBottom:48,textAlign:'center',fontFamily:'Inter, sans-serif'}}>Select an order to view its items</p>
             ) : isLoading ? (
-              <p className="text-gray-400 py-12 text-center">Loading...</p>
+              <p style={{color:'#A09888',paddingTop:48,paddingBottom:48,textAlign:'center',fontFamily:'Inter, sans-serif'}}>Loading...</p>
             ) : detail ? (
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <h3 className="font-semibold text-white">Order Items</h3>
+              <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:20,fontFamily:'Inter, sans-serif'}}>
+                <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+                  <h3 style={{fontSize:16,fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Order Items</h3>
                   <Badge variant={detail.status === 'completed' ? 'success' : 'info'}>{detail.status}</Badge>
-                  <span className="text-sm text-gray-400">
+                  <span style={{fontSize:13,color:'#A09888',fontFamily:'Inter, sans-serif'}}>
                     {matched.length} matched · {unmatched.length} unmatched · {deducted.length} deducted
                   </span>
                 </div>
 
-                {message && <div style={{marginBottom:16,fontSize:14,color:'#A09888',background:'rgba(200,160,78,0.08)',border:'1px solid #3A3428',borderRadius:6,padding:12,fontFamily:'Inter, sans-serif'}}>{message}</div>}
+                {message && <div style={{marginBottom:16,fontSize:14,color:'#A09888',background:'rgba(200,160,78,0.08)',border:'1px solid #3A3428',borderRadius:8,padding:12,fontFamily:'Inter, sans-serif'}}>{message}</div>}
 
-                <div className="flex gap-2 mb-4">
+                <div style={{display:'flex',gap:8,marginBottom:16}}>
                   <Button size="sm" onClick={() => post('sync', 'Sync')} disabled={busy}>
                     Sync Items
                   </Button>
@@ -170,10 +169,10 @@ export default function OrderItemsPage() {
                   </Button>
                 </div>
 
-                <div className="space-y-2">
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {detail.items.map(item => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg" style={{background:'#242018',border:'1px solid #3A3428'}}>
-                      <span className="text-white font-medium flex-1">
+                    <div key={item.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',background:'#242018',border:'1px solid #3A3428',borderRadius:8,fontFamily:'Inter, sans-serif'}}>
+                      <span style={{fontWeight:500,flex:1,color:'#F0EBE3',fontSize:14}}>
                         {item.quantity}x {item.item_name}
                       </span>
                       {item.product_id ? (
@@ -184,26 +183,26 @@ export default function OrderItemsPage() {
                         <Badge variant="danger">unmatched</Badge>
                       )}
                       {item.product_id && (
-                        <span className="text-xs text-gray-400">
+                        <span style={{fontSize:12,color:'#A09888'}}>
                           base {item.base_quantity ?? '—'}{item.pour_size_ml ? ` (${item.pour_size_ml}ml pour)` : ''}
                         </span>
                       )}
                       {item.transaction_id ? (
-                        <span className="text-xs text-green-500">✓ deducted</span>
+                        <span style={{fontSize:12,color:'#4CAF50'}}>✓ deducted</span>
                       ) : item.product_id ? (
-                        <span className="text-xs text-amber-400">pending</span>
+                        <span style={{fontSize:12,color:'#C8A04E'}}>pending</span>
                       ) : null}
                     </div>
                   ))}
                   {detail.items.length === 0 && (
-                    <p className="text-gray-500 text-sm py-8 text-center">
+                    <p style={{color:'#6B6358',fontSize:14,paddingTop:32,paddingBottom:32,textAlign:'center',fontFamily:'Inter, sans-serif'}}>
                       No normalized items yet — click "Sync Items" to parse the order
                     </p>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 py-12 text-center">Order not found</p>
+              <p style={{color:'#6B6358',paddingTop:48,paddingBottom:48,textAlign:'center',fontFamily:'Inter, sans-serif'}}>Order not found</p>
             )}
           </div>
         </div>

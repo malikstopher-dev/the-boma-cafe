@@ -35,60 +35,62 @@ export default function SupplierPerformancePage() {
 
   return (
     <AdminPage title="Supplier Performance" description="On-time delivery rates, lead times, and PO history">
-      <div className="p-6">
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Avg On-Time Rate</p>
-            <p className={`text-2xl font-bold mt-1 ${avgOnTime >= 90 ? 'text-green-400' : avgOnTime >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
+      <div style={{padding:24,fontFamily:'Inter, sans-serif'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))',gap:16,marginBottom:24}}>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:13,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>Avg On-Time Rate</p>
+            <p style={{fontSize:28,fontWeight:700,marginTop:8,color:avgOnTime >= 90 ? '#4ADE80' : avgOnTime >= 70 ? '#FBBF24' : '#F87171',margin:0}}>
               {avgOnTime}%
             </p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Active Suppliers</p>
-            <p className="text-2xl font-bold text-white mt-1">{suppliers.length}</p>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:13,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>Active Suppliers</p>
+            <p style={{fontSize:28,fontWeight:700,color:'#F0EBE3',marginTop:8,margin:0}}>{suppliers.length}</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Open POs</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">{totalOpen}</p>
+          <div style={{background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12,padding:16}}>
+            <p style={{fontSize:13,fontWeight:600,color:'#A09888',textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>Open POs</p>
+            <p style={{fontSize:28,fontWeight:700,color:'#FBBF24',marginTop:8,margin:0}}>{totalOpen}</p>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
+          <div style={{color:'#A09888',padding:'48px 0',textAlign:'center'}}>Loading...</div>
         ) : suppliers.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">No supplier data available</div>
+          <div style={{color:'#6B6358',padding:'48px 0',textAlign:'center'}}>No supplier data available</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div style={{overflowX:'auto',background:'#1E1A14',border:'1px solid #3A3428',borderRadius:12}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
               <thead>
-                <tr className="text-gray-400 border-b border-gray-700">
-                  <th className="text-left py-2 px-3">Supplier</th>
-                  <th className="text-right py-2 px-3">Total POs</th>
-                  <th className="text-right py-2 px-3">Received</th>
-                  <th className="text-right py-2 px-3">On-Time</th>
-                  <th className="text-right py-2 px-3">Rate</th>
-                  <th className="text-right py-2 px-3">Avg Lead (days)</th>
-                  <th className="text-right py-2 px-3">Open</th>
-                  <th className="text-right py-2 px-3">Cancelled</th>
+                <tr style={{background:'#242018',borderBottom:'1px solid #3A3428'}}>
+                  <th style={{textAlign:'left',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Supplier</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Total POs</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Received</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>On-Time</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Rate</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Avg Lead (days)</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Open</th>
+                  <th style={{textAlign:'right',padding:'12px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Cancelled</th>
                 </tr>
               </thead>
               <tbody>
                 {suppliers.map(sp => (
-                  <tr key={sp.supplier_id} className="border-b border-gray-800 hover:bg-gray-800/30">
-                    <td className="py-2 px-3 text-white font-medium">{sp.supplier_name}</td>
-                    <td className="py-2 px-3 text-right text-gray-300">{sp.total_pos}</td>
-                    <td className="py-2 px-3 text-right text-gray-300">{sp.received_count}</td>
-                    <td className="py-2 px-3 text-right text-gray-300">{sp.on_time_count}</td>
-                    <td className="py-2 px-3 text-right">
+                  <tr key={sp.supplier_id} style={{borderBottom:'1px solid #3A3428',transition:'background 0.15s ease'}}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#2A261E' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                    <td style={{padding:'12px 16px',color:'#F0EBE3',fontWeight:500}}>{sp.supplier_name}</td>
+                    <td style={{padding:'12px 16px',textAlign:'right',color:'#A09888'}}>{sp.total_pos}</td>
+                    <td style={{padding:'12px 16px',textAlign:'right',color:'#A09888'}}>{sp.received_count}</td>
+                    <td style={{padding:'12px 16px',textAlign:'right',color:'#A09888'}}>{sp.on_time_count}</td>
+                    <td style={{padding:'12px 16px',textAlign:'right'}}>
                       <Badge variant={sp.on_time_rate >= 90 ? 'success' : sp.on_time_rate >= 70 ? 'warning' : 'danger'}>
                         {sp.on_time_rate}%
                       </Badge>
                     </td>
-                    <td className="py-2 px-3 text-right text-gray-300">{sp.avg_lead_time_days?.toFixed(1) ?? '—'}</td>
-                    <td className="py-2 px-3 text-right">
-                      <span className={sp.open_pos > 0 ? 'text-yellow-400' : 'text-gray-500'}>{sp.open_pos}</span>
+                    <td style={{padding:'12px 16px',textAlign:'right',color:'#A09888'}}>{sp.avg_lead_time_days?.toFixed(1) ?? '—'}</td>
+                    <td style={{padding:'12px 16px',textAlign:'right'}}>
+                      <span style={{color:sp.open_pos > 0 ? '#FBBF24' : '#6B6358'}}>{sp.open_pos}</span>
                     </td>
-                    <td className="py-2 px-3 text-right text-gray-300">{sp.cancelled_count}</td>
+                    <td style={{padding:'12px 16px',textAlign:'right',color:'#A09888'}}>{sp.cancelled_count}</td>
                   </tr>
                 ))}
               </tbody>

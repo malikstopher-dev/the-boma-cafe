@@ -116,39 +116,39 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-            <h3 className="font-semibold mb-3">Product Information</h3>
-            <dl className="grid grid-cols-2 gap-3 text-sm">
-              <div><dt style={{ color: '#A09888' }}>Name</dt><dd className="font-medium">{product.name}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>SKU</dt><dd className="font-medium">{product.sku || '—'}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>Barcode</dt><dd className="font-medium">{product.barcode || '—'}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>Reorder Threshold</dt><dd className="font-medium">{product.reorder_threshold ?? '—'}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>Reorder Quantity</dt><dd className="font-medium">{product.reorder_quantity ?? '—'}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>Supplier Code</dt><dd className="font-medium">{product.supplier_code || '—'}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>Has Expiry</dt><dd className="font-medium">{product.has_expiry ? 'Yes' : 'No'}</dd></div>
-              <div><dt style={{ color: '#A09888' }}>Shelf Life</dt><dd className="font-medium">{product.shelf_life_days ? `${product.shelf_life_days} days` : '—'}</dd></div>
+            <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Product Information</h3>
+            <dl className="grid grid-cols-2 gap-3 text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.name}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SKU</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.sku || '—'}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Barcode</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.barcode || '—'}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reorder Threshold</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.reorder_threshold ?? '—'}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reorder Quantity</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.reorder_quantity ?? '—'}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Supplier Code</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.supplier_code || '—'}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Has Expiry</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.has_expiry ? 'Yes' : 'No'}</dd></div>
+              <div><dt style={{ color: '#A09888', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Shelf Life</dt><dd style={{ color: '#F0EBE3', fontWeight: 500, marginTop: 2 }}>{product.shelf_life_days ? `${product.shelf_life_days} days` : '—'}</dd></div>
             </dl>
           </div>
 
           {product.inventory_product_uoms && product.inventory_product_uoms.length > 0 && (
           <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-              <h3 className="font-semibold mb-3">UOM Configuration</h3>
+              <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>UOM Configuration</h3>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b" style={{ background: '#242018' }}>
-                    <th className="text-left p-2">UOM</th>
-                    <th className="text-left p-2">Role</th>
-                    <th className="text-left p-2">Conversion Factor</th>
+                  <tr style={{ background: '#242018' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#6B6358', textTransform: 'uppercase', letterSpacing: '0.04em' }}>UOM</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#6B6358', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Role</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#6B6358', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Conversion Factor</th>
                   </tr>
                 </thead>
                 <tbody>
                   {product.inventory_product_uoms.map(uom => (
-                    <tr key={uom.id} className="border-b">
-                      <td className="p-2">{uom.uom_id}</td>
-                      <td className="p-2">
+                    <tr key={uom.id} style={{ borderBottom: '1px solid #3A3428' }}>
+                      <td style={{ padding: '12px 16px', color: '#F0EBE3' }}>{uom.uom_id}</td>
+                      <td style={{ padding: '12px 16px' }}>
                         {uom.is_base && <Badge variant="info">Base</Badge>}
                         {uom.is_display && <Badge variant="success">Display</Badge>}
                       </td>
-                      <td className="p-2">{uom.conversion_factor}</td>
+                      <td style={{ padding: '12px 16px', color: '#F0EBE3' }}>{uom.conversion_factor}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -157,14 +157,14 @@ export default function ProductDetailPage() {
           )}
 
           <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-            <h3 className="font-semibold mb-3">Activity Timeline</h3>
+            <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Activity Timeline</h3>
             <MovementTimeline productId={product.id} />
           </div>
         </div>
 
         <div className="space-y-4">
           <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-            <h3 className="font-semibold mb-3">Actions</h3>
+            <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Actions</h3>
             <div className="space-y-2">
               {product.is_active ? (
                 <Button className="w-full" variant="danger" size="sm" onClick={handleArchive} disabled={busy}>
@@ -179,11 +179,11 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-            <h3 className="font-semibold mb-3">Stock Summary</h3>
+            <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Stock Summary</h3>
             <div className="text-sm">
               <div className="flex justify-between py-1">
                 <span style={{ color: '#A09888' }}>Current Balance</span>
-                <span className="font-medium">
+                <span style={{ color: '#F0EBE3', fontWeight: 500 }}>
                   {product.current_balance !== null && product.current_balance !== undefined
                     ? product.current_balance.toFixed(2)
                     : '—'}
@@ -191,7 +191,7 @@ export default function ProductDetailPage() {
               </div>
               <div className="flex justify-between py-1">
                 <span style={{ color: '#A09888' }}>Reorder Threshold</span>
-                <span className="font-medium">{product.reorder_threshold ?? '—'}</span>
+                <span style={{ color: '#F0EBE3', fontWeight: 500 }}>{product.reorder_threshold ?? '—'}</span>
               </div>
             </div>
           </div>
