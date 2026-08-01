@@ -21,13 +21,7 @@ const sectionRow: React.CSSProperties = {
   background: '#1E1A14',
   border: '1px solid #3A3428',
   borderRadius: 12,
-  padding: '20px 24px',
-}
-
-const sectionHeading: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 600,
-  color: '#F0EBE3',
+  padding: 20,
 }
 
 function QuickAction({ href, icon, label, color }: { href: string; icon: string; label: string; color: string }) {
@@ -40,14 +34,14 @@ function QuickAction({ href, icon, label, color }: { href: string; icon: string;
       textDecoration: 'none',
       fontWeight: 600,
       fontSize: 14,
-      color: '#F0EDE8',
+      color: '#F0EBE3',
     }}
     onMouseEnter={e => {
       e.currentTarget.style.borderColor = color
       e.currentTarget.style.boxShadow = `0 4px 12px ${color}20`
     }}
     onMouseLeave={e => {
-      e.currentTarget.style.borderColor = '#1E1E2A'
+      e.currentTarget.style.borderColor = '#3A3428'
       e.currentTarget.style.boxShadow = 'none'
     }}
     >
@@ -62,28 +56,28 @@ function RecentOrderRow({ order }: { order: OrderRecord }) {
   return (
     <Link href="/admin/orders" style={{
       display: 'flex', alignItems: 'center', gap: 10,
-      padding: '10px 0', borderBottom: '1px solid #1E1E2A',
+      padding: '10px 0', borderBottom: '1px solid #3A3428',
       textDecoration: 'none',
       transition: 'background 0.1s',
     }}>
       <OrderStatusBadge status={order.status} />
-      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600, color: '#F0EDE8', flex: 1 }}>
+      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600, color: '#F0EBE3', flex: 1 }}>
         {order.order_ref || order.id.slice(0, 8)}
       </span>
-      <span style={{ fontSize: 13, color: '#8A8694', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 13, color: '#A09888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {order.customer_name}
       </span>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#D4A843', fontVariantNumeric: 'tabular-nums' }}>
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#C8A04E', fontVariantNumeric: 'tabular-nums' }}>
         R{order.total?.toFixed(0)}
       </span>
-      <span style={{ fontSize: 12, color: '#5A5666', minWidth: 44, textAlign: 'right' }}>{time}</span>
+      <span style={{ fontSize: 12, color: '#6B6358', minWidth: 44, textAlign: 'right' }}>{time}</span>
     </Link>
   )
 }
 
 const sectionCard: React.CSSProperties = {
-  background: '#12121A',
-  border: '1px solid #1E1E2A',
+  background: '#1E1A14',
+  border: '1px solid #3A3428',
   borderRadius: 12,
   padding: 20,
 }
@@ -91,13 +85,13 @@ const sectionCard: React.CSSProperties = {
 const sectionHeading: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
-  color: '#F0EDE8',
+  color: '#F0EBE3',
 }
 
 const sectionLabel: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
-  color: '#8A8694',
+  color: '#A09888',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
   marginBottom: 12,
@@ -221,14 +215,14 @@ export default function AdminDashboard() {
         <div style={sectionRow}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h2 style={sectionHeading}>Recent Orders</h2>
-            <Link href="/admin/orders" style={{ fontSize: 13, fontWeight: 500, color: '#D4A843', textDecoration: 'none' }}>View all →</Link>
+            <Link href="/admin/orders" style={{ fontSize: 13, fontWeight: 500, color: '#C8A04E', textDecoration: 'none' }}>View all →</Link>
           </div>
           {recentOrders.length > 0 ? (
             <div>
               {recentOrders.slice(0, 8).map((o, i) => <RecentOrderRow key={o.id || i} order={o} />)}
             </div>
           ) : (
-            <p style={{ color: '#5A5666', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No recent orders</p>
+            <p style={{ color: '#6B6358', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No recent orders</p>
           )}
         </div>
 
@@ -246,23 +240,23 @@ export default function AdminDashboard() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{
                           width: 28, height: 28, borderRadius: 8,
-                          background: 'rgba(212,168,67,0.12)', color: '#D4A843',
+                          background: 'rgba(200,160,78,0.12)', color: '#C8A04E',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontWeight: 700, fontSize: 12, flexShrink: 0,
                         }}>{w.name.charAt(0).toUpperCase()}</span>
-                        <span style={{ fontWeight: 500, color: '#F0EDE8', fontSize: 14 }}>{w.name}</span>
+                        <span style={{ fontWeight: 500, color: '#F0EBE3', fontSize: 14 }}>{w.name}</span>
                       </span>
-                      <span style={{ fontWeight: 700, color: '#D4A843', fontSize: 14 }}>{w.count}</span>
+                      <span style={{ fontWeight: 700, color: '#C8A04E', fontSize: 14 }}>{w.count}</span>
                     </div>
-                    <div style={{ height: 4, background: '#1E1E2A', borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: '#D4A843', borderRadius: 2, transition: 'width 0.3s ease' }} />
+                    <div style={{ height: 4, background: '#3A3428', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: '#C8A04E', borderRadius: 2, transition: 'width 0.3s ease' }} />
                     </div>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <p style={{ color: '#8A8694', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No waiter data</p>
+            <p style={{ color: '#A09888', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No waiter data</p>
           )}
         </div>
       </div>
