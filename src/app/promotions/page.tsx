@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PremiumHero from '@/components/ui/PremiumHero';
 import { resolveImage } from '@/lib/resolve-image';
-const DEFAULT_IMAGE = '/gallery/promotions/default.jpg';
+const DEFAULT_IMAGE = '/gallery/promotions/2025-04-23-1.webp';
 
 export default function PromotionsPage() {
   const [currentSlide, setCurrentSlide] = useState(0);

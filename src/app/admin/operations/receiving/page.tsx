@@ -35,10 +35,16 @@ export default function ReceivingPage() {
   const fetchPending = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await fetch(`/api/inventory/purchase-orders?limit=50`)
-      const json = await res.json()
-      const all: PurchaseOrderRow[] = json.data || []
-      setPos(all.filter(po => AWAITING_STATUSES.includes(po.status)))
+      // Fetch both awaiting statuses server-side — a single uncapped list
+      // would silently drop older pending POs once 50 exist.
+      const [orderedRes, partialRes] = await Promise.all([
+        fetch('/api/inventory/purchase-orders?status=ordered&limit=100'),
+        fetch('/api/inventory/purchase-orders?status=partial&limit=100'),
+      ])
+      const [orderedJson, partialJson] = await Promise.all([orderedRes.json(), partialRes.json()])
+      const ordered: PurchaseOrderRow[] = orderedJson.data || []
+      const partial: PurchaseOrderRow[] = partialJson.data || []
+      setPos([...ordered, ...partial].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
     } catch {
       // ignore
     } finally {

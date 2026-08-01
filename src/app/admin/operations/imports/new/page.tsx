@@ -8,16 +8,12 @@ import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 
 type PreviewRow = {
-  id: string
-  rowNumber: number
-  sourceRow: number
+  rowIndex: number
   productName?: string
-  sku?: string
-  quantity?: number
+  parsedQuantity?: number
   unitCost?: number
-  location?: string
-  match?: { productId?: string; matchSource: string; confidence?: number }
-  errors: string[]
+  match?: { productId?: string; matchSource: string; confidence?: number } | null
+  errors: Array<{ message: string; field?: string }> | string[]
 }
 
 type PreviewData = {
@@ -82,7 +78,7 @@ export default function NewImportPage() {
       if (supplierId) fd.append('supplierId', supplierId)
 
       const res = await fetch('/api/inventory/imports', { method: 'POST', body: fd })
-      const json = await res.json()
+      const json = await res.json().catch(() => ({ error: { message: 'Upload failed — server returned an invalid response' } }))
 
       if (res.ok) {
         setPreview(json.data)
@@ -102,8 +98,33 @@ export default function NewImportPage() {
     setError(null)
 
     try {
-      const res = await fetch(`/api/inventory/imports/${preview.id}/apply`, { method: 'POST' })
-      const json = await res.json()
+      // Build decisions from the preview: apply every row with a matched
+      // product and no validation errors. Rows that failed validation were
+      // already excluded by the disabled Apply button, but guard anyway.
+      const decisions = preview.rows
+        .filter(r => r.match?.productId && (!r.errors || r.errors.length === 0))
+        .map(r => ({
+          rowIndex: r.rowIndex,
+          action: 'apply' as const,
+          productId: r.match?.productId,
+          quantity: r.parsedQuantity ?? null,
+          locationId: null,
+          unitCost: r.unitCost ?? null,
+          transactionType: importType === 'adjustment' ? 'adjustment' : 'purchase',
+          sourceRow: r.productName,
+        }))
+
+      if (decisions.length === 0) {
+        setError('No matched rows to apply — check for unknown or errored rows first.')
+        return
+      }
+
+      const res = await fetch(`/api/inventory/imports/${preview.id}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decisions }),
+      })
+      const json = await res.json().catch(() => ({ error: { message: 'Apply failed — server returned an invalid response' } }))
 
       if (res.ok) {
         router.push(`/admin/operations/imports/${preview.id}`)
@@ -201,7 +222,6 @@ export default function NewImportPage() {
                     <tr className="border-b bg-gray-50 sticky top-0">
                       <th className="text-left p-2 font-medium">#</th>
                       <th className="text-left p-2 font-medium">Product</th>
-                      <th className="text-left p-2 font-medium">SKU</th>
                       <th className="text-right p-2 font-medium">Qty</th>
                       <th className="text-right p-2 font-medium">Unit Cost</th>
                       <th className="text-left p-2 font-medium">Match</th>
@@ -210,20 +230,21 @@ export default function NewImportPage() {
                   </thead>
                   <tbody>
                     {preview.rows.map(row => (
-                      <tr key={row.id} className={`border-b ${row.errors.length > 0 ? 'bg-red-50' : row.match?.matchSource === 'none' ? 'bg-yellow-50' : ''}`}>
-                        <td className="p-2 text-xs text-gray-500">{row.rowNumber}</td>
+                      <tr key={row.rowIndex} className={`border-b ${row.errors.length > 0 ? 'bg-red-50' : !row.match || row.match.matchSource === 'none' ? 'bg-yellow-50' : ''}`}>
+                        <td className="p-2 text-xs text-gray-500">{row.rowIndex}</td>
                         <td className="p-2 font-medium">{row.productName || '—'}</td>
-                        <td className="p-2 text-xs">{row.sku || '—'}</td>
-                        <td className="p-2 text-right">{row.quantity ?? '—'}</td>
+                        <td className="p-2 text-right">{row.parsedQuantity ?? '—'}</td>
                         <td className="p-2 text-right">{row.unitCost != null ? `R${row.unitCost.toFixed(2)}` : '—'}</td>
                         <td className="p-2">
-                          {row.match?.matchSource === 'none' ? <Badge variant="warning">Unknown</Badge> :
-                           row.match?.matchSource === 'sku' ? <Badge variant="success">SKU</Badge> :
-                           row.match?.matchSource === 'name' ? <Badge variant="info">Name</Badge> :
-                           row.match?.productId ? <Badge variant="info">Matched</Badge> :
+                          {!row.match || row.match.matchSource === 'none' ? <Badge variant="warning">Unknown</Badge> :
+                           row.match.matchSource === 'supplier_sku' ? <Badge variant="success">SKU</Badge> :
+                           row.match.matchSource === 'exact_name' || row.match.matchSource === 'name_and_size' ? <Badge variant="info">Name</Badge> :
+                           row.match.matchSource === 'saved_mapping' ? <Badge variant="info">Saved</Badge> :
+                           row.match.matchSource === 'fuzzy' ? <Badge variant="warning">Fuzzy</Badge> :
+                           row.match.productId ? <Badge variant="info">Matched</Badge> :
                            <Badge>—</Badge>}
                         </td>
-                        <td className="p-2 text-xs text-red-600">{row.errors.join(', ') || ''}</td>
+                        <td className="p-2 text-xs text-red-600">{row.errors.map(e => typeof e === 'string' ? e : e.message).join(', ') || ''}</td>
                       </tr>
                     ))}
                   </tbody>

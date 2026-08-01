@@ -21,7 +21,15 @@ export default function AdminInquiries() {
   const { success, error: showError } = useToast()
 
   useEffect(() => {
-    fetch('/api/supabase/contact').then(r => r.json()).then(setMessages).catch(() => showError('Failed to load messages')).finally(() => setIsLoading(false))
+    fetch('/api/supabase/contact')
+      .then(async r => {
+        if (!r.ok) throw new Error('Failed to load messages')
+        const data = await r.json()
+        if (!Array.isArray(data)) throw new Error('Failed to load messages')
+        setMessages(data as ContactMessage[])
+      })
+      .catch(() => showError('Failed to load messages'))
+      .finally(() => setIsLoading(false))
   }, [])
 
   const markAsRead = async (id: string) => {

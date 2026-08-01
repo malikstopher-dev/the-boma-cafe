@@ -31,7 +31,7 @@ export default function PriceHistoryPage() {
   const [loadingHistory, setLoadingHistory] = useState(false)
 
   useEffect(() => {
-    fetch('/api/inventory/products?limit=500')
+        fetch('/api/inventory/products?page_size=500')
       .then(r => r.json())
       .then(json => setProducts(json.data ?? []))
       .catch(() => {})

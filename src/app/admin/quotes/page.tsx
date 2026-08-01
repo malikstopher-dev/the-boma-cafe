@@ -236,12 +236,21 @@ export default function AdminQuotes() {
                 </Button>
                 {quote.status === 'draft' && (
                   <Button variant="ghost" size="sm" onClick={async () => {
-                    await fetch(`/api/admin/quotes?id=${quote.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ status: 'sent' }),
-                    })
-                    setQuotes(quotes.map(q => q.id === quote.id ? { ...q, status: 'sent' } : q))
+                    try {
+                      const res = await fetch(`/api/admin/quotes?id=${quote.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'sent' }),
+                      })
+                      if (!res.ok) {
+                        const err = await res.json().catch(() => null)
+                        showError(err?.error?.message || 'Failed to mark as sent')
+                        return
+                      }
+                      setQuotes(quotes.map(q => q.id === quote.id ? { ...q, status: 'sent' } : q))
+                    } catch {
+                      showError('Failed to mark as sent')
+                    }
                   }}>
                     Mark Sent
                   </Button>

@@ -46,21 +46,21 @@ export default function AdminSiteSettings() {
     diningSubtitle: 'Rustic Outdoor Restaurant',
     diningDescription: 'Experience authentic outdoor dining beneath our signature thatched roof.',
     diningHighlights: 'Thatched roof ambiance, Open-air seating, Fresh local ingredients, Cozy firepits',
-    diningImage: '/hero/hero-experience.jpg',
+    diningImage: '/hero/hero-experience.png',
     diningCta: 'View Menu',
     diningCtaLink: '/menu',
     puffTitle: 'Bisou El Patrona',
     puffSubtitle: 'A Different Vibe',
     puffDescription: 'A separate lounge area with a distinct atmosphere from our main restaurant.',
     puffHighlights: 'Separate lounge area, Curated music selection, Relaxed social vibe, Intimate setting',
-    puffImage: '/hero/hero-experience.jpg',
+    puffImage: '/hero/hero-experience.png',
     puffCta: 'Learn More',
     puffCtaLink: '/contact',
     familyTitle: 'Family & Activities',
     familySubtitle: 'Fun for All Ages',
     familyDescription: 'A welcoming destination for families.',
     familyHighlights: 'Kiddies play area, Clay painting activity, Family-friendly atmosphere',
-    familyImage: '/hero/hero-experience.jpg',
+    familyImage: '/hero/hero-experience.png',
     familyCta: 'Plan Your Visit',
     familyCtaLink: '/contact',
     weekendTitle: 'Weekend Buffet',
@@ -87,7 +87,7 @@ export default function AdminSiteSettings() {
     liveDescription: 'Experience passionate performances from local artists.',
     vibeTitle: 'Weekend Evenings',
     vibeDescription: 'The Boma Café transforms into the ultimate weekend destination.',
-    vibeImage: '/hero/hero-entertainment.jpg',
+    vibeImage: '/hero/hero-entertainment.png',
     ctaBook: 'Book a Table',
     ctaFollow: 'Follow Us'
   });
@@ -118,7 +118,6 @@ export default function AdminSiteSettings() {
       '/gallery/events/events-slideshow/slide4.webp',
       '/gallery/events/events-slideshow/slide5.webp',
       '/gallery/events/events-slideshow/slide6.webp',
-      '/gallery/events/events-slideshow/slide7.jpg',
       '/gallery/events/events-slideshow/slide.webp'
     ]
   });

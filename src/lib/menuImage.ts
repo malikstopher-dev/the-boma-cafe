@@ -36,7 +36,7 @@
   'Americano': '/menu/americano.jpg',
   'Espresso': '/menu/expresso.jpg',
   'Cappuccino': '/menu/cappuccino.jpg',
-  'CafÃ© Latte': '/menu/cafe-latte.jpg',
+  'Café Latte': '/menu/cafe-latte.jpg',
   'Filter Coffee': '/menu/filter-coffee.jpg',
   'Moccachino': '/menu/moccachino.jpg',
   'Coffee Freezo': '/menu/coffee-freezo.jpg',

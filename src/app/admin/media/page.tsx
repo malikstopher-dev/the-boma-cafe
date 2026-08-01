@@ -24,8 +24,12 @@ export default function MediaLibrary() {
 
   const fetchMedia = () => {
     fetch('/api/admin/media')
-      .then(r => r.json())
-      .then(({ data }) => setMedia(data || []))
+      .then(async r => {
+        if (!r.ok) throw new Error('Failed to load media')
+        const json = await r.json()
+        setMedia(json.data || [])
+      })
+      .catch(() => setToast({ msg: 'Failed to load media', type: 'error' }))
   }
 
   const onUpload = (url: string) => {

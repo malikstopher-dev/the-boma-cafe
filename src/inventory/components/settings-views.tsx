@@ -36,6 +36,7 @@ export function UomsView() {
     fetch('/api/inventory/uoms')
       .then(r => r.json())
       .then(json => setUoms(json.data || []))
+      .catch(() => setUoms([]))
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -77,6 +78,7 @@ export function CategoriesView() {
     fetch('/api/inventory/categories')
       .then(r => r.json())
       .then(json => setCategories(json.data || []))
+      .catch(() => setCategories([]))
       .finally(() => setIsLoading(false))
   }, [])
 

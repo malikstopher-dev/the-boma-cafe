@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { getInventoryTypeFilter, applyInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import { resolveLocationId } from '@/inventory/lib/location'
+import { getCurrentBalance } from '@/inventory/engine/ledger'
 import type { ApiResponse, InventoryProduct } from '@/inventory/engine/types'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryProduct[]>>> {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const locationId = await resolveLocationId(searchParams.get('location_id'))
     const showArchived = searchParams.get('show_archived') === 'true'
     const cursor = searchParams.get('cursor')
-    const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 100)
+    const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 500)
     const inventoryType = getInventoryTypeFilter(searchParams)
 
     let query = supabase
@@ -54,14 +55,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const products = (data ?? []) as InventoryProduct[]
 
     if (locationId && products.length > 0) {
+      // Use the engine's getCurrentBalance: it falls back to summing the
+      // transaction ledger when the inventory_get_balance RPC is absent
+      // (the RPC is missing from migrations). A raw .rpc() call with
+      // .single() throws on a 404 and turns the whole list into a 500.
       for (const product of products) {
-        const { data: balance } = await supabase
-          .rpc('inventory_get_balance', {
-            p_product_id: product.id,
-            p_location_id: locationId,
-          })
-          .single()
-        ;(product as unknown as Record<string, unknown>).current_balance = (balance as { balance?: number } | null)?.balance ?? null
+        const balance = await getCurrentBalance(product.id, locationId)
+        ;(product as unknown as Record<string, unknown>).current_balance = balance
       }
     }
 

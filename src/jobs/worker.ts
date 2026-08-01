@@ -68,14 +68,27 @@ async function executeJob(job: BackgroundJob): Promise<void> {
     locked_by: `${HOSTNAME}:${process.pid}`,
   }
 
-  const { error: lockError } = await client
+  // Optimistic lock: only this UPDATE can flip a row from pending → processing.
+  // Using .select() so we can detect whether THIS worker actually won the lock.
+  // If another worker beat us (status no longer 'pending'), the update affects 0
+  // rows and returns an empty array — we must abort to avoid duplicate execution.
+  const { data: lockedRows, error: lockError } = await client
     .from('background_jobs')
     .update(lockUpdate)
     .eq('id', job.id)
     .eq('status', 'pending')
+    .select('id')
 
   if (lockError) {
     logger.error('lock job failed', { job_id: job.id, error: lockError.message })
+    return
+  }
+
+  if (!lockedRows || lockedRows.length === 0) {
+    logger.debug('lock not acquired — another worker processed this job', {
+      job_id: job.id,
+      job_type: job.job_type,
+    })
     return
   }
 
@@ -93,6 +106,7 @@ async function executeJob(job: BackgroundJob): Promise<void> {
   let finalStatus: string
   let finalResult: Record<string, unknown> | null = null
   let finalError: string | null = null
+  let serializedError: { message: string; name: string; stack: string | null; retry_count: number; timestamp: string } | null = null
   let scheduledAt: string | null = null
   let newRetryCount = job.retry_count
 
@@ -114,7 +128,8 @@ async function executeJob(job: BackgroundJob): Promise<void> {
 
     finalStatus = 'completed'
   } catch (err) {
-    finalError = String(err)
+    serializedError = serializeError(err, job.retry_count)
+    finalError = serializedError.message
     newRetryCount = job.retry_count + 1
 
     if (newRetryCount < job.max_retries) {
@@ -128,6 +143,7 @@ async function executeJob(job: BackgroundJob): Promise<void> {
         retry_count: newRetryCount,
         scheduled_at: scheduledAt,
         error: finalError,
+        error_name: serializedError.name,
       })
     } else {
       finalStatus = 'dead_letter'
@@ -137,6 +153,8 @@ async function executeJob(job: BackgroundJob): Promise<void> {
         job_type: job.job_type,
         retry_count: newRetryCount,
         error: finalError,
+        error_name: serializedError.name,
+        stack: serializedError.stack,
       })
     }
   }
@@ -152,11 +170,12 @@ async function executeJob(job: BackgroundJob): Promise<void> {
     statusUpdate.result = finalResult
     statusUpdate.completed_at = new Date().toISOString()
   } else {
-    statusUpdate.error = {
-      message: finalError,
-      timestamp: new Date().toISOString(),
-      retry_count: newRetryCount,
-    }
+    // Persist the full structured error (message + name + stack + retry_count)
+    // into the existing `error` JSONB column. Re-stamp timestamp to the final
+    // attempt time so dashboards show when the last failure happened.
+    statusUpdate.error = serializedError
+      ? { ...serializedError, retry_count: newRetryCount, timestamp: new Date().toISOString() }
+      : { message: finalError || 'Unknown error', timestamp: new Date().toISOString(), retry_count: newRetryCount }
     statusUpdate.retry_count = newRetryCount
 
     if (scheduledAt) {
@@ -184,4 +203,47 @@ async function executeJob(job: BackgroundJob): Promise<void> {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Serialize any thrown value into a plain object safe for JSONB storage.
+ * Preserves message, name, stack for Error instances, and never produces
+ * "[object Object]" or "undefined" — the worker's error column must always
+ * carry a readable, actionable message.
+ */
+function serializeError(err: unknown, retryCount: number): {
+  message: string
+  name: string
+  stack: string | null
+  retry_count: number
+  timestamp: string
+} {
+  let message: string
+  let name: string
+  let stack: string | null = null
+
+  if (err instanceof Error) {
+    message = err.message || String(err)
+    name = err.name || 'Error'
+    stack = err.stack || null
+  } else if (typeof err === 'string') {
+    message = err
+    name = 'Error'
+  } else if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
+    // Supabase / fetch errors carry a `.message` string
+    message = (err as any).message
+    name = (err as any).name || (err as any).code || 'Error'
+    stack = typeof (err as any).stack === 'string' ? (err as any).stack : null
+  } else {
+    message = JSON.stringify(err) === undefined ? String(err) : JSON.stringify(err)
+    name = 'Error'
+  }
+
+  return {
+    message,
+    name,
+    stack,
+    retry_count: retryCount,
+    timestamp: new Date().toISOString(),
+  }
 }

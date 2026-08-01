@@ -49,6 +49,32 @@ export class ImportService {
       }
     }
 
+    // Persist the import record so the Apply → Rollback → History flow has a
+    // real row to work with. Without this, apply() updates a non-existent row
+    // and history/rollback/detail all report "not found".
+    const supabase = getInventoryClient()
+    const rowCount = preview.totalRows
+    const matchedCount = preview.rows.filter(r => r.match?.productId).length
+    const unknownCount = preview.rows.filter(r => !r.match?.productId).length
+    const errorCount = preview.rows.reduce((sum, r) => sum + r.errors.length, 0)
+
+    await supabase
+      .from('inventory_imports')
+      .upsert({
+        id: preview.id,
+        import_type: importType,
+        filename,
+        storage_path: preview.id,
+        status: 'previewed',
+        supplier_id: supplierId ?? null,
+        idempotency_key: `preview:${preview.id}`,
+        row_count: rowCount,
+        matched_count: matchedCount,
+        unknown_count: unknownCount,
+        error_count: errorCount,
+        errors: validation.errors,
+      }, { onConflict: 'id' })
+
     if (importMode === 'direct' && validation.isValid) {
       const allApply: ImportDecision[] = preview.rows
         .filter(r => r.match?.productId)
@@ -111,7 +137,10 @@ export class ImportService {
     }
 
     const importId = createId()
-    return this.executor.execute(importId, decisions, performedBy)
+    return this.executor.execute(importId, decisions, performedBy, {
+      importType,
+      filename,
+    })
   }
 
   async apply(

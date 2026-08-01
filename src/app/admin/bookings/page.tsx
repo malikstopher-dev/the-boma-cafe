@@ -61,8 +61,9 @@ export default function AdminBookings() {
 
   useEffect(() => {
     fetch('/api/supabase/bookings')
-      .then(r => r.json())
-      .then((data) => {
+      .then(async r => {
+        if (!r.ok) throw new Error('Failed to load bookings')
+        const data = await r.json()
         setBookings(Array.isArray(data) ? data : [])
       })
       .catch(() => showError('Failed to load bookings'))

@@ -11,8 +11,17 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<ImportApplyResult>>> {
   try {
     const { id } = await params
-    const body = await request.json()
-    const { decisions } = body
+
+    // Tolerate a missing/empty request body: request.json() throws
+    // "Unexpected end of JSON input" on an empty body, which would surface
+    // as a confusing 500. Return a readable 400 instead.
+    let decisions: unknown
+    try {
+      const body = await request.json()
+      decisions = body?.decisions
+    } catch {
+      decisions = undefined
+    }
 
     if (!Array.isArray(decisions)) {
       return NextResponse.json(

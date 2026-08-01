@@ -104,13 +104,24 @@ export async function POST(request: NextRequest) {
 
     // 4. Generate quote number and persist quotation
     const quoteNumber = await generateQuoteNumber()
+    // persistQuotation throws on DB error — propagates to the outer catch → 500.
     const quoteId = await persistQuotation(booking.id, calculation, quoteNumber, settings.quote_validity_days)
 
-    let accessToken = ''
-    if (quoteId) {
-      accessToken = generateAccessToken(quoteId)
-      await client.from('quotes').update({ access_token: accessToken }).eq('id', quoteId)
-      await client.from('bookings').update({ quote_id: quoteId, status: 'quote_sent' }).eq('id', booking.id)
+    const accessToken = generateAccessToken(quoteId)
+    const { error: quoteTokenError } = await client
+      .from('quotes')
+      .update({ access_token: accessToken })
+      .eq('id', quoteId)
+    if (quoteTokenError) {
+      throw new Error(`Failed to set quote access token: ${quoteTokenError.message}`)
+    }
+
+    const { error: bookingLinkError } = await client
+      .from('bookings')
+      .update({ quote_id: quoteId, status: 'quote_sent' })
+      .eq('id', booking.id)
+    if (bookingLinkError) {
+      throw new Error(`Failed to link booking to quote: ${bookingLinkError.message}`)
     }
 
     // 5. Fetch display names (needed for PDF, email templates)
@@ -166,47 +177,76 @@ export async function POST(request: NextRequest) {
     const validUntil = new Date()
     validUntil.setDate(validUntil.getDate() + (settings.quote_validity_days || 14))
 
+    // Idempotency key derived from stable booking content so a double-submit
+    // (e.g. double-click) collides at the DB UNIQUE constraint rather than
+    // producing two jobs/quotes for the same reservation request.
+    const idempotencyKey = `booking-submit:${data.email}:${data.booking_date}:${data.booking_time}:${data.venue_area_id}`
+
+    const jobPayload = {
+      job_type: 'pdf_generation',
+      payload: {
+        quoteId,
+        quoteNumber,
+        version: 1,
+        customerName: data.name,
+        customerEmail: data.email,
+        customerPhone: data.phone,
+        bookingReference: booking.id,
+        bookingType: bookingTypeName,
+        venueArea: venueAreaName,
+        foodPackage: foodPackageName,
+        drinkPackage: drinkPackageName,
+        addons: addonsDisplayText,
+        addonNames,
+        bookingDate: data.booking_date,
+        bookingTime: data.booking_time,
+        guests,
+        lineItems: calculation.line_items.filter((i: any) => i.total > 0),
+        subtotal: calculation.subtotal,
+        taxRate: calculation.tax_rate,
+        taxAmount: calculation.tax_amount,
+        total: calculation.total,
+        depositPercentage: calculation.deposit_percentage,
+        depositAmount: calculation.deposit_amount,
+        balanceAmount: calculation.balance_amount,
+        validUntil: validUntil.toISOString().split('T')[0],
+        portalUrl,
+        notificationEmails: settings.notification_emails,
+        company: data.company || null,
+        specialRequests: data.special_requests || null,
+      },
+      idempotency_key: idempotencyKey,
+      priority: 1,
+      max_retries: 3,
+    }
+
     const { data: job, error: jobError } = await client
       .from('background_jobs')
-      .insert({
-        job_type: 'pdf_generation',
-        payload: {
-          quoteId,
-          quoteNumber,
-          version: 1,
-          customerName: data.name,
-          customerEmail: data.email,
-          customerPhone: data.phone,
-          bookingReference: booking.id,
-          bookingType: bookingTypeName,
-          venueArea: venueAreaName,
-          foodPackage: foodPackageName,
-          drinkPackage: drinkPackageName,
-          addons: addonsDisplayText,
-          addonNames,
-          bookingDate: data.booking_date,
-          bookingTime: data.booking_time,
-          guests,
-          lineItems: calculation.line_items.filter((i: any) => i.total > 0),
-          subtotal: calculation.subtotal,
-          taxRate: calculation.tax_rate,
-          taxAmount: calculation.tax_amount,
-          total: calculation.total,
-          depositPercentage: calculation.deposit_percentage,
-          depositAmount: calculation.deposit_amount,
-          balanceAmount: calculation.balance_amount,
-          validUntil: validUntil.toISOString().split('T')[0],
-          portalUrl,
-          notificationEmails: settings.notification_emails,
-          company: data.company || null,
-          specialRequests: data.special_requests || null,
-        },
-        idempotency_key: `booking-submit-${quoteNumber}`,
-        priority: 1,
-        max_retries: 3,
-      })
+      .insert(jobPayload)
       .select('id')
       .single()
+
+    // Handle duplicate submission: same content already enqueued/processed.
+    // Replay the existing job id so a double-click never creates duplicate work.
+    if (jobError && jobError.code === '23505') {
+      const { data: existingJob } = await client
+        .from('background_jobs')
+        .select('id, payload')
+        .eq('idempotency_key', idempotencyKey)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      return NextResponse.json({
+        success: true,
+        booking_id: booking.id,
+        quote_id: quoteId,
+        quote_number: quoteNumber,
+        quotation: calculation,
+        job_id: existingJob?.id || null,
+        duplicate: true,
+      }, { status: 200 })
+    }
 
     if (jobError || !job) {
       console.error('Failed to enqueue PDF generation job:', jobError?.message)

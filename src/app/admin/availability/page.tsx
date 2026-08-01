@@ -44,8 +44,14 @@ export default function AdminAvailability() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/admin/blocked-dates').then(r => r.json()),
-      fetch('/api/booking/config').then(r => r.json()),
+      fetch('/api/admin/blocked-dates').then(async r => {
+        if (!r.ok) throw new Error('Failed to load blocked dates')
+        return r.json()
+      }),
+      fetch('/api/booking/config').then(async r => {
+        if (!r.ok) throw new Error('Failed to load venue config')
+        return r.json()
+      }),
     ])
       .then(([blocked, config]) => {
         setBlockedDates(Array.isArray(blocked) ? blocked : [])

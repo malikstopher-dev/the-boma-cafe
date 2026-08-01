@@ -37,6 +37,7 @@ export default function LocationsPage() {
     fetch(`/api/inventory/locations?${params}`)
       .then(r => r.json())
       .then(json => setLocations(json.data || []))
+      .catch(() => setLocations([]))
       .finally(() => setIsLoading(false))
   }
 

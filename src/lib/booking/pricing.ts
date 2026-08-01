@@ -323,14 +323,15 @@ function formatPrice(amount: number): string {
 
 /**
  * Persist a quotation (quote + line items) to the database.
- * Called when the customer accepts the quotation.
+ * Throws on any DB error so the caller can surface the real failure instead
+ * of silently enqueueing a background job against a non-existent quote.
  */
 export async function persistQuotation(
   bookingId: string,
   calculation: CalculationResult,
   quoteNumber: string,
   validityDays: number
-): Promise<string | null> {
+): Promise<string> {
   const now = new Date()
   const validUntil = new Date(now)
   validUntil.setDate(validUntil.getDate() + validityDays)
@@ -354,7 +355,9 @@ export async function persistQuotation(
     .select('id')
     .single()
 
-  if (error || !data) return null
+  if (error || !data) {
+    throw new Error(`Failed to create quote: ${error?.message || 'no row returned'}`)
+  }
 
   const quoteId = data.id
 
@@ -375,7 +378,9 @@ export async function persistQuotation(
     .from('quote_items')
     .insert(items)
 
-  if (itemsError) return null
+  if (itemsError) {
+    throw new Error(`Failed to create quote line items: ${itemsError.message}`)
+  }
 
   return quoteId
 }

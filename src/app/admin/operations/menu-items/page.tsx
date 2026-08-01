@@ -42,7 +42,7 @@ export default function MenuItemsPage() {
   useEffect(() => {
     Promise.all([
       fetch('/api/inventory/menu-items').then(r => r.json()),
-      fetch('/api/inventory/products?page_size=200').then(r => r.json()),
+      fetch('/api/inventory/products?page_size=500').then(r => r.json()),
     ]).then(([itemsJson, productsJson]) => {
       setItems(itemsJson.data || [])
       setProducts(productsJson.data || [])

@@ -65,8 +65,12 @@ async function resolveStuckJob(job: any): Promise<void> {
   const client = getAdminClient()
 
   const newRetryCount = (job.retry_count || 0) + 1
+  // Never retry a job more times than the job itself asked for
+  // (job.max_retries) — the queue's own retry contract wins, the scheduler
+  // only rescues stuck 'processing' rows, it does not extend a job's lifetime.
+  const effectiveMax = Math.min(MAX_STUCK_RETRIES, job.max_retries || 0)
 
-  if (newRetryCount < MAX_STUCK_RETRIES) {
+  if (newRetryCount < effectiveMax) {
     const nextRun = calculateScheduledAt(newRetryCount)
 
     const { error: updateError } = await client

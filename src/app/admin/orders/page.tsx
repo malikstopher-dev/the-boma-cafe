@@ -613,14 +613,20 @@ export default function OrdersPOS() {
     if (paymentMethod) meta.paymentMethod = paymentMethod
     const newItemsJson = JSON.stringify({ items, metadata: meta })
     try {
-      await fetch(`/api/supabase/orders?id=${orderId}`, {
+      const res = await fetch(`/api/supabase/orders?id=${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items_json: newItemsJson, table_number: String(tableNumber) }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        showToast(err?.error || 'Failed to assign table', 'error')
+        return
+      }
       loadOrders()
     } catch (e) {
       console.error('Failed to assign table:', e)
+      showToast('Failed to assign table', 'error')
     }
   }
 
