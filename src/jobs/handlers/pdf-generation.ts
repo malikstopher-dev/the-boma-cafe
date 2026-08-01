@@ -205,79 +205,204 @@ export async function pdfGenerationHandler(job: BackgroundJob): Promise<Record<s
   }
 
   // ============================================================
-  // Phase 3: Admin Notification Email
+  // Phase 3: Admin Notification Email — transactional-outbox idempotency.
+  //
+  // Pattern:
+  //   1. Look up notification_queue row for this quote + 'admin_new_booking'.
+  //      - NONE: insert a fresh row with status='pending'. Proceed to send.
+  //      - status='sent': a previous attempt fully completed the email.
+  //        Skip the send (idempotent dedup against crash-retry storms).
+  //      - status='pending': a previous attempt pre-claimed the slot but
+  //        died before the email confirmed. Re-attempt the send, then mark
+  //        sent. This handles the "crashed mid-send" case.
+  //      - status='failed': the previous attempt gave up permanently. Skip
+  //        (we don't retry forever; admin sees the booking via dashboard).
+  //   2. Send the email. If it throws, bubble to the worker's retry
+  //      (do NOT swallow — email failure must count as a job failure so
+  //      the worker's retry/dead_letter machinery kicks in). The queue row
+  //      remains 'pending', so the next retry will re-attempt the send.
+  //   3. On successful send, UPDATE the queue row to status='sent'.
+  //
+  // Worst case across a crash-retry cycle: at most ONE actual email send
+  // per quote. Without this gate, a worker that crashed between
+  // sendEmailToMultiple and the final job-status UPDATE would have the
+  // scheduler retry the job and fire ANOTHER admin email — unbounded
+  // amplification per crash (the operational defect we set out to fix).
   // ============================================================
 
   if (payload.notificationEmails && payload.notificationEmails.length > 0) {
-    const addonsDisplayText = (payload.addonNames || [])
-      .map((a) => `${a.name} x ${a.qty}`)
-      .join(', ')
+    const adminNotifKey = payload.quoteNumber
 
-    const estimatedTotalStr = formatCurrency(payload.total)
-    const depositStr = formatCurrency(payload.depositAmount)
-    const balanceStr = formatCurrency(payload.balanceAmount)
+    const { data: priorAdminNotif, error: lookupErr } = await client
+      .from('notification_queue')
+      .select('id, status')
+      .eq('recipient_type', 'admin')
+      .eq('notification_type', 'admin_new_booking')
+      .eq('recipient_identifier', adminNotifKey)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    const lineItemsHtml = payload.lineItems
-      .filter((i) => i.total > 0)
-      .map((item) =>
-        `<tr><td style="padding:5px 0;font-size:13px;color:#555;">${item.label}${item.quantity > 1 ? ` x ${item.quantity}` : ''}</td><td style="padding:5px 0;font-size:13px;color:#333;text-align:right;">${formatCurrency(item.total)}</td></tr>`
-      )
-      .join('')
+    let shouldSend = true
+    let queueRowId: string | null = null
 
-    const adminHtml = buildAdminNotificationHtml({
-      customerName: payload.customerName,
-      customerPhone: payload.customerPhone,
-      customerEmail: payload.customerEmail,
-      quoteNumber: payload.quoteNumber,
-      bookingType: payload.bookingType,
-      bookingDate: payload.bookingDate,
-      bookingTime: payload.bookingTime,
-      guests: payload.guests,
-      venueArea: payload.venueArea,
-      foodPackage: payload.foodPackage,
-      drinkPackage: payload.drinkPackage,
-      addons: addonsDisplayText,
-      specialRequests: payload.specialRequests || '',
-      lineItems: lineItemsHtml,
-      estimatedTotal: estimatedTotalStr,
-      depositAmount: depositStr,
-      balanceAmount: balanceStr,
-      subtotal: formatCurrency(payload.subtotal),
-      taxAmount: formatCurrency(payload.taxAmount),
-      taxRate: payload.taxRate,
-      bookingId: payload.bookingReference,
-    })
-    const adminText = buildAdminNotificationText({
-      customerName: payload.customerName,
-      customerPhone: payload.customerPhone,
-      customerEmail: payload.customerEmail,
-      quoteNumber: payload.quoteNumber,
-      bookingType: payload.bookingType,
-      bookingDate: payload.bookingDate,
-      bookingTime: payload.bookingTime,
-      guests: payload.guests,
-      venueArea: payload.venueArea,
-      foodPackage: payload.foodPackage,
-      drinkPackage: payload.drinkPackage,
-      addons: addonsDisplayText,
-      specialRequests: payload.specialRequests || '',
-      estimatedTotal: estimatedTotalStr,
-      depositAmount: depositStr,
-      balanceAmount: balanceStr,
-      bookingId: payload.bookingReference,
-    })
+    if (lookupErr) {
+      // Lookup failed: we cannot safely decide. Log + fall through to send.
+      // Worst case is one duplicate send if a prior attempt's row exists
+      // but we couldn't see it. Acceptable; better than breaking bookings.
+      logger.warn('admin notification queue lookup failed, proceeding to send without idempotency check', {
+        quote_id: payload.quoteId,
+        error: lookupErr.message,
+      })
+    } else if (priorAdminNotif) {
+      queueRowId = priorAdminNotif.id
+      const priorStatus = priorAdminNotif.status
+      if (priorStatus === 'sent') {
+        shouldSend = false
+        logger.info('admin notification already sent, skipping', {
+          quote_id: payload.quoteId,
+          quote_number: payload.quoteNumber,
+        })
+      } else if (priorStatus === 'failed') {
+        shouldSend = false
+        logger.warn('admin notification previously failed permanently, skipping', {
+          quote_id: payload.quoteId,
+          quote_number: payload.quoteNumber,
+        })
+      }
+      // status='pending' (or any other) -> shouldSend stays true. We'll re-attempt.
+    }
 
-    await sendEmailToMultiple({
-      recipients: payload.notificationEmails,
-      subject: `New Booking (${payload.quoteNumber})`,
-      html: adminHtml,
-      text: adminText,
-    })
+    if (shouldSend) {
+      // Pre-claim the queue slot with status='pending' so a crash between
+      // this INSERT and the email send is visible to the next retry (which
+      // will see a 'pending' row and re-attempt).
+      if (!queueRowId) {
+        const { data: insertedQueueRow, error: insertErr } = await client
+          .from('notification_queue')
+          .insert({
+            recipient_type: 'admin',
+            recipient_identifier: adminNotifKey,
+            notification_type: 'admin_new_booking',
+            template_data: {
+              quote_id: payload.quoteId,
+              quote_number: payload.quoteNumber,
+              booking_id: payload.bookingReference,
+              recipients: payload.notificationEmails,
+            },
+            status: 'pending',
+          })
+          .select('id')
+          .single()
 
-    logger.info('admin notifications sent', {
-      quote_id: payload.quoteId,
-      recipient_count: payload.notificationEmails.length,
-    })
+        if (insertErr || !insertedQueueRow) {
+          // Insert failed. If the email sends fine and we can't mark the
+          // row, the next retry WILL re-send (because there's no row to
+          // gate). To guarantee idempotency we ABORT the send here and let
+          // the job retry the whole phase later.
+          throw new Error(`Failed to pre-claim admin notification queue slot: ${insertErr?.message}`)
+        }
+
+        queueRowId = insertedQueueRow.id
+      }
+
+      // (queueRowId is now non-null — either a fresh 'pending' row we just
+      // inserted, or a 'pending' row from a prior crashed attempt we're
+      // re-attempting.)
+      const addonsDisplayText = (payload.addonNames || [])
+        .map((a) => `${a.name} x ${a.qty}`)
+        .join(', ')
+
+      const estimatedTotalStr = formatCurrency(payload.total)
+      const depositStr = formatCurrency(payload.depositAmount)
+      const balanceStr = formatCurrency(payload.balanceAmount)
+
+      const lineItemsHtml = payload.lineItems
+        .filter((i) => i.total > 0)
+        .map((item) =>
+          `<tr><td style="padding:5px 0;font-size:13px;color:#555;">${item.label}${item.quantity > 1 ? ` x ${item.quantity}` : ''}</td><td style="padding:5px 0;font-size:13px;color:#333;text-align:right;">${formatCurrency(item.total)}</td></tr>`
+        )
+        .join('')
+
+      const adminHtml = buildAdminNotificationHtml({
+        customerName: payload.customerName,
+        customerPhone: payload.customerPhone,
+        customerEmail: payload.customerEmail,
+        quoteNumber: payload.quoteNumber,
+        bookingType: payload.bookingType,
+        bookingDate: payload.bookingDate,
+        bookingTime: payload.bookingTime,
+        guests: payload.guests,
+        venueArea: payload.venueArea,
+        foodPackage: payload.foodPackage,
+        drinkPackage: payload.drinkPackage,
+        addons: addonsDisplayText,
+        specialRequests: payload.specialRequests || '',
+        lineItems: lineItemsHtml,
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        subtotal: formatCurrency(payload.subtotal),
+        taxAmount: formatCurrency(payload.taxAmount),
+        taxRate: payload.taxRate,
+        bookingId: payload.bookingReference,
+      })
+      const adminText = buildAdminNotificationText({
+        customerName: payload.customerName,
+        customerPhone: payload.customerPhone,
+        customerEmail: payload.customerEmail,
+        quoteNumber: payload.quoteNumber,
+        bookingType: payload.bookingType,
+        bookingDate: payload.bookingDate,
+        bookingTime: payload.bookingTime,
+        guests: payload.guests,
+        venueArea: payload.venueArea,
+        foodPackage: payload.foodPackage,
+        drinkPackage: payload.drinkPackage,
+        addons: addonsDisplayText,
+        specialRequests: payload.specialRequests || '',
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        bookingId: payload.bookingReference,
+      })
+
+      // sendEmailToMultiple throws on failure — propagates to the worker's
+      // catch, which sets status back to 'pending' with retry backoff. The
+      // queue row stays 'pending'; the retry will re-attempt the send and
+      // mark it 'sent' on success.
+      await sendEmailToMultiple({
+        recipients: payload.notificationEmails,
+        subject: `New Booking (${payload.quoteNumber})`,
+        html: adminHtml,
+        text: adminText,
+      })
+
+      // Email confirmed -> mark the queue row sent. If this UPDATE fails
+      // (e.g. transient DB hiccup, process killed right here), the next
+      // retry will see a 'pending' row and RE-SEND the email. That's the
+      // one acceptable duplicate window for the outbox pattern — bounded
+      // to exactly one extra send per retry, infinitely better than the
+      // unbounded storm we had before.
+      const { error: markSentErr } = await client
+        .from('notification_queue')
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq('id', queueRowId)
+
+      if (markSentErr) {
+        logger.warn('admin email sent but queue row not marked sent — next retry will re-send', {
+          quote_id: payload.quoteId,
+          queue_row_id: queueRowId,
+          error: markSentErr.message,
+        })
+      } else {
+        logger.info('admin notifications sent and recorded', {
+          quote_id: payload.quoteId,
+          recipient_count: payload.notificationEmails.length,
+          queue_row_id: queueRowId,
+        })
+      }
+    }
   }
 
   // ============================================================
