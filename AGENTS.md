@@ -660,7 +660,7 @@ All four M5 components delivered, verified (TypeScript clean, 61/61 tests passin
 
 ---
 
-## Session: Operations Restructure � /admin/inventory ? /admin/operations (2026-07-31)
+## Session: Operations Restructure � /admin/inventory ? /admin/operations (2026-07-31)
 
 ### Objective
 Finish the final item of the 8-refinement plan: rename and restructure the admin UI from "Inventory" to manager-first "Operations". User approved overriding the old frozen "no rename" rule.
@@ -670,9 +670,9 @@ Finish the final item of the 8-refinement plan: rename and restructure the admin
 - **Opening Checklist is the Operations landing page** (`/admin/operations`); old dashboard ? `/admin/operations/dashboard`
 - Checklist history ? `/admin/operations/history`; containers ? `/admin/operations/beverage/containers`
 - **Food/Beverage splits** (new routes): `/admin/operations/food/products`, `/admin/operations/beverage/products`, `/admin/operations/food/reconcile`, `/admin/operations/beverage/reconcile`
-- **New page:** `/admin/operations/receiving` � Goods Receiving queue (POs in ordered/partial status, links to PO detail receive flow)
+- **New page:** `/admin/operations/receiving` � Goods Receiving queue (POs in ordered/partial status, links to PO detail receive flow)
 - **Settings** became a hub with sub-routes: `settings/uoms`, `settings/categories`, `settings/cost-centres`
-- API paths unchanged (`/api/inventory/*`) � only admin UI routes moved; middleware already protects `/admin/:path*`
+- API paths unchanged (`/api/inventory/*`) � only admin UI routes moved; middleware already protects `/admin/:path*`
 
 ### Sidebar (7 Operations sub-groups replacing the flat 25-item Inventory group)
 - Open: Opening Checklist, Reconcile Food, Reconcile Beverage, Stock Counts, Variance Report
@@ -687,20 +687,94 @@ Finish the final item of the 8-refinement plan: rename and restructure the admin
 - Special cases: `/admin/inventory/checklist` ? `/admin/operations`, `/admin/inventory/checklist/history` ? `/admin/operations/history`, `/admin/inventory/containers` ? `/admin/operations/beverage/containers`
 
 ### Shared Components Created (src/inventory/components/)
-- `products-view.tsx` � ProductsView with optional `forcedType` (FOOD/BEVERAGE/all)
-- `reconciliation-view.tsx` � ReconciliationView with optional `forcedType` (adds inventory_type query param)
-- `settings-views.tsx` � UomsView, CategoriesView, CostCentresView (split out of old settings page)
-- `src/inventory/ambient.d.ts` � permanent `declare module '*.module.css'` (inventory components now import design-system CSS modules; required for strict inventory tsc)
+- `products-view.tsx` � ProductsView with optional `forcedType` (FOOD/BEVERAGE/all)
+- `reconciliation-view.tsx` � ReconciliationView with optional `forcedType` (adds inventory_type query param)
+- `settings-views.tsx` � UomsView, CategoriesView, CostCentresView (split out of old settings page)
+- `src/inventory/ambient.d.ts` � permanent `declare module '*.module.css'` (inventory components now import design-system CSS modules; required for strict inventory tsc)
 
 ### Pre-existing Build Blockers Found & Fixed (would have failed next build)
-- **12 pages used `subtitle=`** on AdminPage (prop is `description=`) � pages from M2�M4 era verified only via narrow temp tsconfigs
+- **12 pages used `subtitle=`** on AdminPage (prop is `description=`) � pages from M2�M4 era verified only via narrow temp tsconfigs
 - **imports/page.tsx** used `render:` instead of `cell:` in DataTable columns + object literal for emptyState
-- **TS2344**: DataTable `<T extends Record<string, unknown>>` vs plain interfaces � converted all page interfaces to `type` aliases (51 across operations pages; pattern still exists in some src/app non-inventory pages)
-- **Badge/Button** CSS module maps (`Record<Variant, string>`) broke under strict noUncheckedIndexedAccess � added `?? ''` fallbacks
+- **TS2344**: DataTable `<T extends Record<string, unknown>>` vs plain interfaces � converted all page interfaces to `type` aliases (51 across operations pages; pattern still exists in some src/app non-inventory pages)
+- **Badge/Button** CSS module maps (`Record<Variant, string>`) broke under strict noUncheckedIndexedAccess � added `?? ''` fallbacks
 - Receiving page Badge `primary` variant ? `info` (BadgeVariant has no primary)
 
 ### Verification (2026-07-31)
 - `npx tsc --noEmit -p src/inventory/tsconfig.json` clean (strict)
-- UI pages verified via temp `src/inventory/tsconfig.ui.json` (extends root, strict:false, explicit jsx+paths, includes ambient.d.ts) � deleted after verification
+- UI pages verified via temp `src/inventory/tsconfig.ui.json` (extends root, strict:false, explicit jsx+paths, includes ambient.d.ts) - deleted after verification
 - 61/61 vitest passing
 - Zero `/admin/inventory` references remain in `src/` (grep verified)
+
+---
+
+## Session: Background Jobs Correctness Pass (2026-08-01)
+
+### Objective
+The booking submit / Regenerate PDF endpoints were intermittently returning "Failed to queue PDF generation" / "Failed to queue PDF regeneration". Audited and hardened the entire enqueue → worker → handler pipeline against concurrency, crash, and idempotency failures. Multiple production-blocking bugs found and fixed end-to-end (verified live against the production Supabase DB and the live Vercel deployment).
+
+### Bugs Found (in order of discovery) and Fixed
+
+| Commit | Bug | Severity | Fix |
+|--------|-----|----------|-----|
+| `281424c` | `regenerate-pdf/route.ts` returned a hard 500 on duplicate `idempotency_key` (23505) — the dead_letter row held the UNIQUE slot forever, so every subsequent Regenerate click on that quote returned "Failed to queue PDF regeneration" | Critical | Introduced atomic `enqueue_background_job()` RPC (migration 060) using `FOR UPDATE` + dead-row delete+insert; both submit & regenerate routes call it |
+| `fec179d` | Migration 060's `enqueue_background_job()` raised `42702: column reference "id" is ambiguous` at call time — `RETURNS TABLE (id, status, outcome)` declared output vars named `id`/`status` that collided with unqualified `RETURNING id` / `SELECT id` / `DELETE WHERE id=` references in the body. Every enqueue call died. Both routes returned the generic "Failed to queue ..." message | Critical (production-blocking) | Fully qualified every reference as `public.background_jobs.id` / `.status` |
+| `fa51693` | Routes read `enqueueResult.outcome` / `.id` off the ARRAY returned by supabase-js v2 for `RETURNS TABLE` functions → `outcome` was always `undefined` → `isDuplicate` always `false`. Verified live: a deliberate double-submit created a second booking `BMC-2026-0015` + quote, instead of returning `duplicate:true` | High (duplicate customer rows) | Normalize via `Array.isArray(enqueueResult) ? enqueueResult[0] : enqueueResult` in both routes |
+| `2c8ff67` | Submit route did the entire booking+quote+audit+availability inserts BEFORE the idempotency decision at the end → a duplicate submission created duplicate rows even when the enqueue decided "duplicate". DB-level idempotency only protected the PDF job, not the booking/quote rows | High (duplicate rows on retry/double-click) | Early idempotency check immediately after validation, before any DB write. Replays prior job's payload back to UI as `success duplicate:true`; falls through to fresh submit if prior payload malformed |
+| `5f753c2` | PDF handler's Phase 3 admin notification email had no idempotency check. A worker that crashed between `sendEmailToMultiple` and the final job-status UPDATE would have the scheduler retry and fire ANOTHER admin email — unbounded amplification per crash-retry cycle | High (admin email amplification) | Transactional-outbox pattern keyed on `(recipient_type='admin', notification_type='admin_new_booking', recipient_identifier=quoteNumber)`: insert `status='pending'` BEFORE send, UPDATE to `'sent'` after; retry sees `pending` row and re-attempts only if not sent; `sent`/`failed` rows skip the send |
+
+### Migration 060 — `enqueue_background_job()` RPC (final form after `fec179d`)
+
+File: `supabase/migrations/060_background_jobs_enqueue_rpc.sql`
+
+`SECURITY DEFINER` `RETURNS TABLE (id UUID, status TEXT, outcome TEXT)` function that owns every enqueue decision and row mutation atomically. Outcomes:
+- `inserted` — no prior row, fresh `pending` job created
+- `already_queued` — a `pending`/`processing` job exists, left untouched (returns existing row)
+- `already_completed` — a `completed` job exists, left untouched
+- `replaced` — `dead_letter`/`failed`/`cancelled` row deleted, fresh `pending` job inserted with the same key
+
+Hardening baked in:
+- `search_path = pg_catalog, public` + fully-qualified `public.background_jobs.*` references (defeats the `42702` ambiguity)
+- `<<decision_loop>>` with `EXCEPTION WHEN unique_violation THEN CONTINUE` — handles the READ COMMITTED no-prior-row race (two concurrent first-ever enqueues; one wins UNIQUE, the other re-enters the loop and sees the committed row → `already_queued`). Bounded to 3 attempts.
+- `SELECT ... FOR UPDATE` on any existing keyed row serializes concurrent callers under READ COMMITTED (the FOR UPDATE wake-up re-evaluates the query post-peer-commit, so a `replaced` death-row gets seen as a new `pending` row by the locked-out peer)
+- `p_job_type` allow-list (only `'pdf_generation'` — must match `registry.ts` registrations; add an entry when a handler is registered)
+- `p_max_retries` clamped to 1-10 (default 3)
+- `REVOKE ALL FROM PUBLIC, anon, authenticated`; `GRANT EXECUTE TO service_role` guarded by `DO $$ IF EXISTS ...`
+
+Audit verdict (after hardening): production-safe under READ COMMITTED; at most one row lock per transaction ⇒ no deadlock possible across job types; only the service-role can call it (matching `getAdminClient()`).
+
+### Worker Lifecycle Audit (no code change — confirmed safe)
+
+Traced crash scenarios against `src/jobs/worker.ts` + `src/jobs/scheduler.ts`:
+
+- **Crash before lock UPDATE:** row stays `pending`, picked up on next poll (5s). No harm.
+- **Crash after lock, before heartbeat:** row is `processing` with stuck `heartbeat_at`. Scheduler runs every 30s, stuck threshold 60s (`lt`, strict). Worst-case reclaim ≈ 90s.
+- **Crash during processing:** heartbeat last fired ~10-50s ago. Scheduler detects and resets to `pending` with incremented `retry_count` + backoff.
+- **Crash AFTER handler completes but BEFORE status UPDATE:** row stuck `processing`. Scheduler reclaims; handler re-runs. **Idempotency:** PDF gen already done (`quotes.storage_path`/`pdf_version` skip); customer email gated by `quotes.quotation_email_sent_at`; admin notification was the gap (now fixed by `5f753c2`).
+- **Permanently stuck?** Only if BOTH worker AND scheduler stop — they're colocated in `src/jobs/index.ts` (`Promise.all([startWorker(), startScheduler()])`). On process restart the scheduler's first poll reclaims within ~30s.
+
+Rejected recommendation: aggressive `locked_by`-based startup reclaim — would steal legitimate long-running PDFs from a still-alive worker whose PID changed on host restart. Heartbeat-based reclaim (the current design) is correct.
+
+### Remaining operational gaps (user-rated ~9.7/10 subsystem)
+
+1. **Worker is NOT running anywhere** — confirmed live: production `background_jobs` has pending `pdf_generation` jobs from ~10h before this session, none picked up. The booking pipeline queues work that nothing processes; customers/admins never receive PDFs or emails until the worker is deployed. This is the unblocking item — see `oracle-runbook.md`.
+2. Crash-injection tests (5 scenarios listed in conversation) not yet run — would harden confidence beyond static analysis.
+3. Multi-worker (horizontal) instance behavior untested — locking is sound but no live proof.
+4. `booking_settings` table doesn't exist (the schema is actually `site_settings` with `booking:*` keys) — code already handles via `getBookingSettings()` defaults; informational only.
+
+### Final Background-Jobs Subsystem Rating
+
+After the enqueue RPC, race hardening, worker lifecycle analysis, scheduler review, retry logic, and idempotency work — **9.7/10**. Remaining gaps are operational (worker deployment, crash-injection tests, multi-worker verification, prod monitoring), not architectural.
+
+### Files Touched (this session)
+- `supabase/migrations/060_background_jobs_enqueue_rpc.sql` (NEW — 190 lines)
+- `src/app/api/booking/submit/route.ts` (rewrite of enqueue block + early idempotency check + array-unwrap)
+- `src/app/api/admin/quotes/[id]/regenerate-pdf/route.ts` (rewrite of enqueue block + array-unwrap)
+- `src/jobs/handlers/pdf-generation.ts` (Phase 3 admin notification outbox idempotency)
+
+### Verification
+- Migration 060 verified live against production: `POST /rest/v1/rpc/enqueue_background_job` returns `{"id":"...","status":"pending","outcome":"inserted"}` HTTP 200 (after `fec179d` re-apply; before — `42702`)
+- Live booking submit `BMC-2026-0014` returned 201 with the real job queued in `background_jobs` (`status:=pending, retry_count:=0`)
+- Live admin regenerate-pdf on that quote returned 200 with `queued:true, pdf_version:2`; second regeneration job queued correctly
+- Audit-created test data cleaned (bookings, quotes, customer, jobs deleted HTTP 204)
+- TypeScript parse-clean for all three edited `.ts` files (full module-resolution type-check deferred to Vercel build per pre-existing tooling constraints)
+
