@@ -267,8 +267,10 @@ export default function ReportsPage() {
             key={t.id}
             onClick={() => setActiveTab(t.id)}
             style={{
-              padding:'10px 16px',fontSize:14,fontWeight:500,borderBottom:`2px solid ${activeTab === t.id ? '#C8A04E' : 'transparent'}`,
-              color:activeTab === t.id ? '#C8A04E' : '#A09888',background:'none',border:'none',borderBottom:`2px solid ${activeTab === t.id ? '#C8A04E' : 'transparent'}`,
+              padding:'10px 16px',fontSize:14,fontWeight:500,
+              borderBottom:`2px solid ${activeTab === t.id ? '#C8A04E' : 'transparent'}`,
+              color:activeTab === t.id ? '#C8A04E' : '#A09888',
+              background:'none',borderTop:'none',borderLeft:'none',borderRight:'none',
               cursor:'pointer',whiteSpace:'nowrap',transition:'color 0.15s',fontFamily:'Inter, sans-serif'
             }}
           >
