@@ -80,9 +80,9 @@ BEGIN
   IF p_idempotency_key IS NULL THEN
     INSERT INTO public.background_jobs (job_type, payload, idempotency_key, priority, max_retries, scheduled_at)
     VALUES (p_job_type, p_payload, NULL, p_priority, p_max_retries, p_scheduled_at)
-    RETURNING id, status INTO v_new_id, v_existing_status;
+    RETURNING public.background_jobs.id, public.background_jobs.status INTO v_new_id, v_existing_status;
 
-    RETURN QUERY SELECT v_new_id, v_existing_status, 'inserted'::TEXT;
+    RETURN QUERY SELECT v_new_id, v_existing_status, 'inserted'::text;
     RETURN;
   END IF;
 
@@ -110,7 +110,7 @@ BEGIN
       -- against the row version current at the peer's commit. So if the
       -- peer deleted+re-inserted (replaced branch), we wake up and lock
       -- its brand-new 'pending' row -> already_queued.
-      SELECT id, status INTO v_existing_id, v_existing_status
+      SELECT public.background_jobs.id, public.background_jobs.status INTO v_existing_id, v_existing_status
       FROM public.background_jobs
       WHERE idempotency_key = p_idempotency_key
       ORDER BY created_at DESC
@@ -123,7 +123,7 @@ BEGIN
         -- which time our row is committed and visible -> already_queued.
         INSERT INTO public.background_jobs (job_type, payload, idempotency_key, priority, max_retries, scheduled_at)
         VALUES (p_job_type, p_payload, p_idempotency_key, p_priority, p_max_retries, p_scheduled_at)
-        RETURNING id, status INTO v_new_id, v_existing_status;
+        RETURNING public.background_jobs.id, public.background_jobs.status INTO v_new_id, v_existing_status;
 
         RETURN QUERY SELECT v_new_id, v_existing_status, 'inserted'::TEXT;
         RETURN;
@@ -144,11 +144,11 @@ BEGIN
       -- fresh job with the same key. Lock held until commit, so a peer
       -- waiting on FOR UPDATE will, post-commit, lock either the new
       -- 'pending' row (-> already_queued) or find nothing -> inserts cleanly.
-      DELETE FROM public.background_jobs WHERE id = v_existing_id;
+      DELETE FROM public.background_jobs WHERE public.background_jobs.id = v_existing_id;
 
       INSERT INTO public.background_jobs (job_type, payload, idempotency_key, priority, max_retries, scheduled_at)
       VALUES (p_job_type, p_payload, p_idempotency_key, p_priority, p_max_retries, p_scheduled_at)
-      RETURNING id, status INTO v_new_id, v_existing_status;
+      RETURNING public.background_jobs.id, public.background_jobs.status INTO v_new_id, v_existing_status;
 
       RETURN QUERY SELECT v_new_id, v_existing_status, 'replaced'::TEXT;
       RETURN;
