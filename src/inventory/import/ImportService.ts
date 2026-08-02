@@ -60,14 +60,26 @@ export class ImportService {
       }
     }
 
+    if (validation.skips) {
+      for (const skip of validation.skips) {
+        const row = preview.rows.find(r => r.rowIndex === skip.rowIndex)
+        if (row) {
+          row.skipped = true
+          row.skipReason = skip.reason
+        }
+      }
+    }
+
     // Persist the import record so the Apply → Rollback → History flow has a
     // real row to work with. Without this, apply() updates a non-existent row
     // and history/rollback/detail all report "not found".
     const supabase = getInventoryClient()
     const rowCount = preview.totalRows
-    const matchedCount = preview.rows.filter(r => r.match?.productId).length
-    const unknownCount = preview.rows.filter(r => !r.match?.productId).length
-    const errorCount = preview.rows.reduce((sum, r) => sum + r.errors.length, 0)
+    const skippedCount = preview.rows.filter(r => r.skipped).length
+    const rowCountExclSkipped = rowCount - skippedCount
+    const matchedCount = preview.rows.filter(r => r.match?.productId && !r.skipped).length
+    const unknownCount = preview.rows.filter(r => !r.match?.productId && !r.skipped).length
+    const errorCount = preview.rows.reduce((sum, r) => sum + (r.skipped ? 0 : r.errors.length), 0)
 
     await supabase
       .from('inventory_imports')
@@ -79,7 +91,7 @@ export class ImportService {
         status: 'previewed',
         supplier_id: supplierId ?? null,
         idempotency_key: `preview:${preview.id}`,
-        row_count: rowCount,
+        row_count: rowCountExclSkipped,
         matched_count: matchedCount,
         unknown_count: unknownCount,
         error_count: errorCount,

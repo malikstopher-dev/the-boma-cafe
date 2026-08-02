@@ -1,4 +1,4 @@
-import type { ParsedRow, ValidationError, ValidationResult, ImportType } from './ImportTypes'
+import type { ParsedRow, ValidationError, ValidationResult, ImportType, SkipInfo } from './ImportTypes'
 
 export class ImportValidator {
   private readonly DECREASE_TYPES_FOR_ADJUSTMENT = ['breakage', 'spillage', 'waste', 'theft', 'donation']
@@ -6,16 +6,19 @@ export class ImportValidator {
   validate(rows: ParsedRow[], importType: ImportType): ValidationResult {
     const errors: ValidationError[] = []
     const warnings: string[] = []
+    const skips: SkipInfo[] = []
     const seenProducts = new Set<string>()
 
     for (const row of rows) {
       if (!row.productName) {
-        errors.push({
+        // Blank rows (e.g. spacer/empty rows in a spreadsheet) are skipped
+        // automatically rather than erroring. Skipping keeps them from
+        // blocking valid rows from being applied.
+        skips.push({
           rowIndex: row.rowIndex,
-          field: 'productName',
-          message: 'Product name is required',
-          value: row.productName,
+          reason: 'Blank row — no product name. Skipped.',
         })
+        continue
       }
 
       if (row.quantity === null || row.quantity === undefined) {
@@ -107,6 +110,7 @@ export class ImportValidator {
       isValid: errors.length === 0,
       errors,
       warnings,
+      skips,
     }
   }
 }

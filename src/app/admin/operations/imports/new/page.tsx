@@ -52,6 +52,8 @@ type PreviewRow = {
   match?: { productId?: string | null; matchSource: string; confidence?: number } | null
   errors: Array<{ message: string; field?: string }> | string[]
   warnings: string[]
+  skipped?: boolean
+  skipReason?: string | null
 }
 
 type PreviewData = {
@@ -62,6 +64,8 @@ type PreviewData = {
   matchedRows: number
   unknownRows: number
   errorRows: number
+  skippedRows?: number
+  skipReasons?: string[]
   headers?: DetectedHeader[]
   rows: PreviewRow[]
   summary: {
@@ -131,7 +135,10 @@ export default function NewImportPage() {
   const [isApplying, setIsApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [rowEdits, setRowEdits] = useState<Record<number, { quantity?: string; unitCost?: string }>>({})
+  const [rowEdits, setRowEdits] = useState<Record<number, { quantity?: string; unitCost?: string; productName?: string }>>({})
+  const [skippedRows, setSkippedRows] = useState<Set<number>>(new Set())
+  const [bulkQuantity, setBulkQuantity] = useState('')
+  const [bulkUnitCost, setBulkUnitCost] = useState('')
 
   const loadSuppliers = useCallback(() => {
     if (suppliersLoaded) return
@@ -232,25 +239,54 @@ export default function NewImportPage() {
 
   function effectiveRows() {
     if (!preview) return []
-    return preview.rows.map(r => {
-      const edit = rowEdits[r.rowIndex]
-      if (!edit) return r
-      const parsedQuantity = edit.quantity !== undefined && edit.quantity !== ''
-        ? Number(edit.quantity)
-        : r.parsedQuantity
-      const unitCost = edit.unitCost !== undefined && edit.unitCost !== ''
-        ? Number(edit.unitCost)
-        : r.unitCost
-      const cleared = new Set<string>()
-      if (edit.quantity !== '' && Number.isFinite(parsedQuantity) && (parsedQuantity ?? 0) > 0) cleared.add('quantity')
-      if (edit.unitCost !== '' && Number.isFinite(unitCost) && (unitCost ?? 0) >= 0) cleared.add('unitCost')
-      const errors = r.errors.filter(e => !cleared.has(errorField(e) ?? ''))
-      return { ...r, parsedQuantity, unitCost, errors }
-    })
+    return preview.rows
+      .filter(r => !skippedRows.has(r.rowIndex) && !r.skipped)
+      .map(r => {
+        const edit = rowEdits[r.rowIndex]
+        if (!edit) return r
+        const parsedQuantity = edit.quantity !== undefined && edit.quantity !== ''
+          ? Number(edit.quantity)
+          : r.parsedQuantity
+        const unitCost = edit.unitCost !== undefined && edit.unitCost !== ''
+          ? Number(edit.unitCost)
+          : r.unitCost
+        const productName = edit.productName !== undefined && edit.productName !== ''
+          ? edit.productName
+          : r.productName
+        const cleared = new Set<string>()
+        if (edit.quantity !== '' && Number.isFinite(parsedQuantity) && (parsedQuantity ?? 0) > 0) cleared.add('quantity')
+        if (edit.unitCost !== '' && Number.isFinite(unitCost) && (unitCost ?? 0) >= 0) cleared.add('unitCost')
+        if (productName) cleared.add('productName')
+        const errors = r.errors.filter(e => !cleared.has(errorField(e) ?? ''))
+        return { ...r, parsedQuantity, unitCost, productName, errors }
+      })
   }
 
   function setRowEdit(rowIndex: number, field: 'quantity' | 'unitCost', value: string) {
     setRowEdits(prev => ({ ...prev, [rowIndex]: { ...prev[rowIndex], [field]: value } }))
+  }
+
+  function applyBulkFill() {
+    if (!preview) return
+    const qty = bulkQuantity.trim() !== '' ? Number(bulkQuantity) : NaN
+    const cost = bulkUnitCost.trim() !== '' ? Number(bulkUnitCost) : NaN
+    if (Number.isNaN(qty) && Number.isNaN(cost)) {
+      setError('Enter a Quantity or Unit Cost to bulk-fill.')
+      return
+    }
+    setRowEdits(prev => {
+      const next = { ...prev }
+      for (const row of preview.rows) {
+        if (!Number.isNaN(qty)) {
+          next[row.rowIndex] = { ...next[row.rowIndex], quantity: String(qty) }
+        }
+        if (!Number.isNaN(cost)) {
+          next[row.rowIndex] = { ...next[row.rowIndex], unitCost: String(cost) }
+        }
+      }
+      return next
+    })
+    setError(null)
   }
 
   async function handleApply() {
@@ -481,6 +517,36 @@ export default function NewImportPage() {
             <StatCard label="Unknown" value={preview.unknownRows} color="#FF9800" />
             <StatCard label="Errors" value={preview.errorRows} color="#E85454" />
             <StatCard label="Total Qty" value={preview.summary.totalQuantity} color="#F0EBE3" />
+          </div>
+
+          {(preview.skippedRows ?? 0) > 0 && (
+            <div style={{ background: '#2A2610', border: '1px solid #7A6A2A', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#D9BE6A' }}>
+              <strong style={{ color: '#E8C870' }}>{preview.skippedRows} blank row{preview.skippedRows === 1 ? '' : 's'} auto-skipped:</strong>{' '}
+              {[...new Set(preview.skipReasons ?? [])].join(' ')}
+            </div>
+          )}
+
+          <div style={{ background: '#242018', border: '1px solid #3A3428', borderRadius: 12, padding: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#A09888', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Fill all rows</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label style={{ fontSize: 12, color: '#6B6358' }}>Qty</label>
+              <input
+                type="number" min={0} step="any" value={bulkQuantity}
+                onChange={e => setBulkQuantity(e.target.value)} placeholder="e.g. 1"
+                style={{ width: 80, background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 6, padding: '6px 8px', fontSize: 13, color: '#F0EBE3' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label style={{ fontSize: 12, color: '#6B6358' }}>Unit Cost</label>
+              <input
+                type="number" min={0} step="any" value={bulkUnitCost}
+                onChange={e => setBulkUnitCost(e.target.value)}
+                placeholder="e.g. 150.00"
+                style={{ width: 100, background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 6, padding: '6px 8px', fontSize: 13, color: '#F0EBE3' }}
+              />
+            </div>
+            <Button variant="secondary" size="sm" onClick={applyBulkFill}>Apply to all rows</Button>
+            <span style={{ fontSize: 12, color: '#6B6358' }}>Sets the same value across every row — you can still fine-tune individual cells below.</span>
           </div>
 
           {preview.rows.length > 0 && (

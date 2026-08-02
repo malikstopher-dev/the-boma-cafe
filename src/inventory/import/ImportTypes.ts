@@ -110,10 +110,16 @@ export interface ValidationError {
   value: unknown
 }
 
+export interface SkipInfo {
+  rowIndex: number
+  reason: string
+}
+
 export interface ValidationResult {
   isValid: boolean
   errors: ValidationError[]
   warnings: string[]
+  skips?: SkipInfo[]
 }
 
 export interface ProductMatch {
@@ -136,6 +142,8 @@ export interface PreviewRow {
   unitCost: number | null
   errors: ValidationError[]
   warnings: string[]
+  skipped?: boolean
+  skipReason?: string | null
 }
 
 export interface ImportPreview {
@@ -146,6 +154,8 @@ export interface ImportPreview {
   matchedRows: number
   unknownRows: number
   errorRows: number
+  skippedRows?: number
+  skipReasons?: string[]
   rows: PreviewRow[]
   headers?: DetectedHeader[]
   summary: {

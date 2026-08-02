@@ -17,13 +17,16 @@ describe('ImportValidator', () => {
     expect(result.errors).toHaveLength(0)
   })
 
-  it('should reject missing product name', () => {
+  it('should skip rows with missing product name', () => {
     const rows: ParsedRow[] = [
       { rowIndex: 2, productName: '', quantity: 10, unit: null, supplierSku: null, unitCost: null, bottleSizeMl: null, fullBottles: null, tots: null, notes: null, categoryName: null },
     ]
     const result = validator.validate(rows, 'supplier_delivery')
-    expect(result.isValid).toBe(false)
-    expect(result.errors[0]?.field).toBe('productName')
+    expect(result.isValid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+    expect(result.skips).toHaveLength(1)
+    expect(result.skips?.[0]?.rowIndex).toBe(2)
+    expect(result.skips?.[0]?.reason).toContain('no product name')
   })
 
   it('should reject zero quantity', () => {

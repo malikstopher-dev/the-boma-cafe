@@ -16,6 +16,7 @@ export class PreviewBuilder {
 
     const previewRows: PreviewRow[] = rows.map(row => {
       const match = matchMap.get(row.rowIndex) ?? null
+      const isBlank = !row.productName
       return {
         rowIndex: row.rowIndex,
         productName: row.productName,
@@ -27,30 +28,38 @@ export class PreviewBuilder {
         unitCost: row.unitCost,
         errors: [],
         warnings: [],
+        skipped: isBlank,
+        skipReason: isBlank ? 'Blank row — no product name. Skipped.' : null,
       }
     })
 
-    const matched = previewRows.filter(r => r.match && r.match.matchSource !== 'none')
-    const unknown = previewRows.filter(r => !r.match || r.match.matchSource === 'none')
-    const errored = previewRows.filter(r => r.errors.length > 0)
+    // Skip rows will be re-detected by the validator too; this gives the
+    // builder's counts a correct base before ImportService applies skips.
+    const nonSkipped = previewRows.filter(r => !r.skipped)
+    const matched = nonSkipped.filter(r => r.match && r.match.matchSource !== 'none')
+    const unmatched = nonSkipped.filter(r => !r.match || r.match.matchSource === 'none')
+    const errored = nonSkipped.filter(r => r.errors.length > 0)
+    const skippedRows = previewRows.filter(r => r.skipped)
 
-    const totalQuantity = rows.reduce((sum, r) => sum + (r.quantity ?? 0), 0)
-    const totalValue = rows.reduce((sum, r) => sum + ((r.quantity ?? 0) * (r.unitCost ?? 0)), 0)
+    const totalQuantity = nonSkipped.reduce((sum, r) => sum + (r.parsedQuantity ?? 0), 0)
+    const totalValue = nonSkipped.reduce((sum, r) => sum + ((r.parsedQuantity ?? 0) * (r.unitCost ?? 0)), 0)
 
     return {
       id: createId(),
       importType,
       filename,
-      totalRows: rows.length,
+      totalRows: nonSkipped.length,
       matchedRows: matched.length,
-      unknownRows: unknown.length,
+      unknownRows: unmatched.length,
       errorRows: errored.length,
+      skippedRows: skippedRows.length,
+      skipReasons: [...new Set(skippedRows.map(r => r.skipReason ?? '').filter(Boolean))],
       rows: previewRows,
       headers,
       summary: {
-        totalProducts: rows.length,
+        totalProducts: nonSkipped.length,
         matchedProducts: matched.length,
-        unknownProducts: unknown.length,
+        unknownProducts: unmatched.length,
         totalQuantity,
         totalValue,
       },
