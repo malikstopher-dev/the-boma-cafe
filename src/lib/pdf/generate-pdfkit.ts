@@ -37,10 +37,6 @@ function dataUriToBuffer(dataUri: string): Buffer {
   return Buffer.from(base64, 'base64')
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '')
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
-}
 
 const PAGE_M = 40
 
@@ -49,7 +45,7 @@ class Cursor {
   y = PAGE_M
   constructor(private doc: PDFKit.PDFDocument) {}
 
-  private get bottom(): number {
+  get bottom(): number {
     return 842 - PAGE_M
   }
 
@@ -113,8 +109,7 @@ export async function generateQuotationPdfPdfkit(input: PdfGenerationInput): Pro
     }
 
     // Dark overlay
-    const [or, og, ob] = hexToRgb('#1F1708')
-    doc.fillColor(or, og, ob)
+    doc.fillColor('#1F1708')
     doc.opacity(0.55)
     doc.rect(0, 0, pageWidth, pageHeight).fill()
     doc.opacity(1)
@@ -330,9 +325,8 @@ export async function generateQuotationPdfPdfkit(input: PdfGenerationInput): Pro
     // ════════════════════════════════════════════
     // PAGE 3: THANK YOU
     // ════════════════════════════════════════════
-    const d3r = hexToRgb(T.dark)
     doc.addPage({ size: 'A4', margins: { top: 40, bottom: 40, left: 40, right: 40 } })
-    doc.fillColor(d3r[0], d3r[1], d3r[2])
+    doc.fillColor(T.dark)
     doc.rect(0, 0, pageWidth, pageHeight).fill()
 
     let tyY = 220
@@ -441,8 +435,7 @@ function drawPriceTable(
     { label: 'TOTAL', w: width * 0.22 },
   ]
 
-  const darkRgb = hexToRgb(T.dark)
-  doc.fillColor(darkRgb[0], darkRgb[1], darkRgb[2])
+  doc.fillColor(T.dark)
   doc.roundedRect(PAGE_MARGIN, y, width, 18, 4).fill()
   let hx = PAGE_MARGIN
   doc.fillColor(T.textOnDark).font('Helvetica-Bold').fontSize(7)
@@ -481,8 +474,7 @@ function drawTotalHero(
   width: number,
   input: PdfGenerationInput
 ): number {
-  const darkRgb = hexToRgb(T.dark)
-  doc.fillColor(darkRgb[0], darkRgb[1], darkRgb[2])
+  doc.fillColor(T.dark)
   doc.roundedRect(PAGE_MARGIN, y, width, 72, 8).fill()
   doc.strokeColor(T.gold).lineWidth(1).roundedRect(PAGE_MARGIN, y, width, 72, 8).stroke()
 
@@ -493,16 +485,14 @@ function drawTotalHero(
   doc.font('Helvetica-Bold').text(fmt(input.subtotal), PAGE_MARGIN + 20, y + 52, { width: width - 40, align: 'right' })
   y += 72
 
-  const goldRgb = hexToRgb(T.gold)
-  doc.fillColor(goldRgb[0], goldRgb[1], goldRgb[2])
+  doc.fillColor(T.gold)
   doc.roundedRect(PAGE_MARGIN, y, width, 20, 4).fill()
   doc.fillColor(T.dark).font('Helvetica-Bold').fontSize(9)
   doc.text(`Deposit (${input.depositPercentage}%)`, PAGE_MARGIN + 12, y + 5)
   doc.text(fmt(input.depositAmount), PAGE_MARGIN + 12, y + 5, { width: width - 24, align: 'right' })
   y += 22
 
-  const greenRgb = hexToRgb(T.success)
-  doc.fillColor(greenRgb[0], greenRgb[1], greenRgb[2])
+  doc.fillColor(T.success)
   doc.roundedRect(PAGE_MARGIN, y, width, 20, 4).fill()
   doc.fillColor(T.white).font('Helvetica-Bold').fontSize(9)
   doc.text('Outstanding Balance', PAGE_MARGIN + 12, y + 5)
@@ -592,10 +582,9 @@ function drawDigitalSignature(
   doc.strokeColor(T.border).lineWidth(1).moveTo(PAGE_MARGIN, y).lineTo(PAGE_MARGIN + width, y).stroke()
   y += 10
 
-  const darkRgb = hexToRgb(T.dark)
   const badgeW = 200
   const badgeX = PAGE_MARGIN + (width - badgeW) / 2
-  doc.fillColor(darkRgb[0], darkRgb[1], darkRgb[2])
+  doc.fillColor(T.dark)
   doc.roundedRect(badgeX, y, badgeW, 18, 4).fill()
   doc.fillColor(T.gold).font('Helvetica').fontSize(7).text('OFFICIAL DIGITAL QUOTATION', badgeX, y + 5, { width: badgeW, align: 'center', characterSpacing: 3 })
   y += 24
@@ -611,8 +600,7 @@ function drawContactSection(
   y: number,
   width: number
 ): number {
-  const darkRgb = hexToRgb(T.dark)
-  doc.fillColor(darkRgb[0], darkRgb[1], darkRgb[2])
+  doc.fillColor(T.dark)
   doc.roundedRect(PAGE_MARGIN, y, width, 54, 8).fill()
 
   doc.fillColor(T.gold).font('Helvetica-Bold').fontSize(10).text('THE BOMA CAFE', PAGE_MARGIN + 16, y + 8)
