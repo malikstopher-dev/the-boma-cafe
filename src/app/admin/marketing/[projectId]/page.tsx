@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import BackButton from '@/components/admin/BackButton'
 import { MarketingProject, MarketingProjectVersion, ExportFormat, GeneratorType, DesignData, GENERATOR_TYPES, generateId } from '@/lib/marketing/types'
 import { renderDesignToCanvas, exportDesign, generateSVG, createDefaultDesign } from '@/lib/marketing/generators'
 import StudioCanvas from '@/components/marketing/StudioCanvas'
-import { BUILT_IN_TEMPLATES } from '@/lib/marketing/templates'
+import { getMergedTemplateById, getMergedTemplatesByType } from '@/lib/marketing/templatesData'
 
 export default function ProjectEditor() {
   const params = useParams()
@@ -411,9 +411,18 @@ export default function ProjectEditor() {
 
   const handleApplyTemplate = (templateId: string) => {
     if (!project || isLocked) return
-    const template = BUILT_IN_TEMPLATES.find(t => t.id === templateId)
+    const template = getMergedTemplateById(templateId)
     if (!template) return
     const data = template.designData || createDefaultDesign(project.type, project.projectData.width, project.projectData.height)
+    const tw = data.width || project.projectData.width
+    const th = data.height || project.projectData.height
+    const scaled = data.elements.map(el => ({
+      ...el,
+      x: Math.round((el.x / tw) * project.projectData.width),
+      y: Math.round((el.y / th) * project.projectData.height),
+      width: Math.round((el.width / tw) * project.projectData.width),
+      height: Math.round((el.height / th) * project.projectData.height),
+    }))
     setProject({
       ...project,
       projectData: {
@@ -421,7 +430,7 @@ export default function ProjectEditor() {
         height: project.projectData.height,
         dpi: project.projectData.dpi,
         background: data.background,
-        elements: [...data.elements],
+        elements: scaled as any,
         assets: data.assets || [],
       },
     })
@@ -611,7 +620,7 @@ export default function ProjectEditor() {
                 </button>
               ))}
 
-              {paletteTab === 'templates' && BUILT_IN_TEMPLATES.filter(t => t.type === project.type || !t.type).map(t => (
+              {paletteTab === 'templates' && getMergedTemplatesByType(project.type).map(t => (
                 <button key={t.id} onClick={() => handleApplyTemplate(t.id)}
                   style={{ textAlign: 'left', padding: '0.6rem 0.75rem', background: '#242018', border: '1px solid #3A3428', borderRadius: 8, color: '#F0EBE3', fontSize: '0.82rem', cursor: 'pointer' }}>
                   {t.name}

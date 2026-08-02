@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import BackButton from '@/components/admin/BackButton'
-import { GENERATOR_TYPES, MarketingProject, Template, BrandAsset, generateId } from '@/lib/marketing/types'
-import { BUILT_IN_TEMPLATES } from '@/lib/marketing/templates'
+import { GENERATOR_TYPES, MarketingProject, Template, BrandAsset, generateId, GeneratorType } from '@/lib/marketing/types'
+import { ALL_MARKETING_TEMPLATES, getBomaTemplateByType } from '@/lib/marketing/templatesData'
 import { createDefaultDesign } from '@/lib/marketing/generators'
 import MediaPicker from '@/components/admin/MediaPicker'
 import { getAssetUrl } from '@/lib/storage'
@@ -22,7 +22,7 @@ export default function MarketingStudio() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('generator')
   const [projects, setProjects] = useState<MarketingProject[]>([])
-  const [templates, setTemplates] = useState<Template[]>(BUILT_IN_TEMPLATES)
+  const [templates, setTemplates] = useState<Template[]>(ALL_MARKETING_TEMPLATES)
   const [assets, setAssets] = useState<BrandAsset[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -92,12 +92,26 @@ export default function MarketingStudio() {
 
   const handleCreateBlank = async (type: (typeof GENERATOR_TYPES)[number]) => {
     try {
-      const design = createDefaultDesign(type.id, type.defaultWidth, type.defaultHeight)
+      const branded = getBomaTemplateByType(type.id as GeneratorType)
+      const design = branded
+        ? {
+            ...branded.designData,
+            width: type.defaultWidth,
+            height: type.defaultHeight,
+            elements: branded.designData.elements.map(el => ({
+              ...el,
+              x: Math.round((el.x / (branded.designData.width || 1)) * type.defaultWidth),
+              y: Math.round((el.y / (branded.designData.height || 1)) * type.defaultHeight),
+              width: Math.round((el.width / (branded.designData.width || 1)) * type.defaultWidth),
+              height: Math.round((el.height / (branded.designData.height || 1)) * type.defaultHeight),
+            })),
+          }
+        : createDefaultDesign(type.id, type.defaultWidth, type.defaultHeight)
       const res = await fetch('/api/cms/marketing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: `New ${type.label}`,
+          name: branded ? `${branded.name}` : `New ${type.label}`,
           type: type.id,
           projectData: design,
         }),
