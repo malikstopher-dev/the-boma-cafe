@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import BackButton from '@/components/admin/BackButton'
 import { MarketingProject, MarketingProjectVersion, ExportFormat, GeneratorType, DesignData, GENERATOR_TYPES, generateId } from '@/lib/marketing/types'
 import { renderDesignToCanvas, exportDesign, generateSVG, createDefaultDesign } from '@/lib/marketing/generators'
+import StudioCanvas from '@/components/marketing/StudioCanvas'
+import { BUILT_IN_TEMPLATES } from '@/lib/marketing/templates'
 
 export default function ProjectEditor() {
   const params = useParams()
@@ -24,6 +26,8 @@ export default function ProjectEditor() {
   const [exportQuality, setExportQuality] = useState(0.92)
   const [exportScale, setExportScale] = useState(1)
   const [editingElement, setEditingElement] = useState<string | null>(null)
+  const [zoom, setZoom] = useState(0.3)
+  const [paletteTab, setPaletteTab] = useState<'text' | 'shapes' | 'templates' | 'brand'>('text')
   const autosaveTimer = useRef<NodeJS.Timeout | null>(null)
 
   const fetchProject = useCallback(async () => {
@@ -236,6 +240,136 @@ export default function ProjectEditor() {
     setProject(updated)
   }
 
+  const handleSelectElement = (elementId: string | null) => {
+    setEditingElement(elementId)
+  }
+
+  const handlePatchElement = (elementId: string, patch: Partial<any>) => {
+    if (!project || isLocked) return
+    setProject({
+      ...project,
+      projectData: {
+        ...project.projectData,
+        elements: project.projectData.elements.map(el =>
+          el.id === elementId ? { ...el, ...patch } : el
+        ),
+      },
+    })
+  }
+
+  const handleMoveLayer = (elementId: string, dir: -1 | 1) => {
+    if (!project || isLocked) return
+    const els = [...project.projectData.elements]
+    els.sort((a, b) => a.zIndex - b.zIndex)
+    const idx = els.findIndex(e => e.id === elementId)
+    if (idx === -1) return
+    const target = idx + dir
+    if (target < 0 || target >= els.length) return
+    const tmp = els[idx].zIndex
+    els[idx] = { ...els[idx], zIndex: els[target].zIndex }
+    els[target] = { ...els[target], zIndex: tmp }
+    setProject({
+      ...project,
+      projectData: { ...project.projectData, elements: els },
+    })
+  }
+
+  const handleDuplicateElement = (elementId: string) => {
+    if (!project || isLocked) return
+    const el = project.projectData.elements.find(e => e.id === elementId)
+    if (!el) return
+    const clone = {
+      ...el,
+      id: generateId(),
+      x: el.x + 20,
+      y: el.y + 20,
+      zIndex: Math.max(...project.projectData.elements.map(e => e.zIndex), 0) + 1,
+      visible: true,
+    }
+    setProject({
+      ...project,
+      projectData: {
+        ...project.projectData,
+        elements: [...project.projectData.elements, clone],
+      },
+    })
+    setEditingElement(clone.id)
+  }
+
+  const handleBackgroundColor = (color: string) => {
+    if (!project || isLocked) return
+    setProject({
+      ...project,
+      projectData: {
+        ...project.projectData,
+        background: { ...project.projectData.background, type: 'solid', color },
+      },
+    })
+  }
+
+  const handleInsertTextField = (label: string, content: string, opts?: Partial<any>) => {
+    if (!project || isLocked) return
+    const w = Math.round(project.projectData.width * 0.7)
+    const h = Math.round(project.projectData.height * 0.1)
+    const newEl: any = {
+      id: generateId(),
+      type: 'text',
+      x: Math.round(project.projectData.width * 0.15),
+      y: Math.round(Math.max(20, project.projectData.height * 0.2)),
+      width: w,
+      height: h,
+      rotation: 0,
+      opacity: 1,
+      visible: true,
+      zIndex: Math.max(...project.projectData.elements.map(e => e.zIndex), 0) + 1,
+      props: {
+        content,
+        fontFamily: 'Poppins',
+        fontSize: Math.round(Math.min(project.projectData.width, project.projectData.height) * 0.06),
+        fontWeight: opts?.fontWeight ?? 400,
+        fontStyle: 'normal',
+        textAlign: opts?.textAlign ?? 'center',
+        color: opts?.color ?? '#1F1F1F',
+        lineHeight: 1.4,
+        letterSpacing: 1,
+        textTransform: opts?.textTransform ?? 'none',
+      },
+    }
+    setProject({
+      ...project,
+      projectData: {
+        ...project.projectData,
+        elements: [...project.projectData.elements, newEl],
+      },
+    })
+    setEditingElement(newEl.id)
+  }
+
+  const handleInsertShape = (shapeType: any) => {
+    if (!project || isLocked) return
+    const newEl: any = {
+      id: generateId(),
+      type: 'shape',
+      x: Math.round(project.projectData.width * 0.15),
+      y: Math.round(project.projectData.height * 0.2),
+      width: Math.round(project.projectData.width * 0.3),
+      height: Math.round(project.projectData.height * 0.1),
+      rotation: 0,
+      opacity: 1,
+      visible: true,
+      zIndex: Math.max(...project.projectData.elements.map(e => e.zIndex), 0) + 1,
+      props: { shapeType: shapeType, fillColor: '#C8A04E', borderRadius: 0 },
+    }
+    setProject({
+      ...project,
+      projectData: {
+        ...project.projectData,
+        elements: [...project.projectData.elements, newEl],
+      },
+    })
+    setEditingElement(newEl.id)
+  }
+
   const handleAddElement = (type: 'text' | 'image' | 'shape' | 'qr' | 'icon' | 'pattern') => {
     if (!project || isLocked) return
     const w = project.projectData.width
@@ -273,6 +407,24 @@ export default function ProjectEditor() {
       },
     })
     setEditingElement(null)
+  }
+
+  const handleApplyTemplate = (templateId: string) => {
+    if (!project || isLocked) return
+    const template = BUILT_IN_TEMPLATES.find(t => t.id === templateId)
+    if (!template) return
+    const data = template.designData || createDefaultDesign(project.type, project.projectData.width, project.projectData.height)
+    setProject({
+      ...project,
+      projectData: {
+        width: project.projectData.width,
+        height: project.projectData.height,
+        dpi: project.projectData.dpi,
+        background: data.background,
+        elements: [...data.elements],
+        assets: data.assets || [],
+      },
+    })
   }
 
   const handleDuplicateProject = async () => {
@@ -405,7 +557,85 @@ export default function ProjectEditor() {
       </div>
 
       {/* Main Editor Area */}
-      <div style={{ display: 'flex', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+        {/* Left Asset Palette */}
+        <div style={{ width: '220px', flexShrink: 0 }}>
+          <div style={{
+            background: '#1E1A14',
+            borderRadius: '16px',
+            padding: '1rem 0',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          }}>
+            <div style={{ display: 'flex', padding: '0 0.75rem 0.75rem', gap: '0.25rem', borderBottom: '1px solid #3A3428' }}>
+              {(['text', 'shapes', 'templates', 'brand'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setPaletteTab(tab)}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem 0',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    background: paletteTab === tab ? '#242018' : 'transparent',
+                    border: 'none',
+                    borderRadius: 6,
+                    color: paletteTab === tab ? '#C8A04E' : '#6B6358',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '520px', overflowY: 'auto' }}>
+              {paletteTab === 'text' && [
+                { label: 'Headline', content: 'Your Big Headline', opts: { fontSize: 0.08, fontWeight: 700, textAlign: 'center', textTransform: 'uppercase' } },
+                { label: 'Subheading', content: 'Supporting subheading text', opts: { fontWeight: 500 } },
+                { label: 'Body Text', content: 'Write your body copy here. Add detail about your offer or event.', opts: { fontWeight: 400 } },
+                { label: 'Price Tag', content: 'R 89.00', opts: { fontWeight: 700, color: '#C8A04E', textAlign: 'center' } },
+                { label: 'Offer Badge', content: 'SPECIAL OFFER', opts: { fontWeight: 700, textTransform: 'uppercase', color: '#1F1F1F' } },
+              ].map(block => (
+                <button key={block.label} onClick={() => handleInsertTextField(block.label, block.content, block.opts)}
+                  style={{ textAlign: 'left', padding: '0.6rem 0.75rem', background: '#242018', border: '1px solid #3A3428', borderRadius: 8, color: '#F0EBE3', fontSize: '0.82rem', cursor: 'pointer' }}>
+                  {block.label}
+                </button>
+              ))}
+
+              {paletteTab === 'shapes' && ['rectangle', 'rounded-rect', 'circle', 'line'].map(shape => (
+                <button key={shape} onClick={() => handleInsertShape(shape)}
+                  style={{ textAlign: 'left', padding: '0.6rem 0.75rem', background: '#242018', border: '1px solid #3A3428', borderRadius: 8, color: '#F0EBE3', fontSize: '0.82rem', cursor: 'pointer' }}>
+                  {shape}
+                </button>
+              ))}
+
+              {paletteTab === 'templates' && BUILT_IN_TEMPLATES.filter(t => t.type === project.type || !t.type).map(t => (
+                <button key={t.id} onClick={() => handleApplyTemplate(t.id)}
+                  style={{ textAlign: 'left', padding: '0.6rem 0.75rem', background: '#242018', border: '1px solid #3A3428', borderRadius: 8, color: '#F0EBE3', fontSize: '0.82rem', cursor: 'pointer' }}>
+                  {t.name}
+                </button>
+              ))}
+
+              {paletteTab === 'brand' && (
+                <>
+                  <div style={{ fontSize: '0.75rem', color: '#A09888', marginBottom: '0.25rem' }}>Background Color</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {['#FFFFFF', '#F5EDE3', '#C8A04E', '#C26A2D', '#1F1F1F', '#3A3428', '#4B4033', '#000000'].map(c => (
+                      <button key={c} onClick={() => handleBackgroundColor(c)} title={c}
+                        style={{ width: 28, height: 28, borderRadius: 8, background: c, border: '2px solid ' + (project.projectData.background?.color === c ? '#C8A04E' : '#3A3428'), cursor: 'pointer' }} />
+                    ))}
+                  </div>
+                  <label style={{ fontSize: '0.75rem', color: '#A09888', margin: '0.5rem 0 0.25rem', display: 'block' }}>Custom</label>
+                  <input type="color" value={project.projectData.background?.color || '#FFFFFF'} onChange={e => handleBackgroundColor(e.target.value)}
+                    style={{ width: '100%', height: 40, borderRadius: 8, border: '1px solid #3A3428', background: '#242018', cursor: 'pointer' }} />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Canvas Preview */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
@@ -413,20 +643,21 @@ export default function ProjectEditor() {
             borderRadius: '16px',
             padding: '1rem',
             boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+            overflow: 'auto',
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'center',
             minHeight: '400px',
-            overflow: 'auto',
           }}>
-            <canvas
-              ref={canvasRef}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '80vh',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.1)',
-                borderRadius: '4px',
+            <StudioCanvas
+              design={project.projectData}
+              canvasRef={canvasRef}
+              selectedElementId={editingElement}
+              onSelect={handleSelectElement}
+              onUpdateElement={(id, patch) => {
+                handlePatchElement(id, patch)
               }}
+              zoom={zoom}
+              onZoom={setZoom}
             />
           </div>
         </div>
@@ -497,6 +728,17 @@ export default function ProjectEditor() {
                 <h3 style={{ fontSize: '1rem', color: '#F0EBE3', marginBottom: '0.75rem', textTransform: 'capitalize' }}>
                   {el.type} Properties
                 </h3>
+
+                <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.75rem' }}>
+                  <button onClick={() => handleMoveLayer(el.id, 1)} title="Bring forward"
+                    style={{ flex: 1, padding: '0.35rem 0', background: '#242018', border: '1px solid #3A3428', borderRadius: 6, color: '#F0EBE3', fontSize: '0.75rem', cursor: 'pointer' }}>▲</button>
+                  <button onClick={() => handleMoveLayer(el.id, -1)} title="Send backward"
+                    style={{ flex: 1, padding: '0.35rem 0', background: '#242018', border: '1px solid #3A3428', borderRadius: 6, color: '#F0EBE3', fontSize: '0.75rem', cursor: 'pointer' }}>▼</button>
+                  <button onClick={() => handleDuplicateElement(el.id)} title="Duplicate"
+                    style={{ flex: 1, padding: '0.35rem 0', background: '#242018', border: '1px solid #3A3428', borderRadius: 6, color: '#F0EBE3', fontSize: '0.75rem', cursor: 'pointer' }}>⧉</button>
+                  <button onClick={() => handleDeleteElement(el.id)} title="Delete"
+                    style={{ flex: 1, padding: '0.35rem 0', background: 'rgba(232,84,84,0.15)', border: '1px solid #3A3428', borderRadius: 6, color: '#E85454', fontSize: '0.75rem', cursor: 'pointer' }}>✕</button>
+                </div>
 
                 {el.type === 'text' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

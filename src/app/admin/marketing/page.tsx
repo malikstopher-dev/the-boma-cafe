@@ -218,17 +218,34 @@ export default function MarketingStudio() {
                   padding: '1.5rem',
                   borderRadius: '16px',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                  border: 'none',
+                  border: '1px solid rgba(200,160,78,0.15)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s ease',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 0 1px #C8A04E, 0 8px 24px rgba(200,160,78,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'; e.currentTarget.style.transform = 'none' }}
               >
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{gt.icon}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '2.5rem' }}>{gt.icon}</div>
+                  <span style={{
+                    background: '#242018',
+                    border: '1px solid #3A3428',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.65rem',
+                    color: '#A09888',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {Math.round(gt.defaultWidth / Math.min(gt.defaultWidth, gt.defaultHeight))} × 1
+                  </span>
+                </div>
                 <h3 style={{ fontSize: '1.1rem', color: '#F0EBE3', marginBottom: '0.25rem' }}>{gt.label}</h3>
-                <p style={{ fontSize: '0.85rem', color: '#A09888' }}>{gt.description}</p>
+                <p style={{ fontSize: '0.85rem', color: '#A09888', marginBottom: '1rem' }}>{gt.description}</p>
+                <div style={{ fontSize: '0.7rem', color: '#6B6358' }}>
+                  {gt.defaultWidth} × {gt.defaultHeight}px
+                </div>
               </button>
             ))}
           </div>
