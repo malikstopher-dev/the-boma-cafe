@@ -1,9 +1,6 @@
-import React, { type ReactElement } from 'react'
-import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer'
 import { ensureBucket, uploadPdf, downloadPdfBuffer } from './storage'
-import { generateQrDataUri } from './qrcode'
 import { getAdminClient } from '@/lib/supabase'
-import { QuotationPDF as QuotationPDFComponent } from './QuotationPDF'
+import { generateQuotationPdfPdfkit } from './generate-pdfkit'
 
 export interface PdfGenerationInput {
   quoteId: string
@@ -39,45 +36,7 @@ export interface PdfGenerationInput {
 }
 
 export async function generateQuotationPdf(input: PdfGenerationInput): Promise<Buffer> {
-  const dateIssued = new Date().toISOString().split('T')[0]
-
-  let qrDataUri: string | null = null
-  const qrUrl = input.portalUrl || `https://the-boma-cafe.vercel.app/booking/${input.quoteNumber}`
-  try {
-    qrDataUri = await generateQrDataUri(qrUrl)
-  } catch {
-    // QR code is non-critical
-  }
-
-  const element = React.createElement(QuotationPDFComponent, {
-    quoteNumber: input.quoteNumber,
-    dateIssued,
-    validUntil: input.validUntil,
-    customerName: input.customerName,
-    customerPhone: input.customerPhone,
-    customerEmail: input.customerEmail,
-    bookingReference: input.bookingReference,
-    bookingType: input.bookingType,
-    venueArea: input.venueArea,
-    foodPackage: input.foodPackage,
-    drinkPackage: input.drinkPackage,
-    addons: input.addons,
-    bookingDate: input.bookingDate,
-    bookingTime: input.bookingTime,
-    guests: input.guests,
-    lineItems: input.lineItems,
-    subtotal: input.subtotal,
-    taxRate: input.taxRate,
-    taxAmount: input.taxAmount,
-    total: input.total,
-    depositPercentage: input.depositPercentage,
-    depositAmount: input.depositAmount,
-    balanceAmount: input.balanceAmount,
-    qrDataUri,
-    portalUrl: input.portalUrl,
-  })
-
-  return await renderToBuffer(element as React.ReactElement<DocumentProps>)
+  return generateQuotationPdfPdfkit(input)
 }
 
 export async function generateAndStorePdf(
