@@ -75,7 +75,6 @@ export async function pdfGenerationHandler(job: BackgroundJob): Promise<Record<s
       pdf_version: existingQuote.pdf_version,
     })
   } else {
-    pdfVersion = existingQuote?.pdf_version ? existingQuote.pdf_version + 1 : 1
     const generatedBy = existingQuote?.pdf_version ? 'worker-retry' : 'worker'
 
     storagePath = await generateAndStorePdf(
@@ -122,86 +121,179 @@ export async function pdfGenerationHandler(job: BackgroundJob): Promise<Record<s
   }
 
   // ============================================================
-  // Phase 2: Customer Email (idempotent via quotation_email_sent_at)
+  // Phase 2: Customer Email — transactional-outbox idempotency.
+  //
+  // Same pattern as Phase 3 admin notification: pre-claim a
+  // notification_queue row with status='pending' BEFORE sending.
+  // If the worker crashes between sendEmail (Resend confirmed) and
+  // the quotes.update(quotation_email_sent_at), the retry will see
+  // the 'pending' row and re-attempt — but the 'sent' gate prevents
+  // a duplicate send if the UPDATE did land before the crash.
   // ============================================================
-
-  const emailAlreadySent = existingQuote?.quotation_email_sent_at && existingQuote?.quotation_email_recipient === payload.customerEmail
 
   if (payload.skipCustomerEmail) {
     logger.info('customer email skipped (skipCustomerEmail flag)', {
       quote_id: payload.quoteId,
     })
-  } else if (emailAlreadySent) {
-    logger.info('customer email already sent, skipping', {
-      quote_id: payload.quoteId,
-      sent_at: existingQuote.quotation_email_sent_at,
-      recipient: existingQuote.quotation_email_recipient,
-    })
   } else {
-    const attachmentData = await getPdfAttachmentData(storagePath)
+    const customerNotifKey = payload.quoteNumber
 
-    const lineItemsHtml = payload.lineItems
-      .filter((i) => i.total > 0)
-      .map((item) =>
-        `<tr><td style="padding:5px 0;font-size:13px;color:#555;">${item.label}${item.quantity > 1 ? ` x ${item.quantity}` : ''}</td><td style="padding:5px 0;font-size:13px;color:#333;text-align:right;">${formatCurrency(item.total)}</td></tr>`
-      )
-      .join('')
+    // Look up prior queue row for this quote's customer email
+    const { data: priorCustomerNotif, error: custLookupErr } = await client
+      .from('notification_queue')
+      .select('id, status')
+      .eq('recipient_type', 'customer')
+      .eq('notification_type', 'quote_ready')
+      .eq('recipient_identifier', customerNotifKey)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    const estimatedTotalStr = formatCurrency(payload.total)
-    const depositStr = formatCurrency(payload.depositAmount)
-    const balanceStr = formatCurrency(payload.balanceAmount)
+    let shouldSendCustomer = true
+    let customerQueueRowId: string | null = null
 
-    const customerHtml = buildCustomerQuotationHtml({
-      customerName: payload.customerName,
-      quoteNumber: payload.quoteNumber,
-      bookingType: payload.bookingType,
-      bookingDate: payload.bookingDate,
-      bookingTime: payload.bookingTime,
-      guests: payload.guests,
-      estimatedTotal: estimatedTotalStr,
-      depositAmount: depositStr,
-      balanceAmount: balanceStr,
-      venueArea: payload.venueArea,
-      portalUrl: payload.portalUrl,
-    })
-    const customerText = buildCustomerQuotationText({
-      customerName: payload.customerName,
-      quoteNumber: payload.quoteNumber,
-      bookingType: payload.bookingType,
-      bookingDate: payload.bookingDate,
-      bookingTime: payload.bookingTime,
-      guests: payload.guests,
-      estimatedTotal: estimatedTotalStr,
-      depositAmount: depositStr,
-      balanceAmount: balanceStr,
-      venueArea: payload.venueArea,
-      portalUrl: payload.portalUrl,
-    })
-
-    const emailSent = await sendEmail({
-      to: payload.customerEmail,
-      subject: `Your Booking Quotation (${payload.quoteNumber})`,
-      html: customerHtml,
-      text: customerText,
-      attachments: attachmentData ? [attachmentData] : [],
-    })
-
-    if (!emailSent) {
-      throw new Error('Customer email sending failed')
+    if (custLookupErr) {
+      logger.warn('customer notification queue lookup failed, proceeding to send without idempotency check', {
+        quote_id: payload.quoteId,
+        error: custLookupErr.message,
+      })
+    } else if (priorCustomerNotif) {
+      customerQueueRowId = priorCustomerNotif.id
+      if (priorCustomerNotif.status === 'sent') {
+        shouldSendCustomer = false
+        logger.info('customer email already sent (outbox gate), skipping', {
+          quote_id: payload.quoteId,
+          quote_number: payload.quoteNumber,
+        })
+      } else if (priorCustomerNotif.status === 'failed') {
+        shouldSendCustomer = false
+        logger.warn('customer email previously failed permanently, skipping', {
+          quote_id: payload.quoteId,
+          quote_number: payload.quoteNumber,
+        })
+      }
+      // status='pending' -> shouldSend stays true; re-attempt
     }
 
-    await client
-      .from('quotes')
-      .update({
-        quotation_email_sent_at: new Date().toISOString(),
-        quotation_email_recipient: payload.customerEmail,
+    // Also check the existing quotes.quotation_email_sent_at as a
+    // secondary idempotency guard (covers jobs queued before the
+    // outbox pattern was added).
+    if (shouldSendCustomer && existingQuote?.quotation_email_sent_at && existingQuote?.quotation_email_recipient === payload.customerEmail) {
+      shouldSendCustomer = false
+      logger.info('customer email already sent (quotes column), skipping', {
+        quote_id: payload.quoteId,
+        sent_at: existingQuote.quotation_email_sent_at,
+        recipient: existingQuote.quotation_email_recipient,
       })
-      .eq('id', payload.quoteId)
+    }
 
-    logger.info('customer email sent', {
-      quote_id: payload.quoteId,
-      recipient: payload.customerEmail,
-    })
+    if (shouldSendCustomer) {
+      // Pre-claim the queue slot
+      if (!customerQueueRowId) {
+        const { data: insertedCustRow, error: custInsertErr } = await client
+          .from('notification_queue')
+          .insert({
+            recipient_type: 'customer',
+            recipient_identifier: customerNotifKey,
+            notification_type: 'quote_ready',
+            template_data: {
+              quote_id: payload.quoteId,
+              quote_number: payload.quoteNumber,
+              customer_email: payload.customerEmail,
+            },
+            status: 'pending',
+          })
+          .select('id')
+          .single()
+
+        if (custInsertErr || !insertedCustRow) {
+          throw new Error(`Failed to pre-claim customer notification queue slot: ${custInsertErr?.message}`)
+        }
+
+        customerQueueRowId = insertedCustRow.id
+      }
+
+      const attachmentData = await getPdfAttachmentData(storagePath)
+
+      const lineItemsHtml = payload.lineItems
+        .filter((i) => i.total > 0)
+        .map((item) =>
+          `<tr><td style="padding:5px 0;font-size:13px;color:#555;">${item.label}${item.quantity > 1 ? ` x ${item.quantity}` : ''}</td><td style="padding:5px 0;font-size:13px;color:#333;text-align:right;">${formatCurrency(item.total)}</td></tr>`
+        )
+        .join('')
+
+      const estimatedTotalStr = formatCurrency(payload.total)
+      const depositStr = formatCurrency(payload.depositAmount)
+      const balanceStr = formatCurrency(payload.balanceAmount)
+
+      const customerHtml = buildCustomerQuotationHtml({
+        customerName: payload.customerName,
+        quoteNumber: payload.quoteNumber,
+        bookingType: payload.bookingType,
+        bookingDate: payload.bookingDate,
+        bookingTime: payload.bookingTime,
+        guests: payload.guests,
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        venueArea: payload.venueArea,
+        portalUrl: payload.portalUrl,
+      })
+      const customerText = buildCustomerQuotationText({
+        customerName: payload.customerName,
+        quoteNumber: payload.quoteNumber,
+        bookingType: payload.bookingType,
+        bookingDate: payload.bookingDate,
+        bookingTime: payload.bookingTime,
+        guests: payload.guests,
+        estimatedTotal: estimatedTotalStr,
+        depositAmount: depositStr,
+        balanceAmount: balanceStr,
+        venueArea: payload.venueArea,
+        portalUrl: payload.portalUrl,
+      })
+
+      const emailSent = await sendEmail({
+        to: payload.customerEmail,
+        subject: `Your Booking Quotation (${payload.quoteNumber})`,
+        html: customerHtml,
+        text: customerText,
+        attachments: attachmentData ? [attachmentData] : [],
+      })
+
+      if (!emailSent) {
+        throw new Error('Customer email sending failed')
+      }
+
+      // Mark the queue row as sent
+      const { error: custMarkSentErr } = await client
+        .from('notification_queue')
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq('id', customerQueueRowId)
+
+      if (custMarkSentErr) {
+        logger.warn('customer email sent but queue row not marked sent — next retry will re-send', {
+          quote_id: payload.quoteId,
+          queue_row_id: customerQueueRowId,
+          error: custMarkSentErr.message,
+        })
+      }
+
+      // Also update quotes table (kept for backward compat + dashboard)
+      await client
+        .from('quotes')
+        .update({
+          quotation_email_sent_at: new Date().toISOString(),
+          quotation_email_recipient: payload.customerEmail,
+        })
+        .eq('id', payload.quoteId)
+
+      logger.info('customer email sent', {
+        quote_id: payload.quoteId,
+        recipient: payload.customerEmail,
+        queue_row_id: customerQueueRowId,
+      })
+    }
   }
 
   // ============================================================

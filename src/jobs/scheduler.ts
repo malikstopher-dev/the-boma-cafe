@@ -80,6 +80,8 @@ async function resolveStuckJob(job: any): Promise<void> {
         retry_count: newRetryCount,
         scheduled_at: nextRun.toISOString(),
         heartbeat_at: new Date().toISOString(),
+        locked_by: null,
+        started_at: null,
         error: {
           message: 'Job stuck in processing state — reset by scheduler',
           previous_heartbeat: job.heartbeat_at,
@@ -88,6 +90,7 @@ async function resolveStuckJob(job: any): Promise<void> {
         },
       })
       .eq('id', job.id)
+      .eq('status', 'processing')
 
     if (updateError) {
       logger.error('failed to reset stuck job', {
@@ -110,6 +113,8 @@ async function resolveStuckJob(job: any): Promise<void> {
         status: 'dead_letter',
         completed_at: new Date().toISOString(),
         heartbeat_at: new Date().toISOString(),
+        locked_by: null,
+        started_at: null,
         error: {
           message: 'Job stuck in processing state after max retries — moved to dead_letter',
           previous_heartbeat: job.heartbeat_at,
@@ -117,6 +122,7 @@ async function resolveStuckJob(job: any): Promise<void> {
         },
       })
       .eq('id', job.id)
+      .eq('status', 'processing')
 
     if (updateError) {
       logger.error('failed to dead_letter stuck job', {

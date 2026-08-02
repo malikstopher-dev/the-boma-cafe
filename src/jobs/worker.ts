@@ -164,6 +164,8 @@ async function executeJob(job: BackgroundJob): Promise<void> {
   const statusUpdate: Record<string, unknown> = {
     status: finalStatus,
     heartbeat_at: new Date().toISOString(),
+    locked_by: null,
+    started_at: null,
   }
 
   if (finalStatus === 'completed') {
