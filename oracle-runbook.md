@@ -91,7 +91,7 @@ Create `~/boma/.env.worker` with these values (copy from your `.env.local`):
 ```bash
 cat > ~/boma/.env.worker << 'EOF'
 # Supabase (paste your real values from .env.local — never commit these)
-SUPABASE_URL=https://lyksqvqtiysjttwpgeyw.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://lyksqvqtiysjttwpgeyw.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<paste-from-.env.local>
 
 # Resend (for email sends in the worker)
@@ -110,9 +110,9 @@ EOF
 chmod 600 ~/boma/.env.worker
 ```
 
-**Why `SUPABASE_URL` not `NEXT_PUBLIC_SUPABASE_URL`:** the worker doesn't use Next.js env-var prefixing; it reads raw `process.env`. The `NEXT_PUBLIC_` prefix is only for client-side exposure in Next.js, which the worker is not.
+**Why `NEXT_PUBLIC_SUPABASE_URL`:** the worker bundles `src/lib/supabase.ts` which reads `process.env.NEXT_PUBLIC_SUPABASE_URL` (with `!` non-null assertion). Despite the `NEXT_PUBLIC_` prefix convention, this env var is read server-side by the worker — there is no client-side exposure. Set it to the same value as in `.env.local`.
 
-**Required vars:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `HOSTNAME`. Others are used by the email templates if `notification_emails` is set in `booking:notification_emails`.
+**Required vars:** `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `BOOKING_FROM_EMAIL`, `HOSTNAME`. Others are optional (`BOOKING_FROM_NAME`, `BOOKING_REPLY_TO` fall back gracefully).
 
 ---
 

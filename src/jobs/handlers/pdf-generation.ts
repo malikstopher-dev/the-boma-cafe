@@ -498,28 +498,9 @@ export async function pdfGenerationHandler(job: BackgroundJob): Promise<Record<s
   }
 
   // ============================================================
-  // Phase 4: Notification Queue Entry
+  // Phase 4: Removed — Phase 2 already records the customer
+  // notification in notification_queue with outbox idempotency.
   // ============================================================
-
-  try {
-    await client.from('notification_queue').insert({
-      recipient_type: 'customer',
-      recipient_identifier: payload.customerEmail,
-      notification_type: 'quote_ready',
-      template_data: {
-        quote_number: payload.quoteNumber,
-        customer_name: payload.customerName,
-        total: payload.total,
-      },
-      status: 'sent',
-      sent_at: new Date().toISOString(),
-    })
-  } catch (err) {
-    logger.warn('notification queue insert failed (non-critical)', {
-      quote_id: payload.quoteId,
-      error: String(err),
-    })
-  }
 
   return {
     storage_path: storagePath,
