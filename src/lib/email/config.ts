@@ -27,10 +27,15 @@ export function getEmailConfig(): EmailConfig {
   if (!fromName) warnOnce('BOOKING_FROM_NAME', 'Missing BOOKING_FROM_NAME env var — using raw email address')
   if (!replyTo) warnOnce('BOOKING_REPLY_TO', 'Missing BOOKING_REPLY_TO env var — no Reply-To set')
 
+  // A malformed reply_to (= BOOKING_REPLY_TO env var) makes Resend reject the
+  // entire send with "Invalid `reply_to` field". Only passthrough when it looks
+  // like `email@example.com` or `Name <email@example.com>`.
+  const parsedReplyTo = validateValidReplyTo(replyTo)
+
   const defaultSender: EmailSender = {
     fromEmail,
     fromName,
-    replyTo,
+    replyTo: parsedReplyTo || '',
   }
 
   return {
@@ -42,6 +47,21 @@ export function getEmailConfig(): EmailConfig {
       accounts: defaultSender,
     },
   }
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validateValidReplyTo(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (EMAIL_RE.test(trimmed)) return trimmed
+  const nameMatch = trimmed.match(/^(.*?)<([^<>]+)>$/)
+  if (nameMatch) {
+    const inner = nameMatch[2].trim()
+    if (EMAIL_RE.test(inner)) return `${nameMatch[1].trim()} <${inner}>`
+  }
+  warnOnce(`BAD_BOOKING_REPLY_TO:${trimmed}`, `Ignoring malformed BOOKING_REPLY_TO: "${trimmed}"`)
+  return ''
 }
 
 export function formatFromAddress(sender: EmailSender): string {

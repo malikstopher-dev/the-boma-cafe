@@ -20,8 +20,10 @@ const T = {
   surface: '#FDF8F3',
 }
 
-function fmt(amount: number): string {
-  return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmt(amount: number | null | undefined): string {
+  const n = Number(amount)
+  if (Number.isNaN(n)) return 'R 0.00'
+  return `R ${n.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function formatDate(dateStr: string): string {
