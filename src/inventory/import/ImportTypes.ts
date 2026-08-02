@@ -1,6 +1,60 @@
 export type ImportType = 'supplier_delivery' | 'physical_count' | 'adjustment'
 export type ImportMode = 'draft' | 'direct' | 'reconcile'
 
+// ─── Column-Mapping Metadata ──────────────────────────────────────────────
+// The UI drives the mapping step from this single source of truth. Each field
+// maps to a ParsedRow property + a human label + whether it's required for a
+// meaningful import. Kept in ImportTypes (not the parser) so both engine and
+// UI can import it without pulling in xlsx.
+export type ImportField =
+  | 'productName'
+  | 'quantity'
+  | 'unit'
+  | 'supplierSku'
+  | 'unitCost'
+  | 'bottleSizeMl'
+  | 'fullBottles'
+  | 'tots'
+  | 'categoryName'
+  | 'inventoryType'
+  | 'sku'
+  | 'barcode'
+  | 'parLevel'
+  | 'reorderPoint'
+  | 'preferredSupplier'
+  | 'notes'
+
+export const FIELD_LABELS: Record<ImportField, string> = {
+  productName: 'Product Name',
+  quantity: 'Quantity',
+  unit: 'Unit / Package Size',
+  supplierSku: 'Supplier SKU / Code',
+  unitCost: 'Unit Cost',
+  bottleSizeMl: 'Bottle / Volume (ml)',
+  fullBottles: 'Full Bottles',
+  tots: 'Tots / Shots',
+  categoryName: 'Category',
+  inventoryType: 'Item Type (Food/Beverage/etc.)',
+  sku: 'Internal SKU',
+  barcode: 'Barcode',
+  parLevel: 'Par Level',
+  reorderPoint: 'Reorder Point',
+  preferredSupplier: 'Preferred Supplier',
+  notes: 'Notes',
+}
+
+export const REQUIRED_FIELDS: ImportField[] = ['productName', 'quantity']
+
+export interface DetectedHeader {
+  field: ImportField | null
+  header: string
+  match: 'exact' | 'alias' | 'none'
+}
+
+// A user override given as { field -> original spreadsheet header }. Passed
+// back to the parser so remapped columns are honoured on re-parse.
+export type ColumnOverride = Partial<Record<ImportField, string>>
+
 export type ImportStatus = 'pending' | 'previewed' | 'approved' | 'applied' | 'rolled_back' | 'failed'
 
 export type MatchSource = 'supplier_sku' | 'exact_name' | 'name_and_size' | 'saved_mapping' | 'fuzzy' | 'none'
@@ -19,6 +73,12 @@ export interface ParsedRow {
   tots: number | null
   notes: string | null
   categoryName: string | null
+  inventoryType?: string | null
+  sku?: string | null
+  barcode?: string | null
+  parLevel?: number | null
+  reorderPoint?: number | null
+  preferredSupplier?: string | null
   costCentreId?: string | null
   reasonType?: string | null
   reasonNotes?: string | null
@@ -34,6 +94,7 @@ export interface ParseResult {
   rows: ParsedRow[]
   errors: ParseError[]
   totalRows: number
+  headers: DetectedHeader[]
 }
 
 export interface ColumnMapping {
@@ -86,6 +147,7 @@ export interface ImportPreview {
   unknownRows: number
   errorRows: number
   rows: PreviewRow[]
+  headers?: DetectedHeader[]
   summary: {
     totalProducts: number
     matchedProducts: number

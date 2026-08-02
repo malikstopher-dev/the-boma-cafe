@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ImportService } from '@/inventory/import/ImportService'
 import type { ApiResponse } from '@/inventory/engine/types'
-import type { ImportPreview, ImportHistoryEntry, ImportType, ImportMode } from '@/inventory/import/ImportTypes'
+import type { ImportPreview, ImportHistoryEntry, ImportType, ImportMode, DetectedHeader } from '@/inventory/import/ImportTypes'
 
 const importService = new ImportService()
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
   }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ImportPreview>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ImportPreview | DetectedHeader[]>>> {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
@@ -25,6 +25,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supplierId = formData.get('supplierId') as string | null
     const importMode = (formData.get('importMode') as ImportMode) ?? 'draft'
     const locationId = formData.get('locationId') as string | null
+    const action = (formData.get('action') as string) ?? 'preview'
+    let columnOverride: import('@/inventory/import/ImportTypes').ColumnOverride | null = null
+    const overrideRaw = formData.get('columnOverride')
+
+    if (overrideRaw && overrideRaw !== 'null' && overrideRaw !== '') {
+      try {
+        columnOverride = JSON.parse(overrideRaw as string)
+      } catch {
+        // Invalid override JSON — ignore and fall back to auto-detect
+      }
+    }
 
     if (!file) {
       return NextResponse.json(
@@ -57,7 +68,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const buffer = await file.arrayBuffer()
-    const preview = await importService.preview(buffer, file.name, importType as ImportType, supplierId, importMode as ImportMode)
+
+    // "detect" mode: only parse the headers so the wizard can build the
+    // column-mapping step before a full (DB-writing) preview.
+    if (action === 'detect') {
+      const headers = importService.detectColumns(buffer, columnOverride)
+      return NextResponse.json({ data: headers }, { status: 200 })
+    }
+
+    const preview = await importService.preview(buffer, file.name, importType as ImportType, supplierId, importMode as ImportMode, columnOverride)
 
     return NextResponse.json({ data: preview }, { status: 200 })
   } catch (error) {

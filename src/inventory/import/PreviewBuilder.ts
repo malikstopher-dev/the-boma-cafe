@@ -1,4 +1,4 @@
-import type { ParsedRow, ProductMatch, PreviewRow, ImportPreview, ImportType } from './ImportTypes'
+import type { ParsedRow, ProductMatch, PreviewRow, ImportPreview, ImportType, DetectedHeader } from './ImportTypes'
 import { createId } from '../lib/id'
 
 export class PreviewBuilder {
@@ -7,6 +7,7 @@ export class PreviewBuilder {
     matches: ProductMatch[],
     importType: ImportType,
     filename: string,
+    headers?: DetectedHeader[],
   ): Promise<ImportPreview> {
     const matchMap = new Map<number, ProductMatch>()
     for (const m of matches) {
@@ -45,6 +46,7 @@ export class PreviewBuilder {
       unknownRows: unknown.length,
       errorRows: errored.length,
       rows: previewRows,
+      headers,
       summary: {
         totalProducts: rows.length,
         matchedProducts: matched.length,

@@ -9,6 +9,8 @@ import type {
   ImportMode,
   ImportHistoryEntry,
   ImportDetail,
+  DetectedHeader,
+  ColumnOverride,
 } from './ImportTypes'
 import { ExcelParser } from './ExcelParser'
 import { ColumnMapper } from './ColumnMapper'
@@ -29,18 +31,27 @@ export class ImportService {
   private executor = new ImportExecutor()
   private rollbackService = new ImportRollbackService()
 
+  /**
+   * Parse ONLY the headers of an upload so the wizard can show + let the user
+   * adjust column mapping before committing to the heavy row parse.
+   */
+  detectColumns(buffer: ArrayBuffer, columnOverride?: ColumnOverride | null): DetectedHeader[] {
+    return this.parser.detectHeaders(buffer, columnOverride)
+  }
+
   async preview(
     buffer: ArrayBuffer,
     filename: string,
     importType: ImportType,
     supplierId?: string | null,
     importMode?: ImportMode,
+    columnOverride?: ColumnOverride | null,
   ): Promise<ImportPreview> {
-    const parseResult = this.parser.parse(buffer, importType)
+    const parseResult = this.parser.parse(buffer, importType, columnOverride)
     const validation = this.validator.validate(parseResult.rows, importType)
 
     const matches = await this.matcher.match(parseResult.rows, supplierId)
-    const preview = await this.previewBuilder.build(parseResult.rows, matches, importType, filename)
+    const preview = await this.previewBuilder.build(parseResult.rows, matches, importType, filename, parseResult.headers)
 
     for (const err of validation.errors) {
       const row = preview.rows.find(r => r.rowIndex === err.rowIndex)
