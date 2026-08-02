@@ -101,7 +101,7 @@ BOOKING_FROM_NAME=The Boma Café
 BOOKING_REPLY_TO=info@stopher-malik.co.za
 
 # Worker identity (used for job locking + scheduler dedup)
-HOSTNAME=boma-worker-oracle
+HOSTNAME=boma-worker
 
 # Optional: tighten logging (production)
 NODE_ENV=production
