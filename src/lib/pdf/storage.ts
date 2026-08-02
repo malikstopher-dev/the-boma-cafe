@@ -49,7 +49,7 @@ export async function uploadPdf(
     const bucket = await getBucket()
     const { error } = await bucket.upload(fileName, buffer, {
       contentType: 'application/pdf',
-      upsert: false,
+      upsert: true,
     })
     if (error) {
       console.error('Failed to upload PDF:', error)
