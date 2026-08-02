@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import DataTable from '@/components/admin/design-system/DataTable'
 import type { Column } from '@/components/admin/design-system/DataTable'
 import Button from '@/components/admin/design-system/Button'
+import ReasonDialog from '@/components/admin/design-system/ReasonDialog'
 
 type Uom = {
   id: string
@@ -118,6 +119,7 @@ export function CostCentresView() {
   const [newName, setNewName] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [busy, setBusy] = useState(false)
+  const [archiveTarget, setArchiveTarget] = useState<CostCentre | null>(null)
 
   useEffect(() => {
     fetch('/api/inventory/cost-centres?show_archived=true')
@@ -146,11 +148,16 @@ export function CostCentresView() {
     }
   }
 
-  async function toggle(cc: CostCentre) {
+  async function toggle(cc: CostCentre, reason?: string) {
+    if (cc.is_active && !reason) {
+      setArchiveTarget(cc)
+      return
+    }
+    setArchiveTarget(null)
     const res = await fetch(`/api/inventory/cost-centres/${cc.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_active: !cc.is_active }),
+      body: JSON.stringify({ is_active: !cc.is_active, reason: reason ?? null }),
     })
     const json = await res.json()
     if (res.ok && json.data) {
@@ -211,6 +218,15 @@ export function CostCentresView() {
         keyField="id"
         isLoading={isLoading}
         emptyState={<div className="p-6 text-center text-gray-400">No cost centres defined yet</div>}
+      />
+      <ReasonDialog
+        open={archiveTarget !== null}
+        title={archiveTarget ? `Archive "${archiveTarget.name}"?` : ''}
+        message="The cost centre will be hidden from movement dropdowns. Historical transactions keep it."
+        confirmLabel="Archive"
+        confirmVariant="danger"
+        onConfirm={reason => archiveTarget && toggle(archiveTarget, reason)}
+        onCancel={() => setArchiveTarget(null)}
       />
     </div>
   )

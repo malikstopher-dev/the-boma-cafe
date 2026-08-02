@@ -33,6 +33,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
   const [showArchived, setShowArchived] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'out' | 'low'>('all')
   const [form, setForm] = useState({
     name: '',
     sku: '',
@@ -145,7 +146,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
         if (product.reorder_threshold && product.current_balance !== null && product.current_balance !== undefined && product.current_balance <= product.reorder_threshold) {
           return <Badge variant="warning">Low</Badge>
         }
-        return <Badge variant="success">Active</Badge>
+        return <Badge variant="success">In Stock</Badge>
       },
     },
   ]
@@ -153,6 +154,27 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
   const titleLabel = forcedType
     ? `${forcedType.charAt(0) + forcedType.slice(1).toLowerCase()} Products`
     : 'Products'
+
+  const active = products.filter(p => p.is_active)
+  const outOfStock = active.filter(p => p.current_balance !== null && p.current_balance !== undefined && p.current_balance <= 0)
+  const lowStock = active.filter(p =>
+    p.current_balance !== null && p.current_balance !== undefined &&
+    p.current_balance > 0 &&
+    p.reorder_threshold !== null && p.reorder_threshold !== undefined &&
+    p.current_balance <= p.reorder_threshold,
+  )
+  const belowParCount = outOfStock.length + lowStock.length
+
+  const visibleProducts = statusFilter === 'out'
+    ? active.filter(p => p.current_balance !== null && p.current_balance !== undefined && p.current_balance <= 0)
+    : statusFilter === 'low'
+      ? active.filter(p => {
+          if (p.current_balance === null || p.current_balance === undefined) return false
+          if (p.current_balance <= 0) return false
+          if (p.reorder_threshold === null || p.reorder_threshold === undefined) return false
+          return p.current_balance <= p.reorder_threshold
+        })
+      : products
 
   const descLabel = forcedType
     ? `${forcedType.charAt(0) + forcedType.slice(1).toLowerCase()} products only — see all in Products`
@@ -228,9 +250,45 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
         </div>
       )}
 
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setStatusFilter('all')}
+          style={{
+            padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+            background: statusFilter === 'all' ? '#3A3428' : '#1E1A14', color: statusFilter === 'all' ? '#F0EBE3' : '#A09888',
+            border: '1px solid #3A3428', display: 'flex', alignItems: 'center', gap: 8,
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4CAF50' }} />
+          All ({active.length})
+        </button>
+        <button
+          onClick={() => setStatusFilter('low')}
+          style={{
+            padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+            background: statusFilter === 'low' ? '#3A3428' : '#1E1A14', color: statusFilter === 'low' ? '#F0EBE3' : '#A09888',
+            border: '1px solid #3A3428', display: 'flex', alignItems: 'center', gap: 8,
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F5C444' }} />
+          Below Par — {belowParCount} need ordering
+        </button>
+        <button
+          onClick={() => setStatusFilter('out')}
+          style={{
+            padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+            background: statusFilter === 'out' ? '#2A1515' : '#1E1A14', color: statusFilter === 'out' ? '#E85454' : '#A09888',
+            border: '1px solid #3A3428', display: 'flex', alignItems: 'center', gap: 8,
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#E85454' }} />
+          Out of Stock — {outOfStock.length}
+        </button>
+      </div>
+
       <DataTable<Product>
         columns={columns}
-        data={products}
+        data={visibleProducts}
         keyField="id"
         onRowClick={product => router.push(`/admin/operations/products/${product.id}`)}
         isLoading={isLoading}

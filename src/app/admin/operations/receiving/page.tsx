@@ -17,7 +17,12 @@ type PurchaseOrderRow = {
   inventory_purchase_order_items?: { count: number }[]
 }
 
-const AWAITING_STATUSES = ['ordered', 'partial']
+type PoItem = {
+  id: string
+  product_id: string
+  quantity_ordered: number
+  quantity_received: number | null
+}
 
 const statusBadge: Record<string, { variant: 'warning' | 'info' | 'success' | 'danger'; label: string }> = {
   draft: { variant: 'info', label: 'Draft' },
@@ -31,6 +36,7 @@ const statusBadge: Record<string, { variant: 'warning' | 'info' | 'success' | 'd
 export default function ReceivingPage() {
   const [pos, setPos] = useState<PurchaseOrderRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [receiveBusyId, setReceiveBusyId] = useState<string | null>(null)
 
   const fetchPending = useCallback(async () => {
     setIsLoading(true)
@@ -54,10 +60,59 @@ export default function ReceivingPage() {
 
   useEffect(() => { fetchPending() }, [fetchPending])
 
+  async function receiveFullPo(po: PurchaseOrderRow) {
+    setReceiveBusyId(po.id)
+    try {
+      const detailRes = await fetch(`/api/inventory/purchase-orders/${po.id}`)
+      const detailJson = await detailRes.json()
+      if (!detailJson.data) {
+        alert(detailJson.error?.message || 'Failed to load PO items')
+        return
+      }
+
+      const items: PoItem[] = detailJson.data.inventory_purchase_order_items || []
+      const outstanding = items
+        .map(item => ({
+          po_item_id: item.id,
+          product_id: item.product_id,
+          quantity_received: Number(item.quantity_ordered) - Number(item.quantity_received ?? 0),
+        }))
+        .filter(i => i.quantity_received > 0)
+
+      if (outstanding.length === 0) {
+        alert('Nothing outstanding to receive on this PO')
+        return
+      }
+
+      const confirmMessage =
+        `Receive the full outstanding quantity of PO ${po.id.slice(0, 8)}?\n\n` +
+        outstanding.map(i => `• ${i.quantity_received} unit(s)`).join('\n') +
+        '\n\nStock will be added to the ledger immediately.'
+
+      if (!window.confirm(confirmMessage)) return
+
+      const res = await fetch(`/api/inventory/purchase-orders/${po.id}/receive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: outstanding, invoice_number: null }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        alert(json.error?.message || 'Receive failed')
+        return
+      }
+      await fetchPending()
+    } catch {
+      alert('Failed to receive PO')
+    } finally {
+      setReceiveBusyId(null)
+    }
+  }
+
   return (
     <AdminPage
       title="Goods Receiving"
-      description="Deliveries waiting to be received against purchase orders"
+      description="Deliveries when to be received against purchase orders"
       actions={
         <Button onClick={fetchPending} variant="secondary" size="sm">Refresh</Button>
       }
@@ -96,7 +151,14 @@ export default function ReceivingPage() {
                   </p>
                 </div>
                 <Badge variant={badge.variant}>{badge.label}</Badge>
-                <span style={{color:'#A09888',fontSize:14}}>Receive →</span>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); receiveFullPo(po) }}
+                  disabled={receiveBusyId !== null}
+                >
+                  {receiveBusyId === po.id ? 'Receiving…' : 'Receive Full PO'}
+                </Button>
               </Link>
             )
           })}

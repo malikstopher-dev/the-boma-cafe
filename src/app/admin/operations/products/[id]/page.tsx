@@ -8,6 +8,7 @@ import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import ReasonDialog from '@/components/admin/design-system/ReasonDialog'
 import MovementTimeline from '@/inventory/components/movement-timeline'
 
 interface ProductDetail {
@@ -43,6 +44,7 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
 
   function load() {
     const id = params?.id as string
@@ -60,10 +62,10 @@ export default function ProductDetailPage() {
 
   useEffect(load, [params?.id])
 
-  async function handleArchive() {
+  async function handleArchive(reason: string) {
     const id = params?.id as string
-    if (!confirm('Archive this product? It will no longer appear in active lists.')) return
     setBusy(true)
+    setShowArchiveConfirm(false)
     try {
       const res = await fetch(`/api/inventory/products/${id}`, { method: 'DELETE' })
       if (res.ok || res.status === 409) {
@@ -167,7 +169,7 @@ export default function ProductDetailPage() {
             <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Actions</h3>
             <div className="space-y-2">
               {product.is_active ? (
-                <Button className="w-full" variant="danger" size="sm" onClick={handleArchive} disabled={busy}>
+                <Button className="w-full" variant="danger" size="sm" onClick={() => setShowArchiveConfirm(true)} disabled={busy}>
                   {busy ? 'Working...' : 'Archive'}
                 </Button>
               ) : (
@@ -197,6 +199,14 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+      <ReasonDialog
+        open={showArchiveConfirm}
+        title={`Archive "${product.name}"?`}
+        message="The product will no longer appear in active lists. Historical transactions are kept."
+        confirmLabel="Archive"
+        onConfirm={handleArchive}
+        onCancel={() => setShowArchiveConfirm(false)}
+      />
     </AdminPage>
   )
 }
