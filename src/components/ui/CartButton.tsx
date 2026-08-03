@@ -420,67 +420,69 @@ export default function CartButton() {
                 <p className={styles.emptySub}>Add items from our menu to get started!</p>
               </div>
             ) : (
-              <>
-                {/* Cart Items */}
-                <div className={styles.itemsList}>
-                  {items.map((item: any, idx: number) => {
-                    const qty = item?.quantity ?? 1
-                    const price = item?.price ?? 0
-                    const itemTotal = price * qty
-                    const itemName = item?.name ?? ''
-                    const itemId = item?.id ?? `item-${idx}`
-                    const extras: string[] = []
-                    if (item?.selectedSize) extras.push(`Size: ${item.selectedSize}`)
-                    if (item?.selectedAddOns && item.selectedAddOns.length > 0) extras.push(`+${item.selectedAddOns.join(', +')}`)
+              <div className={styles.columns}>
+                {/* Column 1: Order Items */}
+                <div className={`${styles.col} ${styles.colLeft}`}>
+                  <div className={styles.colTitle}>🛒 Your Order</div>
+                  <div className={styles.itemsList}>
+                    {items.map((item: any, idx: number) => {
+                      const qty = item?.quantity ?? 1
+                      const price = item?.price ?? 0
+                      const itemTotal = price * qty
+                      const itemName = item?.name ?? ''
+                      const itemId = item?.id ?? `item-${idx}`
+                      const extras: string[] = []
+                      if (item?.selectedSize) extras.push(`Size: ${item.selectedSize}`)
+                      if (item?.selectedAddOns && item.selectedAddOns.length > 0) extras.push(`+${item.selectedAddOns.join(', +')}`)
 
-                    return (
-                      <div key={itemId} className={styles.itemRow}>
-                        <div className={styles.qtyControls}>
+                      return (
+                        <div key={itemId} className={styles.itemRow}>
+                          <div className={styles.qtyControls}>
+                            <button
+                              className={styles.qtyBtn}
+                              onClick={() => handleDecrease(item)}
+                              aria-label="Decrease quantity"
+                            >
+                              −
+                            </button>
+                            <span className={styles.qtyValue}>{qty}</span>
+                            <button
+                              className={styles.qtyBtn}
+                              onClick={() => handleIncrease(item)}
+                              aria-label="Increase quantity"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <div className={styles.itemName}>
+                            {itemName}
+                            {extras.length > 0 && (
+                              <span className={styles.itemNameSub}>{extras.join(' | ')}</span>
+                            )}
+                          </div>
+                          <span className={styles.itemPrice}>R{itemTotal}</span>
                           <button
-                            className={styles.qtyBtn}
-                            onClick={() => handleDecrease(item)}
-                            aria-label="Decrease quantity"
+                            className={styles.deleteBtn}
+                            onClick={() => handleRemove(itemId)}
+                            aria-label="Remove item"
                           >
-                            −
-                          </button>
-                          <span className={styles.qtyValue}>{qty}</span>
-                          <button
-                            className={styles.qtyBtn}
-                            onClick={() => handleIncrease(item)}
-                            aria-label="Increase quantity"
-                          >
-                            +
+                            <i className="fas fa-trash-alt" />
                           </button>
                         </div>
-                        <div className={styles.itemName}>
-                          {itemName}
-                          {extras.length > 0 && (
-                            <span className={styles.itemNameSub}>{extras.join(' | ')}</span>
-                          )}
-                        </div>
-                        <span className={styles.itemPrice}>R{itemTotal}</span>
-                        <button
-                          className={styles.deleteBtn}
-                          onClick={() => handleRemove(itemId)}
-                          aria-label="Remove item"
-                        >
-                          <i className="fas fa-trash-alt" />
-                        </button>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+
+                  {fieldErrors.items && (
+                    <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(239,68,68,0.08)', borderRadius: '8px' }}>
+                      {fieldErrors.items}
+                    </p>
+                  )}
                 </div>
 
-                {/* Validation error banner */}
-                {fieldErrors.items && (
-                  <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(239,68,68,0.08)', borderRadius: '8px' }}>
-                    {fieldErrors.items}
-                  </p>
-                )}
-
-                {/* Customer Details */}
-                <div className={styles.detailsSection}>
-                  <h3>📝 Your Details</h3>
+                {/* Column 2: Customer Details */}
+                <div className={`${styles.col} ${styles.colMid}`}>
+                  <div className={styles.colTitle}>📝 Your Details</div>
 
                   <div className={styles.formGrid}>
                     <div>
@@ -511,6 +513,7 @@ export default function CartButton() {
                       />
                       {fieldErrors.phone && <span className={styles.fieldError}>{fieldErrors.phone}</span>}
                     </div>
+                    <div className={styles.fieldLabel}>How would you like to receive it?</div>
                     <div className={styles.toggleRow}>
                       <button
                         type="button"
@@ -551,22 +554,20 @@ export default function CartButton() {
                       </div>
                     )}
                     {orderType === 'dine-in' && (
-                      <>
-                        <div>
-                          <input
-                            ref={tableRef}
-                            type="text"
-                            placeholder="Table number *"
-                            value={customerInfo?.tableNumber ?? ''}
-                            onChange={e => {
-                              setCustomerInfo(prev => ({ ...prev, tableNumber: e.target.value }))
-                              if (fieldErrors.tableNumber) setFieldErrors(prev => ({ ...prev, tableNumber: undefined }))
-                            }}
-                            className={`${styles.input} ${fieldErrors.tableNumber ? styles.inputError : ''}`}
-                          />
-                          {fieldErrors.tableNumber && <span className={styles.fieldError}>{fieldErrors.tableNumber}</span>}
-                        </div>
-                      </>
+                      <div>
+                        <input
+                          ref={tableRef}
+                          type="text"
+                          placeholder="Table number *"
+                          value={customerInfo?.tableNumber ?? ''}
+                          onChange={e => {
+                            setCustomerInfo(prev => ({ ...prev, tableNumber: e.target.value }))
+                            if (fieldErrors.tableNumber) setFieldErrors(prev => ({ ...prev, tableNumber: undefined }))
+                          }}
+                          className={`${styles.input} ${fieldErrors.tableNumber ? styles.inputError : ''}`}
+                        />
+                        {fieldErrors.tableNumber && <span className={styles.fieldError}>{fieldErrors.tableNumber}</span>}
+                      </div>
                     )}
                     <input
                       type="text"
@@ -585,49 +586,38 @@ export default function CartButton() {
                   </div>
                 </div>
 
-                {/* Total & Order */}
-                <div className={styles.totalSection}>
-                  <div className={styles.totalRow}>
-                    <span className={styles.totalLabel}>Total:</span>
-                    <span className={styles.totalValue}>R{total}</span>
+                {/* Column 3: Total & Actions */}
+                <div className={`${styles.col} ${styles.colRight}`}>
+                  <div className={styles.totalDisplay}>
+                    <span className={styles.totalDisplayLabel}>Total</span>
+                    <span className={styles.totalDisplayAmount}>R{total}</span>
                   </div>
-                </div>
-
-                {/* Order method selection */}
-                <div style={{ marginTop: '1rem' }}>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.75rem', fontWeight: 600, textAlign: 'center' }}>
-                    Order Method
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <button
-                      onClick={handleWhatsAppOrder}
-                      disabled={isOrderSubmitting}
-                      className={styles.orderBtn}
-                      style={{ opacity: isOrderSubmitting ? 0.7 : 1, cursor: isOrderSubmitting ? 'not-allowed' : 'pointer' }}
-                    >
-                      {isOrderSubmitting ? 'Submitting...' : <><i className="fab fa-whatsapp" /> Order via WhatsApp</>}
-                    </button>
-                    <button
-                      onClick={handleOnlineOrder}
-                      disabled={isOrderSubmitting}
-                      style={{
-                        width: '100%', minHeight: '48px',
-                        padding: '0.85rem', borderRadius: '14px',
-                        border: '2px solid var(--beige-dark)', background: 'var(--white)',
-                        color: 'var(--dark-brown)', fontSize: '0.95rem', fontWeight: 600, cursor: isOrderSubmitting ? 'not-allowed' : 'pointer',
-                        opacity: isOrderSubmitting ? 0.7 : 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                      }}
-                    >
-                      <span>🌐</span> Place Online Order
-                    </button>
+                  <div style={{ width: '100%' }}>
+                    <p className={styles.orderMethodLabel}>Order Method</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <button
+                        onClick={handleWhatsAppOrder}
+                        disabled={isOrderSubmitting}
+                        className={styles.orderBtn}
+                        style={{ opacity: isOrderSubmitting ? 0.7 : 1, cursor: isOrderSubmitting ? 'not-allowed' : 'pointer' }}
+                      >
+                        {isOrderSubmitting ? 'Submitting...' : <><i className="fab fa-whatsapp" /> Order via WhatsApp</>}
+                      </button>
+                      <button
+                        onClick={handleOnlineOrder}
+                        disabled={isOrderSubmitting}
+                        className={styles.btnOnline}
+                        style={{ opacity: isOrderSubmitting ? 0.7 : 1, cursor: isOrderSubmitting ? 'not-allowed' : 'pointer' }}
+                      >
+                        <span>🌐</span> Place Online Order
+                      </button>
+                    </div>
                   </div>
+                  {orderError && (
+                    <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', margin: '0.75rem 0 0' }}>{orderError}</p>
+                  )}
                 </div>
-
-                {orderError && (
-                  <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', margin: '0.75rem 0 0' }}>{orderError}</p>
-                )}
-              </>
+              </div>
             )}
           </div>
         </div>

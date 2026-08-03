@@ -242,7 +242,7 @@ function OrderCard({
             ✅ Approve
           </button>
         )}
-        {order.order_type === 'dine-in' && !['completed', 'cancelled'].includes(order.status) && (
+        {!['completed', 'cancelled'].includes(order.status) && (
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <button
               onClick={(e) => { e.stopPropagation(); setShowWaiterDropdown(!showWaiterDropdown) }}
@@ -340,7 +340,7 @@ function OrderCard({
             Cancel
           </button>
         )}
-        {!tn && order.status === 'pending' && availableTables.length > 0 && (
+        {order.order_type === 'dine-in' && !tn && order.status === 'pending' && availableTables.length > 0 && (
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <button
               onClick={(e) => { e.stopPropagation(); setShowTableDropdown(!showTableDropdown) }}
@@ -512,7 +512,7 @@ function CheckoutPanel({
         {order.waiter_name && <span style={{ color: '#E85454', fontWeight: 600 }}>🍽️ {order.waiter_name}</span>}
         </div>
 
-        {!tn && (
+        {order.order_type === 'dine-in' && !tn && (
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '0.3rem' }}>Assign to table</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
