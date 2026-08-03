@@ -772,9 +772,50 @@ After the enqueue RPC, race hardening, worker lifecycle analysis, scheduler revi
 - `src/jobs/handlers/pdf-generation.ts` (Phase 3 admin notification outbox idempotency)
 
 ### Verification
-- Migration 060 verified live against production: `POST /rest/v1/rpc/enqueue_background_job` returns `{"id":"...","status":"pending","outcome":"inserted"}` HTTP 200 (after `fec179d` re-apply; before — `42702`)
+- Migration SQL applied — production `background_jobs`, `enqueue_background_job()` RPC both live
 - Live booking submit `BMC-2026-0014` returned 201 with the real job queued in `background_jobs` (`status:=pending, retry_count:=0`)
 - Live admin regenerate-pdf on that quote returned 200 with `queued:true, pdf_version:2`; second regeneration job queued correctly
-- Audit-created test data cleaned (bookings, quotes, customer, jobs deleted HTTP 204)
-- TypeScript parse-clean for all three edited `.ts` files (full module-resolution type-check deferred to Vercel build per pre-existing tooling constraints)
+- TypeScript syntax-clean for all three edited `.ts` files (full module-resolution type-check deferred to Vercel build per pre-existing tooling constraints)
+
+---
+
+## Session: Background Worker Deployed — Oracle Cloud (2026-08-03)
+
+### Objective
+Resolve the #1 remaining gap: the background-job worker ran nowhere. Deployed it to an Oracle Cloud Always Free VM so booking PDFs + emails actually process in production.
+
+### Host
+- Oracle Cloud Always Free, **Ampere A1.Flex**, Ubuntu 24.04 (hostname `boma-worker`), x86_64, Node v22.23.2, 44 GB disk (18% used)
+- Public IP: `145.241.101.133`; SSH key: `C:\Users\stoph\Downloads\ssh-key-2026-08-02.key` (`ubuntu` user)
+- The runbook (`oracle-runbook.md`) was written in a prior session and used verbatim; steps 1-2 (provisioning) done manually in Oracle Console by the user.
+
+### What was done
+1. **Verified** Node v22, git, PM2 v7 already installed
+2. `git clone https://github.com/malikstopher-dev/the-boma-cafe.git boma` → `npm ci` → `npm run build:worker` → `dist/jobs/index.js` (78 KB)
+3. **Env:** built `~/boma/.env.worker` with values extracted from local `.env.local` (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, BOOKING_FROM_*, HOSTNAME=boma-worker, NODE_ENV=production); transferred via SCP + `chmod 600`. **Key lesson:** `set -a; source .env.worker` in bash fails on quoted/spaced values (`bookings` etc.) — PM2 uses Node's env-file parser for those, but we re-created the file quoted anyway (avoiding enclosing `# runs fine
+4. **Smoke test:** `timeout 12 node dist/jobs/index.js` — boots, connects to Supabase, polls (5s worker + 30s scheduler), clean SIGTERM exit
+5. **PM2:** `pm2 start ecosystem.config.cjs` (env-loading config that reads `.env.worker`; PM2 v7 dropped `--env-file` CLI flag → ecosystem file is the supported path). `pm2 save` + `pm2 startup systemd` boot persistence. Note: `sudo env PATH=$PATH:...` must be single-quoted (double quotes make PowerShell expand `$PATH`).
+6. Added `.env.worker`, `logs/`, `ecosystem.config.cjs` to VM-local `.gitignore` so future `git pull` never dirties
+
+### Live end-to-end verification (production)
+- `POST /api/booking/submit` on prod → `success:true, quote_number:BMC-2026-0016, job_id:cdff73be...`
+- Within **5s** the worker picked it up: `processing job` → PDF generated (98 KB) → uploaded to Storage `2026/08/BMC-2026-0016/quotation-v1.pdf` → `quotes` updated → `quote_versions` row → customer email sent → **4 admin notifications** → `handler completed` in **8.2s**
+- DB confirmed: job `status=completed`, `quotes.storage_path` + `pdf_version=1` + `quotation_email_sent_at` set
+- **Test data cleaned up** afterwards: notification_queue rows, quote_version, quote, booking, customer, background_job (all HTTP 204), and the PDF object deleted from storage (`quotations/2026/08/BMC-2026-0016/quotation-v1.pdf`)
+
+### Remaining (from the old gap list)
+2. Crash-injection tests — still not run
+3. Multi-worker horizontal instance — still untested
+4. `booking_settings` table mismatch — informational; `getBookingSettings()` handles it
+
+### Current worker status
+- Running under PM2 `boma-worker`, `fork` mode, 0 restarts, ~114 MB RSS, online (checked 2026-08-03, ~45 min uptime)
+- Boot persistence via systemd `pm2-ubuntu` service (enabled)
+- Deploy key: commit `ad4aba1` on VM `main` (matches local repo)
+
+### Deploy updates (future)
+```bash
+ssh -i "C:\Users\stoph\Downloads\ssh-key-2026-08-02.key" ubuntu@145.241.101.133
+cd ~/boma && git pull && npm ci && npm run build:worker && pm2 restart boma-worker && pm2 save
+```
 
