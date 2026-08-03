@@ -1,9 +1,21 @@
 # THE BOMA CAFE — SYSTEM AUDIT & OPERATOR MANUAL
 
-**Date:** 15 June 2026
-**Platform:** Next.js 14.2.3 (App Router) + Supabase (PostgreSQL) + Vercel
+**Date:** 3 August 2026 (originally 15 June 2026; refreshed)
+**Platform:** Next.js 14.2.3 (App Router) + Supabase (PostgreSQL) + Resend + Vercel
 **Repository:** github.com/malikstopher-dev/the-boma-cafe
-**Latest Commit:** 730c0d8 — Zero-trust: waiter middleware, x-user-scope, requireWaiter()
+**Latest Commit:** `179f0d4` — menu-items refactor (centered modal, auto-link, batch-link)
+
+> **What has changed since the original June 2026 audit:**
+> - Full inventory / operations platform built (M1–M5, migrations 039–061): transaction-ledger engine, UOMs, locations, suppliers, purchase orders, stock counts, recipes, production runs, waste, order-items, forecasting, analytics, notifications, container tracking, reorder, price history, checklist, reconciliation.
+> - Admin routes restructured `/admin/inventory/*` → `/admin/operations/*` (manager-first; opening checklist is the landing page).
+> - Background job queue (migrations 038 + 060): booking PDFs + emails handled by a standalone worker; `enqueue_background_job()` RPC is race-safe and idempotent.
+> - Bar menu `is_alcohol` flag (migration 061): alcoholic items blocked for pickup/delivery; waiter field removed for public dine-in.
+> - POS/KDS UX refactor (commit `17fc5db`): 24h auto-archive, fixed-urgency timers, empty-column collapse, color-coded table grid, single-row order cards.
+> - Admin UX pass (commit `550f812`): sidebar section headers + gold rail, menu edit scroll-to-top, imports sticky bottom bar + sticky thead, chat dark theme + truncation.
+> - Menu integration (commit `179f0d4`): centered overflow-safe modal, category accordions, auto-link (fuzzy name match), batch-link by category, pour-size inheritance from `bar_product_config`.
+> - Tests: 61 passing across 6 files. Inventory engine strict-typed. TypeScript clean. `npm run build` succeeds (~2.6 min).
+>
+> The original audit findings below are retained as a historical baseline. Several have since been fixed; see the "Status" column and the update notes inline.
 
 ---
 
