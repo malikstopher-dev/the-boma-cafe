@@ -19,6 +19,7 @@ interface BarItem {
   shot?: number;
   price?: string;
   availableForPickup?: boolean;
+  isAlcohol?: boolean;
 }
 
 interface BarCategory {
@@ -123,6 +124,11 @@ const MenuItem = memo(function MenuItem({ item, categoryName, onSelect }: { item
             </>
           )}
         </div>
+        {item.isAlcohol && (
+          <span className={styles.dineInNotice} title="Alcoholic beverages are available for dine-in orders only">
+            🍽️ Available for dine-in only
+          </span>
+        )}
       </div>
     </motion.div>
   );
@@ -231,6 +237,11 @@ function ItemModal({ item, categoryName, onClose, onAddToCart }: { item: BarItem
         )}
         <div className={styles.modalContent}>
           <h3 className={styles.modalName}>{item.name}</h3>
+          {item.isAlcohol && (
+            <span className={styles.dineInNotice} title="Alcoholic beverages are available for dine-in orders only">
+              🍽️ Available for dine-in only
+            </span>
+          )}
 
           {/* Size selector */}
           {hasSizes && (
@@ -326,6 +337,7 @@ export default function BarMenuClient() {
             shot: item.shotPrice || undefined,
             price: item.price || undefined,
             availableForPickup: item.availableForPickup !== false,
+            isAlcohol: item.isAlcohol === true,
           });
         }
         const cats: BarCategory[] = data.categories.map((c: any) => ({
@@ -412,6 +424,7 @@ export default function BarMenuClient() {
         selectedSize: size,
         station: 'bar',
         availableForPickup: item.availableForPickup !== false,
+        isAlcohol: item.isAlcohol === true,
       } as any)
     }
     openCart()

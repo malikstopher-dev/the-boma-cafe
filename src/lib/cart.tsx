@@ -19,6 +19,8 @@ interface CartItem {
   dietaryFlags?: string[];
   notes?: string;
   station?: 'kitchen' | 'bar';
+  availableForPickup?: boolean;
+  isAlcohol?: boolean;
 }
 
 interface CartContextType {

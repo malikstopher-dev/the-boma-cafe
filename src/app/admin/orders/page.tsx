@@ -12,27 +12,25 @@ const FALLBACK_POLL_INTERVAL = 30000
 const TOTAL_TABLES = 20
 
 const TABLE_PALETTE = {
-  available: { border: 'rgba(74,222,128,0.4)', bg: 'rgba(34,197,94,0.08)', dot: '#4ADE80' },
-  progress:  { border: 'rgba(245,158,11,0.45)', bg: 'rgba(245,158,11,0.10)', dot: '#F59E0B' },
-  ready:     { border: 'rgba(56,189,248,0.5)', bg: 'rgba(56,189,248,0.10)', dot: '#38BDF8' },
-  billing:   { border: 'rgba(239,68,68,0.5)', bg: 'rgba(239,68,68,0.12)', dot: '#EF4444' },
+  available:  { border: 'rgba(74,222,128,0.4)',   bg: 'rgba(34,197,94,0.08)',   dot: '#4ADE80' },
+  occupied:   { border: 'rgba(244,63,94,0.5)',    bg: 'rgba(244,63,94,0.12)',   dot: '#F43F5E' },
+  billPending:{ border: 'rgba(245,158,11,0.5)',   bg: 'rgba(245,158,11,0.12)',  dot: '#F59E0B' },
 } as const
 
 type TableTone = keyof typeof TABLE_PALETTE
 
 const TABLE_LEGEND: { tone: TableTone; label: string }[] = [
   { tone: 'available', label: 'Available' },
-  { tone: 'progress', label: 'Food in prep' },
-  { tone: 'ready', label: 'Ready to serve' },
-  { tone: 'billing', label: 'Bill / payment' },
+  { tone: 'occupied', label: 'Occupied' },
+  { tone: 'billPending', label: 'Bill pending' },
 ]
 
 function getTableTone(order?: { status?: string; payment_status?: string }): TableTone {
   if (!order) return 'available'
   const s = order.status
-  if (['pending', 'confirmed', 'preparing', 'packing'].includes(s ?? '')) return 'progress'
-  if (s === 'ready') return 'ready'
-  return 'billing'
+  // Guest is ready to be served / has been served but hasn't settled the bill yet
+  if (['ready', 'served'].includes(s ?? '') && order.payment_status !== 'paid') return 'billPending'
+  return 'occupied'
 }
 
 function formatTime(iso: string) {
@@ -134,8 +132,11 @@ function OrderCard({
   onConfirmPayment,
   onAcceptNoPayment,
   onConfirmWaiterOrder,
+  onApproveDineIn,
+  onAssignWaiter,
   onCancel,
   tables,
+  waiters,
 }: {
   order: SupabaseOrder
   selected: boolean
@@ -144,10 +145,14 @@ function OrderCard({
   onConfirmPayment: (orderId: string) => void
   onAcceptNoPayment: (orderId: string) => void
   onConfirmWaiterOrder: (orderId: string) => void
+  onApproveDineIn?: (orderId: string) => void
+  onAssignWaiter?: (orderId: string, waiterName: string) => void
   onCancel?: (orderId: string) => void
   tables: TableInfo[]
+  waiters: { id: string; name: string; active: boolean }[]
 }) {
   const [showTableDropdown, setShowTableDropdown] = useState(false)
+  const [showWaiterDropdown, setShowWaiterDropdown] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const items = parseOrderItems(order.items_json)
   const status = order.status as any
@@ -223,6 +228,81 @@ function OrderCard({
           >
             ✅ Confirm
           </button>
+        )}
+        {order.source !== 'waiter' && order.order_type === 'dine-in' && order.status === 'pending' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onApproveDineIn?.(order.id) }}
+            style={{
+              padding: '0.25rem 0.55rem', borderRadius: '8px', border: 'none',
+              background: '#4ADE80', color: '#000', fontSize: '0.7rem', fontWeight: 700,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+            title="Approve dine-in order (no payment required — paid at table). Then assign a waiter on duty."
+          >
+            ✅ Approve
+          </button>
+        )}
+        {order.order_type === 'dine-in' && !['completed', 'cancelled'].includes(order.status) && (
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowWaiterDropdown(!showWaiterDropdown) }}
+              style={{
+                padding: '0.25rem 0.55rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
+                background: order.waiter_name ? 'rgba(232,84,84,0.15)' : 'rgba(255,255,255,0.08)',
+                color: order.waiter_name ? '#F87171' : 'rgba(255,255,255,0.6)',
+                fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              {order.waiter_name ? `🍽️ ${order.waiter_name}` : '+ Assign Waiter'}
+            </button>
+            {showWaiterDropdown && (
+              <div style={{
+                position: 'absolute', bottom: '100%', right: 0, zIndex: 100,
+                background: '#2A261E', borderRadius: '10px', padding: '0.25rem',
+                border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                minWidth: '160px', marginBottom: '4px',
+              }}>
+                <div style={{ padding: '0.4rem 0.75rem 0.2rem', fontSize: '0.6rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Waiters on duty
+                </div>
+                {waiters.filter(w => w.active).map((w) => (
+                  <button
+                    key={w.id}
+                    onClick={(e) => { e.stopPropagation(); onAssignWaiter?.(order.id, w.name); setShowWaiterDropdown(false) }}
+                    style={{
+                      display: 'block', width: '100%', padding: '0.4rem 0.75rem', border: 'none',
+                      background: order.waiter_name === w.name ? 'rgba(232,84,84,0.2)' : 'transparent',
+                      color: '#fff', fontSize: '0.8rem', fontWeight: 500,
+                      cursor: 'pointer', borderRadius: '6px', textAlign: 'left',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = order.waiter_name === w.name ? 'rgba(232,84,84,0.2)' : 'transparent'}
+                  >
+                    👤 {w.name}
+                  </button>
+                ))}
+                {waiters.filter(w => w.active).length === 0 && (
+                  <div style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)' }}>
+                    No waiters on duty
+                  </div>
+                )}
+                {order.waiter_name && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAssignWaiter?.(order.id, ''); setShowWaiterDropdown(false) }}
+                    style={{
+                      display: 'block', width: '100%', padding: '0.4rem 0.75rem', border: 'none',
+                      background: 'transparent', color: '#E85454', fontSize: '0.75rem', fontWeight: 600,
+                      cursor: 'pointer', borderRadius: '6px', textAlign: 'left',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    ✕ Unassign
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         )}
         {requiresPaymentConfirmation(order.order_type) && order.payment_status === 'pending' && (
           <>
@@ -547,6 +627,14 @@ export default function OrdersPOS() {
   const [cancelling, setCancelling] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [todayOnly, setTodayOnly] = useState(false)
+  const [waiters, setWaiters] = useState<{ id: string; name: string; active: boolean }[]>([])
+
+  useEffect(() => {
+    fetch('/api/waiters')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setWaiters(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
@@ -772,6 +860,46 @@ export default function OrdersPOS() {
     }
   }
 
+  // Approve an online dine-in order (no payment required — paid at table)
+  const handleApproveDineIn = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/supabase/orders?id=${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'confirmed' }),
+      })
+      if (res.ok) {
+        showToast('Dine-in order approved — sent to kitchen/bar', 'success')
+        loadOrders()
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Approve failed', 'error')
+      }
+    } catch (e) {
+      showToast('Failed to approve order', 'error')
+    }
+  }
+
+  // Assign (or unassign) a waiter on duty to a dine-in order
+  const handleAssignWaiter = async (orderId: string, waiterName: string) => {
+    try {
+      const res = await fetch(`/api/supabase/orders?id=${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ waiter_name: waiterName }),
+      })
+      if (res.ok) {
+        showToast(waiterName ? `Assigned ${waiterName}` : 'Waiter unassigned', 'success')
+        loadOrders()
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Assign waiter failed', 'error')
+      }
+    } catch (e) {
+      showToast('Failed to assign waiter', 'error')
+    }
+  }
+
   const handleCancelOrder = async () => {
     if (!cancelOrderId || cancelReason.trim().length < 3) return
     setCancelling(true)
@@ -960,8 +1088,11 @@ export default function OrdersPOS() {
               onConfirmPayment={handleConfirmPayment}
               onAcceptNoPayment={handleAcceptNoPayment}
               onConfirmWaiterOrder={handleConfirmWaiterOrder}
+              onApproveDineIn={handleApproveDineIn}
+              onAssignWaiter={handleAssignWaiter}
               onCancel={(id) => { setCancelOrderId(id); setCancelReason('') }}
               tables={tables}
+              waiters={waiters}
             />
           ))}
         </div>

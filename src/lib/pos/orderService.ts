@@ -15,6 +15,31 @@ interface BarDbItem {
   price: number | null
 }
 
+/**
+ * Returns the names of any alcoholic bar items in the given order items.
+ * Empty array = no alcohol present (order may proceed).
+ * Uses is_alcohol when the column exists; falls back to false if not.
+ */
+export async function getAlcoholItemNames(items: { bar_item_id?: string; menu_item_id?: string; station?: string }[]): Promise<string[]> {
+  const barIds = items
+    .filter(i => i.station === 'bar' || !!i.bar_item_id)
+    .map(i => i.bar_item_id || i.menu_item_id)
+    .filter((v): v is string => !!v)
+  if (barIds.length === 0) return []
+  try {
+    const { data, error } = await getAdminClient()
+      .from('bar_items')
+      .select('id, name, is_alcohol')
+      .in('id', barIds)
+    if (error) return []
+    return (data || [])
+      .filter(r => r.is_alcohol === true)
+      .map(r => r.name)
+  } catch {
+    return []
+  }
+}
+
 async function getBarItemsByIds(ids: string[]): Promise<Map<string, BarDbItem>> {
   const result = new Map<string, BarDbItem>()
   if (ids.length === 0) return result

@@ -7,6 +7,18 @@ import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic'
 
+// Must match migration 061's backfill list — keep in sync
+const ALCOHOL_CATEGORIES = new Set([
+  'signature cocktails', 'classic cocktails', 'cocktails',
+  'whisky', 'whiskey', 'brandy', 'cognac', 'vodka', 'gin', 'rum',
+  'shots', 'shooters', 'tequila', 'roses cordials', 'spirits & liqueurs',
+  'beers', 'beer', 'ciders & rtds', 'cider',
+  'sauvignon blanc', 'chardonnay', 'chenin blanc', 'rosé', 'rose',
+  'cap classique', 'champagne', 'prosecco', 'merlot', 'pinotage',
+  'cabernet sauvignon', 'shiraz', 'red blends', 'white blends',
+  'other varietals', 'special board', 'wines', 'wine', 'port', 'sherry',
+])
+
 async function seedBarData() {
   const client = await getAdminClient()
   const now = new Date().toISOString()
@@ -58,6 +70,8 @@ async function seedBarData() {
         price: item.price || null,
         order_index: i,
         is_available: true,
+        available_for_pickup: !ALCOHOL_CATEGORIES.has(category.name.toLowerCase()),
+        is_alcohol: ALCOHOL_CATEGORIES.has(category.name.toLowerCase()),
         created_at: now,
         updated_at: now,
       })

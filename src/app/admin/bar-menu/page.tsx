@@ -22,6 +22,7 @@ interface BarItem {
   order: number;
   isAvailable: boolean;
   availableForPickup: boolean;
+  isAlcohol: boolean;
 }
 
 export default function AdminBarMenu() {
@@ -45,6 +46,7 @@ export default function AdminBarMenu() {
     price: '',
     isAvailable: true,
     availableForPickup: true,
+    isAlcohol: false,
   });
 
   const loadData = async () => {
@@ -69,7 +71,7 @@ export default function AdminBarMenu() {
   };
 
   const resetItemForm = () => {
-    setItemForm({ name: '', categoryId: '', bottle: '', singlePrice: '', glassPrice: '', shotPrice: '', price: '', isAvailable: true, availableForPickup: true });
+    setItemForm({ name: '', categoryId: '', bottle: '', singlePrice: '', glassPrice: '', shotPrice: '', price: '', isAvailable: true, availableForPickup: true, isAlcohol: false });
     setEditingItem(null);
     setShowItemForm(false);
   };
@@ -152,6 +154,7 @@ export default function AdminBarMenu() {
         price: itemForm.price || null,
         isAvailable: itemForm.isAvailable,
         availableForPickup: itemForm.availableForPickup,
+        isAlcohol: itemForm.isAlcohol,
       };
       if (editingItem) {
         payload.id = editingItem.id;
@@ -210,6 +213,7 @@ export default function AdminBarMenu() {
       price: item.price || '',
       isAvailable: item.isAvailable,
       availableForPickup: item.availableForPickup !== false,
+      isAlcohol: item.isAlcohol === true,
     });
     setShowItemForm(true);
   };
@@ -301,6 +305,10 @@ export default function AdminBarMenu() {
               <input type="checkbox" id="availPickup" checked={itemForm.availableForPickup} onChange={e => setItemForm({...itemForm, availableForPickup: e.target.checked})} />
               <label htmlFor="availPickup">Available for Pickup (uncheck to block pickup orders for this item)</label>
             </div>
+            <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input type="checkbox" id="isAlcohol" checked={itemForm.isAlcohol} onChange={e => setItemForm({...itemForm, isAlcohol: e.target.checked})} />
+              <label htmlFor="isAlcohol">Alcoholic (dine-in only — shown as "Available for dine-in only", blocked for pickup/delivery)</label>
+            </div>
             <div style={{ gridColumn: 'span 2', display: 'flex', gap: '0.75rem' }}>
               <button type="submit" className="btn btn-primary">Save</button>
               <button type="button" onClick={resetItemForm} className="btn btn-ghost">Cancel</button>
@@ -337,6 +345,8 @@ export default function AdminBarMenu() {
                       </>
                     )}
                     {!item.isAvailable && <span style={{ color: '#E85454' }}>● Unavailable</span>}
+                    {item.isAlcohol && <span style={{ color: '#f59e0b' }}>🍷 Dine-in only</span>}
+                    {!item.availableForPickup && !item.isAlcohol && <span style={{ color: '#C8A04E' }}>● No pickup</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>

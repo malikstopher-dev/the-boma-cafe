@@ -4,7 +4,7 @@ import { requireAuthenticated, requireAdmin, getRequestRole } from '@/lib/auth/r
 import { canTransition, requiresPaymentConfirmation, paymentRequiredForTransition } from '@/lib/order-state-machine'
 import { checkRateLimit, checkRateLimitByWaiter } from '@/lib/rate-limit'
 import { validateOrder, sanitizeOrderInput } from '@/lib/pos/validateOrder'
-import { createOrder, splitAndCreateOrders, getSiblingOrders, logOrderEvent } from '@/lib/pos/orderService'
+import { createOrder, splitAndCreateOrders, getSiblingOrders, logOrderEvent, getAlcoholItemNames } from '@/lib/pos/orderService'
 import type { OrderEventType } from '@/lib/pos/types'
 import { notifyOrderCreated, notifyOrderConfirmed, notifyOrderRejected, notifyOrderPreparing, notifyOrderReady } from '@/lib/notifications/push'
 
@@ -119,12 +119,12 @@ export async function POST(request: NextRequest) {
 
     // ── Auth check: waiter orders require valid waiter session ──
     const role = await getRequestRole(request)
-    console.log('API ROLE', role, 'waiter_name', body.waiter_name)
     if (body.waiter_name) {
       if (role !== 'waiter') {
-        return NextResponse.json({ error: 'Unauthorized — waiter login required' }, { status: 401 })
-      }
-      if (!checkRateLimitByWaiter(body.waiter_name as string)) {
+        // Public visitors cannot self-assign a waiter — silently drop it
+        // (manager allocates a waiter on duty after approving the order)
+        delete body.waiter_name
+      } else if (!checkRateLimitByWaiter(body.waiter_name as string)) {
         return NextResponse.json({ error: 'Too many requests (waiter)' }, { status: 429 })
       }
     }
@@ -137,6 +137,17 @@ export async function POST(request: NextRequest) {
         error: first.message,
         fields: validation.errors,
       }, { status: 400 })
+    }
+
+    // ── Alcoholic beverages are dine-in only (law/regulation) ──
+    if (body.order_type !== 'dine-in') {
+      const alcoholNames = await getAlcoholItemNames((body.items || []) as any[])
+      if (alcoholNames.length > 0) {
+        return NextResponse.json({
+          error: `Alcoholic beverages are available for dine-in orders only (${alcoholNames.join(', ')}). Please select dine-in or remove them.`,
+          fields: [{ field: 'items', message: 'Alcoholic beverages are available for dine-in orders only' }],
+        }, { status: 400 })
+      }
     }
 
     // ── Process order (split by station if needed) ─────────

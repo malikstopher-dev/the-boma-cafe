@@ -35,7 +35,6 @@ export default function CartButton() {
     notes: '',
     tableNumber: '',
     deliveryAddress: '',
-    waiterName: '',
   })
   const [orderRef, setOrderRef] = useState('')
   const [pendingSync, setPendingSync] = useState(0)
@@ -44,7 +43,6 @@ export default function CartButton() {
   const phoneRef = useRef<HTMLInputElement>(null)
   const tableRef = useRef<HTMLInputElement>(null)
   const deliveryRef = useRef<HTMLInputElement>(null)
-  const waiterRef = useRef<HTMLInputElement>(null)
 
   const items = Array.isArray(cartCtx?.items) ? cartCtx.items : []
   const total = cartCtx?.total ?? 0
@@ -99,6 +97,14 @@ export default function CartButton() {
       }
     }
 
+    // Alcoholic beverages are dine-in only
+    if (orderType === 'pickup' || orderType === 'delivery') {
+      const alcoholItems = items.filter((item: any) => item.isAlcohol === true)
+      if (alcoholItems.length > 0) {
+        errs.items = `Alcoholic beverages are available for dine-in only (${alcoholItems.map((i: any) => i.name).join(', ')}). Please switch to dine-in or remove them.`
+      }
+    }
+
     // Pickup restriction: Hot Beverages, DRNK Freezos, Milkshakes, Cocktails, Ice Cream cannot be picked up
     if (orderType === 'pickup') {
       const restrictedItems = items.filter((item: any) => item.station === 'bar' && item.availableForPickup === false)
@@ -119,8 +125,6 @@ export default function CartButton() {
       table_number: tableRef,
       deliveryAddress: deliveryRef,
       delivery_address: deliveryRef,
-      waiterName: waiterRef,
-      waiter_name: waiterRef,
     }
     const ref = refMap[field]
     if (ref?.current) {
@@ -166,7 +170,6 @@ export default function CartButton() {
     const cOrderType = orderType
     const cTableNumber = customerInfo?.tableNumber?.trim() ?? ''
     const cDeliveryAddress = customerInfo?.deliveryAddress?.trim() ?? ''
-    const cWaiterName = customerInfo?.waiterName?.trim() ?? ''
     const cRequestedTime = customerInfo?.requestedTime || 'ASAP'
 
     const payload = {
@@ -177,7 +180,6 @@ export default function CartButton() {
       idempotency_key: idempotencyKey,
       items: itemsPayload,
       ...(cOrderType === 'dine-in' && cTableNumber ? { table_number: cTableNumber } : {}),
-      ...(cOrderType === 'dine-in' && cWaiterName ? { waiter_name: cWaiterName } : {}),
       ...(cOrderType === 'delivery' && cDeliveryAddress ? { delivery_address: cDeliveryAddress } : {}),
     }
 
@@ -212,7 +214,7 @@ export default function CartButton() {
     setOrderRef('')
     setOrderError('')
     setFieldErrors({})
-    setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '', waiterName: '' })
+    setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
   }, [clearCart, closeCart])
 
   const addItem = cartCtx?.addItem ?? (() => {})
@@ -293,7 +295,7 @@ export default function CartButton() {
       window.open(url, '_blank')
 
       clearCart()
-      setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '', waiterName: '' })
+      setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save order'
       setOrderError(msg)
@@ -323,7 +325,7 @@ export default function CartButton() {
       setOrderRef(ref)
 
       clearCart()
-      setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '', waiterName: '' })
+      setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save order'
       setOrderError(msg)
@@ -563,18 +565,6 @@ export default function CartButton() {
                             className={`${styles.input} ${fieldErrors.tableNumber ? styles.inputError : ''}`}
                           />
                           {fieldErrors.tableNumber && <span className={styles.fieldError}>{fieldErrors.tableNumber}</span>}
-                        </div>
-                        <div>
-                          <input
-                            ref={waiterRef}
-                            type="text"
-                            placeholder="Waiter name (optional)"
-                            value={customerInfo?.waiterName ?? ''}
-                            onChange={e => {
-                              setCustomerInfo(prev => ({ ...prev, waiterName: e.target.value }))
-                            }}
-                            className={styles.input}
-                          />
                         </div>
                       </>
                     )}

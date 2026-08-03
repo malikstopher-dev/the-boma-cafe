@@ -565,6 +565,7 @@ export async function getBarItems(): Promise<any[]> {
     categoryId: item.category_id,
     isAvailable: item.is_available,
     availableForPickup: item.available_for_pickup !== false,
+    isAlcohol: item.is_alcohol === true,
     bottle: item.bottle ? Number(item.bottle) : null,
     singlePrice: item.single_price ? Number(item.single_price) : null,
     glassPrice: item.glass_price ? Number(item.glass_price) : null,
@@ -586,6 +587,7 @@ export async function saveBarItem(item: any): Promise<any> {
     order_index: item.order || 0,
     is_available: item.isAvailable !== false,
     available_for_pickup: item.availableForPickup !== false,
+    is_alcohol: item.isAlcohol === true,
     updated_at: now,
   }
   if (item.id) {
