@@ -5,6 +5,8 @@
 **Repository:** github.com/malikstopher-dev/the-boma-cafe
 **Latest Commit:** `179f0d4` — menu-items refactor (centered modal, auto-link, batch-link)
 
+> **Live API Audit (3 August 2026):** All 30+ public and admin API endpoints tested via curl against production. Every endpoint returned correct HTTP status, auth-protected routes reject unauthenticated requests, idempotency works (duplicate submissions return `duplicate:true` with the original record), booking submit queues a background job with correct quote line items, and order tracking resolves correctly. Two logic-layer bugs found (see Known Bugs #13-14): order error sanitization hides real DB errors, and station-split fails for food-menu items with `station:"bar"`. Full findings in sections 11 and 12 below.
+>
 > **What has changed since the original June 2026 audit:**
 > - Full inventory / operations platform built (M1–M5, migrations 039–061): transaction-ledger engine, UOMs, locations, suppliers, purchase orders, stock counts, recipes, production runs, waste, order-items, forecasting, analytics, notifications, container tracking, reorder, price history, checklist, reconciliation.
 > - Admin routes restructured `/admin/inventory/*` → `/admin/operations/*` (manager-first; opening checklist is the landing page).
@@ -1171,6 +1173,18 @@ All have public read + service-role write RLS policies. Safe — public can read
 | 11 | **No login rate limiting** — `POST /api/admin/auth` has no rate limiting. Brute-force attack possible on admin/kitchen/waiter passwords. | **Critical** | Unfixed |
 | 12 | **Kitchen page polls without auth check** — After initial auth, the polling loop does not re-verify auth. If cookie is manually cleared, polling continues until a 401 response. | **Low** | Unfixed |
 
+### Live API Audit Findings (3 August 2026)
+
+The following bugs were discovered during a live production curl audit of every public and admin API endpoint. All endpoints returned correct HTTP status codes and data shapes; these are logic-layer issues found by analyzing the responses.
+
+| # | Bug | Severity | Status | Evidence |
+|---|-----|----------|--------|----------|
+| 13 | **Order error sanitization hides real DB errors** — `POST /api/supabase/orders` catch block (lines 206-208 of `src/app/api/supabase/orders/route.ts`) blanket-sanitizes ALL non-duplicate errors to `"Failed to create order"`. When `createOrder()` or `splitAndCreateOrders()` returns a specific error (e.g. `"Bar item not found: <uuid>"`, `"Menu item not found: <uuid>"`, `"Invalid price for item: <name>"`, `"Size \"X\" not found for item: <name>"`), the client receives the generic message instead. This hides actionable validation feedback from the user (they see "Failed to create order" when the real problem is a bad menu item ID or missing price). Only split-order partial failures expose the real error (line 485 of `orderService.ts`). | **High** | Pending fix | Live audit: mixed-station order (kitchen item + bar item from food menu) failed with `"Failed to create order"` instead of the real error `"Bar item not found: <uuid>"`. |
+| 14 | **Station split logic fails for food-menu bar items** — `splitItemsByStation()` in `src/lib/pos/orderService.ts:204-215` routes any item with `station: "bar"` to the bar order. `enrichItems()` then looks up the bar item by ID in the `bar_items` table via `getBarItemsByIds()`. However, food menu items (`menu_items_supabase`) that have `station: "bar"` do NOT exist in `bar_items` — their UUID is a `menu_items_supabase` UUID, not a `bar_items` UUID. Result: the bar split order fails with `"Bar item not found: <uuid>"`. This means cocktails/drinks ordered from the food menu (which carry `station: "bar"`) cannot be processed in a mixed-station order. Only items that exist in both tables (or were explicitly given a `bar_item_id`) work. | **Critical** | Pending fix | Live audit: order with `[{menu_item_id: "<food-menu-uuid>", station: "bar"}, {menu_item_id: "<kitchen-uuid>"}]` — kitchen order succeeded, bar order failed with `"Bar item not found: 0b161e24-..."`. The `0b161e24` ID is from `menu_items_supabase`, not `bar_items`. |
+| 15 | **Background jobs worker not running in production** — The `background_jobs` table has 5 jobs in `dead_letter` status and 8 `completed` (from local worker test runs). No worker process is deployed anywhere. The booking submit endpoint queues PDF generation jobs that nothing processes — customers and admins never receive quotation PDFs or notification emails until the worker is deployed. The enqueue RPC (migration 060) works correctly; the gap is purely operational (no worker host). | **Critical** (operational) | Known | Live: `GET /api/background-jobs/stats` → `{pending:0, processing:0, completed:8, failed:0, dead_letter:5}`. All 8 completed jobs were from local worker test sessions; no production worker exists. |
+| 16 | **Import preview shows 437 errors on real data** — `GET /api/inventory/imports` shows a recent import (`df4d7e24`) with `rowCount: 429, matchedCount: 2, unknownCount: 435, errorCount: 437`. The Excel import matched only 2 of 429 rows. This indicates the product matching algorithm is too strict or the Excel column headers don't match the expected template format. Not a code bug per se, but a data quality / UX issue — the user sees 437 errors with no clear guidance on how to fix them. | **Medium** | Known | Live: import history shows 3 recent imports, all `status: "previewed"` (none applied), worst one with 437 errors. |
+| 17 | **Idempotency for non-duplicate errors is destructive** — When `createOrder()` returns a non-duplicate error (e.g. enrichment failure), the route returns 400. But the `idempotency_key` was never written to the DB (no row was inserted). A retry with the same `idempotency_key` will NOT be detected as a duplicate — it will re-attempt the full flow. This is correct behavior for a transient error (retry should work), but for a permanent error (bad menu item ID), the user can retry infinitely and get the same error. No rate limit or max-retry counter on the idempotency key itself. | **Low** | Known | By design — idempotency only protects successful inserts. |
+
 ---
 
 ## 12. RECOMMENDED IMPROVEMENTS
@@ -1180,6 +1194,9 @@ All have public read + service-role write RLS policies. Safe — public can read
 1. **Add login rate limiting** — Brute-force protection on `/api/admin/auth`. 5 attempts per IP per minute with incremental backoff.
 2. **Fix bar menu persistence** — Migrate bar menu data to either CMS (`menu_items` with a 'drinks' category) or Supabase storage.
 3. **Migrate inquiries + page_content** — Move remaining SQLite tables to Supabase or confirm no code references them.
+4. **Deploy background jobs worker** — No worker is running in production. Booking PDFs + emails are queued but never processed. Deploy `dist/jobs/index.js` to Railway/Fly/Render (see `oracle-runbook.md`).
+5. **Fix station-split for food-menu bar items** (Bug #14) — `enrichItems()` should look up items with `station:"bar"` but no `bar_item_id` in `menu_items_supabase` (like kitchen items) rather than `bar_items`. They keep `station:"bar"` for routing/display but use food-menu pricing.
+6. **Expose real order errors to client** (Bug #13) — Replace the blanket `"Failed to create order"` sanitization with an allow-list of safe error messages from `createOrder()`/`splitAndCreateOrders()`. Strip DB-internal details but preserve user-actionable messages like `"Menu item not found"` and `"Invalid price for item: <name>"`.
 
 ### High (1-3 months)
 

@@ -202,11 +202,21 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const msg = (err as Error)?.message ?? String(err)
     console.error('order POST error:', msg)
-    // Sanitize error message for client response
-    const clientMsg = msg.includes('duplicate') || msg.includes('unique')
-      ? 'Duplicate order detected'
-      : 'Failed to create order'
-    return NextResponse.json({ error: clientMsg }, { status: 400 })
+    // Surface known, actionable errors; sanitize everything else.
+    const KNOWN_ERROR_PATTERNS = [
+      'not found',
+      'invalid price',
+      'size "',
+      'no items to order',
+      'failed to create order after retries',
+      'first order created',
+      'duplicate submission',
+    ]
+    const isKnown = KNOWN_ERROR_PATTERNS.some(p => msg.toLowerCase().includes(p))
+    if (isKnown) {
+      return NextResponse.json({ error: msg }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 400 })
   }
 }
 

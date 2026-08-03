@@ -113,8 +113,15 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
   const enriched: EnrichedItem[] = []
   let total = 0
 
-  const foodIds = items.filter(i => i.station !== 'bar' && i.menu_item_id).map(i => i.menu_item_id!)
-  const barIds = items.filter(i => i.station === 'bar').map(i => i.bar_item_id || i.menu_item_id).filter(Boolean) as string[]
+  // Look up in the food menu (menu_items): kitchen items plus cocktail-style
+  // items that live in the food menu but carry station:"bar".
+  const foodIds = items
+    .filter(i => i.menu_item_id && (i.station !== 'bar' || !i.bar_item_id))
+    .map(i => i.menu_item_id!)
+  // bar_items lookup only applies when a real bar_item_id is supplied.
+  const barIds = items
+    .filter(i => i.station === 'bar' && i.bar_item_id)
+    .map(i => i.bar_item_id!)
   const [menuMap, barMap] = await Promise.all([
     foodIds.length > 0 ? getMenuItemsByIds(foodIds) : Promise.resolve(new Map<string, DbMenuItem>()),
     barIds.length > 0 ? getBarItemsByIds(barIds) : Promise.resolve(new Map<string, BarDbItem>()),
@@ -122,28 +129,61 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
 
   for (const item of items) {
     if (item.station === 'bar') {
-      const barId = item.bar_item_id || item.menu_item_id
-      const row = barId ? barMap.get(barId) : undefined
-      if (!row) {
-        return { enriched: [], total: 0, error: `Bar item not found: ${item.menu_item_id}` }
+      // A real bar_item_id resolves via bar_items (single/bottle/glass/shot pricing).
+      const barRow = item.bar_item_id ? barMap.get(item.bar_item_id) : undefined
+      if (barRow) {
+        const { price: itemPrice, matched: sizeMatched } = resolveBarSizePrice(barRow, item.selected_size)
+        if (itemPrice < 0) {
+          return { enriched: [], total: 0, error: `Invalid price for bar item: ${barRow.name}` }
+        }
+        const linePrice = itemPrice
+        const subtotal = linePrice * item.quantity
+        enriched.push({
+          menu_item_id: barRow.id,
+          name: barRow.name,
+          price: linePrice,
+          quantity: item.quantity,
+          subtotal,
+          station: 'bar',
+          ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
+          ...(item.notes ? { notes: item.notes } : {}),
+        })
+        total += subtotal
+        continue
       }
-      const { price: itemPrice, matched: sizeMatched } = resolveBarSizePrice(row, item.selected_size)
-      if (itemPrice < 0) {
-        return { enriched: [], total: 0, error: `Invalid price for bar item: ${row.name}` }
+
+      // No bar_item_id (or not in bar_items): this is a food-menu item whose
+      // station is "bar" (e.g. a cocktail in menu_items). Enrich via the food
+      // menu but keep station:"bar" so it routes to the bar station.
+      const menuRow = item.menu_item_id ? menuMap.get(item.menu_item_id) : undefined
+      if (menuRow) {
+        const { price: itemPrice, matched: sizeMatched } = resolveSizePrice(menuRow, item.selected_size)
+        if (itemPrice < 0) {
+          const reason = item.selected_size
+            ? `Size "${item.selected_size}" not found for item: ${menuRow.name}`
+            : `Invalid price for item: ${menuRow.name}`
+          return { enriched: [], total: 0, error: reason }
+        }
+        const resolvedAddOns = resolveAddOnPrices(menuRow, item.selected_add_ons)
+        const addOnTotal = resolvedAddOns.reduce((s, a) => s + a.price, 0)
+        const linePrice = itemPrice + addOnTotal
+        const subtotal = linePrice * item.quantity
+        enriched.push({
+          menu_item_id: menuRow.id,
+          name: menuRow.name,
+          price: linePrice,
+          quantity: item.quantity,
+          subtotal,
+          station: 'bar',
+          ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
+          ...(resolvedAddOns.length > 0 ? { selected_add_ons: resolvedAddOns } : {}),
+          ...(item.notes ? { notes: item.notes } : {}),
+        })
+        total += subtotal
+        continue
       }
-      const linePrice = itemPrice
-      const subtotal = linePrice * item.quantity
-      enriched.push({
-        menu_item_id: row.id,
-        name: row.name,
-        price: linePrice,
-        quantity: item.quantity,
-        subtotal,
-        station: 'bar',
-        ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
-        ...(item.notes ? { notes: item.notes } : {}),
-      })
-      total += subtotal
+
+      return { enriched: [], total: 0, error: `Bar item not found: ${item.menu_item_id ?? item.bar_item_id}` }
     } else {
       const row = menuMap.get(item.menu_item_id)
       if (!row) {
