@@ -10,7 +10,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     let query = supabase
       .from('bar_items')
-      .select('id, name, is_available, has_inventory, category_id, bar_item_inventory_links(id, inventory_product_id, pour_size_ml, inventory_products(id, name, sku))')
+      .select('id, name, is_available, has_inventory, category_id, bar_categories(name), bar_item_inventory_links(id, inventory_product_id, pour_size_ml, inventory_products(id, name, sku))')
       .order('name')
 
     if (linked === 'true') {
