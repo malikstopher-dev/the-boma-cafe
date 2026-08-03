@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Boma Cafe — Order Modal Design Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a1a;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    color: #f5f0e8;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    color: #a8a09a;
+    font-size: 0.9rem;
+    margin-bottom: 40px;
+  }
+
+  .devices {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1400px;
+  }
+
+  .device-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .device-label {
+    color: #a8a09a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── Desktop Frame ──────────────────────────── */
+  .desktop-frame {
+    background: #f0f0f0;
+    border-radius: 12px;
+    padding: 0;
+    width: 960px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .desktop-chrome {
+    background: #e8e8e8;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #d0d0d0;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+  .url-bar {
+    flex: 1;
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    color: #666;
+    margin-left: 8px;
+  }
+  .desktop-body {
+    background: #2a2218;
+    padding: 20px;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Modal (Desktop — 3-column) ─────────────── */
+  .modal-desktop {
+    background: #fff;
+    border-radius: 20px;
+    width: 920px;
+    max-height: 380px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid #f0ebe3;
+  }
+  .modal-header h2 {
+    font-size: 1.2rem;
+    color: #292524;
+  }
+  .modal-header .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+  }
+  .modal-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+  }
+  .col {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .col-left { border-right: 1px solid #f0ebe3; }
+  .col-mid  { border-right: 1px solid #f0ebe3; }
+
+  .col-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #292524;
+    margin-bottom: 4px;
+  }
+
+  /* Item row */
+  .item-card {
+    background: #faf6f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .qty-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .qty-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid #c9a961;
+    background: transparent;
+    color: #c9a961;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qty-num {
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 20px;
+    text-align: center;
+  }
+  .item-info {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #292524;
+  }
+  .item-info small {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #a8a09a;
+  }
+  .item-price {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #c9a961;
+  }
+
+  /* Warning box */
+  .warning-box {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: #991b1b;
+    line-height: 1.4;
+  }
+
+  /* Inputs */
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: -4px;
+  }
+  .field-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e8e0d8;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #292524;
+    background: #fff;
+    outline: none;
+  }
+  .field-input:focus { border-color: #c9a961; }
+
+  /* Order type toggles */
+  .toggle-row {
+    display: flex;
+    gap: 6px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 8px 6px;
+    border: 1.5px solid #e8e0d8;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.78rem;
+    color: #888;
+    cursor: pointer;
+    text-align: center;
+  }
+  .toggle-btn.active {
+    background: #faf6f0;
+    border-color: #c9a961;
+    color: #c9a961;
+    font-weight: 600;
+  }
+
+  /* Right column */
+  .total-display {
+    text-align: center;
+    padding: 14px 0;
+  }
+  .total-display .label {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 500;
+  }
+  .total-display .amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #292524;
+  }
+  .order-method-label {
+    font-size: 0.78rem;
+    color: #888;
+    text-align: center;
+    font-weight: 500;
+  }
+  .btn-whatsapp {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-online {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    border: 2px solid #e8e0d8;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #292524;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* ── Mobile Frame ───────────────────────────── */
+  .mobile-frame {
+    width: 375px;
+    background: #f5f5f5;
+    border-radius: 36px;
+    padding: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    border: 3px solid #333;
+  }
+  .mobile-notch {
+    width: 120px;
+    height: 28px;
+    background: #333;
+    border-radius: 0 0 16px 16px;
+    margin: 0 auto 8px;
+  }
+  .mobile-screen {
+    background: #faf6f0;
+    border-radius: 28px;
+    min-height: 680px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px 10px;
+    border-bottom: 1px solid #f0ebe3;
+  }
+  .mobile-header h2 { font-size: 1rem; color: #292524; }
+  .mobile-header .close-btn {
+    background: none; border: none; font-size: 1.2rem; color: #666; cursor: pointer;
+  }
+  .mobile-body {
+    padding: 12px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .mobile-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #292524;
+    margin-top: 4px;
+  }
+  .mobile-item {
+    background: #faf6f0;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mobile-item .item-info { font-size: 0.8rem; }
+  .mobile-item .item-price { font-size: 0.8rem; }
+  .mobile-item .qty-btn { width: 28px; height: 28px; font-size: 0.9rem; }
+
+  .mobile-warning {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.72rem;
+    color: #991b1b;
+    line-height: 1.35;
+  }
+  .mobile-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e8e0d8;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #292524;
+    background: #fff;
+  }
+  .mobile-toggle-row {
+    display: flex;
+    gap: 5px;
+  }
+  .mobile-toggle-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1.5px solid #e8e0d8;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.72rem;
+    color: #888;
+    text-align: center;
+  }
+  .mobile-toggle-btn.active {
+    background: #faf6f0;
+    border-color: #c9a961;
+    color: #c9a961;
+    font-weight: 600;
+  }
+  .mobile-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .mobile-total .label { font-size: 0.85rem; color: #888; }
+  .mobile-total .amount { font-size: 1.5rem; font-weight: 700; color: #292524; }
+  .mobile-btn-wa {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .mobile-btn-online {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    border: 2px solid #e8e0d8;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #292524;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>The Boma Cafe — Order Modal Design Mockup</h1>
+<p class="subtitle">Three-column desktop layout + single-column mobile layout</p>
+
+<div class="devices">
+
+  <!-- ════════════ DESKTOP ════════════ -->
+  <div class="device-frame">
+    <div class="device-label">Desktop (960px+)</div>
+    <div class="desktop-frame">
+      <div class="desktop-chrome">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <div class="url-bar">the-boma-cafe.vercel.app/bar-menu</div>
+      </div>
+      <div class="desktop-body">
+        <div class="modal-desktop">
+          <div class="modal-header">
+            <h2>🛒 Your Order</h2>
+            <button class="close-btn">✕</button>
+          </div>
+          <div class="modal-columns">
+
+            <!-- Col 1: Items -->
+            <div class="col col-left">
+              <div class="col-title">Your Order</div>
+              <div class="item-card">
+                <div class="qty-ctrl">
+                  <button class="qty-btn">−</button>
+                  <span class="qty-num">1</span>
+                  <button class="qty-btn">+</button>
+                </div>
+                <div class="item-info">Margarita<small>Size: single</small></div>
+                <div class="item-price">R90</div>
+              </div>
+              <div class="item-card">
+                <div class="qty-ctrl">
+                  <button class="qty-btn">−</button>
+                  <span class="qty-num">2</span>
+                  <button class="qty-btn">+</button>
+                </div>
+                <div class="item-info">Chicken Wings 8pc<small>With BBQ basting</small></div>
+                <div class="item-price">R160</div>
+              </div>
+              <div class="warning-box">
+                ⚠️ Alcoholic beverages are available for dine-in only (Margarita). Please switch to dine-in or remove them.
+              </div>
+            </div>
+
+            <!-- Col 2: Details -->
+            <div class="col col-mid">
+              <div class="col-title">👤 Your Details</div>
+              <div class="field-label">Name</div>
+              <input class="field-input" type="text" value="stopher" />
+              <div class="field-label">Phone</div>
+              <input class="field-input" type="tel" value="099999999" />
+              <div class="field-label">How would you like to receive it?</div>
+              <div class="toggle-row">
+                <button class="toggle-btn">🏪 Pickup</button>
+                <button class="toggle-btn active">🚚 Delivery</button>
+                <button class="toggle-btn">🍽️ Dine-In</button>
+              </div>
+              <div class="field-label">Delivery address</div>
+              <input class="field-input" type="text" value="127b Wroxham Rd, paulsho, sandton" />
+              <div class="field-label">Requested time</div>
+              <input class="field-input" type="text" value="7:30 PM" />
+              <div class="field-label">Additional notes (optional)</div>
+              <input class="field-input" type="text" value="" placeholder="e.g. Extra sauce" />
+            </div>
+
+            <!-- Col 3: Actions -->
+            <div class="col">
+              <div class="total-display">
+                <div class="label">Total</div>
+                <div class="amount">R250</div>
+              </div>
+              <div class="order-method-label">Order Method</div>
+              <button class="btn-whatsapp">💬 Order via WhatsApp</button>
+              <button class="btn-online">🌐 Place Online Order</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ MOBILE ════════════ -->
+  <div class="device-frame">
+    <div class="device-label">Mobile (375px)</div>
+    <div class="mobile-frame">
+      <div class="mobile-notch"></div>
+      <div class="mobile-screen">
+        <div class="mobile-header">
+          <h2>🛒 Your Order</h2>
+          <button class="close-btn">✕</button>
+        </div>
+        <div class="mobile-body">
+
+          <div class="mobile-section-title">Your Order</div>
+          <div class="mobile-item">
+            <div class="qty-ctrl">
+              <button class="qty-btn">−</button>
+              <span class="qty-num">1</span>
+              <button class="qty-btn">+</button>
+            </div>
+            <div class="item-info">Margarita<small>Size: single</small></div>
+            <div class="item-price">R90</div>
+          </div>
+          <div class="mobile-item">
+            <div class="qty-ctrl">
+              <button class="qty-btn">−</button>
+              <span class="qty-num">2</span>
+              <button class="qty-btn">+</button>
+            </div>
+            <div class="item-info">Chicken Wings<small>BBQ basting</small></div>
+            <div class="item-price">R160</div>
+          </div>
+
+          <div class="mobile-warning">
+            ⚠️ Alcoholic beverages are available for dine-in only (Margarita). Please switch to dine-in or remove them.
+          </div>
+
+          <div class="mobile-section-title">👤 Your Details</div>
+          <input class="mobile-input" type="text" value="stopher" placeholder="Your name *" />
+          <input class="mobile-input" type="tel" value="099999999" placeholder="Phone *" />
+          <div class="mobile-toggle-row">
+            <button class="mobile-toggle-btn">🏪 Pickup</button>
+            <button class="mobile-toggle-btn active">🚚 Delivery</button>
+            <button class="mobile-toggle-btn">🍽️ Dine-In</button>
+          </div>
+          <input class="mobile-input" type="text" value="127b Wroxham Rd, paulsho, sandton" placeholder="Address *" />
+          <input class="mobile-input" type="text" value="7:30 PM" placeholder="Requested time" />
+          <input class="mobile-input" type="text" placeholder="Additional notes (optional)" />
+
+          <div class="mobile-total">
+            <span class="label">Total:</span>
+            <span class="amount">R250</span>
+          </div>
+
+          <div class="mobile-btn-wa">💬 Order via WhatsApp</div>
+          <div class="mobile-btn-online">🌐 Place Online Order</div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="color:#666; font-size:0.75rem; margin-top:40px;">Static mockup — not interactive. For implementation, see MODULAR_IMPLEMENTATION_TASK_LIST.md</p>
+</body>
+</html>
