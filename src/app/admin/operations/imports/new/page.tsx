@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AdminPage from '@/components/admin/design-system/AdminPage'
@@ -331,6 +331,13 @@ export default function NewImportPage() {
     }
   }
 
+  // Scroll to top when an error appears so the user immediately sees it
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [error])
+
   const effRows = effectiveRows()
   const errorRows = effRows.filter(r => (r.errors || []).length > 0).length
   const canApply = preview !== null && errorRows === 0
@@ -550,10 +557,10 @@ export default function NewImportPage() {
           </div>
 
           {preview.rows.length > 0 && (
-            <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, overflow: 'hidden' }}>
-              <div className="overflow-x-auto max-h-96">
+            <div style={{ background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 420px)', minHeight: 320 }}>
+              <div style={{ flex: 1, overflow: 'auto' }}>
                 <table style={{ width: '100%', fontSize: 14 }}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                     <tr style={{ borderBottom: '1px solid #3A3428', background: '#242018' }}>
                       {['#', 'Product', 'Qty', 'Unit Cost', 'Match', 'Status', 'Notes'].map(h => (
                         <th key={h} style={{ textAlign: h === 'Qty' || h === 'Unit Cost' ? 'right' : 'left', padding: '10px 16px', fontSize: 11, fontWeight: 600, color: '#6B6358', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</th>
@@ -612,24 +619,40 @@ export default function NewImportPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Sticky bottom action bar — errors + cancel/apply visible regardless of scroll */}
+              <div style={{
+                position: 'sticky', bottom: 0, zIndex: 2,
+                background: '#1A1610', borderTop: '2px solid #3A3428',
+                padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                {error && (
+                  <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#FCA5A5', fontWeight: 500 }}>
+                    {error}
+                  </div>
+                )}
+                {errorRows > 0 && (
+                  <p style={{ fontSize: 12, color: '#E85454', margin: 0 }}>Some rows have errors. Fix Quantity or Unit Cost directly in the table — valid edits clear the error — or adjust column mapping and re-preview.</p>
+                )}
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between' }}>
+                  <Button variant="secondary" size="sm" onClick={() => setStep(1)}>Back to mapping</Button>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <Button variant="secondary" size="sm" onClick={() => { setPreview(null); setHeaders(null); setStep(0); setFile(null); setRowEdits({}) }}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleApply} disabled={isApplying || !canApply} variant="primary">
+                      {isApplying ? 'Applying…' : 'Apply Import'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          {errorRows > 0 && (
+          {/* Inline error banner for unmatched */}
+          {preview.rows.length === 0 && errorRows > 0 && (
             <p style={{ fontSize: 12, color: '#E85454' }}>Some rows have errors. Fix Quantity or Unit Cost directly in the table — valid edits clear the error — or adjust column mapping and re-preview.</p>
           )}
-
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between' }}>
-            <Button variant="secondary" onClick={() => setStep(1)}>Back to mapping</Button>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <Button variant="secondary" onClick={() => { setPreview(null); setHeaders(null); setStep(0); setFile(null); setRowEdits({}) }}>
-                Cancel
-              </Button>
-              <Button onClick={handleApply} disabled={isApplying || !canApply} variant="primary">
-                {isApplying ? 'Applying…' : 'Apply Import'}
-              </Button>
-            </div>
-          </div>
         </div>
       )}
       </AdminPage>

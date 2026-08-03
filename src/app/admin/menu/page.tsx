@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import AdminPage from '@/components/admin/design-system/AdminPage';
 import Button from '@/components/admin/design-system/Button';
@@ -20,6 +20,8 @@ export default function AdminMenu() {
   const [editItem, setEditItem] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+  const editRowIdRef = useRef<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -112,6 +114,7 @@ export default function AdminMenu() {
   const openEdit = (item: any) => {
     const category = categories.find((c: any) => c.id === item.categoryId);
     setEditItem(item);
+    editRowIdRef.current = item.id;
     setFormData({
       name: item.name || '',
       description: item.description || '',
@@ -125,6 +128,10 @@ export default function AdminMenu() {
       isAvailable: item.isAvailable !== false,
     });
     setIsEditing(true);
+    // Auto-scroll the viewport to the edit form so the user doesn't lose it.
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   };
 
   const openAdd = () => {
@@ -141,6 +148,7 @@ export default function AdminMenu() {
   const closeForm = () => {
     setIsEditing(false);
     setEditItem(null);
+    editRowIdRef.current = null;
   };
 
   const categoryOptions = [
@@ -175,7 +183,7 @@ export default function AdminMenu() {
 
       {/* Edit Form */}
       {isEditing && (
-        <div style={{
+        <div ref={formRef} style={{
           background: '#1E1A14', border: '1px solid #3A3428', borderRadius: 12,
           padding: 24, marginBottom: 24,
         }}>
@@ -232,15 +240,19 @@ export default function AdminMenu() {
         />
       ) : (
         <div style={{ display: 'grid', gap: 8 }}>
-          {filteredItems.map((item: any) => (
+          {filteredItems.map((item: any) => {
+            const isEditingRow = isEditing && editItem?.id === item.id
+            return (
             <div key={item.id} style={{
               display: 'flex', alignItems: 'center', gap: 16,
-              padding: '14px 16px', background: '#1E1A14',
-              border: '1px solid #3A3428', borderRadius: 12,
-              transition: 'border-color 0.15s',
+              padding: '14px 16px', background: isEditingRow ? 'rgba(200,160,78,0.08)' : '#1E1A14',
+              border: isEditingRow ? '2px solid #C8A04E' : '1px solid #3A3428',
+              borderRadius: 12,
+              transition: 'all 0.2s',
+              opacity: isEditing ? (isEditingRow ? 1 : 0.6) : 1,
             }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = '#A09888')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = '#3A3428')}
+            onMouseEnter={e => { if (!isEditing) e.currentTarget.style.borderColor = '#A09888' }}
+            onMouseLeave={e => { if (!isEditing) e.currentTarget.style.borderColor = '#3A3428' }}
             >
               {/* Thumbnail */}
               {item.image ? (
@@ -270,7 +282,8 @@ export default function AdminMenu() {
                 <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} style={{ color: '#E85454' }}>Delete</Button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

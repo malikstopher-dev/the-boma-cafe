@@ -148,8 +148,8 @@ export default function NotificationsPage() {
                       {n.type === 'inventory_out_of_stock' ? 'Out of stock' : 'Low stock'}
                     </Badge>
                   </div>
-                  {n.message && <p className="text-xs text-gray-400">{n.message}</p>}
-                  <p className="text-[11px] text-gray-600 mt-1">
+                  {n.message && <p style={{ fontSize: 12, color: '#C8C0B2', marginTop: 2 }}>{n.message}</p>}
+                  <p style={{ fontSize: 11, color: '#8C8275', marginTop: 4 }}>
                     {new Date(n.createdAt).toLocaleString('en-ZA')}
                   </p>
                 </div>

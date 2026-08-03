@@ -215,24 +215,29 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100%',
-      background: '#F8F9FB', fontFamily: "'Inter', -apple-system, sans-serif",
+      background: '#1A1610', fontFamily: "'Inter', -apple-system, sans-serif",
     }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px', background: '#FFFFFF',
-        borderBottom: '1px solid #E5E7EB', flexShrink: 0,
+        padding: '12px 16px', background: '#242018',
+        borderBottom: '1px solid #3A3428', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {onClose && (
             <button onClick={onClose} style={{
-              background: 'none', border: 'none', color: '#94A3B8',
+              background: 'none', border: 'none', color: '#A09888',
               fontSize: 18, cursor: 'pointer', padding: 4,
             }}>←</button>
           )}
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>
-              {Object.values(staffProfiles).map(p => p.name).join(', ') || 'Chat'}
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#F0EBE3',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 260 }}>
+              {(() => {
+                const names = Object.values(staffProfiles).map(p => p.name)
+                if (names.length <= 2) return names.join(', ') || 'Chat'
+                return `${names[0]}, ${names[1]} +${names.length - 2} others`
+              })()}
             </div>
           </div>
         </div>
@@ -256,14 +261,14 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
         display: 'flex', flexDirection: 'column', gap: 4,
       }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 48, color: '#94A3B8' }}>Loading...</div>
-        ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 48, color: '#94A3B8' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
-            <p>No messages yet</p>
-            <p style={{ fontSize: 12 }}>Send a message to start the conversation</p>
-          </div>
-        ) : (
+            <div style={{ textAlign: 'center', padding: 48, color: '#A09888' }}>Loading...</div>
+          ) : messages.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 48, color: '#A09888' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
+              <p style={{ color: '#C0B8A8' }}>No messages yet</p>
+              <p style={{ fontSize: 12, color: '#6B6358' }}>Send a message to start the conversation</p>
+            </div>
+          ) : (
           messages.map(msg => (
             <MessageBubble
               key={msg.id}
