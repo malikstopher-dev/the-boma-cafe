@@ -17,9 +17,9 @@ export const posTokens = {
     },
     text: {
       primary: '#F8F9FB',
-      secondary: 'rgba(255,255,255,0.7)',
-      muted: 'rgba(255,255,255,0.5)',
-      dim: 'rgba(255,255,255,0.35)',
+      secondary: 'rgba(255,255,255,0.8)',
+      muted: 'rgba(255,255,255,0.62)',
+      dim: 'rgba(255,255,255,0.48)',
     },
     status: {
       pending: '#f59e0b',

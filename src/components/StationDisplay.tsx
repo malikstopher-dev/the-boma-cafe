@@ -44,6 +44,7 @@ interface Order {
 }
 
 const READY_CLEANUP_MS = 5 * 60 * 1000
+const STALE_ORDER_MS = 24 * 60 * 60 * 1000
 
 const COLUMNS = [
   { key: 'pending',   label: 'NEW',      icon: '🆕', color: '#f59e0b', bg: 'rgba(245,158,11,0.04)' },
@@ -242,6 +243,9 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   const displayOrders = useMemo(() => {
     const safeOrders = Array.isArray(orders) ? orders : []
     return safeOrders.filter((o) => {
+      // Auto-archive orders older than 24h (stale/zombie orders) so boards
+      // only ever reflect the current shift.
+      if (o.created_at && Date.now() - new Date(o.created_at).getTime() > STALE_ORDER_MS) return false
       if (o.status !== 'ready') return true
       const readyTs = readyTimesRef.current.get(o.id)
       return !readyTs || Date.now() - readyTs < READY_CLEANUP_MS
@@ -369,19 +373,33 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   const readyOrders = safeDisplayOrders.filter(o => o.status === 'ready')
   const allColumns = [pending, confirmed, preparing, packing, readyOrders]
 
-  useEffect(() => { setFocusedIdx(0) }, [focusedCol])
+  // Auto-collapse empty columns on desktop so active columns get the full width.
+  const visibleColumns = COLUMNS
+    .map((col, i) => ({ ...col, items: allColumns[i] }))
+    .filter(c => c.items.length > 0)
+
+  useEffect(() => { setFocusedIdx(0) }, [focusedCol, visibleColumns.length])
+
+  // Clamp keyboard column focus to the currently visible (non-empty) columns.
+  useEffect(() => {
+    setFocusedCol(p => {
+      if (visibleColumns.length === 0) return 0
+      if (p >= visibleColumns.length) return visibleColumns.length - 1
+      return p
+    })
+  }, [visibleColumns.length])
 
   useEffect(() => {
     if (!authed) return
     const handler = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === 'INPUT') return
-      if (e.key === 'ArrowRight') { setFocusedCol(p => Math.min(p + 1, 4)); return }
+      if (e.key === 'ArrowRight') { setFocusedCol(p => Math.min(p + 1, Math.max(visibleColumns.length - 1, 0))); return }
       if (e.key === 'ArrowLeft') { setFocusedCol(p => Math.max(p - 1, 0)); return }
-      if (e.key === 'ArrowDown') { const col = allColumns[focusedCol]; if (col) setFocusedIdx(p => Math.min(p + 1, col.length - 1)); return }
+      if (e.key === 'ArrowDown') { const col = visibleColumns[focusedCol]; if (col) setFocusedIdx(p => Math.min(p + 1, col.items.length - 1)); return }
       if (e.key === 'ArrowUp') { setFocusedIdx(p => Math.max(p - 1, 0)); return }
-      const col = allColumns[focusedCol]
-      if (!col || col.length === 0) return
-      const order = col[focusedIdx]
+      const col = visibleColumns[focusedCol]
+      if (!col || !col.items || col.items.length === 0) return
+      const order = col.items[focusedIdx]
       if (!order || updating === order.id) return
       const displayRef = order.order_ref || `#${order.id.slice(0, 8).toUpperCase()}`
       if (e.key === '1' && (order.status === 'confirmed' || (order.status === 'pending' && order.source === 'waiter'))) { openPrepSelector(order.id, displayRef); return }
@@ -390,7 +408,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [authed, focusedCol, focusedIdx, orders, updating, prepTimeInputs, openPrepSelector])
+  }, [authed, focusedCol, focusedIdx, orders, updating, prepTimeInputs, openPrepSelector, visibleColumns])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -555,14 +573,16 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
         </div>
       )}
 
-      {/* Desktop kanban */}
-      {displayOrders.length > 0 && <div className="pos-kanban-desktop" style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 0, overflow: 'hidden' }}>
-        {columnData.map((col, colIdx) => (
-          <Column key={col.key} col={col} colIdx={colIdx} focusedCol={isMobile ? mobileTab : focusedCol} focusedIdx={focusedIdx}
-            orders={col.items} updating={updating} updateStatus={updateStatus} prepTimeInputs={prepTimeInputs} setPrepTimeInputs={setPrepTimeInputs}
-            cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={false} openCancelModal={openCancelModal} openPrepSelector={openPrepSelector} primaryColor={primaryColor} />
-        ))}
-      </div>}
+      {/* Desktop kanban — empty columns auto-collapse, active columns expand */}
+      {displayOrders.length > 0 && (
+        <div className="pos-kanban-desktop" style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(${Math.max(visibleColumns.length, 1)}, minmax(0, 1fr))`, gap: 0, overflow: 'hidden' }}>
+          {visibleColumns.map((col, colIdx) => (
+            <Column key={col.key} col={col} colIdx={colIdx} focusedCol={isMobile ? mobileTab : focusedCol} focusedIdx={focusedIdx}
+              orders={col.items} updating={updating} updateStatus={updateStatus} prepTimeInputs={prepTimeInputs} setPrepTimeInputs={setPrepTimeInputs}
+              cardErrors={cardErrors} readyTimesRef={readyTimesRef} station={station} isMobile={false} openCancelModal={openCancelModal} openPrepSelector={openPrepSelector} primaryColor={primaryColor} />
+          ))}
+        </div>
+      )}
 
       {/* Mobile single-column view */}
       {isMobile && displayOrders.length > 0 && activeColData && (
@@ -689,7 +709,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, paddingLeft: 6 }}>
         <span style={{ fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, fontFamily: t.typography.fontFamilyMono, color: t.colors.text.primary, lineHeight: 1.2 }}>{displayRef}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Timer startTime={order.created_at} targetMinutes={station === 'bar' ? 5 : 15} size="sm" />
+          <Timer startTime={order.created_at} targetMinutes={station === 'bar' ? 5 : 15} size="sm" fixedUrgency />
           <PrepTimeCountdown
             estimatedReadyAt={order.estimated_ready_at}
             prepStartedAt={order.prep_started_at}

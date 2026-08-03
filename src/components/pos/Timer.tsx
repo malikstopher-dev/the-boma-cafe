@@ -8,6 +8,9 @@ interface TimerProps {
   size?: 'sm' | 'md' | 'lg'
   showIcon?: boolean
   className?: string
+  /** Use fixed elapsed thresholds (green <10m / amber 10-20m / flashing red >20m)
+   *  instead of ratio-based urgency vs targetMinutes. */
+  fixedUrgency?: boolean
 }
 
 function formatElapsed(ms: number): string {
@@ -30,13 +33,20 @@ function getUrgencyColor(elapsedMs: number, targetMinutes: number): { color: str
   return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)' }
 }
 
+// Fixed elapsed-time bands: green < 10m, amber 10-20m, flashing red > 20m
+function getFixedUrgency(elapsedMs: number): { color: string; bg: string } {
+  if (elapsedMs < 10 * 60 * 1000) return { color: '#10b981', bg: 'rgba(16,185,129,0.12)' }
+  if (elapsedMs < 20 * 60 * 1000) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' }
+  return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)' }
+}
+
 const SIZE_MAP = {
   sm: { fontSize: '0.7rem', padding: '2px 6px', gap: '3px' },
   md: { fontSize: '0.8rem', padding: '4px 8px', gap: '4px' },
   lg: { fontSize: '0.9rem', padding: '6px 12px', gap: '5px' },
 }
 
-export default function Timer({ startTime, targetMinutes = 15, size = 'md', showIcon = true, className }: TimerProps) {
+export default function Timer({ startTime, targetMinutes = 15, size = 'md', showIcon = true, className, fixedUrgency }: TimerProps) {
   const [elapsed, setElapsed] = useState(() => Date.now() - new Date(startTime).getTime())
 
   useEffect(() => {
@@ -46,11 +56,13 @@ export default function Timer({ startTime, targetMinutes = 15, size = 'md', show
     return () => clearInterval(interval)
   }, [startTime])
 
-  const urgency = getUrgencyColor(elapsed, targetMinutes)
+  const urgency = fixedUrgency ? getFixedUrgency(elapsed) : getUrgencyColor(elapsed, targetMinutes)
   const sizeStyle = SIZE_MAP[size]
-  const isOverdue = elapsed > targetMinutes * 60 * 1000
+  const isOverdue = fixedUrgency ? elapsed > 20 * 60 * 1000 : elapsed > targetMinutes * 60 * 1000
 
-  const urgencyLabel = isOverdue ? 'overdue' : elapsed < targetMinutes * 60 * 1000 * 0.7 ? 'on track' : 'approaching limit'
+  const urgencyLabel = fixedUrgency
+    ? elapsed > 20 * 60 * 1000 ? 'overdue' : elapsed > 10 * 60 * 1000 ? 'approaching limit' : 'on track'
+    : isOverdue ? 'overdue' : elapsed < targetMinutes * 60 * 1000 * 0.7 ? 'on track' : 'approaching limit'
 
   return (
     <span

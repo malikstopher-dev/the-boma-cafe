@@ -11,6 +11,30 @@ const POLL_INTERVAL = 4000
 const FALLBACK_POLL_INTERVAL = 30000
 const TOTAL_TABLES = 20
 
+const TABLE_PALETTE = {
+  available: { border: 'rgba(74,222,128,0.4)', bg: 'rgba(34,197,94,0.08)', dot: '#4ADE80' },
+  progress:  { border: 'rgba(245,158,11,0.45)', bg: 'rgba(245,158,11,0.10)', dot: '#F59E0B' },
+  ready:     { border: 'rgba(56,189,248,0.5)', bg: 'rgba(56,189,248,0.10)', dot: '#38BDF8' },
+  billing:   { border: 'rgba(239,68,68,0.5)', bg: 'rgba(239,68,68,0.12)', dot: '#EF4444' },
+} as const
+
+type TableTone = keyof typeof TABLE_PALETTE
+
+const TABLE_LEGEND: { tone: TableTone; label: string }[] = [
+  { tone: 'available', label: 'Available' },
+  { tone: 'progress', label: 'Food in prep' },
+  { tone: 'ready', label: 'Ready to serve' },
+  { tone: 'billing', label: 'Bill / payment' },
+]
+
+function getTableTone(order?: { status?: string; payment_status?: string }): TableTone {
+  if (!order) return 'available'
+  const s = order.status
+  if (['pending', 'confirmed', 'preparing', 'packing'].includes(s ?? '')) return 'progress'
+  if (s === 'ready') return 'ready'
+  return 'billing'
+}
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
 }
@@ -26,21 +50,39 @@ function timeSince(iso: string) {
 
 function TableGrid({
   tables,
+  ordersByTable,
   selectedTable,
   onSelectTable,
 }: {
   tables: TableInfo[]
+  ordersByTable: Record<number, SupabaseOrder | undefined>
   selectedTable: number | null
   onSelectTable: (n: number | null) => void
 }) {
   return (
     <div style={{ padding: '0.75rem' }}>
-      <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-        Tables
-      </h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <h3 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Tables
+        </h3>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+        {TABLE_LEGEND.map((l) => {
+          const p = TABLE_PALETTE[l.tone]
+          return (
+            <span key={l.tone} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.6rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.dot, display: 'inline-block' }} />
+              {l.label}
+            </span>
+          )
+        })}
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
         {tables.map((t) => {
           const isOccupied = t.status !== 'empty'
+          const tone = getTableTone(ordersByTable[t.tableNumber])
+          const palette = TABLE_PALETTE[tone]
+          const isSelected = selectedTable === t.tableNumber
           return (
             <button
               key={t.tableNumber}
@@ -48,22 +90,23 @@ function TableGrid({
               style={{
                 padding: '0.6rem 0.4rem',
                 borderRadius: '10px',
-                border: selectedTable === t.tableNumber ? '2px solid #C8A04E' : isOccupied ? '2px solid rgba(200,160,78,0.4)' : '2px solid rgba(255,255,255,0.12)',
-                background: selectedTable === t.tableNumber ? '#C8A04E' : '#1E1A14',
+                border: isSelected ? `2px solid ${palette.dot}` : `2px solid ${palette.border}`,
+                background: isSelected ? palette.dot : palette.bg,
                 cursor: 'pointer',
-                color: selectedTable === t.tableNumber ? '#000000' : '#ffffff',
+                color: isSelected ? '#000' : '#fff',
                 textAlign: 'center',
                 transition: 'all 0.15s',
+                position: 'relative',
               }}
             >
               <div style={{ fontSize: '1rem', fontWeight: 700 }}>{t.tableNumber}</div>
               {isOccupied && (
-                <div style={{ fontSize: '0.55rem', fontWeight: 600, color: selectedTable === t.tableNumber ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.5)', marginTop: '0.15rem' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 600, color: isSelected ? 'rgba(0,0,0,0.75)' : palette.dot, marginTop: '0.15rem' }}>
                   R{t.total.toFixed(0)}
                 </div>
               )}
               {!isOccupied && (
-                <div style={{ fontSize: '0.55rem', color: selectedTable === t.tableNumber ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)', marginTop: '0.15rem' }}>empty</div>
+                <div style={{ fontSize: '0.55rem', color: isSelected ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)', marginTop: '0.15rem' }}>empty</div>
               )}
             </button>
           )
@@ -105,6 +148,7 @@ function OrderCard({
   tables: TableInfo[]
 }) {
   const [showTableDropdown, setShowTableDropdown] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const items = parseOrderItems(order.items_json)
   const status = order.status as any
   const color = STATUS_COLORS[status] || '#A09888'
@@ -114,106 +158,116 @@ function OrderCard({
   const itemCount = items.reduce((s, i) => s + i.quantity, 0)
   const availableTables = tables.filter((t) => t.status === 'empty')
 
+  const toggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpanded(v => !v)
+  }
+
   return (
     <div
       onClick={onClick}
       style={{
-        background: selected ? '#242018' : '#242018',
-        borderRadius: '12px',
-        padding: '1rem',
-        border: selected ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.04)',
+        background: selected ? '#242018' : '#1E1A14',
+        borderRadius: '10px',
+        padding: '0.6rem 0.75rem',
+        border: selected ? `2px solid ${color}` : '1px solid rgba(255,255,255,0.05)',
         cursor: 'pointer',
         transition: 'all 0.15s',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <span style={{ fontSize: '1.2rem', fontWeight: 700, fontFamily: 'monospace', color: '#fff' }}>
+      {/* Compact header row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <button
+          onClick={toggleExpand}
+          title={expanded ? 'Collapse items' : 'Expand items'}
+          style={{
+            padding: '0.15rem 0.4rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)',
+            fontSize: '0.7rem', cursor: 'pointer', flexShrink: 0, lineHeight: 1,
+          }}
+        >
+          {expanded ? '▾' : '▸'}
+        </button>
+        <span style={{ fontSize: '0.95rem', fontWeight: 700, fontFamily: 'monospace', color: '#fff', whiteSpace: 'nowrap' }}>
           {displayRef}
         </span>
-        <span style={{
-          padding: '0.25rem 0.6rem',
-          borderRadius: '6px',
-          fontSize: '0.75rem',
-          fontWeight: 700,
-          background: `${color}25`,
-          color,
-        }}>
+        <span style={{ padding: '0.15rem 0.45rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700, background: `${color}25`, color, whiteSpace: 'nowrap' }}>
           {label}
         </span>
-      </div>
-      {requiresPaymentConfirmation(order.order_type) && (
-        <div style={{ marginBottom: '0.5rem' }}>
+        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap' }}>
+          {order.order_type === 'pickup' ? '📦 Pickup' : order.order_type === 'delivery' ? '🚚 Delivery' : '🍽️ Dine-in'}
+        </span>
+        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap' }}>⏱ {timeSince(order.created_at)}</span>
+        {tn && <span style={{ fontSize: '0.7rem', color: '#38BDF8', fontWeight: 600, whiteSpace: 'nowrap' }}>🪑 {tn}</span>}
+        {order.waiter_name && <span style={{ fontSize: '0.7rem', color: '#E85454', fontWeight: 600, whiteSpace: 'nowrap' }}>🍽️ {order.waiter_name}</span>}
+        {requiresPaymentConfirmation(order.order_type) && (
           <PaymentBadge paymentStatus={order.payment_status} />
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-        <span>{order.order_type === 'pickup' ? '📦 Pickup' : order.order_type === 'delivery' ? '🚚 Delivery' : '🍽️ Dine-in'}</span>
-        <span>⏱ {timeSince(order.created_at)}</span>
-        {tn && <span>🪑 Table {tn}</span>}
-        {order.waiter_name && <span style={{ color: '#E85454', fontWeight: 600 }}>🍽️ {order.waiter_name}</span>}
-        <span style={{ color: 'rgba(255,255,255,0.3)' }}>📋 {itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+        )}
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#4CAF50', whiteSpace: 'nowrap' }}>R{order.total.toFixed(2)}</span>
+          <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+        </span>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4CAF50' }}>R{order.total.toFixed(2)}</span>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {/* Waiter order: show Confirm button for admin/FOH (kitchen can still start without confirmation) */}
-          {order.source === 'waiter' && order.status === 'pending' && (
+
+      {/* Action row (always visible on compact card) */}
+      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.5rem', paddingLeft: '1.1rem' }}>
+        {order.source === 'waiter' && order.status === 'pending' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onConfirmWaiterOrder(order.id) }}
+            style={{
+              padding: '0.25rem 0.55rem', borderRadius: '8px', border: 'none',
+              background: '#C8A04E', color: '#fff', fontSize: '0.7rem', fontWeight: 700,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+            title="Confirm waiter order (kitchen can also start without this)"
+          >
+            ✅ Confirm
+          </button>
+        )}
+        {requiresPaymentConfirmation(order.order_type) && order.payment_status === 'pending' && (
+          <>
             <button
-              onClick={(e) => { e.stopPropagation(); onConfirmWaiterOrder(order.id) }}
+              onClick={(e) => { e.stopPropagation(); onConfirmPayment(order.id) }}
               style={{
-                padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
-                background: '#C8A04E', color: '#fff', fontSize: '0.75rem', fontWeight: 700,
-                cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-              title="Confirm waiter order (kitchen can also start without this)"
-            >
-              ✅ Confirm
-            </button>
-          )}
-          {requiresPaymentConfirmation(order.order_type) && order.payment_status === 'pending' && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); onConfirmPayment(order.id) }}
-                style={{
-                  padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
-                  background: '#4CAF50', color: '#000', fontSize: '0.75rem', fontWeight: 700,
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                }}
-              >
-                Confirm Payment
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onAcceptNoPayment(order.id) }}
-                style={{
-                  padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid #C8A04E',
-                  background: 'transparent', color: '#C8A04E', fontSize: '0.7rem', fontWeight: 600,
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                }}
-              >
-                Accept (Skip Payment)
-              </button>
-            </>
-          )}
-          {!['completed', 'cancelled'].includes(order.status) && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onCancel?.(order.id) }}
-              style={{
-                padding: '0.3rem 0.6rem', borderRadius: '8px', border: 'none',
-                background: '#E85454', color: '#fff', fontSize: '0.7rem', fontWeight: 700,
+                padding: '0.25rem 0.55rem', borderRadius: '8px', border: 'none',
+                background: '#4CAF50', color: '#000', fontSize: '0.7rem', fontWeight: 700,
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
-              Cancel
+              Confirm Payment
             </button>
-          )}
-          {!tn && order.status === 'pending' && availableTables.length > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAcceptNoPayment(order.id) }}
+              style={{
+                padding: '0.25rem 0.55rem', borderRadius: '8px', border: '1px solid #C8A04E',
+                background: 'transparent', color: '#C8A04E', fontSize: '0.65rem', fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              Accept (Skip)
+            </button>
+          </>
+        )}
+        {!['completed', 'cancelled'].includes(order.status) && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCancel?.(order.id) }}
+            style={{
+              padding: '0.25rem 0.55rem', borderRadius: '8px', border: 'none',
+              background: '#E85454', color: '#fff', fontSize: '0.65rem', fontWeight: 700,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            Cancel
+          </button>
+        )}
+        {!tn && order.status === 'pending' && availableTables.length > 0 && (
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <button
               onClick={(e) => { e.stopPropagation(); setShowTableDropdown(!showTableDropdown) }}
               style={{
-                padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
+                padding: '0.25rem 0.55rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
                 background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)',
-                fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
               + Assign Table
@@ -244,8 +298,29 @@ function OrderCard({
             )}
           </div>
         )}
-        </div>
       </div>
+
+      {/* Expandable items drawer */}
+      {expanded && (
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0.3rem 0', borderBottom: i < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', fontSize: '0.85rem' }}>
+              <span style={{ color: '#fff' }}>
+                <strong>{item.quantity}x</strong> {item.name}
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>R{(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          ))}
+          {items.some(i => i.notes) && (
+            <div style={{ marginTop: '0.4rem' }}>
+              {items.filter(i => i.notes).map((item, i) => (
+                <div key={i} style={{ fontSize: '0.75rem', color: '#C8A04E', marginTop: '0.1rem' }}>⚠️ {item.name}: {item.notes}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {order.status === 'cancelled' && order.cancellation_reason && (
         <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.6rem', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
           <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#E85454' }}>
@@ -471,6 +546,7 @@ export default function OrdersPOS() {
   const [cancelReason, setCancelReason] = useState('')
   const [cancelling, setCancelling] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [todayOnly, setTodayOnly] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
@@ -564,8 +640,10 @@ export default function OrdersPOS() {
 
 
 
-  const activeOrders = orders.filter((o) => !['completed', 'cancelled'].includes(o.status))
-  const completedOrders = orders.filter((o) => ['completed', 'cancelled'].includes(o.status))
+  // "Today only" — hide stale orders older than 24h so they don't clutter the board
+  const withinToday = (o: { created_at: string }) => Date.now() - new Date(o.created_at).getTime() <= 24 * 60 * 60 * 1000
+  const activeOrders = orders.filter((o) => !['completed', 'cancelled'].includes(o.status) && (!todayOnly || withinToday(o)))
+  const completedOrders = orders.filter((o) => ['completed', 'cancelled'].includes(o.status) && (!todayOnly || withinToday(o)))
   const selectedOrder = orders.find((o) => o.id === selectedOrderId) || null
 
   // Filter by selected table
@@ -591,8 +669,10 @@ export default function OrdersPOS() {
 
   // Compute tables
   const tables: TableInfo[] = []
+  const ordersByTable: Record<number, SupabaseOrder | undefined> = {}
   for (let i = 1; i <= TOTAL_TABLES; i++) {
     const orderOnTable = activeOrders.find((o) => getOrderTableNumber(o) === i)
+    ordersByTable[i] = orderOnTable
     tables.push({
       tableNumber: i,
       status: orderOnTable ? 'occupied' : 'empty',
@@ -779,7 +859,7 @@ export default function OrdersPOS() {
             {new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
-        <TableGrid tables={tables} selectedTable={selectedTable} onSelectTable={(n) => { setSelectedTable(n); setSelectedOrderId(null) }} />
+        <TableGrid tables={tables} ordersByTable={ordersByTable} selectedTable={selectedTable} onSelectTable={(n) => { setSelectedTable(n); setSelectedOrderId(null) }} />
         <div style={{ marginTop: 'auto', padding: '0.75rem' }}>
           {selectedTable && (
             <button
@@ -835,6 +915,18 @@ export default function OrdersPOS() {
               }}
             >
               {showHistory ? '← Active Orders' : '📜 History'}
+            </button>
+            <button
+              onClick={() => setTodayOnly(!todayOnly)}
+              title="Hide orders older than 24h (stale auto-archive)"
+              style={{
+                padding: '0.3rem 0.6rem', borderRadius: '8px', border: todayOnly ? '1px solid #4ADE80' : '1px solid rgba(255,255,255,0.1)',
+                background: todayOnly ? 'rgba(74,222,128,0.12)' : 'transparent',
+                color: todayOnly ? '#4ADE80' : 'rgba(255,255,255,0.5)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {todayOnly ? '🗓 Today' : '🗓 All time'}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>

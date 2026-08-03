@@ -196,10 +196,25 @@ export default function AdminDashboard() {
         ) : null}
       </div>
 
-      {/* Quick Actions */}
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={sectionLabel}>Quick Actions</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+      {/* Quick Actions — branded command banner */}
+      <div style={{
+        marginBottom: 24,
+        background: 'linear-gradient(135deg, #1E1A14 0%, #242018 100%)',
+        border: '1px solid #3A3428',
+        borderLeft: '4px solid #C8A04E',
+        borderRadius: 12,
+        padding: '18px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#F0EBE3' }}>⚡ Command Center</h2>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#8C8275' }}>Jump straight into the screens you use most</p>
+          </div>
+          <Link href="/admin/orders">
+            <Button variant="primary" size="md">+ New Order</Button>
+          </Link>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
           <QuickAction href="/admin/orders" icon="📋" label="Orders" color="#60A5FA" />
           <QuickAction href="/admin/kitchen" icon="👨‍🍳" label="Kitchen" color="#FBBF24" />
           <QuickAction href="/admin/bar" icon="🍸" label="Bar" color="#A78BFA" />
@@ -230,30 +245,42 @@ export default function AdminDashboard() {
         <div style={sectionRow}>
           <h2 style={{ ...sectionHeading, marginBottom: 16 }}>Orders by Waiter</h2>
           {waiterStats.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {waiterStats.slice(0, 8).map((w, i) => {
-                const maxCount = Math.max(...waiterStats.map(s => s.count))
-                const pct = maxCount > 0 ? (w.count / maxCount) * 100 : 0
-                return (
-                  <div key={i}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{
-                          width: 28, height: 28, borderRadius: 8,
-                          background: 'rgba(200,160,78,0.12)', color: '#C8A04E',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: 700, fontSize: 12, flexShrink: 0,
-                        }}>{w.name.charAt(0).toUpperCase()}</span>
-                        <span style={{ fontWeight: 500, color: '#F0EBE3', fontSize: 14 }}>{w.name}</span>
-                      </span>
-                      <span style={{ fontWeight: 700, color: '#C8A04E', fontSize: 14 }}>{w.count}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {(() => {
+                const maxCount = Math.max(...waiterStats.map(s => s.count), 1)
+                return waiterStats.slice(0, 8).map((w, i) => {
+                  const pct = Math.round((w.count / maxCount) * 100)
+                  return (
+                    <div key={i}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            background: 'rgba(200,160,78,0.12)', color: '#C8A04E',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontWeight: 700, fontSize: 12, flexShrink: 0,
+                          }}>{w.name.charAt(0).toUpperCase()}</span>
+                          <span style={{ fontWeight: 500, color: '#F0EBE3', fontSize: 14 }}>{w.name}</span>
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                          <span style={{ fontWeight: 700, color: '#C8A04E', fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>{w.count}</span>
+                          <span style={{ fontSize: 11, color: '#8C8275', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+                        </span>
+                      </div>
+                      <div style={{ height: 8, background: '#2A261E', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${pct}%`,
+                          background: 'linear-gradient(90deg, #C8A04E 0%, #E5C47A 100%)',
+                          borderRadius: 4,
+                          transition: 'width 0.4s ease',
+                          minWidth: pct > 0 ? '4px' : 0,
+                        }} />
+                      </div>
                     </div>
-                    <div style={{ height: 4, background: '#3A3428', borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: '#C8A04E', borderRadius: 2, transition: 'width 0.3s ease' }} />
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              })()}
             </div>
           ) : (
             <p style={{ color: '#A09888', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No waiter data</p>
