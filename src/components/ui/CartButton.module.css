@@ -457,6 +457,29 @@
   min-height: 48px;
 }
 
+.btnAddMore {
+  width: 100%;
+  padding: 0.85rem;
+  background: transparent;
+  border: 2px dashed var(--beige-dark);
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btnAddMore:hover {
+  border-color: var(--warm);
+  color: var(--warm);
+}
+
 /* ── Desktop three-column grid ─────────────── */
 @media (min-width: 992px) {
   .overlay {

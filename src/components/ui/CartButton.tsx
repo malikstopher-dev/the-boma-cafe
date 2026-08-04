@@ -611,6 +611,13 @@ export default function CartButton() {
                       >
                         <span>🌐</span> Place Online Order
                       </button>
+                      <button
+                        onClick={closeCart}
+                        className={styles.btnAddMore}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <span>➕</span> Add More Items
+                      </button>
                     </div>
                   </div>
                   {orderError && (

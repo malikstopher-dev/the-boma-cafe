@@ -145,7 +145,12 @@ export default function WaiterPage() {
     if (!staffInfo?.name) { setSubmitError('Please log in first'); return }
     setSubmitError(null); setSubmitting(true)
     try {
-      const items = cart.map(c => ({ menu_item_id: c.id, quantity: c.quantity, notes: itemNotes[c.id] || undefined, station: c.station || undefined }))
+      const items = cart.map(c => ({
+        ...(c.station === 'bar' ? { bar_item_id: c.id } : { menu_item_id: c.id }),
+        quantity: c.quantity,
+        notes: itemNotes[c.id] || undefined,
+        station: c.station || undefined,
+      }))
       const res = await fetch('/api/supabase/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customer_name: `Table ${tableNumber}`, order_type: 'dine-in', requested_time: 'ASAP', items, table_number: String(tableNumber), waiter_name: staffInfo?.name || null, order_notes: orderNotes || undefined }),
