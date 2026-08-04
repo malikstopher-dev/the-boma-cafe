@@ -62,7 +62,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
           <div className={styles.grid}>
           {/* Brand Column */}
           <div className={styles.brand}>
-            <img src="/logo.png" alt="The Boma Cafe" width={354} height={254} className={styles.footerLogo} />
+<img src="/logo.webp" alt="The Boma Cafe" width={354} height={254} className={styles.footerLogo} onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png' }} />
             <h3 className={styles.logoText}>The Boma Cafe</h3>
               <p className={styles.tagline}>
                 Where rustic charm meets soulful dining in the heart of Sandton.
@@ -143,7 +143,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
 
         {/* Mobile Footer - Shown Only on Mobile */}
         <div className={styles.mobileFooterContent}>
-          <img src="/logo.png" alt="The Boma Cafe" width={354} height={254} className={styles.footerLogo} />
+          <img src="/logo.webp" alt="The Boma Cafe" width={354} height={254} className={styles.footerLogo} onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png' }} />
           <h3 className={styles.mobileBrand}>The Boma Cafe</h3>
           <p className={styles.mobileTagline}>Where rustic charm meets soulful dining in Sandton.</p>
 

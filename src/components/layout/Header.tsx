@@ -70,13 +70,13 @@ export default function Header() {
 
           <Link href="/" className={styles.logo}>
             <img 
-              src="/logo.png" 
+              src="/logo.webp" 
               alt="The Boma Cafe" 
               width={354}
               height={254}
               className={styles.logoImg}
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).src = '/logo.png';
               }}
             />
           </Link>
