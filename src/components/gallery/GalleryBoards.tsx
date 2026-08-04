@@ -32,10 +32,18 @@ export default function GalleryBoards({ onManageClick, onImageClick, onCategoryC
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(true);
 
+  const getCategoryFromUrl = (url: string): string => {
+    const match = url.match(/\/gallery\/([^/]+)\//);
+    if (!match) return 'Other';
+    const folder = match[1].toLowerCase();
+    const map: Record<string, string> = { events: 'Events', food: 'Food', venue: 'Venue', people: 'People', promotions: 'Promotions' };
+    return map[folder] || 'Other';
+  };
+
   const boards = useMemo(() => {
     const grouped: Record<string, { name: string; images: { url: string }[] }> = {};
     for (const item of galleryItems) {
-      const cat = item.category || 'Other';
+      const cat = item.category || getCategoryFromUrl(item.url || '');
       if (!grouped[cat]) grouped[cat] = { name: cat, images: [] };
       grouped[cat].images.push({ url: item.url });
     }

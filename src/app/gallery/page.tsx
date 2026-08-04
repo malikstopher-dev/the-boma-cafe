@@ -56,9 +56,20 @@ export default function GalleryPage() {
     return () => clearInterval(interval);
   }, [featuredImages.length]);
 
+  const getCategoryFromUrl = (url: string): string => {
+    const match = url.match(/\/gallery\/([^/]+)\//);
+    if (!match) return 'Other';
+    const folder = match[1].toLowerCase();
+    const map: Record<string, string> = { events: 'Events', food: 'Food', venue: 'Venue', people: 'People', promotions: 'Promotions' };
+    return map[folder] || 'Other';
+  };
+
   const filteredGallery = activeCategory === 'All' 
     ? gallery 
-    : gallery.filter((item: any) => item.category === activeCategory);
+    : gallery.filter((item: any) => {
+        const cat = item.category || getCategoryFromUrl(item.url || '');
+        return cat === activeCategory;
+      });
 
   const openLightbox = (images: string[], index: number) => {
     setLightboxImages(images);

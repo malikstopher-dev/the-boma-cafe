@@ -46,7 +46,6 @@ function VideoSection() {
           <video
             controls
             preload="metadata"
-            poster="/images/about.jpg"
             style={{ width: '100%', height: 'auto', display: 'block' }}
           >
             {shouldLoad && <source src="/videos/gallery.mp4" type="video/mp4" />}
@@ -91,33 +90,36 @@ export default function ExperiencePage() {
       title: 'Outdoor Dining',
       description: 'Dine beneath our signature thatched roof — open-air seating with views of the firepits.',
       icon: '🍽️',
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop'
+      image: '/gallery/experience/outdoor-dining.jpg'
     },
     {
       title: 'Firepit Evenings',
       description: 'Gather around glowing firepits — perfect for cold nights, good conversations, and warm drinks.',
       icon: '🔥',
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop'
+      image: '/gallery/experience/firepit-evenings.jpg'
     },
     {
       title: 'Weekend Buffet',
       description: 'Saturday & Sunday breakfast buffet — fresh spreads, hot dishes, and relaxed weekend vibes.',
       icon: '🥞',
-      image: '/gallery/events/images (12).jpg'
+      image: '/gallery/experience/weekend-buffet.jpg'
     },
     {
       title: 'Family Gatherings',
       description: 'Spacious grounds, kids play area, and welcoming atmosphere for celebrations of all sizes.',
       icon: '👨‍👩‍👧‍👦',
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop'
+      image: '/gallery/experience/family-gatherings.jpg'
     }
   ];
 
   const galleryPreview = [
     '/gallery/gallery/bomacafe2-large-1.jpg',
-    '/gallery/venue/2025-04-14.webp',
-    '/gallery/events/2025-04-23.webp',
-    '/gallery/people/boma1-1152x864.jpeg'
+    '/gallery/experience/outdoor-dining.jpg',
+    '/gallery/experience/firepit-evenings.jpg',
+    '/gallery/experience/weekend-buffet.jpg',
+    '/gallery/experience/family-gatherings.jpg',
+    '/gallery/gallery/happy.jpg',
+    '/gallery/gallery/boy.jpg',
   ];
 
   const contactPhoneRaw = settings?.contact?.phone?.replace(/\s/g, '') || '';
@@ -556,27 +558,45 @@ export default function ExperiencePage() {
               </h3>
             </div>
             <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(4, 1fr)', 
-              gap: '0.75rem',
-              maxWidth: '1000px',
-              margin: '0 auto'
+              maxWidth: '900px',
+              margin: '0 auto',
+              overflow: 'hidden',
+              borderRadius: '16px',
+              position: 'relative'
             }}>
-              {galleryPreview.map((img, idx) => (
-                <div key={idx} style={{
-                  aspectRatio: '1',
-                  borderRadius: '12px',
-                  overflow: 'hidden'
-                }}>
-                  <img 
-                    src={img} 
-                    alt={`Boma atmosphere ${idx + 1}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    loading="lazy"
-                  />
-                </div>
-              ))}
+              <div style={{
+                display: 'flex',
+                animation: 'gallerySlide 28s linear infinite',
+                width: `${galleryPreview.length * 100}%`
+              }}>
+                {galleryPreview.map((img, idx) => (
+                  <div key={idx} style={{
+                    width: `${100 / galleryPreview.length}%`,
+                    flexShrink: 0,
+                    aspectRatio: '16/9'
+                  }}>
+                    <img 
+                      src={img} 
+                      alt={`Boma atmosphere ${idx + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
+            <style>{`
+              @keyframes gallerySlide {
+                0%, 14% { transform: translateX(0); }
+                16%, 28% { transform: translateX(-${100 / galleryPreview.length}%); }
+                30%, 42% { transform: translateX(-${200 / galleryPreview.length}%); }
+                44%, 56% { transform: translateX(-${300 / galleryPreview.length}%); }
+                58%, 70% { transform: translateX(-${400 / galleryPreview.length}%); }
+                72%, 84% { transform: translateX(-${500 / galleryPreview.length}%); }
+                86%, 98% { transform: translateX(-${600 / galleryPreview.length}%); }
+                100% { transform: translateX(0); }
+              }
+            `}</style>
             <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
               <Link href="/gallery" style={{ 
                 color: 'var(--primary)', 
