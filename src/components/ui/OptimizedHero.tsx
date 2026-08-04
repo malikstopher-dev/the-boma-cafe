@@ -6,7 +6,9 @@ import Image from 'next/image';
 interface OptimizedHeroProps {
   poster: string;
   videoSrc: string;
+  videoSrcs?: string[];
   mobileVideoSrc?: string;
+  mobileVideoSrcs?: string[];
   className?: string;
   children?: ReactNode;
   contentAlign?: 'center' | 'bottom';
@@ -15,7 +17,9 @@ interface OptimizedHeroProps {
 export default function OptimizedHero({
   poster,
   videoSrc,
+  videoSrcs,
   mobileVideoSrc,
+  mobileVideoSrcs,
   className,
   children,
   contentAlign = 'center',
@@ -23,6 +27,7 @@ export default function OptimizedHero({
   const [loadVideo, setLoadVideo] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [videoIndex, setVideoIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -41,8 +46,19 @@ export default function OptimizedHero({
     };
   }, []);
 
-  const activeVideoSrc = isMobile && mobileVideoSrc ? mobileVideoSrc : videoSrc;
-  const showVideo = loadVideo && activeVideoSrc;
+  const desktopSrcs = videoSrcs && videoSrcs.length > 0 ? videoSrcs : [videoSrc];
+  const mobileSrcs = mobileVideoSrcs && mobileVideoSrcs.length > 0
+    ? mobileVideoSrcs
+    : (mobileVideoSrc ? [mobileVideoSrc] : desktopSrcs);
+  const srcs = isMobile ? mobileSrcs : desktopSrcs;
+  const activeSrc = srcs[Math.min(videoIndex, srcs.length - 1)] || videoSrc;
+  const multiVideo = srcs.length > 1;
+
+  useEffect(() => {
+    setVideoIndex(0);
+  }, [isMobile]);
+
+  const showVideo = loadVideo && activeSrc;
 
   return (
     <div className={className} style={{
@@ -72,10 +88,11 @@ export default function OptimizedHero({
             ref={videoRef}
             autoPlay
             muted
-            loop
+            loop={!multiVideo}
             playsInline
-            preload="none"
+            preload={multiVideo ? 'auto' : 'none'}
             poster={poster}
+            src={activeSrc}
             style={{
               position: 'absolute',
               inset: 0,
@@ -87,9 +104,8 @@ export default function OptimizedHero({
             }}
             onCanPlay={() => setVideoReady(true)}
             onLoadedData={() => setVideoReady(true)}
-          >
-            <source src={activeVideoSrc} type="video/mp4" />
-          </video>
+            onEnded={() => { if (multiVideo) setVideoIndex(i => (i + 1) % srcs.length) }}
+          />
         </div>
       )}
 

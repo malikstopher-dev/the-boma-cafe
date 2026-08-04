@@ -175,7 +175,9 @@ export default function ExperiencePage() {
           <OptimizedHero
             poster="/hero/hero-experience.png"
             videoSrc="/videos/experience-hero.mp4"
+            videoSrcs={['/videos/experience-desktop-1.mp4']}
             mobileVideoSrc="/videos/experience-mobile.mp4"
+            mobileVideoSrcs={['/videos/experience-mobile-2.mp4', '/videos/experience-mobile.mp4']}
             contentAlign={isMobile ? 'center' : 'bottom'}
           >
             {!isMobile && heroContent}

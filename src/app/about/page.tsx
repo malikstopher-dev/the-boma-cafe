@@ -81,7 +81,13 @@ export default function AboutPage() {
           <OptimizedHero
             poster={aboutSettings?.heroImage || "/hero/hero-about.jpg"}
             videoSrc="/videos/about-hero.mp4"
+            videoSrcs={[
+              '/videos/new hero bg about desktop/about-hero-desktop-2.mp4',
+              '/videos/new hero bg about desktop/about-hero-desktop-3.mp4',
+              '/videos/new hero bg about desktop/about-hero-desktop-1.mp4',
+            ]}
             mobileVideoSrc="/videos/about-mobile.mp4"
+            mobileVideoSrcs={['/videos/experience-mobile-2.mp4', '/videos/flame-logo.mp4']}
             contentAlign={isMobile ? 'center' : 'bottom'}
           >
             {!isMobile && heroContent}
