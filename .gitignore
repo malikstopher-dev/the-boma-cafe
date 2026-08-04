@@ -59,3 +59,6 @@ firebase-service-account*.json
 
 # OpenCode session state
 .opencode/
+# leaked keys removed from tracking
+supabase/project_id_url/
+test_db.js
