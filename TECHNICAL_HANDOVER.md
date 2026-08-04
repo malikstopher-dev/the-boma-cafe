@@ -1,11 +1,5 @@
 # The Boma Cafe — Admin Dashboard Handover
 
-**Date:** 3 August 2026
-**Repo:** `github.com/malikstopher-dev/the-boma-cafe`
-**Branch:** `main` — latest commit `179f0d4`
-**Live site:** `the-boma-cafe.vercel.app`
-**Stack:** Next.js 14 (App Router) + Supabase (PostgreSQL) + Resend (email) + Vercel
-**Auth:** password cookies (`boma_admin_auth`) + staff PIN sessions
 
 This document explains, in plain English, what every part of the admin dashboard does and how to use it step by step. It is written for a restaurant manager who is opening the dashboard for the first time.
 
@@ -13,18 +7,18 @@ This document explains, in plain English, what every part of the admin dashboard
 
 ## How to log in
 
-1. Go to `/admin/login` in your browser.
-2. Enter the admin password (stored in the `ADMIN_PASSWORD` env var on Vercel).
+1. Go to `thebomacafe.co.za/admin/login` in your browser.
+2. Enter the admin password.
 3. You are redirected to `/admin/dashboard`.
 4. To log out, click the **Log out** button at the bottom of the sidebar.
 
-Kitchen, bar, and waiter staff log in through their own pages (`/staff/login`, `/waiter`) using PINs. The admin password gets you into everything.
+Kitchen, bar, and waiter staff log in through their own pages (`/staff/login`, `/waiter`) using:BomaKitchen0884,BomaBar0884 and BomaWaiter0884. The admin password gets you into everything.
 
 ---
 
 ## The sidebar — your map of the dashboard
 
-The left sidebar is organised into 13 groups. Each group holds related pages. Here is what every group does, in the order they appear.
+The left sidebar is organised into 14 groups. Each group holds related pages. Here is what every group does, in the order they appear.
 
 ---
 
@@ -47,19 +41,34 @@ Behind the scenes, slow jobs (like generating a booking PDF and emailing it) are
 
 ### Orders (`/admin/orders`) — the POS screen
 This is the point-of-sale where you run the restaurant floor.
-- **Left:** a grid of tables. Green = free, amber = food being prepared, blue = ready, red = bill pending. Click a table to see its orders.
-- **Centre:** order cards. Click one to open it. Each card can be expanded to show the items inside.
-- **Right:** the checkout panel. Choose payment method (cash, card, mobile), then click **Mark Paid** to complete the order.
-- **Pending online dine-in orders** show an **Approve** button (the customer is not in the restaurant yet) and an **Assign Waiter** dropdown.
-- A **Today only** toggle hides stale orders older than 24 hours so the board stays clean.
-- Every 4 seconds the page polls for new orders and plays a beep.
 
-### Kitchen (`/admin/kitchen`)
-The Kitchen Display System (KDS). A Kanban board: NEW → CONFIRMED → PREPARING → PACKING → READY.
-- Keyboard shortcuts: `1` accept, `2` start prep, `3` mark ready, arrow keys to move between cards.
-- Orders older than 24 hours auto-archive so the board never fills up with zombies.
-- Empty columns collapse on desktop so the active column gets full width.
-- Timer colours: green under 10 min, amber 10–20 min, flashing red over 20 min.
+**The table grid (left).** One tile per table (1–20). Green = available, red = occupied (has an active order), amber = **bill pending** (food is ready or served but the bill has not been settled). Click a table to filter the order list to it.
+
+**Order cards (centre).** Each card shows the reference (e.g. `20260804-006`), status badge, order type (dine-in / pickup / delivery), how long ago it arrived, table number (if assigned), the waiter (if assigned), payment status, and total. Click the ▸ arrow to expand the items inside.
+
+**Assigning a waiter and a table** (dine-in orders):
+- **+ Assign Waiter** — opens a dropdown of waiters currently **on duty** (active on the Waiters page). Pick one and their name appears on the card. Waiter orders already carry the waiter's name automatically.
+- **+ Assign Table** — opens a dropdown of only the **empty** tables. Assigning sets the table number and the tile in the grid turns red. When the order is ready/served but not paid, the tile turns amber (bill pending).
+
+**Confirming an order before the kitchen or bar can start** — this depends on where the order came from:
+- **Online pickup / delivery:** payment must be confirmed **before** the kitchen can start. The card shows a **Confirm Payment** button (or **Accept (Skip)** to wave the payment). Both confirm the order and send it to the kitchen/bar.
+- **Online dine-in:** press **✅ Approve** — no payment required, the bill is settled at the table. Then assign a waiter.
+- **Waiter orders (taken at the table):** the **✅ Confirm** button is optional. The kitchen/bar can also press **START PREP** on a pending waiter order directly, without admin confirmation. Either way the order is never prepared before this step.
+- Until an online order is confirmed, the kitchen display shows **"Awaiting admin confirmation"** and the bar/kitchen cannot start it.
+- **Cancel** — asks for a reason (min 3 characters). Cancellation is allowed at any stage before completion.
+- Mixed orders (food + drinks) are split into **two linked orders** — one for the kitchen, one for the bar — with the same table/waiter attached.
+
+**Checkout (right panel).** Select the order, choose the payment method (cash, card, mobile), click **Mark Paid**. This completes the order, records the payment, and triggers the receipt printer view. Completed orders that were ready but unpaid trigger the amber "bill pending" tile.
+- The board updates in real time (Supabase Realtime) with a fallback poll, and beeps on new orders. A **Today only** toggle hides orders older than 24 hours.
+
+### Kitchen (`/admin/kitchen`) and Bar (`/admin/bar`)
+The Kitchen/Bar Display System (KDS). A Kanban board: NEW → CONFIRMED → PREPARING → READY.
+- **NEW (pending) waiter orders** show a **🔥 START PREP** button — the station can start them immediately.
+- **NEW (pending) online orders** show "⏳ Awaiting admin confirmation" — the station can only cancel them until admin confirms on the Orders page.
+- Keyboard shortcuts: `1` = start prep (on confirmed orders, or pending waiter orders), `2` = mark ready, arrow keys move between cards.
+- When starting prep you can enter an estimated prep time — the system then shows a countdown per order.
+- Timer colours: green under 10 min, amber 10–20 min, flashing red over 20 min. Ready orders chime and fade out after a while.
+- Bar and kitchen see only their own station's orders (mixed orders arrive as separate kitchen and bar cards).
 
 ---
 
@@ -271,7 +280,17 @@ Staff chat. Conversations between staff members, real-time. Supports voice notes
 Contact form submissions from the public site. Mark as read, delete.
 
 ### Waiters (`/admin/waiters`)
-Manage wait staff: add, edit name, assign PIN, toggle on/off duty, delete. Deleting a waiter preserves their historical orders.
+Manage wait staff. Each waiter has a name, an employee ID, and a 4–6 digit PIN.
+
+**Adding a waiter:**
+1. Click **People → Waiters** in the sidebar.
+2. Fill in the three fields: **Employee ID** (e.g. `W003` — must be unique), **Name**, and **PIN (4–6 digits)**. Press Enter or click **+ Add**.
+3. They can now log in at `/staff/login` (or `/waiter` on a handheld) using their employee ID + PIN — no admin password needed. Kitchen and bar staff work the same way.
+
+**Other actions:**
+- **🟢/🔴** — toggle on/off duty. Only waiters **on duty** appear in the "Assign Waiter" dropdown on the Orders page, so take people off duty when their shift ends.
+- **✏️** — rename (employee ID and PIN cannot be changed here; delete and re-add to change them).
+- **🗑️** — delete. Historical orders keep the waiter's name; they are just removed from future assignment lists.
 
 ---
 
@@ -298,6 +317,25 @@ The Marketing Studio. Create design projects (posters, social posts) from templa
 **Migrations.** The production Supabase DB is at `lyksqvqtiysjttwpgeyw`. Migrations 000–061 are applied. Do not re-run migrations blindly — use `supabase migration repair --status applied` only to reconcile history for schemas that already exist. Use `npx -y supabase@2.111.0` (the global `@supabase/cli@1.0.0` has no Windows binaries).
 
 **Tests.** Run `npx vitest run` — currently 61 passing across 6 files. Run `npx tsc --noEmit -p src/inventory/tsconfig.json` for the strict type check on the inventory engine. The full `npm run build` takes about 2.6 minutes.
+
+---
+
+## Setting up stock for the first time
+
+Go through this once when you switch on inventory. Everything lives under **Operations** in the sidebar.
+
+1. **Add your units, categories and cost centres** — `Operations → Settings`: units of measure (and conversions), product categories, and cost centres. Every stock movement later needs a cost centre.
+2. **Add suppliers** — `Operations → Suppliers`, so you can receive deliveries against them later.
+3. **Add products** — `Operations → All Products` (or the Food/Beverage quick links). Click the inline **Add Product** form at the top: name, SKU, barcode (optional), and product type (Food, Beverage, Cleaning, Packaging, General). Each product starts with **zero stock** — there is no balance field to type into.
+4. **Link menu items to products (optional but recommended)** — `Operations → Menu Integration`. Linking food/drink menu items to inventory products is what lets stock be auto-deducted when an order completes. "⚡ Auto-Link Exact Matches" does the bulk of it in one click.
+5. **Set reorder levels** — `Operations → Reorder` (reorder rules) so low-stock alerts and reorder suggestions work.
+
+**Get your opening stock into the system** — the ledger is the only truth, and it starts empty. Load opening balances with either method:
+
+- **Option A — Excel import (recommended if you have a spreadsheet):** `Operations → Imports → New Import`. Upload your stock or price list as `.xlsx`, map the columns, preview, fix issues, **Apply**. The system writes ledger transactions (and can create new products from the file).
+- **Option B — Stock Count:** `Operations → Stock Counts → New Count`, pick a location. The count opens against an expected balance of zero. Enter each product's physical quantity on hand, click **Save Count Item**, **Submit**, then **Approve**. Approving posts an adjustment transaction for every count line, so the balances become real.
+
+After either method, your balances are live: the **Dashboard** shows stock value, **Transactions** shows the full movement trail, and ordering (POs → Receiving) adds stock from then on.
 
 ---
 
