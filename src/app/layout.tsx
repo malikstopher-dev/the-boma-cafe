@@ -1,6 +1,7 @@
 import "./globals.css";
 import "@/components/pos/pos-tokens.css";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { Playfair_Display, Poppins } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { CartProvider } from "@/lib/cart";

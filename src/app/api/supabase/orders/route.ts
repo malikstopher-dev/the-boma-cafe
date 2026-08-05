@@ -82,10 +82,16 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500)
   const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10), 0)
   const station = searchParams.get('station')
+  const full = searchParams.get('full') === '1'
+
+  let baseColumns = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,delivery_address,requested_time,preparation_time_minutes,cancellation_reason,phone'
+  if (full) {
+    baseColumns = '*'
+  }
 
   let query = getAdminClient()
     .from('orders')
-    .select('*', { count: 'exact' })
+    .select(baseColumns, { count: (full || !station) ? 'exact' : 'estimated' })
 
   if (station === 'kitchen' || station === 'bar') {
     query = query.eq('station', station)
