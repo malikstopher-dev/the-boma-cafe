@@ -14,7 +14,7 @@ export async function GET() {
 
     const [categoriesRes, itemsRes] = await Promise.all([
       client.from('menu_categories').select('id,name,description,order_index,is_active,is_bar').order('order_index', { ascending: true }),
-      client.from('menu_items').select('id,category_id,name,description,price,image,sizes,add_ons,options,is_available,is_featured,is_on_promo,promo_badge,order_index,available_for_all_order_types').eq('is_available', true).order('order_index', { ascending: true }),
+      client.from('menu_items').select('id,category_id,name,description,price,image,sizes,add_ons,options,is_available,is_featured,is_on_promo,promo_badge,order_index,available_for_all_order_types').eq('is_available', true).order('order_index', { ascending: true }).limit(300),
     ]);
 
     if (categoriesRes.error) throw categoriesRes.error;

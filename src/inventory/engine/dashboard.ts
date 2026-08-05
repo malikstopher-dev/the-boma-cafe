@@ -134,15 +134,25 @@ export async function getAlerts(locationId: string, inventoryType?: InventoryTyp
   }
 
   const { data: products } = await prodQuery
+  if (!products || products.length === 0) return []
 
-  for (const product of products ?? []) {
-    const { data: txns } = await supabase
-      .from('inventory_transactions')
-      .select('quantity')
-      .eq('product_id', product.id)
-      .eq('location_id', locationId)
+  const productIds = products.map(p => p.id)
 
-    const balance = (txns ?? []).reduce((s, t) => s + Number(t.quantity), 0)
+  const { data: txns } = await supabase
+    .from('inventory_transactions')
+    .select('product_id, quantity')
+    .eq('location_id', locationId)
+    .in('product_id', productIds)
+
+  // Build per-product balance in memory (single pass over txns)
+  const balanceMap = new Map<string, number>()
+  for (const t of (txns ?? [])) {
+    const prev = balanceMap.get(t.product_id) ?? 0
+    balanceMap.set(t.product_id, prev + Number(t.quantity))
+  }
+
+  for (const product of products as any[]) {
+    const balance = balanceMap.get(product.id) ?? 0
 
     if (balance < 0) {
       alerts.push({
@@ -152,7 +162,7 @@ export async function getAlerts(locationId: string, inventoryType?: InventoryTyp
         currentBalance: balance,
         threshold: null,
       })
-    } else if (product.reorder_threshold && balance <= Number(product.reorder_threshold)) {
+    } else if ((product.reorder_threshold != null) && balance <= Number(product.reorder_threshold)) {
       alerts.push({
         productId: product.id,
         productName: product.name,

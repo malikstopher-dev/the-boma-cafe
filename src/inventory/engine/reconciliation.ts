@@ -29,41 +29,53 @@ export async function getReconciliation(
   }
 
   const { data: products } = await productQuery
+  if (!products || products.length === 0) return []
 
-  if (!products) return []
+  const productIds = products.map(p => p.id)
 
-  const rows: ReconciliationRow[] = []
-  for (const product of products) {
-    const { data: txns } = await supabase
-      .from('inventory_transactions')
-      .select('quantity, unit_cost')
-      .eq('product_id', product.id)
-      .eq('location_id', locationId)
-      .lte('created_at', asAt)
+  let txnQuery = supabase
+    .from('inventory_transactions')
+    .select('product_id, quantity, unit_cost')
+    .eq('location_id', locationId)
+    .lte('created_at', asAt)
+    .in('product_id', productIds)
 
-    const expected = (txns ?? []).reduce((s, t) => s + Number(t.quantity), 0)
-    const unitCost = txns?.find(t => t.unit_cost)?.unit_cost ?? null
+  const { data: allTxns } = await txnQuery
+  const txnMap = new Map<string, number>()
+  const costMap = new Map<string, number | null>()
 
-    rows.push({
+  for (const t of (allTxns ?? [])) {
+    const prev = txnMap.get(t.product_id) ?? 0
+    txnMap.set(t.product_id, prev + Number(t.quantity))
+    if (t.unit_cost) costMap.set(t.product_id, Number(t.unit_cost))
+  }
+
+  return products.map(product => {
+    const expected = txnMap.get(product.id) ?? 0
+    const unitCost = costMap.get(product.id) ?? null
+    return {
       productId: product.id,
       productName: product.name,
       expectedQuantity: expected,
       physicalQuantity: null,
       variance: null,
-      unitCost: unitCost ? Number(unitCost) : null,
+      unitCost,
       varianceValue: null,
-    })
-  }
-
-  return rows
+    }
+  })
 }
 
 export async function getInventoryValue(locationId: string): Promise<number> {
   const supabase = getInventoryClient()
+
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
   const { data: txns } = await supabase
     .from('inventory_transactions')
     .select('product_id, quantity, unit_cost')
     .eq('location_id', locationId)
+    .gte('created_at', ninetyDaysAgo.toISOString())
 
   if (!txns || txns.length === 0) return 0
 

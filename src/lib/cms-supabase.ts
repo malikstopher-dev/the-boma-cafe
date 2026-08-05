@@ -616,11 +616,11 @@ export async function getPublicCMSData(): Promise<any> {
     client.from('site_settings').select('key, value'),
     client.from('announcement').select('*').limit(1).maybeSingle(),
     client.from('popup').select('*').limit(1).maybeSingle(),
-    client.from('events').select('*').order('order_index').filter('visible', 'neq', false),
-    client.from('promotions').select('*').order('order_index').filter('is_active', 'eq', true),
-    client.from('gallery').select('*').order('order_index', { ascending: true }),
-    client.from('bar_categories').select('*').order('order_index').filter('is_active', 'eq', true),
-    client.from('bar_items').select('*').order('order_index').filter('is_available', 'eq', true),
+    client.from('events').select('*').order('order_index').filter('visible', 'neq', false).limit(50),
+    client.from('promotions').select('*').order('order_index').filter('is_active', 'eq', true).limit(30),
+    client.from('gallery').select('*').order('order_index', { ascending: true }).limit(200),
+    client.from('bar_categories').select('*').order('order_index').filter('is_active', 'eq', true).limit(50),
+    client.from('bar_items').select('*').order('order_index').filter('is_available', 'eq', true).limit(200),
   ])
 
   const settings: Record<string, any> = {}

@@ -9,7 +9,7 @@ export async function GET() {
 
     const [categoriesRes, itemsRes] = await Promise.all([
       client.from('bar_categories').select('id,name,order_index,is_active').order('order_index', { ascending: true }).filter('is_active', 'eq', true),
-      client.from('bar_items').select('id,category_id,name,bottle,single_price,glass_price,shot_price,price,order_index,is_available,available_for_pickup,is_alcohol').order('order_index', { ascending: true }).filter('is_available', 'eq', true),
+      client.from('bar_items').select('id,category_id,name,bottle,single_price,glass_price,shot_price,price,order_index,is_available,available_for_pickup,is_alcohol').order('order_index', { ascending: true }).filter('is_available', 'eq', true).limit(200),
     ]);
 
     if (categoriesRes.error) throw categoriesRes.error;
