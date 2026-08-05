@@ -36,7 +36,7 @@ async function checkStuckJobs(): Promise<void> {
 
   const { data: stuckJobs, error } = await client
     .from('background_jobs')
-    .select('*')
+    .select('id, retry_count, max_retries, heartbeat_at, status')
     .eq('status', 'processing')
     .lt('heartbeat_at', cutoff)
 

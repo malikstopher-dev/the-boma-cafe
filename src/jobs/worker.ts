@@ -37,7 +37,7 @@ async function processNextJob(): Promise<void> {
 
   const { data: jobs, error } = await client
     .from('background_jobs')
-    .select('*')
+    .select('id, job_type, payload, status, scheduled_at, retry_count, max_retries, priority')
     .eq('status', 'pending')
     .lte('scheduled_at', new Date().toISOString())
     .order('priority', { ascending: false })
