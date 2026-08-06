@@ -203,7 +203,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
 
     let supabase: ReturnType<typeof createBrowserClient> | null = null
     let channel: ReturnType<ReturnType<typeof createBrowserClient>['channel']> | null = null
-    let fallbackInterval: ReturnType<typeof setInterval> | null = null
+    let realtimeDown = false
 
     try {
       supabase = createBrowserClient()
@@ -224,15 +224,19 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
           }
         })
         .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[StationDisplay] realtime subscription failed:', status, '— falling back to polling')
-            if (!fallbackInterval) fallbackInterval = setInterval(loadOrders, 5000)
-          }
+          realtimeDown = status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'
         })
     } catch (err) {
       console.warn('[StationDisplay] realtime setup failed:', err, '— falling back to polling')
-      fallbackInterval = setInterval(loadOrders, 5000)
+      realtimeDown = true
     }
+
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null
+    const startPolling = () => {
+      const interval = setInterval(loadOrders, realtimeDown ? 5000 : 30000)
+      fallbackInterval = interval
+    }
+    startPolling()
 
     return () => {
       if (channel && supabase) supabase.removeChannel(channel).catch(() => {})

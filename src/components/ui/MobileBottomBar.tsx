@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { Phone, Utensils, CalendarCheck } from 'lucide-react';
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { BUSINESS_INFO } from '@/lib/whatsappConfig';
 import styles from './MobileBottomBar.module.css';
 
@@ -31,7 +33,7 @@ export default function MobileBottomBar() {
   return (
     <div className={styles.bottomBar}>
       <a href={`tel:${phone}`} className={styles.action}>
-        <i className="fas fa-phone" />
+        <Phone size={18} />
         <span>Call</span>
       </a>
       <a 
@@ -40,15 +42,15 @@ export default function MobileBottomBar() {
         rel="noopener noreferrer"
         className={styles.action}
       >
-        <i className="fab fa-whatsapp" />
+        <WhatsAppIcon size={18} ariaLabel="Chat on WhatsApp" />
         <span>WhatsApp</span>
       </a>
       <Link href="/menu" className={styles.action}>
-        <i className="fas fa-utensils" />
+        <Utensils size={18} />
         <span>Menu</span>
       </Link>
       <Link href="/book-event" className={styles.action}>
-        <i className="fas fa-calendar-check" />
+        <CalendarCheck size={18} />
         <span>Book</span>
       </Link>
     </div>

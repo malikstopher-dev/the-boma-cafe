@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
+import { ShoppingCart, Trash2 } from 'lucide-react'
 import { useCart } from '@/lib/cart'
 import { formatWhatsAppUrl, generateOrderMessage, BUSINESS_INFO } from '@/lib/whatsappConfig'
 import { enqueueOrder, syncPendingOrders } from '@/lib/offline-queue'
 import type { OrderType } from '@/lib/pos/types'
 import styles from './CartButton.module.css'
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import ValidationModal, { type ValidationError } from './ValidationModal'
 
 interface FieldErrors {
@@ -349,14 +351,14 @@ export default function CartButton() {
         className="mobile-cta-button"
         title="Order via WhatsApp"
       >
-        <i className="fab fa-whatsapp" style={{ color: '#fff', fontSize: '1.75rem' }} />
+        <WhatsAppIcon size={28} ariaLabel="Chat on WhatsApp" />
       </a>
 
       <button
         onClick={openCart}
         className="mobile-cart-button"
       >
-        <i className="fas fa-shopping-cart" style={{ color: '#fff', fontSize: '1.2rem' }} />
+        <ShoppingCart size={19} color="#fff" />
         {itemCount > 0 && (
           <span className="mobile-cart-badge">
             {itemCount}
@@ -466,7 +468,7 @@ export default function CartButton() {
                             onClick={() => handleRemove(itemId)}
                             aria-label="Remove item"
                           >
-                            <i className="fas fa-trash-alt" />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       )
@@ -601,7 +603,7 @@ export default function CartButton() {
                         className={styles.orderBtn}
                         style={{ opacity: isOrderSubmitting ? 0.7 : 1, cursor: isOrderSubmitting ? 'not-allowed' : 'pointer' }}
                       >
-                        {isOrderSubmitting ? 'Submitting...' : <><i className="fab fa-whatsapp" /> Order via WhatsApp</>}
+                        {isOrderSubmitting ? 'Submitting...' : <><WhatsAppIcon size={18} ariaLabel="Chat on WhatsApp" /> Order via WhatsApp</>}
                       </button>
                       <button
                         onClick={handleOnlineOrder}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Phone, Mail, MapPin, X, Menu, CalendarCheck } from 'lucide-react';
 import styles from './Header.module.css';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { BUSINESS_INFO } from '@/lib/whatsappConfig';
@@ -69,15 +70,15 @@ export default function Header() {
           </nav>
 
           <Link href="/" className={styles.logo}>
-            <img 
-              src="/logo.webp" 
-              alt="The Boma Cafe" 
-              width={354}
-              height={254}
+            <video
+              src="/videos/logo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster="/logo.png"
               className={styles.logoImg}
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/logo.png';
-              }}
+              style={{ objectFit: 'contain' }}
             />
           </Link>
 
@@ -89,13 +90,13 @@ export default function Header() {
             ))}
             <div className={styles.icons}>
               <a href={`tel:${phoneRaw}`} className={styles.icon} title="Call Us">
-                <i className="fas fa-phone" style={{ fontSize: '0.8rem' }} />
+                <Phone size={14} />
               </a>
               <a href={`mailto:${email}`} className={styles.icon} title="Email Us">
-                <i className="fas fa-envelope" style={{ fontSize: '0.8rem' }} />
+                <Mail size={14} />
               </a>
               <a href={mapUrl} target="_blank" rel="noopener noreferrer" className={styles.icon} title="Find Us">
-                <i className="fas fa-map-marker-alt" style={{ fontSize: '0.8rem' }} />
+                <MapPin size={14} />
               </a>
             </div>
             <Link href={bookEventLink.href} className={styles.navCta}>
@@ -110,7 +111,7 @@ export default function Header() {
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         aria-label="Toggle menu"
       >
-        <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} ${styles.toggleIcon}`} />
+        {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {mobileMenuOpen && (
@@ -127,13 +128,13 @@ export default function Header() {
                 </Link>
               ))}
               <Link href={bookEventLink.href} className={styles.mobileNavCta}>
-                <i className="fas fa-calendar-check" style={{ marginRight: 8 }} />
+                <CalendarCheck size={18} style={{ marginRight: 8 }} />
                 {bookEventLink.label}
               </Link>
             </nav>
             <div className={styles.mobileCtaRow}>
               <a href={`tel:${phoneRaw}`} className={styles.mobileCtaBtn}>
-                <i className="fas fa-phone" />
+                <Phone size={18} />
                 <span>Call</span>
               </a>
               <a href={`https://wa.me/${phoneRaw}`} target="_blank" rel="noopener noreferrer" className={styles.mobileCtaBtn}>
@@ -143,10 +144,10 @@ export default function Header() {
             </div>
             <div className={styles.mobileIcons}>
               <a href={`mailto:${email}`} className={styles.mobileIcon} title="Email">
-                <i className="fas fa-envelope" />
+                <Mail size={18} />
               </a>
               <a href={mapUrl} target="_blank" rel="noopener noreferrer" className={styles.mobileIcon} title="Map">
-                <i className="fas fa-map-marker-alt" />
+                <MapPin size={18} />
               </a>
             </div>
           </div>

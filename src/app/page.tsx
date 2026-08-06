@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
@@ -9,11 +10,12 @@ import Hero from '@/components/home/Hero';
 import AnnouncementBar from '@/components/ui/AnnouncementBar';
 import WeekendBuffetPopup from '@/components/ui/WeekendBuffetPopup';
 import FadeInSection from '@/components/ui/FadeInSection';
-import UpcomingEventsSection from '@/components/sections/UpcomingEventsSection';
-import AboutSection from '@/components/sections/AboutSection';
 import { getReservationLink, getEventEnquiryLink } from '@/data/businessInfo';
 import { useBookingModal } from '@/lib/booking';
 import styles from './page.module.css';
+
+const UpcomingEventsSection = dynamic(() => import('@/components/sections/UpcomingEventsSection'), { ssr: false });
+const AboutSection = dynamic(() => import('@/components/sections/AboutSection'), { ssr: false });
 
 // eventSlideshowImages moved to UpcomingEventsSection component
 
@@ -153,7 +155,7 @@ export default function Home() {
                 <FadeInSection key={idx} delay={idx * 100} className={styles.showcaseCardWrapper}>
                   <Link href={category.link} className={styles.showcaseCard}>
                     <div className={styles.showcaseCardImage}>
-                      <img src={category.image} alt={category.title} width={600} height={450} loading="lazy" decoding="async" />
+                      <Image src={category.image} alt={category.title} width={600} height={450} loading="lazy" />
                       <div className={styles.showcaseCardOverlay} />
                       {category.badge && (
                         <span className={`${styles.showcaseBadge} ${category.badge === 'Chef Pick' ? styles.chefPick : ''}`}>
@@ -196,7 +198,7 @@ export default function Home() {
                 <FadeInSection key={idx} delay={idx * 100} className={styles.signatureCardWrapper}>
                   <Link href="/menu" className={styles.signatureCard}>
                     <div className={styles.signatureCardImage}>
-                      <img src={item.image} alt={item.name} width={600} height={400} loading="lazy" decoding="async" />
+                      <Image src={item.image} alt={item.name} width={600} height={400} loading="lazy" />
                       <span className={styles.signatureBadge}>★ Featured</span>
                     </div>
                     <div className={styles.signatureCardContent}>
@@ -232,7 +234,7 @@ export default function Home() {
                 <FadeInSection key={idx} delay={idx * 100} className={styles.cocktailCardWrapper}>
                   <div className={styles.cocktailCard}>
                     <div className={styles.cocktailImageWrapper}>
-                      <img src={cocktail.image} alt={cocktail.name} width={400} height={500} className={styles.cocktailImage} loading="lazy" decoding="async" />
+                      <Image src={cocktail.image} alt={cocktail.name} width={400} height={500} className={styles.cocktailImage} loading="lazy" />
                       <div className={styles.cocktailOverlay} />
                     </div>
                     <div className={styles.cocktailContent}>
@@ -271,7 +273,7 @@ export default function Home() {
             <FadeInSection animationType="scale" className={styles.galleryPreviewWrapper}>
               <div className={styles.galleryPreview}>
                 <div className={styles.galleryMainImage}>
-                  <img src={galleryPreview[galleryIndex].url} alt={galleryPreview[galleryIndex].alt} width={800} height={600} loading="lazy" decoding="async" />
+                  <Image src={galleryPreview[galleryIndex].url} alt={galleryPreview[galleryIndex].alt} width={800} height={600} loading="lazy" />
                   <div className={styles.galleryOverlay} />
                   <button className={styles.galleryNavPrev} onClick={() => setGalleryIndex(prev => prev > 0 ? prev - 1 : galleryPreview.length - 1)} aria-label="Previous gallery image">‹</button>
                   <button className={styles.galleryNavNext} onClick={() => setGalleryIndex(prev => (prev + 1) % galleryPreview.length)} aria-label="Next gallery image">›</button>

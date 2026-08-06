@@ -85,7 +85,7 @@ const defaultAllSettings: AllSiteSettings = {
     liveDescription: 'Experience passionate performances from local and visiting artists.',
     vibeTitle: 'Weekend Evenings at The Boma Café',
     vibeDescription: 'As the sun sets, The Boma Café transforms into the ultimate weekend destination. Gather with friends, enjoy great food and drinks, and let the music set the mood for an unforgettable evening.',
-    vibeImage: '/hero/hero-entertainment.png',
+    vibeImage: '/hero/hero-entertainment.webp',
     ctaBook: 'Book a Table',
     ctaFollow: 'Follow Us'
   },

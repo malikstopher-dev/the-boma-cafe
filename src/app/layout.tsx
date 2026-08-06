@@ -11,7 +11,6 @@ import ScrollToTopButton from "@/components/ui/ScrollToTopButton";
 import { BUSINESS_INFO } from "@/lib/whatsappConfig";
 import MobileBottomBar from "@/components/ui/MobileBottomBar";
 import ScrollArrows from "@/components/ui/ScrollArrows";
-import FontAwesomeLoader from "@/components/ui/FontAwesomeLoader";
 import { getAllSettings } from "@/lib/cms-supabase";
 
 const playfair = Playfair_Display({
@@ -151,7 +150,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossOrigin="anonymous" />
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1a0f0a" />
@@ -182,7 +180,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className={`min-h-screen ${playfair.variable} ${poppins.variable}`}>
-        <FontAwesomeLoader />
         <AuthProvider>
           <CartProvider>
             <BookingProvider>

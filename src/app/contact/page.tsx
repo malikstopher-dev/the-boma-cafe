@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Navigation } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { businessInfo, getReservationLink, getEventEnquiryLink } from '@/data/businessInfo';
 import OptimizedHero from '@/components/ui/OptimizedHero';
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 
 export default function ContactPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -434,7 +436,7 @@ export default function ContactPage() {
                     boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)',
                   }}
                 >
-                  <i className="fas fa-directions" /> Get Directions
+                  <Navigation size={18} /> Get Directions
                 </a>
 
                 {/* WhatsApp CTA */}
@@ -458,7 +460,7 @@ export default function ContactPage() {
                     boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
                   }}
                 >
-                  <i className="fab fa-whatsapp" /> Chat on WhatsApp
+                  <WhatsAppIcon size={18} ariaLabel="Chat on WhatsApp" /> Chat on WhatsApp
                 </a>
               </div>
 

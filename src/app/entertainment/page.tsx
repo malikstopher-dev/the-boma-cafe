@@ -52,7 +52,7 @@ export default function EntertainmentPage() {
       <main style={{ paddingTop: 0 }}>
         <div style={{ paddingTop: 80 }}>
           <PremiumHero
-          imageUrl="/hero/hero-entertainment.png"
+          imageUrl="/hero/hero-entertainment.webp"
           badge="Entertainment"
           title="Live Entertainment"
           subtitle="Thursday to Sunday — music, energy, and unforgettable evenings"

@@ -175,7 +175,7 @@ export default function ExperiencePage() {
       <main style={{ paddingTop: 0 }}>
         <div style={isMobile ? { marginTop: '-60px' } : undefined}>
           <OptimizedHero
-            poster="/hero/hero-experience.png"
+            poster="/hero/hero-experience.webp"
             videoSrc="/videos/experience-hero.mp4"
             videoSrcs={['/videos/experience-desktop-1.mp4']}
             mobileVideoSrc="/videos/experience-mobile.mp4"

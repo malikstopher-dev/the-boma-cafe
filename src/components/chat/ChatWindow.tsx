@@ -63,7 +63,7 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
   // Realtime subscription with polling fallback
   useEffect(() => {
     const supabase = createBrowserClient()
-    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let realtimeDown = false
 
     const loadMessages = async () => {
       try {
@@ -95,15 +95,14 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
         })
       })
       .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          // Fallback to polling if Realtime fails
-          pollInterval = setInterval(loadMessages, 3000)
-        }
+        realtimeDown = status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'
       })
+
+    const pollInterval = setInterval(loadMessages, realtimeDown ? 3000 : 30000)
 
     return () => {
       if (channel) supabase.removeChannel(channel)
-      if (pollInterval) clearInterval(pollInterval)
+      clearInterval(pollInterval)
     }
   }, [conversationId])
 
