@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth/requireRole'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,9 @@ interface ColumnInfo {
   is_nullable: string
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authError = await requireAdmin(request)
+  if (authError) return authError
   // ── 1. Environment ───────────────────────────────────────────
   const requiredEnvVars = [
     'NEXT_PUBLIC_FIREBASE_API_KEY',

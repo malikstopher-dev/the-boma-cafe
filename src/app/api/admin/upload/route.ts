@@ -5,6 +5,9 @@ import { generateStoragePath, BUCKET } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
 
+const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|webp|gif|svg|mp4|webm|pdf)$/i
+const MAX_FILE_SIZE = 25 * 1024 * 1024
+
 export async function POST(request: NextRequest) {
   const authError = await requireAdmin(request)
   if (authError) return authError
@@ -13,6 +16,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+
+    if (!ALLOWED_EXTENSIONS.test(file.name)) {
+      return NextResponse.json({ error: 'Invalid file type. Allowed: jpg, jpeg, png, webp, gif, svg, mp4, webm, pdf' }, { status: 400 })
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 25MB.' }, { status: 400 })
+    }
 
     const storagePath = generateStoragePath('media', file.name)
     const client = getAdminClient()

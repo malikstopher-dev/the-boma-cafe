@@ -13,10 +13,12 @@ export interface Session {
   role: Role
 }
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''
-const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD || ''
-const WAITER_PASSWORD = process.env.WAITER_PASSWORD || ''
-const BAR_PASSWORD = process.env.BAR_PASSWORD || ''
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD
+const WAITER_PASSWORD = process.env.WAITER_PASSWORD
+const BAR_PASSWORD = process.env.BAR_PASSWORD
+
+if (!ADMIN_PASSWORD) console.error('[auth] CRITICAL: ADMIN_PASSWORD env var is not set — admin login will fail and server may be vulnerable')
 
 function timingSafeCompare(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false

@@ -91,8 +91,8 @@ export default function WaiterPage() {
     if (!authed) return
     setMenuLoading(true)
     Promise.all([
-      fetch('/api/menu/public', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({ categories: [], menuItems: [] })),
-      fetch('/api/bar/public', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({ categories: [], items: [] })),
+      fetch('/api/menu/public').then(r => r.json()).catch(() => ({ categories: [], menuItems: [] })),
+      fetch('/api/bar/public').then(r => r.json()).catch(() => ({ categories: [], items: [] })),
     ]).then(([menuData, barData]) => {
       setCategories(menuData.categories || [])
       setMenuItems(menuData.menuItems || [])

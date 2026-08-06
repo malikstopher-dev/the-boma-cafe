@@ -15,7 +15,7 @@ export default function MobileBottomBar() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/cms/public', { cache: 'no-cache' });
+        const res = await fetch('/api/cms/public');
         const data = await res.json();
         if (data?.settings) setSettings(data.settings);
       } catch {}
