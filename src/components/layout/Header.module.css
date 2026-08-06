@@ -115,7 +115,7 @@
 }
 
 .logoImg {
-  height: 72px;
+  height: 79px;
   width: auto;
   object-fit: contain;
 }
@@ -159,15 +159,16 @@
   top: 20px;
   right: 20px;
   z-index: 1001;
-  background: rgba(10, 6, 4, 0.3);
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 10px;
   padding: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   transition: all 0.25s ease;
+  color: #fff;
 }
 
 .toggleIcon {
@@ -294,8 +295,8 @@
   }
 
   .logoImg {
-    height: 40px;
-    max-width: 130px;
+    height: 46px;
+    max-width: 150px;
     width: auto;
   }
 
@@ -308,6 +309,7 @@
     height: 44px;
     padding: 0;
     border-radius: 12px;
+    color: #fff;
   }
 
   .mobileOverlay {
@@ -464,8 +466,8 @@
 
 @media (max-width: 480px) {
   .logoImg {
-    height: 34px;
-    max-width: 105px;
+    height: 39px;
+    max-width: 120px;
   }
 
   .mobileToggle {
@@ -475,6 +477,7 @@
     height: 42px;
     padding: 0;
     border-radius: 10px;
+    color: #fff;
   }
   
   .toggleIcon {
