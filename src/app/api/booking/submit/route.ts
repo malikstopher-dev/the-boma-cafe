@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  if (!checkRateLimit(`booking-submit:${ip}`)) {
+  if (!await checkRateLimit(`booking-submit:${ip}`)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 

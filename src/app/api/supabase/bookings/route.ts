@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown'
-    if (!checkRateLimit(`booking:${ip}`)) {
+    if (!await checkRateLimit(`booking:${ip}`)) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 

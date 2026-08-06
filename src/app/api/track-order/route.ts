@@ -20,7 +20,7 @@ const OPTIONAL_COLS = 'waiter_name, table_number, preparation_time_minutes, item
 
 export async function GET(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  if (!checkRateLimit(`track:${ip}`)) {
+  if (!await checkRateLimit(`track:${ip}`)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  if (!checkRateLimit(`cancel:${ip}`)) {
+  if (!await checkRateLimit(`cancel:${ip}`)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 

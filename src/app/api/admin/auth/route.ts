@@ -24,7 +24,7 @@ function timingSafeCompare(a: string, b: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    if (!checkRateLimit(`login:${ip}`, 10)) {
+    if (!await checkRateLimit(`login:${ip}`, 10)) {
       return NextResponse.json({ error: 'Too many login attempts. Try again later.' }, { status: 429 });
     }
 

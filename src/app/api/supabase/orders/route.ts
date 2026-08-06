@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown'
-    if (!checkRateLimit(`order:${ip}`)) {
+    if (!await checkRateLimit(`order:${ip}`)) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         // Public visitors cannot self-assign a waiter — silently drop it
         // (manager allocates a waiter on duty after approving the order)
         delete body.waiter_name
-      } else if (!checkRateLimitByWaiter(body.waiter_name as string)) {
+      } else if (!await checkRateLimitByWaiter(body.waiter_name as string)) {
         return NextResponse.json({ error: 'Too many requests (waiter)' }, { status: 429 })
       }
     }

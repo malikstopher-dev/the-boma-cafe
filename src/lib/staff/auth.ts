@@ -1,8 +1,9 @@
 // Staff Authentication — PIN hashing, verification, login logic
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { timingSafeEqual } from 'node:crypto'
+import bcrypt from 'bcryptjs'
 import { getAdminClient } from '@/lib/supabase'
 
-const PIN_SALT_LENGTH = 16
+const BCRYPT_ROUNDS = 12
 const MAX_FAILED_ATTEMPTS = 5
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -24,12 +25,12 @@ export interface StaffProfile {
   avatar_url: string | null
 }
 
-export function hashPin(pin: string, salt: string): string {
-  return createHash('sha256').update(`${salt}:${pin}`).digest('hex')
+export async function hashPin(pin: string): Promise<string> {
+  return bcrypt.hash(pin, BCRYPT_ROUNDS)
 }
 
-export function generateSalt(): string {
-  return randomBytes(PIN_SALT_LENGTH).toString('hex')
+export async function verifyPinHash(pin: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(pin, hash)
 }
 
 export function timingSafeCompare(a: string, b: string): boolean {
@@ -85,23 +86,37 @@ export async function verifyPin(employeeId: string, pin: string): Promise<{ succ
     return { success: false, error: `Account locked. Try again in ${remainingSeconds} seconds.` }
   }
 
-  if (!profile.pin_hash || !profile.pin_salt) {
+  if (!profile.pin_hash) {
     return { success: false, error: 'PIN not set. Contact manager.' }
+  }
+
+  const isLegacyHash = profile.pin_hash.length === 64 && profile.pin_salt
+  let isValid = false
+
+  if (isLegacyHash) {
+    const { createHash } = await import('node:crypto')
+    const legacyHash = createHash('sha256').update(`${profile.pin_salt}:${pin}`).digest('hex')
+    isValid = timingSafeCompare(legacyHash, profile.pin_hash)
+    if (isValid) {
+      const bcryptHash = await hashPin(pin)
+      await getAdminClient()
+        .from('staff_profiles')
+        .update({ pin_hash: bcryptHash, pin_salt: null })
+        .eq('id', profile.id)
+    }
+  } else {
+    isValid = await verifyPinHash(pin, profile.pin_hash)
   }
 
   if (isPinExpired(profile)) {
     return { success: false, error: 'PIN expired. Contact manager to reset.' }
   }
 
-  const computedHash = hashPin(pin, profile.pin_salt)
-  const isValid = timingSafeCompare(computedHash, profile.pin_hash)
-
   if (!isValid) {
     await incrementFailedAttempts(profile.id)
     return { success: false, error: 'Invalid PIN' }
   }
 
-  // Reset failed attempts on success
   await resetFailedAttempts(profile.id)
   await updateLastLogin(profile.id)
 
@@ -109,16 +124,15 @@ export async function verifyPin(employeeId: string, pin: string): Promise<{ succ
 }
 
 export async function setPin(staffId: string, pin: string): Promise<boolean> {
-  const salt = generateSalt()
-  const hash = hashPin(pin, salt)
+  const hash = await hashPin(pin)
   const now = new Date().toISOString()
-  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() // 90 days
+  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
   const { error } = await getAdminClient()
     .from('staff_profiles')
     .update({
       pin_hash: hash,
-      pin_salt: salt,
+      pin_salt: null,
       pin_set_at: now,
       pin_expires_at: expiresAt,
       failed_attempts: 0,
@@ -152,7 +166,7 @@ async function incrementFailedAttempts(staffId: string): Promise<void> {
 
   if (attempts >= MAX_FAILED_ATTEMPTS) {
     updates.locked_until = new Date(Date.now() + LOCKOUT_DURATION_MS).toISOString()
-    updates.failed_attempts = 0 // Reset after lockout
+    // Keep failed_attempts at MAX so lockout detection works correctly after unlock
   }
 
   await getAdminClient()
