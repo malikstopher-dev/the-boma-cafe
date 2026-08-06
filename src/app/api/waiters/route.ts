@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/auth/requireRole'
-import { generateSalt, hashPin } from '@/lib/staff/auth'
+import { hashPin } from '@/lib/staff/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,9 +69,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Employee ID already exists' }, { status: 409 })
     }
 
-    // Hash the PIN
-    const salt = generateSalt()
-    const hash = hashPin(pin, salt)
+    // Hash the PIN with bcrypt (salt is embedded in the hash)
+    const hash = await hashPin(pin)
     const now = new Date().toISOString()
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -83,7 +82,7 @@ export async function POST(request: NextRequest) {
         role: 'waiter',
         employee_id: trimmedId,
         pin_hash: hash,
-        pin_salt: salt,
+        pin_salt: null,
         pin_set_at: now,
         pin_expires_at: expiresAt,
         on_duty: true,
