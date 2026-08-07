@@ -40,7 +40,7 @@ const drinkSlugMap: Record<string, string> = {
   'bubblegum-shake': '/cocktails-and-drinks/Bubblegum-Shake.jpg',
   'oreo-shake': '/cocktails-and-drinks/Oreo-Shake.jpg',
   'strawberry-milkshake': '/cocktails-and-drinks/Strawberry-Milkshake.jpg',
-  'chocolate-milkshake': '/cocktails-and-drinks/Chocolate-Milkshake.jpg',
+  'chocolate-milkshake': '/bar-menu/Chocolate Milkshake.jpg',
 
   // Classic Cocktails
   'classic-mojito': '/cocktails-and-drinks/Classic-Mojito.webp',
@@ -67,7 +67,7 @@ const drinkSlugMap: Record<string, string> = {
   'cosmo-crush': '/cocktails-and-drinks/Cosmo-Crush.jpg',
   'no-jito': '/cocktails-and-drinks/No-Jito.jpg',
   'virgin-pina-colada': '/bar-menu/Pina-Colada.jpg',
-  'virgin-strawberry-daiquiri': '/bar-menu/Strawberry-Daiquiri.jpg',
+  'virgin-strawberry-daiquiri': '/cocktails-and-drinks/Strawberry-Daiquiri.jpg',
   'cherry-blossom-martini': '/cocktails-and-drinks/Cherry-blossom-martini.jpg',
   'virgin-mojito': '/cocktails-and-drinks/Virgin-Mojito.webp',
   'shirley-temple': '/cocktails-and-drinks/Shirley-Temple.jpg',
@@ -141,7 +141,7 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   
   // Non-Alcoholic - use bar-menu images
   'virgin-pina-colada': '/bar-menu/Pina-Colada.jpg',
-  'virgin-strawberry-daiquiri': '/bar-menu/Strawberry-Daiquiri.jpg',
+  'virgin-strawberry-daiquiri': '/menu/our-bar-menu/Strawberry-Daiquiri.jpg',
   'virgin-mojito': '/bar-menu/virgin-mojito.jpg',
   
   // Beers - use exact bar-menu images
@@ -179,8 +179,8 @@ const drinkSlugMapOurBarMenu: Record<string, string> = {
   'hunters-extreme': '/bar-menu/hunters-extreme.png',
   
   // Gin & Ready-To-Drink - use exact bar-menu images
-  'belgravia-gin-pink-tonic': '/bar-menu/belgravia-gin-and-pink-tonic.png',
-  'belgravia-gin-dark-cherry': '/bar-menu/belgravia-gin-and-dark-cherry.png',
+  'belgravia-gin-pink-tonic': '/bar-menu/belgravia-gin-and-pink-tonic.jpg',
+  'belgravia-gin-dark-cherry': '/bar-menu/belgravia-gin-and-dark-cherry.jpg',
   'belgravia-gin-tonic': '/bar-menu/belgravia-gin-and-tonic.png',
   'belgravia-gin-passion': '/bar-menu/belgravia-gin-and-passion.png',
   'gordons-gin': '/bar-menu/gordons.jpg',
