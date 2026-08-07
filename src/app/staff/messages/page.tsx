@@ -204,6 +204,7 @@ export default function StaffMessagesPage() {
                 staffProfiles={staffProfiles}
                 onSelect={setSelectedConversation}
                 selectedId={selectedConversation || undefined}
+                currentUserAliases={[currentUserTextId, currentUserId]}
               />
             )}
           </div>
@@ -228,6 +229,7 @@ export default function StaffMessagesPage() {
               currentUserId={currentUserTextId}
               currentUserName={currentUserName}
               staffProfiles={staffProfiles}
+              currentUserAliases={[currentUserTextId, currentUserId]}
               onClose={() => setSelectedConversation(null)}
             />
           </div>

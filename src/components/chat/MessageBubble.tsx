@@ -18,6 +18,7 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message, isOwn, senderName }: MessageBubbleProps) {
   const time = new Date(message.created_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
+  const senderInitial = senderName ? Array.from(senderName.trim())[0]?.toUpperCase() || '?' : '?'
 
   if (message.message_type === 'system') {
     return (
@@ -45,7 +46,7 @@ export default function MessageBubble({ message, isOwn, senderName }: MessageBub
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 12, fontWeight: 700,
         }}>
-          {senderName.charAt(0).toUpperCase()}
+          {senderInitial}
         </div>
       )}
 

@@ -49,6 +49,37 @@ export function useIncomingMessageNotifications(options: {
   const { currentUserId, soundEnabled = true, onNewMessage } = options
   const seenIdsRef = useRef<Set<string>>(new Set())
   const audioUnlockedRef = useRef(false)
+  const profileMapRef = useRef<Record<string, string>>({})
+
+  const ROLE_DISPLAY_NAMES: Record<string, string> = {
+    ADMIN: 'Admin',
+    KITCHEN: 'Kitchen',
+    BAR: 'Bar',
+    WAITER: 'Waiter',
+  }
+
+  // Load staff profile names once so toasts can show who sent the message
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/staff/list')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data) return
+        const map: Record<string, string> = {}
+        for (const s of data.staff || []) {
+          if (s.id) map[s.id] = s.name
+          if (s.user_id) map[s.user_id] = s.name
+          if (s.employee_id) map[s.employee_id] = s.name
+        }
+        profileMapRef.current = map
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  const resolveSenderName = useCallback((senderId: string) => {
+    return profileMapRef.current[senderId] || ROLE_DISPLAY_NAMES[senderId] || senderId
+  }, [])
 
   // Unlock audio on first user interaction
   useEffect(() => {
@@ -87,7 +118,7 @@ export function useIncomingMessageNotifications(options: {
 
       onNewMessage?.({
         id: msg.id,
-        sender: msg.sender_id,
+        sender: resolveSenderName(msg.sender_id),
         message: msg.message_type === 'voice' ? '🎤 Voice message' : (msg.message || ''),
         conversationId: msg.conversation_id,
         messageType: msg.message_type || 'text',

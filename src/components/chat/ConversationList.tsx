@@ -22,11 +22,14 @@ interface ConversationListProps {
   staffProfiles: Record<string, { name: string; role: string }>
   onSelect: (conversationId: string) => void
   selectedId?: string
+  currentUserAliases?: string[]
 }
 
-export default function ConversationList({ currentUserId, staffProfiles, onSelect, selectedId }: ConversationListProps) {
+export default function ConversationList({ currentUserId, staffProfiles, onSelect, selectedId, currentUserAliases }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
+
+  const aliases = Array.from(new Set(currentUserAliases && currentUserAliases.length > 0 ? currentUserAliases : [currentUserId]))
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -48,8 +51,8 @@ export default function ConversationList({ currentUserId, staffProfiles, onSelec
   const getConversationName = (conv: Conversation) => {
     if (conv.title) return conv.title
     if (conv.is_group) return 'Group Chat'
-    const otherMember = conv.members?.find(m => m.user_id !== currentUserId)
-    return otherMember ? (staffProfiles[otherMember.user_id]?.name || 'Unknown') : 'Chat'
+    const otherMember = conv.members?.find(m => m.user_id && !aliases.includes(m.user_id))
+    return otherMember ? (staffProfiles[otherMember.user_id]?.name || otherMember.user_id) : 'Chat'
   }
 
   const getLastMessagePreview = (conv: Conversation) => {
@@ -102,7 +105,7 @@ export default function ConversationList({ currentUserId, staffProfiles, onSelec
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 16, fontWeight: 700,
             }}>
-              {conv.is_group ? '👥' : getConversationName(conv).charAt(0).toUpperCase()}
+              {conv.is_group ? '👥' : (Array.from(getConversationName(conv).trim())[0]?.toUpperCase() || '?')}
             </div>
 
             {/* Content */}

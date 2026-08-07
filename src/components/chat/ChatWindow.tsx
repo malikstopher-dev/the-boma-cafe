@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@/lib/supabase'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
@@ -22,15 +22,56 @@ interface ChatWindowProps {
   currentUserId: string
   currentUserName: string
   staffProfiles: Record<string, { name: string; role: string }>
+  currentUserAliases?: string[]
   onClose?: () => void
 }
 
-export default function ChatWindow({ conversationId, currentUserId, currentUserName, staffProfiles, onClose }: ChatWindowProps) {
+export default function ChatWindow({ conversationId, currentUserId, currentUserName, staffProfiles, currentUserAliases, onClose }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [memberIds, setMemberIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const aliases = useMemo(
+    () => Array.from(new Set(currentUserAliases && currentUserAliases.length > 0 ? currentUserAliases : [currentUserId])),
+    [currentUserAliases, currentUserId]
+  )
+
+  const isOwnMessage = useCallback((senderId: string) => aliases.includes(senderId), [aliases])
+
+  const resolveSenderName = useCallback((senderId: string) => {
+    return staffProfiles[senderId]?.name || senderId
+  }, [staffProfiles])
+
+  // Resolve conversation participants so the header shows WHO this chat is with
+  useEffect(() => {
+    let cancelled = false
+    const loadMembers = async () => {
+      try {
+        const res = await fetch(`/api/staff/conversations?user_id=${encodeURIComponent(currentUserId)}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+        const conv = (data || []).find((c: any) => c.id === conversationId)
+        if (!conv || !Array.isArray(conv.members)) return
+        // Participant = everyone in the thread EXCEPT current user (in any alias form)
+        const others = (conv.members as { user_id: string }[])
+          .map(m => m.user_id)
+          .filter(uid => uid && !aliases.includes(uid))
+        setMemberIds(others)
+      } catch { /* ignore */ }
+    }
+    loadMembers()
+    return () => { cancelled = true }
+  }, [conversationId, currentUserId, aliases])
+
+  const participantNames = useMemo(() => {
+    const names = memberIds.map(uid => staffProfiles[uid]?.name || uid)
+    if (names.length <= 2) return names.join(', ')
+    return `${names[0]}, ${names[1]} +${names.length - 2} others`
+  }, [memberIds, staffProfiles])
 
   // Load messages
   useEffect(() => {
@@ -232,11 +273,7 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
           <div>
             <div style={{ fontSize: 15, fontWeight: 600, color: '#F0EBE3',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 260 }}>
-              {(() => {
-                const names = Object.values(staffProfiles).map(p => p.name)
-                if (names.length <= 2) return names.join(', ') || 'Chat'
-                return `${names[0]}, ${names[1]} +${names.length - 2} others`
-              })()}
+              {participantNames || 'Chat'}
             </div>
           </div>
         </div>
@@ -272,8 +309,8 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
             <MessageBubble
               key={msg.id}
               message={msg}
-              isOwn={msg.sender_id === currentUserId}
-              senderName={staffProfiles[msg.sender_id]?.name}
+              isOwn={isOwnMessage(msg.sender_id)}
+              senderName={resolveSenderName(msg.sender_id)}
             />
           ))
         )}

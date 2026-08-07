@@ -147,6 +147,7 @@ export default function AdminMessagesPage() {
                   staffProfiles={staffProfiles}
                   onSelect={setSelectedConversation}
                   selectedId={selectedConversation || undefined}
+                  currentUserAliases={[currentUserTextId, currentUserId]}
                 />
               )}
             </div>
@@ -218,6 +219,7 @@ export default function AdminMessagesPage() {
               currentUserId={currentUserTextId}
               currentUserName={currentUserName}
               staffProfiles={staffProfiles}
+              currentUserAliases={[currentUserTextId, currentUserId]}
               onClose={() => setSelectedConversation(null)}
             />
           ) : (
