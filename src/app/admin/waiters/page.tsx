@@ -76,7 +76,9 @@ export default function WaitersPage() {
     if (!deleteTarget) return
     try {
       const res = await fetch(`/api/waiters?id=${deleteTarget.id}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) { setDeleteTarget(null); await loadWaiters(); success('Waiter deleted') }
+      else { showError(data.error || 'Failed to delete waiter') }
     } catch { showError('Failed to delete') }
   }
 

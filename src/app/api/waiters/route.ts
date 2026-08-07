@@ -141,11 +141,26 @@ export async function DELETE(request: NextRequest) {
 
   if (!id) return NextResponse.json({ error: 'Waiter ID required' }, { status: 400 })
 
-  const { error } = await getAdminClient()
+  const { data, error } = await getAdminClient()
     .from('staff_profiles')
     .delete()
     .eq('id', id)
     .eq('role', 'waiter')
+    .select('id, name')
 
-  if (error) return NextResponse.json({ error: 'Failed to delete waiter' }, { status: 500 })
+  if (error) {
+    // FK violation (23503) — waiter still referenced by historical records
+    if (error.code === '23503') {
+      return NextResponse.json({
+        error: 'Cannot delete: this waiter still has linked records. Take them off duty instead, or delete their orders first.',
+      }, { status: 409 })
+    }
+    return NextResponse.json({ error: 'Failed to delete waiter' }, { status: 500 })
+  }
+
+  if (!data || data.length === 0) {
+    return NextResponse.json({ error: 'Waiter not found' }, { status: 404 })
+  }
+
+  return NextResponse.json({ success: true, deleted: data[0] })
 }

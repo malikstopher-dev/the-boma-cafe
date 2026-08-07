@@ -91,8 +91,8 @@ export default function ConversationList({ currentUserId, staffProfiles, onSelec
             style={{
               display: 'flex', alignItems: 'center', gap: 12,
               padding: '12px 16px', border: 'none',
-              background: selectedId === conv.id ? '#ECFDF5' : 'transparent',
-              borderBottom: '1px solid #F1F3F7',
+              background: selectedId === conv.id ? 'rgba(245,158,11,0.12)' : 'transparent',
+              borderBottom: '1px solid rgba(58,52,40,0.6)',
               cursor: 'pointer', textAlign: 'left', width: '100%',
               transition: 'background 0.15s',
             }}
@@ -100,8 +100,9 @@ export default function ConversationList({ currentUserId, staffProfiles, onSelec
             {/* Avatar */}
             <div style={{
               width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-              background: conv.is_group ? '#EFF6FF' : '#ECFDF5',
-              color: conv.is_group ? '#3B82F6' : '#0F766E',
+              background: conv.is_group ? 'rgba(59,130,246,0.18)' : 'rgba(245,158,11,0.18)',
+              color: conv.is_group ? '#93C5FD' : '#FBBF24',
+              border: conv.is_group ? '1px solid rgba(59,130,246,0.35)' : '1px solid rgba(245,158,11,0.35)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 16, fontWeight: 700,
             }}>
@@ -111,16 +112,16 @@ export default function ConversationList({ currentUserId, staffProfiles, onSelec
             {/* Content */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#F0EBE3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {getConversationName(conv)}
                 </span>
                 {conv.last_message && (
-                  <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0, marginLeft: 8 }}>
+                  <span style={{ fontSize: 11, color: '#6B6358', flexShrink: 0, marginLeft: 8 }}>
                     {getTimeAgo(conv.last_message.created_at)}
                   </span>
                 )}
               </div>
-              <span style={{ fontSize: 13, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+              <span style={{ fontSize: 13, color: '#A09888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                 {getLastMessagePreview(conv)}
               </span>
             </div>
