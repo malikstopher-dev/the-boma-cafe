@@ -71,7 +71,7 @@ export default function Header() {
 
           <Link href="/" className={styles.logo}>
             <img 
-              src="/videos/logo.webp" 
+              src="/logo.webp" 
               alt="The Boma Cafe" 
               className={styles.logoImg}
             />
