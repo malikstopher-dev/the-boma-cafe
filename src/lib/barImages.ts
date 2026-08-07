@@ -487,7 +487,144 @@ const barMenuItemMap: Record<string, string> = {
   'Lime Cordial': 'lime-cordial.png',
 };
 
+// ─── New downloaded images (replaces old bars) ─────────────────────────────────
+// User downloaded fresh pack shots into /public/bar-menu/. Prefer these over the
+// older bar-menu-images files so the menu always shows the newest photos.
+const newDownloadImages: Record<string, string> = {
+  // Beers
+  'Castle Lager': '/bar-menu/Castle-Lager.jpg',
+  'Heineken': '/bar-menu/heineken-2.jpg',
+  'Corona': '/bar-menu/corona-extra.jpg',
+  'Amstel Lager': '/bar-menu/amstel-lager.jpg',
+  'Black Label': '/bar-menu/black-label.jpg',
+  'Windhoek Lager': '/bar-menu/windhoek-lager.jpg',
+  'Castle Milk Stout': '/bar-menu/castle-milkstout.jpg',
+  'Guinness Draught': '/bar-menu/guinness-draught.jpg',
+  "Miller's Draft Bottle": '/bar-menu/miller-genuine-draft.jpg',
+  'Hansa Pilsener': '/bar-menu/hansa-pilsener.jpg',
+  'Heineken Zero': '/bar-menu/heineken-zero.png',
+  'Corona Zero': '/bar-menu/corona-zero.png',
+  'Savanna Dry': '/bar-menu/Savanna Dry.jpg',
+  'Savanna Lite': '/bar-menu/Savanna Light.jpg',
+  'Savanna': '/bar-menu/savanna.jpg',
+
+  // Ciders & RTDs
+  'Hunters Gold': '/bar-menu/hunters-gold.jpg',
+  'Bernini Classic': '/bar-menu/bernini-classic.jpg',
+  'Bernini Blush': '/bar-menu/bernini-blush.jpg',
+  'Breezer Blueberry': '/bar-menu/bacardi-breezer-blueberry.jpg',
+  'Breezer Blackberry': '/bar-menu/bacardi-breezer-blackberry.jpg',
+  'Brutal Fruit Ruby Apple': '/bar-menu/brutal-fruit-spritzer.jpg',
+  'Brutal Fruit Litchi': '/bar-menu/brutal-fruit-spritzer.jpg',
+  'Belgravia Gin & Tonic': '/bar-menu/belgravia-gin-and-tonic.jpg',
+  'Belgravia Gin & Dark Cherry': '/bar-menu/belgravia-gin-and-dark-cherry.jpg',
+  'Belgravia Gin & Pink Tonic': '/bar-menu/belgravia-gin-and-pink-tonic.jpg',
+  'Belgravia Gin & Dry Lemon': '/bar-menu/belgravia-gin-and-tonic.jpg',
+  'Black Crown Gin & Dry Lemon': '/bar-menu/belgravia-gin-and-tonic.jpg',
+  'Breeder Watermelon': '/bar-menu/bacardi-breezer-blueberry.jpg',
+
+  // Spirits & Liqueurs
+  'Gordons Gin': '/bar-menu/gordons.jpg',
+  'Beefeater Original': '/bar-menu/beefeater-london-dry-gin.jpg',
+  'Beefeater Strawberry': '/bar-menu/beefeater-london-pink-strawberry-gin.jpg',
+  'Jack Daniels': '/bar-menu/jack.jpg',
+  'J&B Whisky': '/bar-menu/j-and-b-whisky.jpg',
+  'Amarula': '/bar-menu/amarula.jpg',
+  'Kahlua': '/bar-menu/kahlua-2.jpg',
+  'Aperol': '/bar-menu/aperol.jpg',
+  'Malibu': '/bar-menu/malibu.jpg',
+  'Monate': '/bar-menu/monate.jpg',
+  'Tipo Tinto Spiced': '/bar-menu/tipo-tinto-spiced.jpg',
+  'Smirnoff 1818': '/bar-menu/smirnoff.jpg',
+  'Skyy Vodka': '/bar-menu/skyy-vodka.jpg',
+  'Captain Morgan Spiced Gold': '/bar-menu/captain-morgan.jpg',
+
+  // Brandy
+  'Klipdrift': '/bar-menu/klipdrift.jpg',
+  'KWV 10 Years': '/bar-menu/kwv-10-year.jpg',
+  'KWV 3 Years': '/bar-menu/kwv-3-year.jpg',
+  'KWV 5 Years': '/bar-menu/kwv-5-year.jpg',
+
+  // Wine
+  'Alto Rouge': '/bar-menu/alto-rouge.jpg',
+  'Guardian Peak': '/bar-menu/guardian-peak.jpg',
+  'Nederburg': '/bar-menu/nederburg.jpg',
+  'Optima': '/bar-menu/optima.jpg',
+  'The Beach House': '/bar-menu/the-beach-house.jpg',
+  'Pepperwind Syrah': '/bar-menu/pepperwind-syrah.jpg',
+  'Spier': '/bar-menu/spier.jpg',
+  'Van Loveren': '/bar-menu/vrl-van-loveren.jpg',
+  'Merlot': '/bar-menu/merlot.jpg',
+  'Pinotage': '/bar-menu/pinotage.jpg',
+  'Krone Night Nectar': '/bar-menu/krone.jpg',
+  'Krone Night Nectar Rosé': '/bar-menu/krone.jpg',
+  'Krone Borealis Brut': '/bar-menu/krone.jpg',
+  "Moët & Chandon": '/bar-menu/moet-and-chandon.jpg',
+  'Graham Beck Brut Rosé': '/bar-menu/graham-beck.jpg',
+  'House Red': '/bar-menu/House Red.jpg',
+
+  // Cocktails
+  'Pina Colada': '/bar-menu/Pina-Colada.jpg',
+  'Sex on the Beach': '/bar-menu/Sex-on-the-beach.jpg',
+  'Long Island Iced Tea': '/bar-menu/Long-Island-Iced-Tea.jpg',
+  'Whiskey Sour': '/bar-menu/Whiskey-Sour.jpg',
+  'Yuzu Whiskey Sours': '/bar-menu/Yuzu-whiskey-Sours.jpg',
+  'Cosmo Crush': '/bar-menu/Cosmo-Crush.jpg',
+  'Berry Citrus Twist': '/bar-menu/Berry-Citrus-Twist.webp',
+  'Cherry Blossom Martini': '/bar-menu/Cherry-blossom-martini.jpg',
+  'Margarita': '/bar-menu/Margarita.webp',
+  'Classic Martini': '/bar-menu/Classic-Martini.jpg',
+  'Vanilla Latte': '/bar-menu/Vanilla-Latte.jpg',
+  'Richelieu': '/bar-menu/richelieu.jpg',
+
+  // Freezos & Milkshakes
+  'Chocolate Freezo': '/bar-menu/Chocolate-Freezo.jpg',
+  'Mango Freezo': '/bar-menu/Mango-Freezo.jpg',
+  'White Chocolate Freezo': '/bar-menu/White-Chocolate-Freezo.jpg',
+  'Chocolate Milkshake': '/bar-menu/Chocolate Milkshake.jpg',
+  'Strawberry Milkshake': '/bar-menu/Strawberry-Milkshake-v2.jpg',
+  'Strawberry Shake': '/bar-menu/Strawberry-Shake.jpg',
+  'Bubblegum Shake': '/bar-menu/Bubblegum-Shake.jpg',
+  'Spiced Chai Freezo': '/bar-menu/Spiced-Chai-Freezo.jpg',
+  'Coffee Freezo': '/bar-menu/Coffee-Freezo.jpg',
+  'Decadent Chocolate Freezo': '/bar-menu/Decadent-Chocolate-Freezo.jpg',
+
+  // Non-Alcoholic Cocktails
+  'Virgin Mojito': '/bar-menu/virgin-mojito.jpg',
+  'No-Jito': '/bar-menu/No-Jito.jpg',
+
+  // Hot
+  'Cafe Latte': '/bar-menu/Cafe-Latte.jpg',
+  'Cappuccino': '/bar-menu/Cappuccino.jpg',
+  'Americano': '/bar-menu/Americano.jpg',
+  'Espresso': '/bar-menu/expresso.jpg',
+  'Chai Tea': '/bar-menu/Chai-Tea.jpg',
+  'Five Roses Tea': '/bar-menu/Five-Roses-Tea.jpg',
+  'Hot Chocolate': '/bar-menu/Hot-Chocolate.jpg',
+
+  // Wine items that had no image at all — map to nearest brand/varietal photo
+  'Meerlust': '/bar-menu-images/wines/reds/meerlust-rubicon.jpg',
+  'Meerlust Rubicon': '/bar-menu-images/wines/reds/meerlust-rubicon.jpg',
+  'The Wolf Trap': '/bar-menu-images/wines/reds/shiraz.jpg',
+  'Kevin Arnold': '/bar-menu-images/wines/reds/shiraz.jpg',
+  'R&R Baron Edmond': '/bar-menu-images/wines/reds/shiraz.jpg',
+  'R&R Classique': '/bar-menu-images/wines/reds/shiraz.jpg',
+  'Stellenbosch Reserve Vanderstel': '/bar-menu-images/wines/reds/shiraz.jpg',
+  'Stellenbosch': '/bar-menu-images/wines/reds/cabernet-sauvignon.jpg',
+  'Millstream Rosé': '/bar-menu-images/wines/rose/rose.jpg',
+  'Van Loveren Blanc de Blanc': '/bar-menu/vrl-van-loveren.jpg',
+  'Boschendal Luxe Nectar': '/bar-menu/assorted-mcc-sparkling-wine.jpg',
+  'Steenberg Pinot Noir Brut': '/bar-menu/assorted-mcc-sparkling-wine.jpg',
+  'Annabelle Cuvée Rosé': '/bar-menu/assorted-mcc-sparkling-wine.jpg',
+  'Steenberg Chardonnay Brut': '/bar-menu/assorted-mcc-sparkling-wine.jpg',
+};
+
 export function getBarMenuItemImage(itemName: string, categoryName: string): string | null {
+  // Priority 0: New downloaded images
+  if (newDownloadImages[itemName]) {
+    return newDownloadImages[itemName];
+  }
+
   // Priority 1: Exact match in barMenuItemMap → bar-menu-images folder
   if (barMenuItemMap[itemName]) {
     const folder = categoryToFolder[categoryName];

@@ -62,7 +62,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
           <div className={styles.grid}>
           {/* Brand Column */}
           <div className={styles.brand}>
-<video src="/videos/logo.mp4" autoPlay loop muted playsInline poster="/logo.png" className={styles.footerLogo} style={{ objectFit: 'contain' }} />
+          <img src="/videos/logo.webp" alt="The Boma Cafe" className={styles.footerLogo} />
             <h3 className={styles.logoText}>The Boma Cafe</h3>
               <p className={styles.tagline}>
                 Where rustic charm meets soulful dining in the heart of Sandton.
@@ -143,7 +143,7 @@ export default function Footer({ settings: propSettings, branding: propBranding 
 
         {/* Mobile Footer - Shown Only on Mobile */}
         <div className={styles.mobileFooterContent}>
-          <video src="/videos/logo.mp4" autoPlay loop muted playsInline poster="/logo.png" className={styles.footerLogo} style={{ objectFit: 'contain' }} />
+          <img src="/logo.png" alt="The Boma Cafe" className={styles.footerLogo} />
           <h3 className={styles.mobileBrand}>The Boma Cafe</h3>
           <p className={styles.mobileTagline}>Where rustic charm meets soulful dining in Sandton.</p>
 

@@ -70,15 +70,10 @@ export default function Header() {
           </nav>
 
           <Link href="/" className={styles.logo}>
-            <video
-              src="/videos/logo.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              poster="/logo.png"
+            <img 
+              src="/videos/logo.webp" 
+              alt="The Boma Cafe" 
               className={styles.logoImg}
-              style={{ objectFit: 'contain' }}
             />
           </Link>
 
