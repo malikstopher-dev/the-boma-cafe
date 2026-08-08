@@ -179,7 +179,7 @@ export default function WaiterPage() {
       } catch {}
     }
     check()
-    const iv = setInterval(check, 15000)
+    const iv = setInterval(check, 30000)
     return () => clearInterval(iv)
   }, [done, orderRefs])
 

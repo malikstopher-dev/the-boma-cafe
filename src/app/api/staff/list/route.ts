@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   let query = getAdminClient()
     .from('staff_profiles')
-    .select('id, user_id, employee_id, name, role, pin_hash, on_duty, online, last_seen')
+    .select('id, user_id, employee_id, name, role, pin_hash, on_duty, online')
     .order('name')
 
   if (role) {
@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
     has_pin: !!s.pin_hash,
     on_duty: s.on_duty,
     online: s.online,
-    last_seen: s.last_seen,
   }))
 
   return NextResponse.json({ staff })

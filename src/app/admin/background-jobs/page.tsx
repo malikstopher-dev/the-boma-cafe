@@ -69,7 +69,7 @@ export default function AdminBackgroundJobs() {
 
   useEffect(() => {
     fetchJobs()
-    const interval = setInterval(fetchJobs, 15000)
+    const interval = setInterval(fetchJobs, 60000)
     return () => clearInterval(interval)
   }, [fetchJobs])
 

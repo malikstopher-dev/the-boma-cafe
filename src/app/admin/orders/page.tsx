@@ -7,7 +7,7 @@ import { STATUS_LABELS, STATUS_COLORS, requiresPaymentConfirmation } from '@/lib
 import { posService } from '@/lib/pos-service'
 import { createBrowserClient } from '@/lib/supabase'
 
-const POLL_INTERVAL = 4000
+const POLL_INTERVAL = 15000
 const FALLBACK_POLL_INTERVAL = 30000
 const TOTAL_TABLES = 20
 

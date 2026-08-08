@@ -233,7 +233,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
 
     let fallbackInterval: ReturnType<typeof setInterval> | null = null
     const startPolling = () => {
-      const interval = setInterval(loadOrders, realtimeDown ? 5000 : 30000)
+      const interval = setInterval(loadOrders, realtimeDown ? 15000 : 30000)
       fallbackInterval = interval
     }
     startPolling()

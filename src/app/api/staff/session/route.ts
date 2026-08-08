@@ -6,17 +6,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { validateSession, endSession } from '@/lib/staff/session'
 import { logAuthAudit } from '@/lib/staff/audit'
 import { getSession } from '@/lib/auth'
+import { ROLE_SESSION_MAP } from '@/lib/staff/identity'
 
 export const dynamic = 'force-dynamic'
 
 // Stable virtual IDs for password-based staff (bar/kitchen/admin)
 // These are deterministic so conversations persist across sessions.
-const ROLE_SESSION_MAP: Record<string, { staffId: string; employeeId: string; name: string }> = {
-  admin:   { staffId: 'role-admin-001',   employeeId: 'ADMIN',   name: 'Admin' },
-  kitchen: { staffId: 'role-kitchen-001', employeeId: 'KITCHEN', name: 'Kitchen' },
-  bar:     { staffId: 'role-bar-001',     employeeId: 'BAR',     name: 'Bar' },
-  waiter:  { staffId: 'role-waiter-001',  employeeId: 'WAITER',  name: 'Waiter' },
-}
+// (ROLE_SESSION_MAP defined in src/lib/staff/identity.ts)
 
 export async function GET(request: NextRequest) {
   // 1. Try PIN-based staff session cookie

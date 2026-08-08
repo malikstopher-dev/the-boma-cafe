@@ -1,11 +1,15 @@
 import React from 'react'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { AdminGuidePDF } from '@/lib/pdf/AdminGuidePDF'
+import { requireAdmin } from '@/lib/auth/requireRole'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authError = await requireAdmin(request)
+  if (authError) return authError
+
   try {
     const pdfBuffer = await renderToBuffer(React.createElement(AdminGuidePDF))
 

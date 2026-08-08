@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
   const authError = await requireAuthenticated(request)
   if (authError) return authError
 
+  const role = await getRequestRole(request)
+  const isAdmin = role === 'admin'
+
   const { searchParams } = new URL(request.url)
   const orderRef = searchParams.get('order_ref')
   const waiterStats = searchParams.get('waiter_stats')
@@ -73,7 +76,7 @@ export async function GET(request: NextRequest) {
     }
     const { data: siblings, error: sibError } = await getAdminClient()
       .from('orders')
-      .select('*')
+      .select(isAdmin ? '*' : 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason')
       .eq('parent_order_id', parent.parent_order_id)
     if (sibError) return NextResponse.json({ error: sibError.message }, { status: 500 })
     return NextResponse.json({ orders: siblings })
@@ -82,9 +85,13 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500)
   const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10), 0)
   const station = searchParams.get('station')
-  const full = searchParams.get('full') === '1'
+  const full = isAdmin && searchParams.get('full') === '1'
 
-  let baseColumns = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,delivery_address,requested_time,preparation_time_minutes,cancellation_reason,phone'
+  // PII-safe columns: phone and delivery_address are admin-only.
+  let baseColumns = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason'
+  if (isAdmin) {
+    baseColumns = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,delivery_address,requested_time,preparation_time_minutes,cancellation_reason,phone'
+  }
   if (full) {
     baseColumns = '*'
   }

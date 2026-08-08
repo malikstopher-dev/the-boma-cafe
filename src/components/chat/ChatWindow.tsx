@@ -139,7 +139,7 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
         realtimeDown = status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'
       })
 
-    const pollInterval = setInterval(loadMessages, realtimeDown ? 3000 : 30000)
+    const pollInterval = setInterval(loadMessages, realtimeDown ? 15000 : 30000)
 
     return () => {
       if (channel) supabase.removeChannel(channel)

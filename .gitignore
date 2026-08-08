@@ -62,3 +62,8 @@ firebase-service-account*.json
 # leaked keys removed from tracking
 supabase/project_id_url/
 test_db.js
+
+# worker local runtime (never commit)
+.env.worker
+logs/
+ecosystem.config.cjs

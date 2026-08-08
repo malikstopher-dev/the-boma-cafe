@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { getRequestRole } from '@/lib/auth/requireRole'
+import { resolveStaffIdentity } from '@/lib/staff/identity'
 
 export const dynamic = 'force-dynamic'
 
+async function isConversationMember(conversationId: string, aliases: string[]): Promise<boolean> {
+  const { data } = await getAdminClient()
+    .from('staff_conversation_members')
+    .select('conversation_id')
+    .eq('conversation_id', conversationId)
+    .in('user_id', aliases)
+    .maybeSingle()
+  return !!data
+}
+
 export async function GET(request: NextRequest) {
-  const role = await getRequestRole(request)
-  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const identity = await resolveStaffIdentity(request)
+  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
   const conversationId = searchParams.get('conversation_id')
@@ -15,6 +25,11 @@ export async function GET(request: NextRequest) {
 
   if (!conversationId) {
     return NextResponse.json({ error: 'conversation_id required' }, { status: 400 })
+  }
+
+  const member = await isConversationMember(conversationId, identity.aliases)
+  if (!member && !identity.isAdmin) {
+    return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
   }
 
   let query = getAdminClient()
@@ -35,26 +50,33 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const role = await getRequestRole(request)
-  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const identity = await resolveStaffIdentity(request)
+  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const body = await request.json()
-    const { conversation_id, sender_id, message, message_type, voice_url, voice_duration } = body
+    const { conversation_id, message, message_type, voice_url, voice_duration } = body
 
-    if (!conversation_id || !sender_id) {
-      return NextResponse.json({ error: 'conversation_id and sender_id required' }, { status: 400 })
+    if (!conversation_id) {
+      return NextResponse.json({ error: 'conversation_id required' }, { status: 400 })
     }
 
     if (!message && !voice_url) {
       return NextResponse.json({ error: 'message or voice_url required' }, { status: 400 })
     }
 
+    const senderId = identity.textId
+
+    const member = await isConversationMember(conversation_id, identity.aliases)
+    if (!member && !identity.isAdmin) {
+      return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
+    }
+
     const { data, error } = await getAdminClient()
       .from('staff_messages')
       .insert({
         conversation_id,
-        sender_id,
+        sender_id: senderId,
         message: message || null,
         message_type: message_type || 'text',
         voice_url: voice_url || null,
@@ -66,19 +88,19 @@ export async function POST(request: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     // Create notifications for other conversation members
-    const { data: members } = await getAdminClient()
+    const { data: memberRows } = await getAdminClient()
       .from('staff_conversation_members')
       .select('user_id')
       .eq('conversation_id', conversation_id)
-      .neq('user_id', sender_id)
+      .neq('user_id', senderId)
 
-    if (members) {
-      const notifications = members.map((m: any) => ({
+    if (memberRows) {
+      const notifications = memberRows.map((m: { user_id: string }) => ({
         user_id: m.user_id,
         type: 'new_message',
         title: 'New Message',
         message: message || '🎤 Voice message',
-        metadata: { conversation_id, sender_id },
+        metadata: { conversation_id, sender_id: senderId },
       }))
       await getAdminClient().from('staff_notifications').insert(notifications)
     }
@@ -90,22 +112,27 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const role = await getRequestRole(request)
-  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const identity = await resolveStaffIdentity(request)
+  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const body = await request.json()
-    const { conversation_id, user_id } = body
+    const { conversation_id } = body
 
-    if (!conversation_id || !user_id) {
-      return NextResponse.json({ error: 'conversation_id and user_id required' }, { status: 400 })
+    if (!conversation_id) {
+      return NextResponse.json({ error: 'conversation_id required' }, { status: 400 })
+    }
+
+    const member = await isConversationMember(conversation_id, identity.aliases)
+    if (!member && !identity.isAdmin) {
+      return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
     }
 
     const { error } = await getAdminClient()
       .from('staff_messages')
       .update({ read_at: new Date().toISOString() })
       .eq('conversation_id', conversation_id)
-      .neq('sender_id', user_id)
+      .neq('sender_id', identity.textId)
       .is('read_at', null)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

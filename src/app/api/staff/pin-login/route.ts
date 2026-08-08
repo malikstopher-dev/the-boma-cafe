@@ -1,6 +1,6 @@
 // POST /api/staff/pin-login — Staff PIN authentication
 // Body: { employee_id: string, pin: string, device_name?: string }
-// Returns: { success, session_token, staff: { id, name, role, employee_id } }
+// Returns: { success, staff: { id, name, role, employee_id } }
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPin, getStaffByEmployeeId } from '@/lib/staff/auth'
@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
       ip,
     })
 
-    // Set session cookie
+    // Set session cookie (session id is NOT exposed in the JSON body —
+    // it is the bearer credential for boma_staff_session)
     const response = NextResponse.json({
       success: true,
-      session_token: session.sessionId,
       staff: {
         id: profile.id,
         name: profile.name,

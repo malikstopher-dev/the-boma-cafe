@@ -3,7 +3,7 @@ import { logger } from './utils/logger'
 import { calculateScheduledAt } from './utils/retry'
 
 const STUCK_THRESHOLD_MS = 60000
-const CHECK_INTERVAL_MS = 30000
+const CHECK_INTERVAL_MS = 60000
 const MAX_STUCK_RETRIES = 5
 
 let shutdownRequested = false

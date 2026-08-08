@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { getRequestRole } from '@/lib/auth/requireRole'
+import { resolveStaffIdentity, memberIdExists } from '@/lib/staff/identity'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const role = await getRequestRole(request)
-  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const identity = await resolveStaffIdentity(request)
+  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
-
-  let query = getAdminClient()
+  // Identity is derived from the validated session; the client-supplied
+  // user_id param (if any) is ignored entirely.
+  const query = getAdminClient()
     .from('staff_conversations')
     .select(`
       *,
@@ -20,12 +19,8 @@ export async function GET(request: NextRequest) {
         id, message, message_type, sender_id, created_at
       )
     `)
+    .filter('members.user_id', 'in', `(${identity.aliases.map((a) => `"${a}"`).join(',')})`)
     .order('created_at', { ascending: false })
-
-  if (userId) {
-    query = query
-      .filter('members.user_id', 'eq', userId)
-  }
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -40,16 +35,13 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(1)
 
-      let unread_count = 0
-      if (userId) {
-        const { count } = await getAdminClient()
-          .from('staff_messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('conversation_id', conv.id)
-          .neq('sender_id', userId)
-          .is('read_at', null)
-        unread_count = count || 0
-      }
+      const { count } = await getAdminClient()
+        .from('staff_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversation_id', conv.id)
+        .not('sender_id', 'in', identity.aliases)
+        .is('read_at', null)
+      const unread_count = count || 0
 
       return { ...conv, last_message: msgs?.[0] || null, unread_count }
     })
@@ -59,22 +51,36 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const role = await getRequestRole(request)
-  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const identity = await resolveStaffIdentity(request)
+  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const body = await request.json()
-    const { member_ids, title } = body
+    let { member_ids, title } = body
 
     if (!member_ids || !Array.isArray(member_ids) || member_ids.length < 2) {
       return NextResponse.json({ error: 'At least 2 member_ids required' }, { status: 400 })
+    }
+
+    // Ensure the caller is always a member (identity derived server-side,
+    // never spoofable), and reject ids that do not resolve to real staff
+    // or role-based session identities.
+    const uniqueIds = Array.from(new Set(member_ids as string[]))
+    if (!uniqueIds.some((id) => identity.aliases.includes(id))) {
+      uniqueIds.push(identity.textId)
+    }
+
+    for (const id of uniqueIds) {
+      if (!(await memberIdExists(id))) {
+        return NextResponse.json({ error: `Unknown member id: ${id}` }, { status: 400 })
+      }
     }
 
     // Check if a conversation with exactly these members already exists
     const { data: existing } = await getAdminClient()
       .from('staff_conversation_members')
       .select('conversation_id')
-      .in('user_id', member_ids)
+      .in('user_id', uniqueIds)
 
     if (existing && existing.length > 0) {
       const grouped = existing.reduce((acc: Record<string, number>, cm: any) => {
@@ -83,15 +89,14 @@ export async function POST(request: NextRequest) {
       }, {})
 
       for (const [convId, count] of Object.entries(grouped)) {
-        if (count === member_ids.length) {
-          // Check if all members match
+        if (count === uniqueIds.length) {
           const { data: members } = await getAdminClient()
             .from('staff_conversation_members')
             .select('user_id')
             .eq('conversation_id', convId)
 
           const existingIds = (members || []).map((m: any) => m.user_id).sort()
-          const requestedIds = [...member_ids].sort()
+          const requestedIds = [...uniqueIds].sort()
           if (JSON.stringify(existingIds) === JSON.stringify(requestedIds)) {
             const { data: conv } = await getAdminClient()
               .from('staff_conversations')
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new conversation
-    const isGroup = member_ids.length > 2
+    const isGroup = uniqueIds.length > 2
     const { data: conv, error: convError } = await getAdminClient()
       .from('staff_conversations')
       .insert({ title: title || null, is_group: isGroup })
@@ -115,7 +120,7 @@ export async function POST(request: NextRequest) {
     if (convError) return NextResponse.json({ error: convError.message }, { status: 500 })
 
     // Add members
-    const membersData = member_ids.map((uid: string) => ({
+    const membersData = uniqueIds.map((uid: string) => ({
       conversation_id: conv.id,
       user_id: uid,
     }))

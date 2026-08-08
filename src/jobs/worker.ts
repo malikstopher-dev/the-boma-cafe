@@ -4,8 +4,8 @@ import { logger } from './utils/logger'
 import { calculateScheduledAt } from './utils/retry'
 import type { BackgroundJob } from './types'
 
-const POLL_INTERVAL_MS = 5000
-const HEARTBEAT_INTERVAL_MS = 10000
+const POLL_INTERVAL_MS = 15000
+const HEARTBEAT_INTERVAL_MS = 30000
 const HOSTNAME = typeof process !== 'undefined' ? (process.env.HOSTNAME || 'localhost') : 'localhost'
 
 let shutdownRequested = false

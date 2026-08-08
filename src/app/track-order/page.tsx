@@ -89,7 +89,7 @@ export default function TrackOrderPage() {
         setLastUpdated(new Date())
         if (data.status === 'completed' || data.status === 'cancelled') stopPolling()
       } catch { /* silent */ }
-    }, 10000)
+    }, 30000)
   }
 
   const handleSubmit = async (e: FormEvent) => {
