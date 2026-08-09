@@ -846,3 +846,39 @@ Applied 066 â†’ all 6 locations have `cost_centre_id` (Bar/Bar/Events/Restaurant
 Legacy NULL rows from before the fix still exist in `inventory_transactions` (no backfill migration for historical rows â€” deliberate; the ledger reports treat NULL as "unassigned"). If the owner wants history corrected, write a migration mapping NULL â†’ location's centre for `purchase` txns only.
 
 
+
+---
+
+## Session: Daily Stock Input + Weekly View + Gas Tracker (2026-08-10) — commit `e91bdd9`
+
+### Objective
+Phases A–D of the owner-approved admin plan: highlight + rename the inventory section on the admin dashboard, Google-Sheets-style Daily Stock Input spreadsheet, numbered Mon–Sun "Delivered vs Sold" weekly view, and an LPG Gas Tracker — all from the live ledger, no fake numbers.
+
+### Migration 067 (applied to prod) — `supabase/migrations/067_daily_stock_profiles_and_gas.sql`
+- `inventory_type` CHECK += `GAS`; `transaction_type` CHECK += `gas_usage`; `reason_type` CHECK += `GAS_USAGE`
+- New tables `inventory_count_profiles` + `inventory_count_profile_items` (section_label, count_uom_id, sort_order)
+- Seeded 5 LPG products `GAS-001..GAS-005` (1/2/9/19/48 kg)
+
+### Engines (new)
+- `src/inventory/lib/weeks.ts` — `mondayOf`/`firstMondayOfYear`/`weekNumber`/`lastWeekOfYear`/`weekRange`/`weekLabel`/`currentWeekNumber`. Week 1 = week containing 1st Monday of year; weeks run Mon–Sun (owner-confirmed).
+- `src/inventory/engine/weekly.ts` — `getWeeklyMovement` (per-inventory-type delivered vs used, DELIVERED_TYPES=purchase/return/transfer_in, USED_TYPES incl. gas_usage) + `getYearlyWeekSummary` (whole year bucketed by weekNumber, includes current week).
+- `src/inventory/engine/daily-entry.ts` — `getOrCreateDailySession` (notes=`daily:{date}` on inventory_stock_counts), `getDailySheet` (profiles ? fallback "All Products" section; expected balance at end-of-day; buildItem converts count units?base via getProductConversion/toBaseUnit), `saveDailyCell` (saveCountItem), `submitDailySession`, `approveDailySession`.
+- `src/inventory/engine/gas.ts` — `getGasOverview` (sizes+onHand via inventory_product_balances, weekly/monthly buckets, recentEvents) + `recordGas` (delivery?purchase/DELIVERY '+', usage?gas_usage/GAS_USAGE negative, audit logged).
+- `ledger.ts` DECREASE_TYPES += `gas_usage`; `api-utils` inventory type filter += `GAS`.
+
+### API + UI
+- API: daily-stock (GET; `[sessionId]` POST cell/PATCH submit; `[sessionId]/approve` POST), count-profiles CRUD, weekly GET, gas GET + records POST — engines under `src/inventory/api/*`, proxies under `src/app/api/inventory/*` using the `@/inventory/api/...` alias pattern (relative depths failed the build).
+- UI: `/admin/operations/daily-stock` (spreadsheet grid: sticky header, Enter ? / blur autosave, submit/approve), `/admin/operations/weekly` (week chips, delivered-vs-used bars, per-type table, CSV export), `/admin/operations/gas` (size cards, week/month deltas, record form, recent events). Sidebar groups renamed "Operations & Stock · X" + 3 new items; admin dashboard got the gold hero banner (per-location daily status, Week chip, Operations & Stock quick action).
+
+### CRITICAL production bug found & fixed (stock-counts.ts)
+`getStockCount()` ordered items by `created_at` — that column **does not exist** on `inventory_stock_count_items` (migration 046), so PostgREST errored, data came back null, and **every stock count / reconciliation / checklist approval in production silently posted ZERO adjustment transactions**. Fixed: order by `id`. Also made `approveStockCount`'s approver optional (`null`) since `staff_profiles` is empty in prod (FK `approved_by` is nullable).
+
+### Verification (2026-08-10)
+- Migration applied to prod via `supabase db push`
+- Live smoke against prod (cleaned up after): daily sheet for Main Bar (fallback section, live expected balances Vodka 39.5/Gin 20), cell save 123 ? variance 83.5, submit + approve ? `physical_count` txn +83.5; gas delivery 3× + usage 1× ? onHand=2, week/month buckets correct; weekly engine week 32 Mon–Sun range, zeros when no real txns
+- 62/62 vitest passing; strict inventory tsc clean; `next build` green
+- Commit `e91bdd9` pushed to main (Vercel auto-deploy)
+
+### Notes
+- `inventory_count_profiles` table exists but is empty — Daily Stock Input currently uses the "All Products" fallback; profiles can be configured later via the count-profiles API.
+- Legacy orphaned `inventory_stock_count_items` rows remain in prod (sessions deleted) — harmless, invisible to reports.
