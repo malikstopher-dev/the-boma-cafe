@@ -17,6 +17,11 @@ const nextConfig = {
   },
   redirects: async () => [
     {
+      source: '/admin/operations/checklist',
+      destination: '/admin/operations',
+      permanent: true,
+    },
+    {
       source: '/admin/inventory/checklist/history',
       destination: '/admin/operations/history',
       permanent: true,
