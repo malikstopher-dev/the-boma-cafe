@@ -19,3 +19,15 @@ export function applyInventoryTypeFilter(
   }
   return query
 }
+
+export function requireString(value: unknown, name: string): string {
+  if (typeof value !== 'string' || !value.trim()) throw new Error(`${name} is required`)
+  return value.trim()
+}
+
+export function getHeader(
+  request: { headers: Headers | { get(name: string): string | null } },
+  name: string,
+): string | null {
+  return request.headers.get(name)
+}

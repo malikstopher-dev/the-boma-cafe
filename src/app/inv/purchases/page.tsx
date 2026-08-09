@@ -48,7 +48,8 @@ export default function PurchasesPage() {
       <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Receive Stock</h1>
       <p style={{ color: '#90A0B8', fontSize: 13, margin: '0 0 20px' }}>
         Purchase orders awaiting or already received. Receiving moves goods into the ledger.{' '}
-        <Link href="/admin/operations/receiving" style={{ color: '#C4A04E' }}>Open receiving queue →</Link>
+        <Link href="/admin/operations/receiving" style={{ color: '#C8A04E' }}>Open receiving queue →</Link>
+        {' '}· <Link href="/inv/payables" style={{ color: '#C8A04E' }}>Supplier payables →</Link>
       </p>
 
       {error && <p style={{ color: '#E05656', fontSize: 13 }}>{error}</p>}

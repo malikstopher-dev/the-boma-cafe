@@ -1,232 +1,385 @@
-﻿'use client'
+'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import Badge from '@/components/admin/design-system/Badge'
+import {
+  C, Badge, Card, Kpi, PageTitle, Loading,
+  formatMoney, formatDateShort, formatDateTime, pctDelta, todayIso,
+} from './kit'
 
-type DashboardData = {
-  summary: {
-    inventoryValue: number
-    totalProducts: number
-    lowStockCount: number
-    outOfStockCount: number
-    todayPurchases: number
-    todaySales: number
-    todayLoss: number
-    todayTransactions: number
-    variance: number
+type PeriodKey = 'this_week' | 'this_month' | 'last_7' | 'last_30' | 'custom'
+
+interface OwnerData {
+  range: { start: string; end: string; label: string }
+  locationName: string
+  kpi: {
+    purchased: number; used: number; wastage: number; adjustments: number
+    stockValue: number; supplierPayments: number; supplierOutstanding: number
+    purchasedPrev: number; usedPrev: number; wastagePrev: number; adjustmentsPrev: number
+    stockValuePrev: number | null
   }
-  alerts: Array<{ productId: string; productName: string; type: string; currentBalance: number; threshold: number | null }>
-  recent: Array<{ id: string; productName: string; transactionType: string; quantity: number; createdAt: string }>
-  fastMovers: Array<{ productId: string; productName: string; totalSold: number }>
-  slowMovers: Array<{ productId: string; productName: string; totalSold: number }>
-  inventoryValue: number
-  todayTransactions: Array<{ type: string; count: number; totalQuantity: number }>
-  purchaseOrders?: {
-    openCount: number
-    overdueCount: number
-    overdue: Array<{ id: string; supplierName: string; expectedAt: string }>
-    recent: Array<{ id: string; status: string; supplierName: string; createdAt: string }>
+  locations: Array<{ locationId: string; name: string; items: number; value: number; pct: number; movement: number }>
+  suppliers: Array<{ supplierId: string | null; supplierName: string; week: number; month: number; outstanding: number }>
+  alerts: Array<{ severity: 'high' | 'medium' | 'low'; message: string; href?: string }>
+  activity: Array<{ kind: string; description: string; person: string; at: string }>
+  movement: Array<{ date: string; purchased: number; used: number }>
+}
+
+const PRESETS: Array<{ key: PeriodKey; label: string }> = [
+  { key: 'this_week', label: 'This Week' },
+  { key: 'this_month', label: 'This Month' },
+  { key: 'last_7', label: 'Last 7 Days' },
+  { key: 'last_30', label: 'Last 30 Days' },
+]
+
+function mondayIso(): string {
+  const d = new Date()
+  const dow = d.getDay() || 7
+  d.setDate(d.getDate() - (dow - 1))
+  return d.toISOString().slice(0, 10)
+}
+
+function monthStartIso(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
+
+function periodStart(key: PeriodKey): string {
+  switch (key) {
+    case 'this_week': return mondayIso()
+    case 'this_month': return monthStartIso()
+    case 'last_7': { const d = new Date(); d.setDate(d.getDate() - 6); return d.toISOString().slice(0, 10) }
+    case 'last_30': { const d = new Date(); d.setDate(d.getDate() - 29); return d.toISOString().slice(0, 10) }
+    default: return todayIso()
   }
 }
 
-type Location = { id: string; name: string; code: string; is_active: boolean }
+function greet(): string {
+  const h = new Date().getHours()
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
+}
 
-export default function InvDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [locations, setLocations] = useState<Location[]>([])
-  const [locationValues, setLocationValues] = useState<Record<string, number>>({})
-  const [isLoading, setIsLoading] = useState(true)
+const ACTIVITY_TONES: Record<string, 'gold' | 'good' | 'warning' | 'danger' | 'info' | 'muted'> = {
+  payment: 'info',
+  purchase: 'good',
+  adjustment: 'warning',
+  waste: 'danger',
+  sale: 'muted',
+  production: 'gold',
+  stock_count: 'gold',
+  invoice: 'info',
+}
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch('/api/inventory/dashboard?section=combined&location_id=main&limit=10&days=30')
-      const json = await res.json()
-      setData(json.data)
+export default function OwnerDashboardPage() {
+  const [period, setPeriod] = useState<PeriodKey>('this_week')
+  const [customFrom, setCustomFrom] = useState(todayIso())
+  const [customTo, setCustomTo] = useState(todayIso())
+  const [data, setData] = useState<OwnerData | null>(null)
+  const [month, setMonth] = useState<OwnerData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-      const locRes = await fetch('/api/inventory/locations')
-      const locJson = await locRes.json()
-      const active = (locJson.data || []).filter((l: Location) => l.is_active)
-      setLocations(active)
-
-      const values: Record<string, number> = {}
-      await Promise.all(active.map(async (l: Location) => {
-        try {
-          const vRes = await fetch(`/api/inventory/dashboard?section=value&location_id=${l.id}`)
-          const vJson = await vRes.json()
-          values[l.id] = vJson.data?.value ?? vJson.data?.inventoryValue ?? 0
-        } catch { /* ignore */ }
-      }))
-      setLocationValues(values)
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false)
+  const fetchPeriod = useCallback(async (key: PeriodKey) => {
+    const params = new URLSearchParams({ period: key })
+    if (key === 'custom') {
+      params.set('from', customFrom)
+      params.set('to', customTo)
     }
-  }, [])
+    const res = await fetch(`/api/inventory/owner-dashboard?${params.toString()}`)
+    const json = await res.json()
+    if (json.error) throw new Error(json.error.message)
+    return json.data as OwnerData
+  }, [customFrom, customTo])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    const load = async () => {
+      try {
+        const [curr, m] = await Promise.all([fetchPeriod(period), fetchPeriod('this_month')])
+        if (cancelled) return
+        setData(curr)
+        setMonth(m)
+        setLastUpdated(new Date())
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [period, fetchPeriod])
 
-  const totalLocationValue = Object.values(locationValues).reduce((a, b) => a + (b || 0), 0)
+  const refresh = useCallback(() => {
+    setLastUpdated(null)
+    setLoading(true)
+    fetchPeriod(period).then(d => { setData(d); setLastUpdated(new Date()); setLoading(false) }).catch(err => { setError(err.message); setLoading(false) })
+  }, [period, fetchPeriod])
 
-  const cards = data ? [
-    { label: 'Current Stock Value', value: `R${(data.summary.inventoryValue || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
-    { label: 'Low Stock', value: data.summary.lowStockCount.toString() },
-    { label: 'Critical / Out of Stock', value: data.summary.outOfStockCount.toString() },
-    { label: "Today's Purchases (units)", value: data.summary.todayPurchases.toString() },
-    { label: "Today's Sales (units)", value: data.summary.todaySales.toString() },
-    { label: "Today's Loss / Waste (units)", value: data.summary.todayLoss.toString() },
-    { label: 'Products', value: data.summary.totalProducts.toString() },
-    { label: 'Open POs', value: (data.purchaseOrders?.openCount ?? 0).toString() },
-  ] : []
+  const summaryLabels: Array<[string, (d: OwnerData) => number]> = [
+    ['Stock Purchased', d => d.kpi.purchased],
+    ['Stock Used', d => d.kpi.used],
+    ['Waste', d => d.kpi.wastage],
+    ['Adjustments', d => d.kpi.adjustments],
+    ['Current Stock Value', d => d.kpi.stockValue],
+    ['Supplier Outstanding', d => d.kpi.supplierOutstanding],
+  ]
+
+  const kpiCards = useMemo(() => {
+    if (!data) return []
+    const k = data.kpi
+    return [
+      {
+        label: 'Stock Received', value: formatMoney(k.purchased),
+        delta: pctDelta(k.purchased, k.purchasedPrev), tone: 'gold' as const,
+        sub: 'vs previous period',
+      },
+      {
+        label: 'Stock Used', value: formatMoney(k.used),
+        delta: pctDelta(k.used, k.usedPrev), tone: 'neutral' as const,
+        sub: 'vs previous period',
+      },
+      {
+        label: 'Current Stock Value', value: formatMoney(k.stockValue),
+        delta: pctDelta(k.stockValue, k.stockValuePrev), tone: 'gold' as const,
+        sub: 'estimated at cost',
+      },
+      {
+        label: 'Supplier Amount Owed', value: formatMoney(k.supplierOutstanding),
+        delta: undefined, tone: 'neutral' as const,
+        sub: `Paid: ${formatMoney(k.supplierPayments)}`,
+      },
+      {
+        label: 'Adjustments', value: formatMoney(k.adjustments),
+        delta: pctDelta(k.adjustments, k.adjustmentsPrev), tone: 'neutral' as const,
+        sub: 'counts, transfers, corrections',
+      },
+    ]
+  }, [data])
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#F0EDE8', margin: 0 }}>Inventory Dashboard</h1>
-          <p style={{ fontSize: 13.5, color: '#8CA4C0', margin: '4px 0 0' }}>
-            Real-time stock, purchasing, waste and supplier overview - calculated from the transaction ledger
-          </p>
-        </div>
-        <button
-          onClick={fetchData}
-          style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #2A3648', background: '#141E2B', color: '#EDE8F0', fontSize: 13, cursor: 'pointer' }}
-        >
-          Refresh
-        </button>
-      </div>
+      <PageTitle
+        title={`${greet()}, Mr Mahindra`}
+        subtitle="Inventory & Financial Overview � every figure is calculated from the live transaction ledger."
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {PRESETS.map(p => (
+              <button
+                key={p.key}
+                onClick={() => setPeriod(p.key)}
+                style={{
+                  padding: '8px 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                  border: period === p.key ? '1px solid #C8A04E' : '1px solid #3A322A',
+                  background: period === p.key ? 'rgba(200,160,78,0.14)' : '#1C1710',
+                  color: period === p.key ? '#E0BC6E' : '#B8B0A0',
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+            {period === 'custom' && (
+              <>
+                <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ background: '#1C1710', border: '1px solid #3A322A', color: '#F0EBE3', borderRadius: 8, padding: '7px 10px', fontSize: 12.5 }} />
+                <span style={{ color: '#8A8072', fontSize: 12 }}>?</span>
+                <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ background: '#1C1710', border: '1px solid #3A322A', color: '#F0EBE3', borderRadius: 8, padding: '7px 10px', fontSize: 12.5 }} />
+              </>
+            )}
+            <button onClick={refresh} style={{ padding: '8px 13px', borderRadius: 8, border: 'none', background: '#C8A04E', color: '#171008', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}>
+              Refresh
+            </button>
+          </div>
+        }
+      />
 
-      {isLoading ? (
-        <p style={{ color: '#8A96AC', fontSize: 14 }}>Loading inventory...</p>
-      ) : !data ? (
-        <p style={{ color: '#F87171', fontSize: 14 }}>Could not load inventory dashboard.</p>
-      ) : (
+      {error && (
+        <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(232,84,84,0.1)', border: '1px solid rgba(232,84,84,0.4)', color: '#F17777', fontSize: 13, marginBottom: 20 }}>
+          {error}
+        </div>
+      )}
+
+      {loading && !data ? (
+        <Loading />
+      ) : data ? (
         <>
-          {/* KPI cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 26 }}>
-            {cards.map(card => (
-              <div key={card.label} style={{ background: '#141E2B', borderRadius: 12, border: '1px solid #243043', padding: '16px 18px' }}>
-                <p style={{ margin: 0, fontSize: 11.5, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7A8CA8' }}>{card.label}</p>
-                <p style={{ margin: '8px 0 0', fontSize: 24, fontWeight: 800, color: '#F0EDE8' }}>{card.value}</p>
-              </div>
+          {/* KPI band */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14, marginBottom: 8 }}>
+            {kpiCards.map(k => (
+              <Kpi key={k.label} label={k.label} value={k.value} delta={k.delta} sub={k.sub} tone={k.tone} />
             ))}
           </div>
+          <p style={{ fontSize: 11.5, color: '#665D50', margin: '10px 0 0', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+            {data.locationName} � Showing {data.range && `${formatDateShort(data.range.start)} � ${formatDateShort(data.range.end)}`}
+            {lastUpdated ? ` � Updated ${lastUpdated.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}` : ' � Updating�'}
+          </p>
 
-          {/* Low stock alerts */}
-          <div style={{ background: '#141E2C', borderRadius: 12, border: '1px solid #24304A', padding: 18, marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#F0EDE8' }}>Low Stock Alerts ({data.alerts.length})</h3>
-              <Link href="/inv/adjustments" style={{ fontSize: 13, color: '#C4A04E', textDecoration: 'none' }}>Record adjustment -&gt;</Link>
-            </div>
-            {data.alerts.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: '#6B7A92' }}>No low-stock alerts - everything is at or above minimum.</p>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
-                {data.alerts.slice(0, 12).map(a => (
-                  <div key={a.productId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', background: '#0F1729', borderRadius: 8 }}>
-                    <span style={{ fontSize: 13, color: '#E8E6F0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{a.productName}</span>
-                    <Badge variant={a.type === 'negative_balance' || a.type === 'out_of_stock' ? 'danger' : 'warning'}>
-                      {a.type.replace(/_/g, ' ')} ({a.currentBalance})
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 16, marginBottom: 16 }}>
-            {/* Stock by location */}
-            <div style={{ background: '#141E2C', borderRadius: 12, border: '1px solid #24304A', padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#F0EDE8' }}>Stock Value by Location</h3>
-                <Link href="/inv/stock" style={{ fontSize: 13, color: '#93A4BC', textDecoration: 'none' }}>View stock -&gt;</Link>
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 16, marginTop: 20 }}>
+            {/* This week / This month summary */}
+            <Card title="Weekly & Monthly Summary" subtitle="Purchasing, usage, value and supplier position">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', color: '#7A8CA8', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Location</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', color: '#7A8CA8', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Stock Value</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', color: '#7A8CA8', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>%</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted, borderBottom: `1px solid ${C.borderStrong}` }}>Line</th>
+                    <th style={{ textAlign: 'right', padding: '8px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted, borderBottom: `1px solid ${C.borderStrong}` }}>This week</th>
+                    <th style={{ textAlign: 'right', padding: '8px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted, borderBottom: `1px solid ${C.borderStrong}` }}>This month</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {locations.map(l => {
-                    const v = locationValues[l.id] ?? 0
-                    const pct = totalLocationValue > 0 ? Math.round((v / totalLocationValue) * 100) : 0
-                    return (
-                      <tr key={l.id} style={{ borderTop: '1px solid #1C2840' }}>
-                        <td style={{ padding: '8px', color: '#E8E6F0' }}>{l.name}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: 600, color: '#F0EDE8' }}>R{v.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', color: '#93A4BC' }}>{pct}%</td>
-                      </tr>
-                    )
-                  })}
-                  <tr style={{ borderTop: '2px solid #2A3A58' }}>
-                    <td style={{ padding: '8px', fontWeight: 700, color: '#C4A04E' }}>TOTAL</td>
-                    <td style={{ padding: '8px', textAlign: 'right', fontWeight: 800, color: '#C4A04E' }}>R{totalLocationValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                    <td style={{ padding: '8px', textAlign: 'right', color: '#C4A04E' }}>100%</td>
+                  {summaryLabels.map(([label, pick]) => (
+                    <tr key={label} style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '9px 10px', color: C.textSoft }}>{label}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: C.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(pick(data))}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: C.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{month ? formatMoney(pick(month)) : '�'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+
+            {/* Movement */}
+            <Card title="Stock Movement" subtitle="Purchased vs used, per day in the selected period">
+              <MiniBarsBlock points={data.movement} />
+            </Card>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, marginTop: 16 }}>
+            {/* Stock by location */}
+            <Card
+              title="Stock by Location"
+              subtitle="Where the money is sitting"
+              action={<Link href="/inv/locations" style={{ color: C.goldBright, fontSize: 13, textDecoration: 'none' }}>View all ?</Link>}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Location</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Items</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Value</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.locations.map(loc => (
+                    <tr key={loc.locationId} style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '8px', color: C.textSoft }}>{loc.name}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>{loc.items}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: C.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(loc.value)}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>{loc.pct}%</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop: `2px solid ${C.borderStrong}` }}>
+                    <td style={{ padding: '8px', fontWeight: 800, color: C.goldBright }}>TOTAL</td>
+                    <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{data.locations.reduce((s, l) => s + l.items, 0)}</td>
+                    <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(data.locations.reduce((s, l) => s + l.value, 0))}</td>
+                    <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright }}>100%</td>
                   </tr>
                 </tbody>
               </table>
-            </div>
+            </Card>
 
-            {/* Supplier / PO overview */}
-            <div style={{ background: '#141E2C', borderRadius: 12, border: '1px solid #24304A', padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#F0EDE8' }}>Deliveries &amp; Suppliers</h3>
-                <Link href="/inv/purchases" style={{ fontSize: 13, color: '#93A4BC', textDecoration: 'none' }}>Receive stock -&gt;</Link>
-              </div>
-              {!data.purchaseOrders || (data.purchaseOrders.overdue.length === 0 && data.purchaseOrders.recent.length === 0) ? (
-                <p style={{ margin: 0, fontSize: 13, color: '#6B7A92' }}>No purchase orders yet.</p>
-              ) : (
-                <>
-                  {data.purchaseOrders.overdue.length > 0 && (
-                    <p style={{ margin: '0 0 8px', fontSize: 11.5, fontWeight: 700, color: '#F87171', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      {data.purchaseOrders.overdue.length} overdue delivery{data.purchaseOrders.overdue.length > 1 ? 's' : ''}
-                    </p>
+            {/* Supplier position */}
+            <Card
+              title="Supplier Position"
+              subtitle="Outstanding balances � invoices less payments"
+              action={<Link href="/inv/payables" style={{ color: C.goldBright, fontSize: 13, textDecoration: 'none' }}>Supplier payables ?</Link>}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Supplier</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>This month</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.suppliers.length === 0 && (
+                    <tr><td colSpan={3} style={{ padding: '20px 8px', textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No supplier invoices on record.</td></tr>
                   )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
-                    {data.purchaseOrders.recent.map(po => (
-                      <Link key={po.id} href={`/admin/operations/purchase-orders/${po.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#0F1729', borderRadius: 8, textDecoration: 'none' }}>
-                        <span style={{ fontSize: 13, color: '#E8E6F0' }}>{po.supplierName}</span>
-                        <Badge variant={po.status === 'received' ? 'success' : po.status === 'ordered' ? 'info' : 'warning'}>{po.status}</Badge>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                  {data.suppliers.map(s => (
+                    <tr key={s.supplierId ?? s.supplierName} style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '8px', color: C.textSoft }}>{s.supplierName}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: C.textSoft, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(s.month)}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: s.outstanding > 0 ? C.warningText : C.successText, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(s.outstanding)}</td>
+                    </tr>
+                  ))}
+                  {data.suppliers.length > 0 && (
+                    <tr style={{ borderTop: `2px solid ${C.borderStrong}` }}>
+                      <td style={{ padding: '8px', fontWeight: 800, color: C.goldBright }}>TOTAL</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(data.suppliers.reduce((s, x) => s + x.month, 0))}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(data.suppliers.reduce((s, x) => s + x.outstanding, 0))}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Card>
           </div>
 
-          {/* Recent activity */}
-          <div style={{ background: '#141E2C', borderRadius: 12, border: '1px solid #24304A', padding: 18 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#F0EDE8' }}>Recent Stock Movement</h3>
-              <Link href="/inv/activity" style={{ fontSize: 13, color: '#93A4BC', textDecoration: 'none' }}>Full activity -&gt;</Link>
-            </div>
-            {data.recent.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: '#6B7A92' }}>No stock movements yet.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
-                {data.recent.map(r => (
-                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: '#0F1729', borderRadius: 8 }}>
-                    <span style={{ fontSize: 13, color: '#E8E6F0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.productName}</span>
-                    <span style={{ fontSize: 12, color: '#7A8CA8', textTransform: 'capitalize' }}>{r.transactionType.replace(/_/g, ' ')}</span>
-                    <span style={{ fontWeight: 700, fontSize: 13, color: r.quantity < 0 ? '#F87171' : '#34D399' }}>
-                      {r.quantity > 0 ? '+' : ''}{r.quantity}
-                    </span>
-                    <span style={{ fontSize: 11.5, color: '#5A6B82' }}>
-                      {new Date(r.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
+          {/* Alerts + activity */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, marginTop: 16 }}>
+            <Card title="Needs Attention" subtitle="Low stock and stock-count concerns">
+              {data.alerts.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 13, color: C.textMuted }}>All clear � nothing needs attention right now.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {data.alerts.slice(0, 8).map((a, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: C.bgRaised, borderRadius: 8 }}>
+                      <Badge tone={a.severity === 'high' ? 'danger' : a.severity === 'medium' ? 'warning' : 'muted'}>{a.severity}</Badge>
+                      <span style={{ fontSize: 13, color: C.textSoft, flex: 1 }}>
+                        {a.href ? <Link href={a.href} style={{ color: C.textSoft, textDecoration: 'none' }}>{a.message}</Link> : a.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card
+              title="Recent Activity"
+              subtitle="Movements, payments and counts � most recent first"
+              action={<Link href="/inv/activity" style={{ color: C.goldBright, fontSize: 13, textDecoration: 'none' }}>Full audit ?</Link>}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {data.activity.length === 0 && <p style={{ margin: 0, fontSize: 13, color: C.textMuted }}>No recorded activity yet.</p>}
+                {data.activity.map((a, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 6px', borderBottom: `1px solid ${C.border}` }}>
+                    <Badge tone={ACTIVITY_TONES[a.kind] ?? 'muted'}>{a.kind.replace(/_/g, ' ')}</Badge>
+                    <span style={{ fontSize: 13, color: C.textSoft, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.description}</span>
+                    <span style={{ fontSize: 11.5, color: C.textMuted, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{formatDateTime(a.at)}</span>
                   </div>
                 ))}
               </div>
-            )}
+            </Card>
           </div>
         </>
+      ) : (
+        <p style={{ color: C.dangerText, fontSize: 14 }}>Could not load the dashboard. Check your connection and try again.</p>
+      )}
+    </div>
+  )
+}
+
+function MiniBarsBlock({ points }: { points: Array<{ date: string; purchased: number; used: number }> }) {
+  const maxVal = Math.max(1, ...points.map(p => Math.max(p.purchased, p.used)))
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 110, marginTop: 12 }}>
+      {points.length === 0 && <span style={{ fontSize: 12.5, color: C.textMuted }}>No movement in this period.</span>}
+      {points.map(p => (
+        <div key={p.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1, minWidth: 8 }} title={`${p.date}\npurchased ${formatMoney(p.purchased)}\nused ${formatMoney(p.used)}`}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 1, height: 80 }}>
+            <div style={{ width: 10, borderRadius: 3, background: '#8C7441', height: `${Math.max(2, (p.used / maxVal) * 100)}%` }} />
+            <div style={{ width: 10, borderRadius: 3, background: '#C8A04E', height: `${Math.max(2, (p.purchased / maxVal) * 100)}%` }} />
+          </div>
+          <span style={{ fontSize: 9.5, color: C.textMuted, letterSpacing: '0.03em' }}>{formatDateShort(p.date)}</span>
+        </div>
+      ))}
+      {points.length > 0 && (
+        <div style={{ marginLeft: 10, display: 'flex', flexDirection: 'column', gap: 2, fontSize: 10.5, color: C.textMuted }}>
+          <span style={{ color: '#C8A04E' }}>� Purchased</span>
+          <span style={{ color: '#8C7441' }}>� Used</span>
+        </div>
       )}
     </div>
   )

@@ -1,0 +1,1 @@
+export { POST } from '../../../../inventory/api/supplier-payments/route'
