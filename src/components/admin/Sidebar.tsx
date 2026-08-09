@@ -7,6 +7,7 @@ import { createBrowserClient } from '@/lib/supabase'
 import styles from './Sidebar.module.css'
 import {
   LayoutDashboard,
+  Landmark,
   Zap,
   ClipboardList,
   ChefHat,
@@ -69,6 +70,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'Overview',
     items: [
+      { label: 'Owner Dashboard', icon: <Landmark size={18} />, href: '/dashboard' },
       { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/dashboard' },
       { label: 'Background Jobs', icon: <Zap size={18} />, href: '/admin/background-jobs' },
     ],

@@ -165,6 +165,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
+    // Inventory workspace pages — reuses the same auth as /admin (admin only)
+    if (pathname.startsWith('/inv')) {
+      const auth = await verifyRole(request)
+      if (!auth || auth.role !== 'admin') return redirectToLogin(request)
+      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+    }
+
+    // Owner Dashboard — the owner's first page after logging in (admin only)
+    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+      const auth = await verifyRole(request)
+      if (!auth || auth.role !== 'admin') return redirectToLogin(request)
+      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+    }
+
     // Admin pages
     if (!pathname.startsWith('/admin/')) return NextResponse.next()
     if (pathname === '/admin/login') return NextResponse.next()
@@ -219,6 +233,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/dashboard/:path*',
+    '/inv/:path*',
     '/admin/:path*',
     '/waiter/:path*',
     '/staff/:path*',

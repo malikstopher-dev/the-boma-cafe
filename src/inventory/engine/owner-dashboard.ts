@@ -1,0 +1,571 @@
+import { getInventoryClient } from '../lib/db'
+import { resolveLocationId } from '../lib/location'
+import { getAlerts } from './dashboard'
+
+export type OwnerPeriod = 'this_week' | 'this_month' | 'last_7' | 'last_30' | 'custom'
+
+export interface OwnerRange {
+  start: string // ISO (inclusive)
+  end: string // ISO (exclusive)
+  label: string
+  previousStart: string
+  previousEnd: string
+}
+
+export interface OwnerKpi {
+  purchased: number
+  used: number
+  wastage: number
+  adjustments: number
+  stockValue: number
+  supplierPayments: number
+  supplierOutstanding: number
+  purchasedPrev: number
+  usedPrev: number
+  wastagePrev: number
+  adjustmentsPrev: number
+  stockValuePrev: number | null
+}
+
+export interface OwnerLocationRow {
+  locationId: string
+  name: string
+  items: number
+  value: number
+  pct: number
+  movement: number
+}
+
+export interface OwnerSupplierRow {
+  supplierId: string | null
+  supplierName: string
+  week: number
+  month: number
+  outstanding: number
+}
+
+export interface OwnerAlert {
+  severity: 'high' | 'medium' | 'low'
+  message: string
+  href?: string
+}
+
+export interface OwnerActivityItem {
+  kind: string
+  description: string
+  person: string
+  at: string
+}
+
+export interface OwnerMovementPoint {
+  date: string
+  purchased: number
+  used: number
+}
+
+export interface OwnerDashboardData {
+  range: OwnerRange
+  location: string | null
+  locationName: string
+  kpi: OwnerKpi
+  locations: OwnerLocationRow[]
+  suppliers: OwnerSupplierRow[]
+  alerts: OwnerAlert[]
+  activity: OwnerActivityItem[]
+  movement: OwnerMovementPoint[]
+  supplierPaymentsEnabled: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Period resolution: Mon–Sun weeks, calendar months, rolling windows, custom.
+// end is EXCLUSIVE (ISO); comparisons use gte(start) / lt(end).
+// ---------------------------------------------------------------------------
+
+function iso(d: Date): string {
+  return d.toISOString()
+}
+
+export function getOwnerRange(period: OwnerPeriod, customFrom?: string | null, customTo?: string | null): OwnerRange {
+  const now = new Date()
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+
+  if (period === 'custom') {
+    const from = customFrom || today.toISOString().slice(0, 10)
+    const to = customTo || today.toISOString().slice(0, 10)
+    const start = new Date(`${from}T00:00:00.000Z`)
+    const end = new Date(`${to}T00:00:00.000Z`)
+    end.setUTCDate(end.getUTCDate() + 1)
+    const spanMs = end.getTime() - start.getTime()
+    const prevStart = new Date(start.getTime() - spanMs)
+    return { start: iso(start), end: iso(end), label: `${from} to ${to}`, previousStart: iso(prevStart), previousEnd: iso(start) }
+  }
+
+  if (period === 'this_week') {
+    const dow = today.getUTCDay() || 7 // Sunday = 7, so Monday = 1
+    const monday = new Date(today)
+    monday.setUTCDate(today.getUTCDate() - (dow - 1))
+    const nextMonday = new Date(monday)
+    nextMonday.setUTCDate(monday.getUTCDate() + 7)
+    const prevMonday = new Date(monday)
+    prevMonday.setUTCDate(monday.getUTCDate() - 7)
+    return {
+      start: iso(monday),
+      end: iso(nextMonday),
+      label: 'This week',
+      previousStart: iso(prevMonday),
+      previousEnd: iso(monday),
+    }
+  }
+
+  if (period === 'this_month') {
+    const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
+    const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1))
+    const prevStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1))
+    return {
+      start: iso(start),
+      end: iso(end),
+      label: 'This month',
+      previousStart: iso(prevStart),
+      previousEnd: iso(start),
+    }
+  }
+
+  const days = period === 'last_30' ? 30 : 7
+  const start = new Date(today)
+  start.setUTCDate(today.getUTCDate() - (days - 1))
+  const end = new Date(today)
+  end.setUTCDate(today.getUTCDate() + 1)
+  const prevStart = new Date(start)
+  prevStart.setUTCDate(start.getUTCDate() - days)
+  return {
+    start: iso(start),
+    end: iso(end),
+    label: `Last ${days} days`,
+    previousStart: iso(prevStart),
+    previousEnd: iso(start),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Transaction aggregation (single source of truth: the ledger)
+// ---------------------------------------------------------------------------
+
+export interface RawTxn {
+  quantity: number
+  unit_cost: number | null
+  transaction_type: string
+  created_at: string
+}
+
+const PURCHASE_TYPES = new Set(['purchase', 'return'])
+const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff', 'production', 'waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'stolen'])
+const WASTE_TYPES = new Set(['waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'breakage'])
+
+export function summarizeTxns(txns: RawTxn[]): { purchased: number; used: number; wastage: number; adjustments: number } {
+  let purchased = 0
+  let used = 0
+  let wastage = 0
+  let adjustments = 0
+
+  for (const t of txns) {
+    const type = (t.transaction_type || '').toLowerCase()
+    const qty = Number(t.quantity) || 0
+    const cost = Number(t.unit_cost) || 0
+    const val = Math.abs(qty) * cost
+
+    if (PURCHASE_TYPES.has(type) && qty > 0) purchased += val
+    if (USED_TYPES.has(type) && qty < 0) used += val
+    if (WASTE_TYPES.has(type) && qty < 0) wastage += val
+    if (type === 'adjustment') adjustments += val
+  }
+
+  return { purchased, used, wastage, adjustments }
+}
+
+export async function fetchTxns(start: string, end: string): Promise<RawTxn[]> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_transactions')
+    .select('quantity, unit_cost, transaction_type, created_at')
+    .gte('created_at', start)
+    .lt('created_at', end)
+
+  if (error) return []
+  return (data ?? []) as unknown as RawTxn[]
+}
+
+async function fetchTxnsByLocation(locationId: string, start: string, end: string): Promise<RawTxn[]> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_transactions')
+    .select('quantity, unit_cost, transaction_type, created_at')
+    .eq('location_id', locationId)
+    .gte('created_at', start)
+    .lt('created_at', end)
+
+  if (error) return []
+  return (data ?? []) as unknown as RawTxn[]
+}
+
+// ---------------------------------------------------------------------------
+// Stock value by location (from the balance cache + last purchase price)
+// ---------------------------------------------------------------------------
+
+async function stockValue(locationId: string): Promise<{ value: number; items: number }> {
+  const supabase = getInventoryClient()
+  const { data: balances } = await supabase
+    .from('inventory_product_balances')
+    .select('product_id, balance')
+    .eq('location_id', locationId)
+
+  let value = 0
+  let items = 0
+
+  for (const b of (balances ?? []) as unknown as Array<{ product_id: string; balance: number }>) {
+    const balance = Number(b.balance)
+    if (balance <= 0) continue
+    items += 1
+
+    const { data: cost } = await supabase
+      .from('inventory_transactions')
+      .select('unit_cost')
+      .eq('product_id', b.product_id)
+      .eq('location_id', locationId)
+      .not('unit_cost', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    value += balance * Number((cost as any)?.unit_cost ?? 0)
+  }
+
+  return { value, items }
+}
+
+// ---------------------------------------------------------------------------
+// Supplier invoices + payments (migration 064)
+// ---------------------------------------------------------------------------
+
+interface InvoiceRow {
+  id: string
+  supplier_id: string
+  total_amount: number
+  status: string
+}
+
+async function invoiceTotalsForSupplier(supplierId: string, start: string, end: string): Promise<number> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_supplier_invoices')
+    .select('total_amount')
+    .eq('supplier_id', supplierId)
+    .gte('invoice_date', start.slice(0, 10))
+    .lt('invoice_date', end.slice(0, 10))
+
+  if (error) return 0
+  return (data ?? []).reduce((sum: number, r: any) => sum + Number(r.total_amount ?? 0), 0)
+}
+
+async function openInvoicesForSupplier(supplierId: string): Promise<Array<{ id: string; total_amount: number }>> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_supplier_invoices')
+    .select('id, total_amount')
+    .eq('supplier_id', supplierId)
+    .in('status', ['pending', 'partial', 'overdue'])
+
+  if (error) return []
+  return (data ?? []) as unknown as Array<{ id: string; total_amount: number }>
+}
+
+async function paidForInvoice(invoiceId: string): Promise<number> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_supplier_payments')
+    .select('amount')
+    .eq('invoice_id', invoiceId)
+
+  if (error) return 0
+  return (data ?? []).reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0)
+}
+
+async function supplierPayables(): Promise<{ rows: OwnerSupplierRow[]; total: number; enabled: boolean }> {
+  const supabase = getInventoryClient()
+  try {
+    const { data: suppliers } = await supabase
+      .from('inventory_suppliers')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name')
+
+    const roster = (suppliers ?? []) as unknown as Array<{ id: string; name: string }>
+    const week = getOwnerRange('this_week')
+    const month = getOwnerRange('this_month')
+    const rows: OwnerSupplierRow[] = []
+    let total = 0
+
+    for (const sup of roster) {
+      const [weekAmount, monthAmount, openInvoices] = await Promise.all([
+        invoiceTotalsForSupplier(sup.id, week.start, week.end),
+        invoiceTotalsForSupplier(sup.id, month.start, month.end),
+        openInvoicesForSupplier(sup.id),
+      ])
+
+      let outstanding = 0
+      for (const inv of openInvoices) {
+        const paid = await paidForInvoice(inv.id)
+        const open = Number(inv.total_amount) - paid
+        if (open > 0.004) outstanding += open
+      }
+      total += outstanding
+      rows.push({ supplierId: sup.id, supplierName: sup.name, week: weekAmount, month: monthAmount, outstanding })
+    }
+
+    return { rows, total, enabled: true }
+  } catch {
+    // Tables don't exist yet (migration 064 not applied) — caller degrades gracefully
+    return { rows: [], total: 0, enabled: false }
+  }
+}
+
+async function supplierPaymentsInRange(start: string, end: string): Promise<{ amount: number; enabled: boolean }> {
+  try {
+    const supabase = getInventoryClient()
+    const { data, error } = await supabase
+      .from('inventory_supplier_payments')
+      .select('amount')
+      .gte('paid_at', start)
+      .lt('paid_at', end)
+    if (error) return { amount: 0, enabled: false }
+    return { amount: (data ?? []).reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0), enabled: true }
+  } catch {
+    return { amount: 0, enabled: false }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Alerts — only real conditions; empty when everything is fine
+// ---------------------------------------------------------------------------
+
+async function buildAlerts(locationId: string): Promise<OwnerAlert[]> {
+  const supabase = getInventoryClient()
+  const alerts: OwnerAlert[] = []
+
+  const stockAlerts = await getAlerts(locationId)
+  for (const a of (stockAlerts ?? []).slice(0, 4)) {
+    alerts.push({
+      severity: a.type === 'out_of_stock' || a.type === 'negative_balance' ? 'high' : 'medium',
+      message: `${a.productName} — ${a.type === 'out_of_stock' ? 'out of stock' : 'low stock'} (${a.currentBalance} on hand)`,
+      href: '/inv/products',
+    })
+  }
+
+  try {
+    const { data: pendingReceipts } = await supabase
+      .from('inventory_po_receipts')
+      .select('id')
+      .eq('verification_status', 'pending')
+      .limit(5)
+    if ((pendingReceipts ?? []).length > 0) {
+      const n = pendingReceipts?.length ?? 0
+      alerts.push({ severity: 'medium', message: `${n} delivery${n > 1 ? 's' : ''} awaiting verification`, href: '/inv/purchases' })
+    }
+  } catch { /* column missing until migration 064 */ }
+
+  try {
+    const { data: pendingInvoices } = await supabase
+      .from('inventory_supplier_invoices')
+      .select('id')
+      .in('status', ['pending', 'partial', 'overdue'])
+      .limit(5)
+    if ((pendingInvoices ?? []).length > 0) {
+      const n = pendingInvoices?.length ?? 0
+      alerts.push({ severity: 'low', message: `${n} supplier invoice${n > 1 ? 's' : ''} open`, href: '/inv/suppliers' })
+    }
+  } catch { /* tables absent */ }
+
+  const { data: pendingCounts } = await supabase
+    .from('inventory_stock_counts')
+    .select('id')
+    .eq('status', 'submitted')
+    .limit(1)
+  if ((pendingCounts ?? []).length > 0) {
+    alerts.push({ severity: 'medium', message: 'A stock count is awaiting approval', href: '/inv/stock-counts' })
+  }
+
+  return alerts.slice(0, 8)
+}
+
+// ---------------------------------------------------------------------------
+// Recent activity
+// ---------------------------------------------------------------------------
+
+async function buildActivity(): Promise<OwnerActivityItem[]> {
+  const supabase = getInventoryClient()
+  const items: OwnerActivityItem[] = []
+
+  const { data: recentTxns } = await supabase
+    .from('inventory_transactions')
+    .select('transaction_type, quantity, unit_cost, created_at, inventory_products(name)')
+    .order('created_at', { ascending: false })
+    .limit(8)
+
+  for (const t of (recentTxns ?? []) as any[]) {
+    items.push({
+      kind: t.transaction_type || 'movement',
+      description: `${t.inventory_products?.name || 'Item'} (${t.quantity > 0 ? '+' : ''}${t.quantity})`,
+      person: '',
+      at: t.created_at,
+    })
+  }
+
+  try {
+    const { data: payments } = await supabase
+      .from('inventory_supplier_payments')
+      .select('amount, paid_at')
+      .order('paid_at', { ascending: false })
+      .limit(3)
+    for (const p of (payments ?? []) as any[]) {
+      items.push({ kind: 'payment', description: `Supplier payment R${Number(p.amount ?? 0).toLocaleString()}`, person: '', at: p.paid_at })
+    }
+  } catch { /* absent */ }
+
+  return items.sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 10)
+}
+
+// ---------------------------------------------------------------------------
+// Main entry
+// ---------------------------------------------------------------------------
+
+export async function getOwnerDashboard(
+  period: OwnerPeriod = 'this_week',
+  customFrom?: string | null,
+  customTo?: string | null,
+): Promise<OwnerDashboardData> {
+  const supabase = getInventoryClient()
+  const range = getOwnerRange(period, customFrom, customTo)
+
+  const [currentTxns, previousTxns] = await Promise.all([
+    fetchTxns(range.start, range.end),
+    fetchTxns(range.previousStart, range.previousEnd),
+  ])
+
+  const current = summarizeTxns(currentTxns)
+  const previous = summarizeTxns(previousTxns)
+
+  const locationId = (await resolveLocationId(null)) ?? ''
+
+  const { data: locations } = await supabase
+    .from('inventory_locations')
+    .select('id, name')
+    .eq('is_active', true)
+    .order('name')
+
+  const locList = ((locations ?? []) as unknown as Array<{ id: string; name: string }>) || []
+
+  const located: OwnerLocationRow[] = []
+  let totalValue = 0
+
+  for (const l of locList) {
+    const sv = await stockValue(l.id)
+    totalValue += sv.value
+    located.push({
+      locationId: l.id,
+      name: l.name,
+      items: sv.items,
+      value: sv.value,
+      pct: 0,
+      movement: 0,
+    })
+  }
+
+  for (const row of located) {
+    row.pct = totalValue > 0 ? Math.round((row.value / totalValue) * 1000) / 10 : 0
+    const mv = await fetchTxnsByLocation(row.locationId, range.start, range.end)
+    const sums = summarizeTxns(mv)
+    row.movement = sums.purchased - sums.used
+  }
+
+  const payables = await supplierPayables()
+  const payments = await supplierPaymentsInRange(range.start, range.end)
+  const previousPayments = await supplierPaymentsInRange(range.previousStart, range.previousEnd)
+
+  const stockValuePrev = await stockValueAt(range.previousStart)
+
+  const [alerts, activity, movement] = await Promise.all([
+    buildAlerts(locationId),
+    buildActivity(),
+    buildMovement(range),
+  ])
+
+  return {
+    range,
+    location: locationId,
+    locationName: locList.find(l => l.id === locationId)?.name ?? 'All locations',
+    kpi: {
+      purchased: current.purchased,
+      used: current.used,
+      wastage: current.wastage,
+      adjustments: current.adjustments,
+      stockValue: totalValue,
+      supplierPayments: payments.amount,
+      supplierOutstanding: payables.total,
+      purchasedPrev: previous.purchased,
+      usedPrev: previous.used,
+      wastagePrev: previous.wastage,
+      adjustmentsPrev: previous.adjustments,
+      stockValuePrev,
+    },
+    locations: located,
+    suppliers: payables.rows,
+    alerts,
+    activity,
+    movement,
+    supplierPaymentsEnabled: payments.enabled && payables.enabled,
+  }
+}
+
+export async function stockValueAt(startIso: string): Promise<number | null> {
+  const date = startIso.slice(0, 10)
+  const prevDate = new Date(new Date(startIso).getTime() - 86400000).toISOString().slice(0, 10)
+  const snapshots = await getInventoryClient()
+    .from('inventory_daily_snapshots')
+    .select('stock_value, date')
+    .in('date', [date, prevDate])
+    .order('date', { ascending: false })
+    .limit(1)
+
+  if (snapshots.error) return null
+  const best = (snapshots.data ?? [])[0] as any
+  return best ? Number(best.stock_value ?? 0) : null
+}
+
+async function buildMovement(range: OwnerRange): Promise<OwnerMovementPoint[]> {
+  const txns = await fetchTxns(range.start, range.end)
+  const byDay = new Map<string, { purchased: number; used: number }>()
+
+  for (const t of txns) {
+    const day = t.created_at.slice(0, 10)
+    const entry = byDay.get(day) ?? { purchased: 0, used: 0 }
+    const type = (t.transaction_type || '').toLowerCase()
+    const qty = Math.abs(t.quantity)
+    const cost = Number(t.unit_cost) || 0
+
+    if (PURCHASE_TYPES.has(type) && t.quantity > 0) entry.purchased += qty * cost
+    if (USED_TYPES.has(type) && t.quantity < 0) entry.used += qty * cost
+    byDay.set(day, entry)
+  }
+
+  return Array.from(byDay.entries())
+    .map(([date, v]) => ({ date, purchased: round2(v.purchased), used: round2(v.used) }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100
+}
+
+export function formatRand(n: number | null | undefined): string {
+  const v = Number(n ?? 0)
+  return `R${v.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}

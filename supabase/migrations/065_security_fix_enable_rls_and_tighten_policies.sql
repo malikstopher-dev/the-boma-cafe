@@ -1,6 +1,11 @@
 -- ============================================================
--- Migration 061: SECURITY FIX — Enable RLS on all unprotected
+-- Migration 065: SECURITY FIX — Enable RLS on all unprotected
 -- tables and tighten over-permissive policies.
+-- (Renamed from 061 to resolve a version collision with
+-- 061_bar_items_alcohol_dinein_only.sql on the schema_migrations
+-- PK; policies were already present on the production DB from a
+-- manual application, so all CREATE POLICY statements below use
+-- IF NOT EXISTS.)
 --
 -- Trigger: Supabase security advisor email (03 Aug 2026) flagged
 -- `rls_disabled_in_public`. Live verification confirmed anon key
@@ -103,21 +108,57 @@ DROP POLICY IF EXISTS "staff_profiles_insert"       ON public.staff_profiles;
 DROP POLICY IF EXISTS "staff_profiles_update"       ON public.staff_profiles;
 DROP POLICY IF EXISTS "staff_profiles_delete"       ON public.staff_profiles;
 
-CREATE POLICY "staff_profiles_authenticated_select"
-  ON public.staff_profiles
-  FOR SELECT TO authenticated USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'staff_profiles'
+      AND policyname = 'staff_profiles_authenticated_select'
+  ) THEN
+    EXECUTE 'CREATE POLICY "staff_profiles_authenticated_select"
+      ON public.staff_profiles
+      FOR SELECT TO authenticated USING (true)';
+  END IF;
+END $$;
 
-CREATE POLICY "staff_profiles_authenticated_insert"
-  ON public.staff_profiles
-  FOR INSERT TO authenticated WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'staff_profiles'
+      AND policyname = 'staff_profiles_authenticated_insert'
+  ) THEN
+    EXECUTE 'CREATE POLICY "staff_profiles_authenticated_insert"
+      ON public.staff_profiles
+      FOR INSERT TO authenticated WITH CHECK (true)';
+  END IF;
+END $$;
 
-CREATE POLICY "staff_profiles_authenticated_update"
-  ON public.staff_profiles
-  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'staff_profiles'
+      AND policyname = 'staff_profiles_authenticated_update'
+  ) THEN
+    EXECUTE 'CREATE POLICY "staff_profiles_authenticated_update"
+      ON public.staff_profiles
+      FOR UPDATE TO authenticated USING (true) WITH CHECK (true)';
+  END IF;
+END $$;
 
-CREATE POLICY "staff_profiles_authenticated_delete"
-  ON public.staff_profiles
-  FOR DELETE TO authenticated USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'staff_profiles'
+      AND policyname = 'staff_profiles_authenticated_delete'
+  ) THEN
+    EXECUTE 'CREATE POLICY "staff_profiles_authenticated_delete"
+      ON public.staff_profiles
+      FOR DELETE TO authenticated USING (true)';
+  END IF;
+END $$;
 
 -- ============================================================
 -- SECTION 3 — orders: keep Realtime working, drop the public
