@@ -126,7 +126,7 @@ export async function getStockCount(id: string): Promise<{ stockCount: Inventory
     .from('inventory_stock_count_items')
     .select('*, inventory_products(id, name, sku)')
     .eq('stock_count_id', id)
-    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
 
   return {
     stockCount: stockCount as InventoryStockCount,
@@ -173,7 +173,7 @@ export async function submitStockCount(id: string, performedBy?: string | null):
   return data as InventoryStockCount
 }
 
-export async function approveStockCount(id: string, approvedBy: string): Promise<InventoryStockCount> {
+export async function approveStockCount(id: string, approvedBy: string | null = null): Promise<InventoryStockCount> {
   const supabase = getInventoryClient()
 
   const session = await getStockCount(id)
@@ -218,7 +218,7 @@ export async function approveStockCount(id: string, approvedBy: string): Promise
   if (error) throw new Error(`Failed to approve stock count: ${error.message}`)
 
   await refreshDashboardCache(session.stockCount.location_id)
-  await writeAuditLog('inventory_stock_counts', id, 'updated', { status: 'approved', approved_by: approvedBy }, approvedBy)
+  await writeAuditLog('inventory_stock_counts', id, 'updated', { status: 'approved', approved_by: approvedBy ?? null }, approvedBy ?? null)
 
   return data as InventoryStockCount
 }

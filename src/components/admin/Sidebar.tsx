@@ -33,6 +33,7 @@ import {
   MapPin,
   Download,
   Bell,
+  Flame,
   BarChart3,
   Settings,
   UtensilsCrossed,
@@ -92,8 +93,11 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operations · Open',
+    label: 'Operations & Stock · Open',
     items: [
+      { label: 'Daily Stock Input', icon: <ClipboardList size={18} />, href: '/admin/operations/daily-stock' },
+      { label: 'Weekly View', icon: <CalendarDays size={18} />, href: '/admin/operations/weekly' },
+      { label: 'Gas Tracker', icon: <Flame size={18} />, href: '/admin/operations/gas' },
       { label: 'Opening Checklist', icon: <CheckCircle size={18} />, href: '/admin/operations' },
       { label: 'Reconcile — Food', icon: <Salad size={18} />, href: '/admin/operations/food/reconcile' },
       { label: 'Reconcile — Beverage', icon: <Beer size={18} />, href: '/admin/operations/beverage/reconcile' },
@@ -102,7 +106,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operations · Inventory',
+    label: 'Operations & Stock · Inventory',
     items: [
       { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/operations/dashboard' },
       { label: 'All Products', icon: <Tag size={18} />, href: '/admin/operations/products' },
@@ -115,7 +119,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operations · Purchasing',
+    label: 'Operations & Stock · Purchasing',
     items: [
       { label: 'Purchase Orders', icon: <ClipboardList size={18} />, href: '/admin/operations/purchase-orders' },
       { label: 'Receiving', icon: <Package size={18} />, href: '/admin/operations/receiving' },
@@ -125,7 +129,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operations · Production',
+    label: 'Operations & Stock · Production',
     items: [
       { label: 'Recipes', icon: <BookOpen size={18} />, href: '/admin/operations/recipes' },
       { label: 'Production Runs', icon: <Factory size={18} />, href: '/admin/operations/production-runs' },
@@ -135,7 +139,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operations · Records',
+    label: 'Operations & Stock · Records',
     items: [
       { label: 'Locations', icon: <MapPin size={18} />, href: '/admin/operations/locations' },
       { label: 'Transactions', icon: <RefreshCw size={18} />, href: '/admin/operations/transactions' },
@@ -144,13 +148,13 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operations · Reports',
+    label: 'Operations & Stock · Reports',
     items: [
       { label: 'Reports', icon: <BarChart3 size={18} />, href: '/admin/operations/reports' },
     ],
   },
   {
-    label: 'Operations · Settings',
+    label: 'Operations & Stock · Settings',
     items: [
       { label: 'Settings', icon: <Settings size={18} />, href: '/admin/operations/settings' },
     ],

@@ -11,6 +11,14 @@ import { useToast } from '@/components/admin/design-system/Toast'
 import { cmsService } from '@/lib/client-cms'
 import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
+interface DailyStatusRow {
+  locationId: string
+  locationName: string
+  status: string
+  notes: string | null
+  count: number
+}
+
 interface OrderRecord {
   id: string; order_ref: string | null; customer_name: string; order_type: string
   total: number; status: string; created_at: string; station?: string
@@ -110,6 +118,7 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState<OrderRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [ordersLoading, setOrdersLoading] = useState(true)
+  const [dailyStatus, setDailyStatus] = useState<DailyStatusRow[]>([])
   const { error: showError } = useToast()
 
   useEffect(() => {
@@ -156,6 +165,35 @@ export default function AdminDashboard() {
       })
       .catch(() => {})
       .finally(() => setOrdersLoading(false))
+
+    const today = new Date().toISOString().split('T')[0]
+    Promise.all([
+      fetch('/api/inventory/stock-counts').then(r => r.json()).catch(() => []),
+      fetch('/api/inventory/locations').then(r => r.json()).catch(() => []),
+    ]).then(([countsRes, locationsRes]) => {
+      const counts = Array.isArray(countsRes) ? countsRes : []
+      const locations = Array.isArray(locationsRes) ? locationsRes : []
+      const nameById = new Map(locations.map((l: { id: string; name: string }) => [l.id, l.name]))
+      const byLoc = new Map<string, DailyStatusRow>()
+      for (const sc of counts) {
+        const isDaily = typeof sc.notes === 'string' && sc.notes.startsWith('daily:')
+        if (!isDaily) continue
+        const locId = sc.location_id
+        const row = byLoc.get(locId) ?? {
+          locationId: locId,
+          locationName: nameById.get(locId) ?? 'Location',
+          status: sc.status,
+          notes: sc.notes,
+          count: 0,
+        }
+        row.count += 1
+        if (['in_progress', 'submitted'].includes(sc.status) || row.status === 'cancelled' || row.status === 'approved') {
+          row.status = sc.status
+        }
+        byLoc.set(locId, row)
+      }
+      setDailyStatus([...byLoc.values()].sort((a, b) => a.locationName.localeCompare(b.locationName)))
+    })
   }, [])
 
   const greeting = () => {
@@ -163,6 +201,14 @@ export default function AdminDashboard() {
     if (h < 12) return 'Good morning'
     if (h < 17) return 'Good afternoon'
     return 'Good evening'
+  }
+
+  const weeklyNumber = () => {
+    const now = new Date()
+    const jan1 = new Date(now.getFullYear(), 0, 1)
+    const monday = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); const dow = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dow); return x }
+    const first = monday(jan1)
+    return Math.max(1, Math.floor((monday(now).getTime() - first.getTime()) / (7 * 86400000)) + 1)
   }
 
   return (
@@ -196,6 +242,56 @@ export default function AdminDashboard() {
         ) : null}
       </div>
 
+      {/* Operations & Stock — highlighted daily stock banner */}
+      <div style={{
+        marginBottom: 24,
+        background: 'linear-gradient(135deg, #2A2015 0%, #1E1A14 60%)',
+        border: '1px solid rgba(200,160,78,0.5)',
+        borderLeft: '5px solid #C8A04E',
+        borderRadius: 12,
+        padding: '18px 20px',
+        boxShadow: '0 6px 24px rgba(200,160,78,0.08)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#F0EBE3' }}>📋 Daily Stock Input — Operations & Stock</h2>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#A09888' }}>
+              Punch in today's stock per location · <Link href="/admin/operations/weekly" style={{ color: '#C8A04E', textDecoration: 'none', fontWeight: 600 }}>Week {weeklyNumber()}</Link> ·{' '}
+              <Link href="/admin/operations/gas" style={{ color: '#C8A04E', textDecoration: 'none', fontWeight: 600 }}>Gas Tracker</Link>
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link href="/admin/operations/daily-stock">
+              <Button variant="primary" size="md">Open Daily Stock Input</Button>
+            </Link>
+            <Link href="/admin/operations">
+              <Button variant="secondary" size="md">Opening Checklist</Button>
+            </Link>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+          {dailyStatus.length > 0 ? dailyStatus.map(row => (
+            <div key={row.locationId} style={{
+              background: 'rgba(200,160,78,0.07)', border: '1px solid rgba(200,160,78,0.25)',
+              borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{
+                width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                background: row.status === 'approved' ? '#6BBD59' : row.status === 'submitted' ? '#E8B93C' : row.status === 'in_progress' ? '#5A9EE6' : '#E85454',
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#F0EBE3' }}>{row.locationName}</span>
+              <span style={{ fontSize: 11.5, color: '#A09888', marginLeft: 'auto' }}>
+                {row.status === 'approved' ? 'Done' : row.status === 'submitted' ? 'Submitted' : row.status === 'in_progress' ? 'Counting' : '—'}
+              </span>
+            </div>
+          )) : (
+            <div style={{ fontSize: 12.5, color: '#8C8275' }}>
+              No daily stock entry yet today — open <Link href="/admin/operations/daily-stock" style={{ color: '#C8A04E' }}>Daily Stock Input</Link> to start.
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Quick Actions — branded command banner */}
       <div style={{
         marginBottom: 24,
@@ -215,6 +311,7 @@ export default function AdminDashboard() {
           </Link>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+          <QuickAction href="/admin/operations/daily-stock" icon="📋" label="Operations & Stock" color="#C8A04E" />
           <QuickAction href="/admin/orders" icon="📋" label="Orders" color="#60A5FA" />
           <QuickAction href="/admin/kitchen" icon="👨‍🍳" label="Kitchen" color="#FBBF24" />
           <QuickAction href="/admin/bar" icon="🍸" label="Bar" color="#A78BFA" />

@@ -1,6 +1,6 @@
 import { getInventoryClient } from './db'
 
-export type AuditAction = 'created' | 'updated' | 'archived' | 'restored' | 'hard_deleted' | 'completed' | 'item_completed' | 'update_notes'
+export type AuditAction = 'created' | 'updated' | 'archived' | 'restored' | 'hard_deleted' | 'completed' | 'item_completed' | 'update_notes' | 'deleted'
 
 export async function writeAuditLog(
   tableName: string,

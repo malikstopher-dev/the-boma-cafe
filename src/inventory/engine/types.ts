@@ -5,14 +5,14 @@ export type TransactionType =
   | 'breakage' | 'spillage' | 'comp' | 'staff'
   | 'waste' | 'expiry_loss' | 'adjustment' | 'physical_count'
   | 'transfer_in' | 'transfer_out' | 'return'
-  | 'production' | 'theft' | 'donation'
+  | 'production' | 'theft' | 'donation' | 'gas_usage'
 
-export type InventoryType = 'FOOD' | 'BEVERAGE' | 'CLEANING' | 'PACKAGING' | 'GENERAL'
+export type InventoryType = 'FOOD' | 'BEVERAGE' | 'CLEANING' | 'PACKAGING' | 'GENERAL' | 'GAS'
 
 export type MovementReason =
   | 'BREAKAGE' | 'WASTE' | 'STAFF_MEAL' | 'PROMOTION' | 'EXPIRED' | 'THEFT'
   | 'DONATION' | 'COMP' | 'TRANSFER' | 'ADJUSTMENT' | 'SALE' | 'BOOKING'
-  | 'RETURN' | 'OPENING' | 'CLOSING' | 'PRODUCTION' | 'SPILLAGE' | 'DELIVERY'
+  | 'RETURN' | 'OPENING' | 'CLOSING' | 'PRODUCTION' | 'SPILLAGE' | 'DELIVERY' | 'GAS_USAGE'
 
 export type ImportMode = 'initial' | 'delivery' | 'full_replacement'
 

@@ -7,7 +7,7 @@ import { writeAuditLog } from '../lib/audit'
 const DECREASE_TYPES: ReadonlySet<TransactionType> = new Set([
   'sale', 'sale_bottle', 'spillage', 'comp', 'staff',
   'waste', 'breakage', 'expiry_loss', 'transfer_out',
-  'theft', 'donation',
+  'theft', 'donation', 'gas_usage',
 ])
 
 function isDecreaseType(t: TransactionType): boolean {

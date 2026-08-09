@@ -4,7 +4,7 @@ export function getInventoryTypeFilter(searchParams: URLSearchParams): Inventory
   const val = searchParams.get('inventory_type')
   if (!val) return null
   const upper = val.toUpperCase() as InventoryType
-  if (['FOOD', 'BEVERAGE', 'CLEANING', 'PACKAGING', 'GENERAL'].includes(upper)) {
+  if (['FOOD', 'BEVERAGE', 'CLEANING', 'PACKAGING', 'GENERAL', 'GAS'].includes(upper)) {
     return upper
   }
   return null
