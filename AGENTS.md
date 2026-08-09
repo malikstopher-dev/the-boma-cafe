@@ -819,3 +819,30 @@ ssh -i "C:\Users\stoph\Downloads\ssh-key-2026-08-02.key" ubuntu@145.241.101.133
 cd ~/boma && git pull && npm ci && npm run build:worker && pm2 restart boma-worker && pm2 save
 ```
 
+---
+
+## Session: Cost-Centre Requirement on Movements (2026-08-09) — commit `bca7261`
+
+### Objective
+Owner noticed PO receiving in production created `inventory_transactions` rows with `cost_centre_id = NULL` (schema requires NOT NULL; engine inserts fell back to null because callers never passed a cost centre). Verified live before the fix: transactions from real receiving events had NULL `cost_centre_id`. Fixed end-to-end.
+
+### Root cause
+`createTransaction()` in `src/inventory/engine/ledger.ts` inserted `cost_centre_id ?? null` and no caller (PO receive API, waste, adjustments, stock counts, imports, order items) passed a cost centre. Schema demands NOT NULL; the inserts succeeded anyway because PostgREST insert can't see the table CHECK? (no — actually the check is on the column and the ledger bypasses it) → NULLs persisted.
+
+### The fix (commit `bca7261`, 11 files, +342/−25)
+1. **Migration `066_locations_cost_centre.sql`** — added `cost_centre_id UUID NULL REFERENCES cost_centres(id)` to `inventory_locations`, backfilled all 6 production locations by keyword rules (Main Bar/Bar 2 → Bar; Dry Store/Store-Room → Restaurant; Puff Lounge → Events; Art Area → Restaurant fallback), then `SET NOT NULL`. Applied to prod.
+2. **`src/inventory/lib/cost-centre.ts` (NEW)** — `resolveCostCentreId(locationId, explicitCostCentreId?)`: explicit non-null wins (validated against DB); else falls back to the location's `cost_centre_id`; else first active location's; else NULL (caller's decision to reject). Default export used everywhere.
+3. **`ledger.ts:createTransaction()`** — now calls `resolveCostCentreId(location_id, cost_centre_id)` itself, so **every ledger caller automatically inherits the location's cost centre** even when it passes nothing (waste, adjustments, stock counts, imports, order-items all fixed with zero per-caller changes).
+4. **`purchase-orders.ts:receiveItems()`** — rewritten: resolves cost centre for ALL items BEFORE the first write (via `Promise.all(map(async ...))`), throws `MissingCostCentreError` up-front if a location has no centre; previously it created the receipt first and then could silently orphan it. Also fixed a mid-edit duplicated block + `await`-in-sync-`.map` corruption.
+5. **API/UI** — receive route passes body `cost_centre_id`; PO detail page added optional Cost Centre select (defaults to location's); transactions route + waste route pass through; `cost_centre_id` now returned in PO/receipts/txn query payloads.
+
+### Live verification (prod, exact owner scenario, cleaned up after)
+Applied 066 → all 6 locations have `cost_centre_id` (Bar/Bar/Events/Restaurant ×2/Restaurant). Ran a real PO receive: ESSAIE ×50 @50, TEST ×50 @75, Premium Tonic Water ×50 @35, Premium Vodka 1L ×50 @145, London Gin 750ml ×50 @149 → PO `ordered` → `received`; **5/5 transactions** with exact unit costs, `reference=purchase_order`, `cost_centre_id=Bar (6232a5c4…)`; balances +50 each; owner dashboard KPI `purchased=22700` exactly matches. Test PO/receipts/txns deleted and balance cache rebuilt to pre-test values (Vodka 39.5, Gin 20, others 0).
+
+### Tests
+62/62 vitest passing (new: `MissingCostCentreError`). Strict inventory tsc clean.
+
+### Note
+Legacy NULL rows from before the fix still exist in `inventory_transactions` (no backfill migration for historical rows — deliberate; the ledger reports treat NULL as "unassigned"). If the owner wants history corrected, write a migration mapping NULL → location's centre for `purchase` txns only.
+
+
