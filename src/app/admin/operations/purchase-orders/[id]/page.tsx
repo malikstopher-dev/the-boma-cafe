@@ -27,7 +27,18 @@ export default function PurchaseOrderDetailPage() {
   const [receiving, setReceiving] = useState(false)
   const [receiveForm, setReceiveForm] = useState<Record<string, { qty: string; cost: string }>>({})
   const [invoiceNumber, setInvoiceNumber] = useState('')
+  const [costCentres, setCostCentres] = useState<{ id: string; name: string }[]>([])
+  const [costCentreId, setCostCentreId] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/inventory/cost-centres')
+      .then(r => r.json())
+      .then(json => {
+        if (json.data) setCostCentres(json.data)
+      })
+      .catch(() => { /* selector simply stays empty */ })
+  }, [])
 
   function load() {
     const id = params?.id as string
@@ -101,7 +112,11 @@ export default function PurchaseOrderDetailPage() {
       const res = await fetch(`/api/inventory/purchase-orders/${id}/receive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, invoice_number: invoiceNumber || null }),
+        body: JSON.stringify({
+          items,
+          invoice_number: invoiceNumber || null,
+          cost_centre_id: costCentreId || null,
+        }),
       })
       if (res.ok) {
         load()
@@ -216,6 +231,23 @@ export default function PurchaseOrderDetailPage() {
           <div style={{marginBottom:12}}>
             <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Invoice Number</label>
             <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:256,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Optional" value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} />
+          </div>
+
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Cost Centre</label>
+            <select
+              style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:256,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
+              value={costCentreId}
+              onChange={e => setCostCentreId(e.target.value)}
+            >
+              <option value="">Auto — use receiving location</option>
+              {costCentres.map(cc => (
+                <option key={cc.id} value={cc.id}>{cc.name}</option>
+              ))}
+            </select>
+            <p style={{fontSize:12,color:'#6B6358',marginTop:4,fontFamily:'Inter, sans-serif'}}>
+              Auto uses the cost centre configured on each item's location. Override only if this delivery is charged to a different centre.
+            </p>
           </div>
 
           {items.filter((i: any) => Number(i.quantity_ordered) - Number(i.quantity_received ?? 0) > 0).map((item: any) => {

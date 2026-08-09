@@ -67,3 +67,23 @@ export class WasteValidationError extends Error {
     this.name = 'WasteValidationError'
   }
 }
+
+export class MissingCostCentreError extends Error {
+  public readonly locationId: string
+
+  constructor(locationId: string) {
+    super(`No cost centre could be determined for location ${locationId}. Assign a cost centre to this location before recording stock movements.`)
+    this.name = 'MissingCostCentreError'
+    this.locationId = locationId
+  }
+}
+
+export class InvalidCostCentreError extends Error {
+  public readonly costCentreId: string
+
+  constructor(costCentreId: string) {
+    super(`Cost centre ${costCentreId} does not exist or is not active`)
+    this.name = 'InvalidCostCentreError'
+    this.costCentreId = costCentreId
+  }
+}

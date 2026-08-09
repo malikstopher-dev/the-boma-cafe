@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError } from '../lib/errors'
+import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError } from '../lib/errors'
 
 const mockClient = {
   from: vi.fn(),
@@ -128,8 +128,9 @@ describe('ledger', () => {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1' })),
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
                 })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
               })),
             })),
           }
@@ -169,6 +170,42 @@ describe('ledger', () => {
       expect(tx.id).toBe('tx-1')
       expect(tx.quantity).toBe(10)
       expect(tx.unit_cost).toBe(50)
+    })
+
+    it('should throw MissingCostCentreError when the location has no cost centre', async () => {
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: null })),
+                })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: null })),
+              })),
+            })),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      await expect(
+        createTransaction({
+          product_id: 'prod-1',
+          location_id: 'loc-1',
+          transaction_type: 'purchase',
+          quantity: 10,
+        }),
+      ).rejects.toThrow(MissingCostCentreError)
     })
 
     it('should throw ProductNotFoundError for non-existent product', async () => {
@@ -249,8 +286,9 @@ describe('ledger', () => {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1' })),
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
                 })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
               })),
             })),
           }

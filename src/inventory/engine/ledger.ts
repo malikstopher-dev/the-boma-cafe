@@ -1,6 +1,7 @@
 import type { CreateTransactionInput, InventoryTransaction, TransactionType } from './types'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError } from '../lib/errors'
 import { getInventoryClient } from '../lib/db'
+import { resolveCostCentreId } from '../lib/cost-centre'
 import { writeAuditLog } from '../lib/audit'
 
 const DECREASE_TYPES: ReadonlySet<TransactionType> = new Set([
@@ -95,6 +96,11 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       ? input.quantity
       : Math.abs(input.quantity)
 
+  // Cost centre is required on every movement (migration 050 NOT NULL).
+  // Resolve it BEFORE any write: explicit value wins, otherwise the
+  // location's configured cost centre. Never emit undefined/null.
+  const costCentreId = await resolveCostCentreId(input.location_id, input.cost_centre_id)
+
   const { data, error } = await supabase
     .from('inventory_transactions')
     .insert({
@@ -103,7 +109,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       transaction_type: input.transaction_type,
       quantity: actualQuantity,
       unit_cost: input.unit_cost ?? null,
-      cost_centre_id: input.cost_centre_id ?? undefined,
+      cost_centre_id: costCentreId,
       reason_type: input.reason_type ?? null,
       reason_notes: input.reason_notes ?? null,
       manager_note: input.manager_note ?? null,
@@ -126,7 +132,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     location_id: input.location_id,
     transaction_type: input.transaction_type,
     quantity: actualQuantity,
-    cost_centre_id: input.cost_centre_id ?? null,
+    cost_centre_id: costCentreId,
     reason_type: input.reason_type ?? null,
     reference_type: input.reference_type,
     reference_id: input.reference_id,

@@ -1,5 +1,6 @@
 import { getInventoryClient } from '../lib/db'
 import { createTransaction } from './ledger'
+import { resolveCostCentreId } from '../lib/cost-centre'
 import { writeAuditLog } from '../lib/audit'
 import type { CreateTransactionInput } from './types'
 
@@ -23,6 +24,11 @@ export interface ReceiveInput {
   invoice_number?: string | null
   notes?: string | null
   received_by?: string | null
+  /**
+   * Optional override. When absent, the cost centre is resolved from
+   * each receiving item's location (inventory_locations.cost_centre_id).
+   */
+  cost_centre_id?: string | null
   items: {
     po_item_id: string
     product_id: string
@@ -209,6 +215,35 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
     throw new Error(`Cannot receive items for PO with status ${po.status}`)
   }
 
+  const { data: poItemRows } = await supabase
+    .from('inventory_purchase_order_items')
+    .select('id, product_id, location_id, quantity_ordered, quantity_received, unit_cost')
+    .eq('po_id', poId)
+
+  const poItemsByKey = new Map((poItemRows ?? []).map(r => [`${r.id}::${r.product_id}`, r]))
+
+  // Resolve the cost centre for every item BEFORE any write. If any
+  // location lacks a configured cost centre this throws up-front, so
+  // the receipt (and its items) are never created without the matching
+  // ledger transactions.
+  const resolvedItems = await Promise.all(input.items.map(async (item) => {
+    if (item.quantity_received <= 0) {
+      throw new Error(`quantity_received must be positive, got ${item.quantity_received}`)
+    }
+
+    const key = `${item.po_item_id}::${item.product_id}`
+    const poItem = poItemsByKey.get(key)
+    if (!poItem) {
+      throw new Error(`Item (po_item_id=${item.po_item_id}, product_id=${item.product_id}) does not belong to PO ${poId}`)
+    }
+
+    return {
+      item,
+      poItem,
+      cost_centre_id: await resolveCostCentreId(poItem.location_id, input.cost_centre_id),
+    }
+  }))
+
   const { data: receipt, error: receiptError } = await supabase
     .from('inventory_po_receipts')
     .insert({
@@ -224,24 +259,7 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
   if (!receipt) throw new Error('Failed to create receipt: no data returned')
   const receiptId = receipt.id
 
-  const { data: poItemRows } = await supabase
-    .from('inventory_purchase_order_items')
-    .select('id, product_id, location_id, quantity_ordered, quantity_received, unit_cost')
-    .eq('po_id', poId)
-
-  const poItemsByKey = new Map((poItemRows ?? []).map(r => [`${r.id}::${r.product_id}`, r]))
-
-  for (const item of input.items) {
-    if (item.quantity_received <= 0) {
-      throw new Error(`quantity_received must be positive, got ${item.quantity_received}`)
-    }
-
-    const key = `${item.po_item_id}::${item.product_id}`
-    const poItem = poItemsByKey.get(key)
-    if (!poItem) {
-      throw new Error(`Item (po_item_id=${item.po_item_id}, product_id=${item.product_id}) does not belong to PO ${poId}`)
-    }
-
+  for (const { item, poItem, cost_centre_id: costCentreId } of resolvedItems) {
     const { error: riError } = await supabase
       .from('inventory_po_receipt_items')
       .insert({
@@ -262,6 +280,7 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
       transaction_type: 'purchase',
       quantity: item.quantity_received,
       unit_cost: unitCost ?? undefined,
+      cost_centre_id: costCentreId,
       reference_type: 'purchase_order',
       reference_id: poId,
       performed_by: input.received_by ?? null,

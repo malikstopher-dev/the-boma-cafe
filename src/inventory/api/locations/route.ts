@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { defaultCostCentreNameForLocation, findCostCentreIdByName } from '@/inventory/lib/cost-centre'
 import type { ApiResponse, InventoryLocation } from '@/inventory/engine/types'
 
 
@@ -72,12 +73,31 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
+    // cost_centre_id is NOT NULL (migration 066). Accept an explicit
+    // value, otherwise infer one from the location name (business-area
+    // rules). Refuse to create a location with no cost centre rather
+    // than silently picking a random/default one.
+    let costCentreId = body.cost_centre_id ?? null
+    if (!costCentreId) {
+      const defaultName = defaultCostCentreNameForLocation(name)
+      if (defaultName) {
+        costCentreId = await findCostCentreIdByName(defaultName)
+      }
+    }
+    if (!costCentreId) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'A cost centre is required for this location. Provide cost_centre_id or use a recognisable location name (e.g. Main Bar, Dry Store).' } },
+        { status: 400 },
+      )
+    }
+
     const { data, error } = await supabase
       .from('inventory_locations')
       .insert({
         name: name.trim(),
         code: code.trim().toUpperCase(),
         description: description ?? null,
+        cost_centre_id: costCentreId,
       })
       .select()
       .single()

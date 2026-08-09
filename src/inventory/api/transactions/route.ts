@@ -3,7 +3,7 @@ import { getInventoryClient } from '@/inventory/lib/db'
 import { createTransaction } from '@/inventory/engine/ledger'
 import { getInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import type { ApiResponse, InventoryTransaction, CreateTransactionInput } from '@/inventory/engine/types'
-import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError } from '@/inventory/lib/errors'
+import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction[]>>> {
   try {
@@ -109,6 +109,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json(
         { error: { code: 'NOT_FOUND', message: error.message } },
         { status: 404 },
+      )
+    }
+    if (error instanceof MissingCostCentreError || error instanceof InvalidCostCentreError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'MISSING_COST_CENTRE',
+            message: 'A cost centre is required for this stock movement. Assign a cost centre to the location, or pass one explicitly.',
+          },
+        },
+        { status: 400 },
       )
     }
     return NextResponse.json(
