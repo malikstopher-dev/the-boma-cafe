@@ -3,6 +3,7 @@
 
 import { getInventoryClient } from '../lib/db'
 import { resolveLocationId } from '../lib/location'
+import type { InventoryType } from './types'
 
 export interface StockSheetRow {
   productId: string
@@ -10,6 +11,10 @@ export interface StockSheetRow {
   sku: string | null
   category: string | null
   unit: string | null
+  inventoryType: InventoryType | string | null
+  supplierName: string | null
+  reorderThreshold: number | null
+  reorderQuantity: number | null
   opening: number
   received: number
   used: number
@@ -69,6 +74,7 @@ export async function getStockSheet(
   from: string,
   to: string,
   locationId?: string | null,
+  inventoryType?: InventoryType | null,
 ): Promise<StockSheetResult> {
   const supabase = getInventoryClient()
   const resolved = await resolveLocationId(locationId ?? null)
@@ -113,23 +119,44 @@ export async function getStockSheet(
   for (const t of beforeTxns) productIds.add(t.product_id)
 
   // Product metadata
-  const productMeta = new Map<string, { name: string; sku: string | null; category: string | null; unit: string | null }>()
+  const productMeta = new Map<string, {
+    name: string
+    sku: string | null
+    category: string | null
+    unit: string | null
+    inventoryType: InventoryType | string | null
+    supplierName: string | null
+    reorderThreshold: number | null
+    reorderQuantity: number | null
+  }>()
   if (productIds.size > 0) {
     const { data: products } = await getInventoryClient()
       .from('inventory_products')
-      .select('id, name, sku, inventory_categories(name)')
+      .select('id, name, sku, inventory_type, reorder_threshold, reorder_quantity, preferred_supplier_id, inventory_categories(name), inventory_suppliers(name), inventory_product_uoms(is_base, inventory_uoms(name))')
       .in('id', [...productIds])
     for (const p of (products ?? []) as unknown as Array<{
       id: string
       name: string
       sku: string | null
+      inventory_type: string | null
+      reorder_threshold: number | null
+      reorder_quantity: number | null
+      preferred_supplier_id: string | null
       inventory_categories?: { name: string } | null
+      inventory_suppliers?: { name: string } | null
+      inventory_product_uoms?: Array<{ is_base: boolean; inventory_uoms?: { name: string } | null }> | null
     }>) {
+      const uoms = (p.inventory_product_uoms ?? []).filter(u => u.inventory_uoms)
+      const baseUom = uoms.find(u => u.is_base) ?? uoms[0]
       productMeta.set(p.id, {
         name: p.name,
         sku: p.sku,
         category: p.inventory_categories?.name ?? null,
-        unit: null,
+        unit: baseUom?.inventory_uoms?.name ?? null,
+        inventoryType: p.inventory_type ?? null,
+        supplierName: p.inventory_suppliers?.name ?? null,
+        reorderThreshold: p.reorder_threshold != null ? Number(p.reorder_threshold) : null,
+        reorderQuantity: p.reorder_quantity != null ? Number(p.reorder_quantity) : null,
       })
     }
   }
@@ -171,6 +198,7 @@ export async function getStockSheet(
   const rows: StockSheetRow[] = []
   for (const [productId, v] of agg) {
     const meta = productMeta.get(productId)
+    if (inventoryType && meta?.inventoryType !== inventoryType) continue
     const closing = v.opening + v.received - v.used - v.waste + v.adjustments
     const unitCost = costMap.get(productId) ?? 0
     rows.push({
@@ -179,6 +207,10 @@ export async function getStockSheet(
       sku: meta?.sku ?? null,
       category: meta?.category ?? null,
       unit: meta?.unit ?? null,
+      inventoryType: meta?.inventoryType ?? null,
+      supplierName: meta?.supplierName ?? null,
+      reorderThreshold: meta?.reorderThreshold ?? null,
+      reorderQuantity: meta?.reorderQuantity ?? null,
       opening: v.opening,
       received: v.received,
       used: v.used,
@@ -205,10 +237,12 @@ export async function getStockSheet(
     { opening: 0, received: 0, used: 0, waste: 0, adjustments: 0, closing: 0, value: 0 },
   )
 
+  const filteredRows = inventoryType ? rows.filter(r => r.inventoryType === inventoryType) : rows
+
   const locationName =
     location === null
       ? 'All locations'
       : ((locRes.data ?? []) as unknown as Array<{ id: string; name: string }>).find(l => l.id === location)?.name ?? null
 
-  return { rows, totals, from, to, locationId: location, locationName }
+  return { rows: filteredRows, totals, from, to, locationId: location, locationName }
 }

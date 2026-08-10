@@ -318,6 +318,28 @@ export async function saveDailyCell(
   return { productId, countedUnits } as unknown as DailyEntryItem
 }
 
+/** Delete one counted cell (row removal from the sheet). */
+export async function deleteDailyCell(sessionId: string, productId: string): Promise<void> {
+  const supabase = getInventoryClient()
+
+  const { data: session } = await supabase
+    .from('inventory_stock_counts')
+    .select('id, status')
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!session) throw new Error('Daily session not found')
+  if (session.status !== 'in_progress') throw new Error(`Session is ${session.status}, not editable`)
+
+  const { error } = await supabase
+    .from('inventory_stock_count_items')
+    .delete()
+    .eq('stock_count_id', sessionId)
+    .eq('product_id', productId)
+
+  if (error) throw new Error(`Failed to delete cell: ${error.message}`)
+}
+
 export async function submitDailySession(sessionId: string): Promise<void> {
   await submitStockCount(sessionId)
 }

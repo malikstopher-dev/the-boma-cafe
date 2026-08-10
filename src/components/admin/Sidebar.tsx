@@ -122,6 +122,7 @@ const navGroups: NavGroup[] = [
     label: 'Operations & Stock · Purchasing',
     items: [
       { label: 'Purchase Orders', icon: <ClipboardList size={18} />, href: '/admin/operations/purchase-orders' },
+      { label: '+ Add Stock', icon: <Package size={18} />, href: '/inv/add-stock' },
       { label: 'Receiving', icon: <Package size={18} />, href: '/admin/operations/receiving' },
       { label: 'Suppliers', icon: <Truck size={18} />, href: '/admin/operations/suppliers' },
       { label: 'Supplier Performance', icon: <BarChart3 size={18} />, href: '/admin/operations/supplier-performance' },

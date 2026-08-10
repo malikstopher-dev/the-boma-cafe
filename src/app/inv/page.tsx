@@ -1,11 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import {
   C, Badge, Card, Kpi, PageTitle, Loading,
   formatMoney, formatDateShort, formatDateTime, pctDelta, todayIso,
 } from './kit'
+import { weekRange, currentWeekNumber, lastWeekOfYear } from '@/inventory/lib/weeks'
 
 type PeriodKey = 'this_week' | 'this_month' | 'last_7' | 'last_30' | 'custom'
 
@@ -74,6 +76,9 @@ export default function OwnerDashboardPage() {
   const [period, setPeriod] = useState<PeriodKey>('this_week')
   const [customFrom, setCustomFrom] = useState(todayIso())
   const [customTo, setCustomTo] = useState(todayIso())
+  const [weekYear, setWeekYear] = useState(() => new Date().getFullYear())
+  const [weekNo, setWeekNo] = useState(() => currentWeekNumber())
+  const [weekApplied, setWeekApplied] = useState<{ y: number; w: number; start: string; end: string } | null>(null)
   const [data, setData] = useState<OwnerData | null>(null)
   const [month, setMonth] = useState<OwnerData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -118,6 +123,21 @@ export default function OwnerDashboardPage() {
     setLoading(true)
     fetchPeriod(period).then(d => { setData(d); setLastUpdated(new Date()); setLoading(false) }).catch(err => { setError(err.message); setLoading(false) })
   }, [period, fetchPeriod])
+
+  const weekOptions = useMemo(() => Array.from({ length: lastWeekOfYear(weekYear) }, (_, i) => i + 1), [weekYear])
+
+  const applyWeek = () => {
+    const { start, end } = weekRange(weekYear, weekNo)
+    setCustomFrom(start)
+    setCustomTo(end)
+    setWeekApplied({ y: weekYear, w: weekNo, start, end })
+    setPeriod('custom')
+  }
+
+  const selectStyle: CSSProperties = {
+    background: '#1C1710', border: '1px solid #3A322A', color: '#F0EBE3',
+    borderRadius: 8, padding: '7px 8px', fontSize: 12.5, cursor: 'pointer',
+  }
 
   const summaryLabels: Array<[string, (d: OwnerData) => number]> = [
     ['Stock Purchased', d => d.kpi.purchased],
@@ -191,9 +211,40 @@ export default function OwnerDashboardPage() {
             <button onClick={refresh} style={{ padding: '8px 13px', borderRadius: 8, border: 'none', background: '#C8A04E', color: '#171008', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}>
               Refresh
             </button>
+            <span style={{ width: 1, height: 24, background: '#332B21' }} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6B6049' }}>Pick week</span>
+            <select value={weekYear} onChange={e => { setWeekYear(Number(e.target.value)); setWeekNo(1) }} style={selectStyle}>
+              {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select value={weekNo} onChange={e => setWeekNo(Number(e.target.value))} style={selectStyle}>
+              {weekOptions.map(w => (
+                <option key={w} value={w}>Week {w}{w === currentWeekNumber() && weekYear === new Date().getFullYear() ? ' (now)' : ''}</option>
+              ))}
+            </select>
+            <button onClick={applyWeek} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #3A322A', background: '#1C1710', color: '#E0BC6E', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
+              Show
+            </button>
+            <span style={{ width: 1, height: 24, background: '#332B21' }} />
+            <Link href="/admin/operations" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #3A322A', background: '#1C1710', color: '#B8B0A0', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>Go to Admin</Link>
+            <Link href="/" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #3A322A', background: '#1C1710', color: '#B8B0A0', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>View Website</Link>
+            <button onClick={() => { window.location.href = '/api/admin/auth?action=logout' }} title="Sign out" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(232,84,84,0.4)', background: 'rgba(232,84,84,0.1)', color: '#F17777', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Logout</button>
           </div>
         }
       />
+
+      {weekApplied && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, padding: '9px 14px', borderRadius: 10, background: 'rgba(200,160,78,0.10)', border: '1px solid rgba(200,160,78,0.35)' }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: '#E0BC6E', letterSpacing: '0.02em' }}>
+            Showing Week {weekApplied.w} of {weekApplied.y} · Mon {formatDateShort(weekApplied.start)} – Sun {formatDateShort(weekApplied.end)}
+          </span>
+          <button
+            onClick={() => { setWeekApplied(null); setPeriod('this_week') }}
+            style={{ marginLeft: 'auto', padding: '4px 10px', borderRadius: 7, border: '1px solid #3A322A', background: 'transparent', color: '#B8B0A0', fontSize: 11.5, cursor: 'pointer' }}
+          >✕ Clear week</button>
+        </div>
+      )}
 
       {error && (
         <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(232,84,84,0.1)', border: '1px solid rgba(232,84,84,0.4)', color: '#F17777', fontSize: 13, marginBottom: 20 }}>
@@ -259,6 +310,7 @@ export default function OwnerDashboardPage() {
                     <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Items</th>
                     <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>Value</th>
                     <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.textMuted }}>%</th>
+                    <th style={{ width: 90, padding: '6px 8px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -268,6 +320,11 @@ export default function OwnerDashboardPage() {
                       <td style={{ padding: '8px', textAlign: 'right', color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>{loc.items}</td>
                       <td style={{ padding: '8px', textAlign: 'right', color: C.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(loc.value)}</td>
                       <td style={{ padding: '8px', textAlign: 'right', color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>{loc.pct}%</td>
+                      <td style={{ padding: '8px' }}>
+                        <div style={{ width: 82, height: 6, borderRadius: 4, background: C.bgRaised, overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.min(100, loc.pct)}%`, height: '100%', borderRadius: 4, background: loc.pct > 50 ? '#C8A04E' : '#8C7441' }} />
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   <tr style={{ borderTop: `2px solid ${C.borderStrong}` }}>
@@ -275,6 +332,11 @@ export default function OwnerDashboardPage() {
                     <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{data.locations.reduce((s, l) => s + l.items, 0)}</td>
                     <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{formatMoney(data.locations.reduce((s, l) => s + l.value, 0))}</td>
                     <td style={{ padding: '8px', textAlign: 'right', color: C.goldBright }}>100%</td>
+                    <td style={{ padding: '8px' }}>
+                      <div style={{ width: 82, height: 6, borderRadius: 4, background: C.bgRaised, overflow: 'hidden' }}>
+                        <div style={{ width: '100%', height: '100%', borderRadius: 4, background: '#C8A04E' }} />
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -320,6 +382,18 @@ export default function OwnerDashboardPage() {
           {/* Alerts + activity */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, marginTop: 16 }}>
             <Card title="Needs Attention" subtitle="Low stock and stock-count concerns">
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: 'rgba(232,84,84,0.14)', border: '1px solid rgba(232,84,84,0.4)', color: C.dangerText }}>
+                  {data.alerts.filter(a => a.severity === 'high').length} high
+                </span>
+                <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: 'rgba(224,188,110,0.12)', border: '1px solid rgba(224,188,110,0.4)', color: '#E0BC6E' }}>
+                  {data.alerts.filter(a => a.severity === 'medium').length} medium
+                </span>
+                <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#2A241A', border: '1px solid #3A322A', color: C.textSoft }}>
+                  {data.alerts.filter(a => a.severity === 'low').length} low
+                </span>
+                <span style={{ marginLeft: 'auto', fontSize: 11.5, color: C.textMuted, alignSelf: 'center' }}>of {data.alerts.length} alerts</span>
+              </div>
               {data.alerts.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 13, color: C.textMuted }}>All clear � nothing needs attention right now.</p>
               ) : (

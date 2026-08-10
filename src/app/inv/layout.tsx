@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import type { ReactNode, CSSProperties } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-quartz.css'
 
 const NAV_GROUPS: Array<{ label: string; items: Array<{ href: string; label: string }> }> = [
   {
@@ -23,6 +25,7 @@ const NAV_GROUPS: Array<{ label: string; items: Array<{ href: string; label: str
   {
     label: 'Purchasing',
     items: [
+      { href: '/inv/add-stock', label: '+ Add Stock' },
       { href: '/inv/purchases', label: 'Receive Stock' },
       { href: '/inv/payables', label: 'Supplier Payables' },
     ],

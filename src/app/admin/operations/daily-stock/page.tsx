@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 
@@ -169,6 +170,9 @@ export default function DailyStockInput() {
             {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
           <Button variant="secondary" size="md" onClick={() => void load()}>↻ Reload</Button>
+          <Link href="/inv/add-stock" style={{ textDecoration: 'none' }}>
+            <Button variant="primary" size="md">+ Add Stock</Button>
+          </Link>
         </>
       }
     >
