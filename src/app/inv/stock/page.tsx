@@ -402,7 +402,7 @@ export default function StockSheetPage() {
     }, 700)
   }
 
-  const patchProduct = async (productId: string, updates: Record<string, string | null>) => {
+  const patchProduct = async (productId: string, updates: Record<string, string | number | null>) => {
     const res = await fetch(`/api/inventory/products/${productId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
