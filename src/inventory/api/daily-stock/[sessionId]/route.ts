@@ -1,23 +1,40 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { z } from 'zod'
 import { saveDailyCell, submitDailySession } from '../../../engine/daily-entry'
-import { getHeader } from '../../../lib/api-utils'
+import { isUuid, uuidError } from '../../../lib/api-utils'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const cellBodySchema = z.object({
+  productId: z.string().uuid(),
+  counted: z.number().finite(),
+})
+
+function validateSessionId(sessionId: string): NextResponse | null {
+  if (!isUuid(sessionId)) {
+    return NextResponse.json({ error: uuidError('sessionId') }, { status: 400 })
+  }
+  return null
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
     const { sessionId } = await params
-    const body = await request.json().catch(() => null)
-    if (!body) return NextResponse.json({ error: { message: 'Invalid body' } }, { status: 400 })
+    const bad = validateSessionId(sessionId)
+    if (bad) return bad
 
-    const productId = typeof body.productId === 'string' ? body.productId : undefined
-    const counted = Number(body.counted)
-    if (!productId || !Number.isFinite(counted)) {
-      return NextResponse.json({ error: { message: 'productId and counted are required' } }, { status: 400 })
+    const parsed = cellBodySchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) {
+      const issue = (parsed as { error?: { issues?: Array<{ message: string }> } }).error?.issues?.[0]
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: issue?.message ?? 'productId and counted are required' } },
+        { status: 400 },
+      )
     }
 
+    const { productId, counted } = parsed.data
     const item = await saveDailyCell(sessionId, productId, counted)
     return NextResponse.json({ data: item })
   } catch (err) {
@@ -30,6 +47,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
     const { sessionId } = await params
+    const bad = validateSessionId(sessionId)
+    if (bad) return bad
     await submitDailySession(sessionId)
     return NextResponse.json({ data: { status: 'submitted' } })
   } catch (err) {

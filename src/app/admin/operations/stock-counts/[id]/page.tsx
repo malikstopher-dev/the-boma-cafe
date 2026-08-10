@@ -120,7 +120,7 @@ export default function StockCountDetailPage() {
       const res = await fetch(`/api/inventory/stock-counts/${id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved_by: 'admin' }),
+        body: JSON.stringify({}),
       })
       if (res.ok) {
         const json = await res.json()

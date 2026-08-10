@@ -18,6 +18,7 @@ interface StockRow {
   productName: string
   sku: string | null
   unit: string | null
+  category: string | null
   supplier: string | null
   price: number
   opening: number
@@ -36,6 +37,7 @@ interface SheetApiRow {
   productName: string
   sku: string | null
   unit: string | null
+  category: string | null
   supplier: string | null
   inventoryType: string | null
   opening: number
@@ -57,6 +59,19 @@ interface ProductApiRow {
   unit_cost: number | null
   reorder_threshold: number | null
   reorder_quantity: number | null
+}
+
+interface CategoryApiRow { id: string; name: string; children?: CategoryApiRow[] }
+
+interface SupplierApiRow { id: string; name: string }
+
+/** Flatten the hierarchical categories tree into a flat id/name list. */
+function flattenCategories(tree: CategoryApiRow[], out: Array<{ id: string; name: string }> = []): Array<{ id: string; name: string }> {
+  for (const node of tree) {
+    out.push({ id: node.id, name: node.name })
+    if (node.children?.length) flattenCategories(node.children, out)
+  }
+  return out
 }
 
 type TabId = 'bar' | 'kitchen'
@@ -118,6 +133,9 @@ export default function StockSheetPage() {
   const [week, setWeek] = useState(() => currentWeekNumber())
   const [mainLocId, setMainLocId] = useState('main')
   const [locations, setLocations] = useState<Array<{ id: string; name: string; is_active: boolean }>>([])
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([])
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [rows, setRows] = useState<StockRow[]>([])
   const [totals, setTotals] = useState<{ opening: number; received: number; used: number; waste: number; closing: number; value: number } | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -158,11 +176,13 @@ export default function StockSheetPage() {
       const storeParams = store ? new URLSearchParams({ from: start, to, location_id: store }) : null
       if (storeParams) storeParams.set('inventory_type', type)
 
-      const [sheetRes, storeRes, prodRes, dailyRes] = await Promise.all([
+      const [sheetRes, storeRes, prodRes, dailyRes, catRes, supRes] = await Promise.all([
         fetch(`/api/inventory/stock-sheet?${sheetParams.toString()}`),
         storeParams ? fetch(`/api/inventory/stock-sheet?${storeParams.toString()}`) : null,
         fetch('/api/inventory/products?page_size=500'),
         fetch(`/api/inventory/daily-stock?location_id=${main}&date=${today}`),
+        fetch('/api/inventory/categories'),
+        fetch('/api/inventory/suppliers?page_size=100'),
       ])
 
       const sheetJson = await sheetRes.json()
@@ -170,6 +190,11 @@ export default function StockSheetPage() {
       const storeJson = storeRes ? await storeRes.json() : { data: { rows: [] } }
       const prodJson = await prodRes.json()
       const dailyJson = await dailyRes.json()
+      const catJson = await catRes.json()
+      const supJson = await supRes.json()
+
+      setCategories(flattenCategories((catJson.data ?? []) as CategoryApiRow[]))
+      setSuppliers(((supJson.data ?? []) as SupplierApiRow[]).map(s => ({ id: s.id, name: s.name })))
 
       const sheetRows = (sheetJson.data?.rows ?? []) as SheetApiRow[]
       const storeRows = (storeJson.data?.rows ?? []) as SheetApiRow[]
@@ -205,6 +230,7 @@ export default function StockSheetPage() {
           productName: name,
           sku: s?.sku ?? p?.sku ?? null,
           unit: s?.unit ?? null,
+          category: s?.category ?? null,
           supplier: s?.supplier ?? null,
           price: (s?.unitCost ?? p?.unit_cost ?? 0),
           opening: s?.opening ?? 0,
@@ -238,6 +264,19 @@ export default function StockSheetPage() {
     return [...opts.values()].sort((a, b) => a.name.localeCompare(b.name))
   }, [rows])
 
+  // Category / supplier picklists (name → id) for the in-grid dropdown editors
+  const categoryOptions = useMemo(() => {
+    const byName = new Map<string, string>()
+    for (const c of categories) byName.set(c.name, c.id)
+    return { byName, names: [...byName.keys()].sort((a, b) => a.localeCompare(b)) }
+  }, [categories])
+
+  const supplierOptions = useMemo(() => {
+    const byName = new Map<string, string>()
+    for (const s of suppliers) byName.set(s.name, s.id)
+    return { byName, names: [...byName.keys()].sort((a, b) => a.localeCompare(b)) }
+  }, [suppliers])
+
   // ---------------------------- cell editing ----------------------------
 
   const saveCounted = async (productId: string, counted: number | null) => {
@@ -259,27 +298,78 @@ export default function StockSheetPage() {
     if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Delete failed')
   }
 
+  // ---------------------------- debounced auto-save ----------------------------
+
+  const saveQueue = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const queueSave = (fn: () => Promise<void>) => {
+    setSaveState('saving')
+    if (saveQueue.current) clearTimeout(saveQueue.current)
+    saveQueue.current = setTimeout(() => {
+      saveQueue.current = null
+      fn()
+        .then(() => {
+          setSaveState('saved')
+          saveQueue.current = setTimeout(() => setSaveState('idle'), 2500)
+        })
+        .catch((e: unknown) => {
+          setSaveState('idle')
+          setError(e instanceof Error ? e.message : 'Save failed')
+        })
+    }, 700)
+  }
+
+  const patchProduct = async (productId: string, updates: Record<string, string | null>) => {
+    const res = await fetch(`/api/inventory/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+    const json = await res.json()
+    if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Update failed')
+  }
+
   const onCellValueChanged = async (params: CellValueChangedEvent<StockRow>) => {
     const key = params.colDef.field
     if (key === 'counted') {
       const raw = params.newValue as number | null | undefined
       const counted = raw == null || Number.isNaN(Number(raw)) ? null : Number(raw)
-      try {
-        if (counted == null) {
-          // Clear the counted entry for this product
-          await removeCounted(params.data.productId)
-          setRows(prev => prev.map(r => (r.productId === params.data.productId ? { ...r, counted: null } : r)))
-          flash('Counted cleared')
-        } else {
-          await saveCounted(params.data.productId, counted)
-          setRows(prev => prev.map(r => (r.productId === params.data.productId ? { ...r, counted } : r)))
-          flash('Saved — ledger updated')
-        }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not save cell')
+      const productId = params.data.productId
+      if (!productId) {
+        flash('Pick a product in the STOCK ITEM column first')
         setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, counted: params.oldValue as number | null } : r))
+        return
       }
+      // Optimistic local update first, then a debounced ledger save.
+      setRows(prev => prev.map(r => (r.productId === productId ? { ...r, counted } : r)))
       gridApi.current?.refreshCells({ rowNodes: undefined })
+      if (counted == null) {
+        queueSave(() => removeCounted(productId))
+      } else {
+        queueSave(() => saveCounted(productId, counted))
+      }
+      return
+    }
+
+    if (key === 'category' || key === 'supplier') {
+      const isCat = key === 'category'
+      const value = String(params.newValue ?? '').trim()
+      const byName = isCat ? categoryOptions.byName : supplierOptions.byName
+      const id = value === '' ? null : (byName.get(value) ?? null)
+      if (value !== '' && !id) {
+        // Not a valid picklist entry — revert to the previous value.
+        setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, [key]: params.oldValue as string | null } : r))
+        flash(`Pick a ${isCat ? 'category' : 'supplier'} from the dropdown list`)
+        return
+      }
+      const productId = params.data.productId
+      if (!productId) {
+        flash('Pick a product in the STOCK ITEM column first')
+        setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, [key]: params.oldValue as string | null } : r))
+        return
+      }
+      setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, [key]: value === '' ? null : value } : r))
+      queueSave(() => patchProduct(productId, isCat ? { category_id: id } : { preferred_supplier_id: id }))
       return
     }
 
@@ -309,7 +399,7 @@ export default function StockSheetPage() {
   const addNewRow = () => {
     const key = `new-${Date.now()}`
     const blank: StockRow = {
-      productId: '', productName: '', sku: null, unit: null, supplier: null,
+      productId: '', productName: '', sku: null, unit: null, category: null, supplier: null,
       price: 0, opening: 0, received: 0, used: 0, waste: 0, closing: 0,
       store: null, orderQty: null, counted: 0, productKey: key,
     }
@@ -348,10 +438,21 @@ export default function StockSheetPage() {
         cellClass: (p: CellClassParams) => (p.data?.productId === '' ? 'cell-new' : p.data?.counted != null ? 'cell-item-counted' : ''),
         valueFormatter: p => String(p.value ?? ''),
       },
+      {
+        field: 'category', headerName: 'CATEGORY', width: 140, editable: true,
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: { values: categoryOptions.names },
+        valueFormatter: p => String(p.value ?? '—'),
+      },
       { field: 'unit', headerName: isBar ? 'UNIT OF MEASURE' : 'UNIT', width: 120, editable: false, valueFormatter: p => String(p.value ?? '—') },
     ]
     if (!isBar) {
-      base.push({ field: 'supplier', headerName: 'SUPPLIER', minWidth: 150, valueFormatter: p => String(p.value ?? '—') })
+      base.push({
+        field: 'supplier', headerName: 'SUPPLIER', minWidth: 150, editable: true,
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: { values: supplierOptions.names },
+        valueFormatter: p => String(p.value ?? '—'),
+      })
     }
     base.push(
       { field: 'price', headerName: 'PRICE', width: 90, editable: false, type: 'rightAligned', valueFormatter: p => fmtNum(p.value as number, 0) },
@@ -380,12 +481,18 @@ export default function StockSheetPage() {
         cellClass: (p: CellClassParams) => (Number(p.value) > 0 ? 'cell-positive' : Number(p.value) < 0 ? 'cell-negative' : ''),
       },
       {
+        headerName: 'TOTAL VALUE (R)', width: 128, type: 'rightAligned', editable: false,
+        valueGetter: p => ((p.data?.counted ?? p.data?.closing ?? 0)) * (p.data?.price ?? 0),
+        valueFormatter: numFmt,
+        cellClass: 'cell-strong',
+      },
+      {
         headerName: '', width: 44, pinned: 'right', sortable: false, filter: false, resizable: false,
         cellRenderer: actionRenderer,
       },
     )
     return base
-  }, [tab])
+  }, [tab, categoryOptions, supplierOptions])
 
   // ---------------------------- add stock (manual) ----------------------------
 
@@ -552,14 +659,20 @@ export default function StockSheetPage() {
             </Select>
           )}
 
+          {saveState !== 'idle' && (
+            <span style={{ fontSize: 12, fontWeight: 700, color: saveState === 'saving' ? '#D9A85E' : '#57D9A3' }}>
+              {saveState === 'saving' ? '● Saving…' : '✓ Saved'}
+            </span>
+          )}
+
           <Button variant="ghost" onClick={() => void load()} disabled={loading}>⟳ Refresh</Button>
           <Button variant="ghost" onClick={addNewRow}>+ Add Row</Button>
           <Button variant="ghost" onClick={() => { setAddTab('import'); setAddOpen(true) }}>⤓ Import</Button>
         </div>
 
         <div style={{ marginTop: 10, fontSize: 12, color: C.textMuted }}>
-          Tips: <b>double-click / type</b> over any cell to edit it · <b>Enter</b> moves down between cells like Excel ·{' '}
-          <b>✕</b> removes a row's counted entry · Item names in <span style={{ color: '#C8A04E' }}>gold</span> are waiting for you to pick a product.
+          Tips: <b>double-click</b> (or press <b>Enter</b>) to start editing a cell · <b>Enter</b> commits and moves down ·{' '}
+          <b>Tab</b> moves right — like Excel · <b>✕</b> removes a row's counted entry · Gold italic names are rows waiting for a product pick.
         </div>
       </Card>
 
@@ -589,7 +702,6 @@ export default function StockSheetPage() {
           rowData={rows}
           columnDefs={columns}
           getRowId={p => p.data.productKey}
-          singleClickEdit
           enterNavigatesVertically
           enterNavigatesVerticallyAfterEdit
           enableRangeSelection

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
 import { approveStockCount } from '@/inventory/engine/stock-counts'
+import { isUuid, uuidError } from '@/inventory/lib/api-utils'
 
 export async function POST(
   request: NextRequest,
@@ -8,18 +9,18 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<unknown>>> {
   try {
     const { id } = await params
+    if (!isUuid(id)) {
+      return NextResponse.json({ error: uuidError('id') }, { status: 400 })
+    }
     let raw: Record<string, unknown> = {}
     try { raw = await request.json() } catch { /* empty body */ }
     const body = raw as { approved_by?: string }
 
-    if (!body.approved_by) {
-      return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'approved_by is required' } },
-        { status: 400 },
-      )
-    }
+    // Approver is optional: staff_profiles may be empty (admin sign-in has no
+    // staff UUID). Only a well-formed UUID may reach the approved_by FK.
+    const approvedBy = body.approved_by && isUuid(body.approved_by) ? body.approved_by : null
 
-    const result = await approveStockCount(id, body.approved_by!)
+    const result = await approveStockCount(id, approvedBy)
     return NextResponse.json({ data: result })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
