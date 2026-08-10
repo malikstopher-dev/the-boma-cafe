@@ -29,6 +29,7 @@ interface StockRow {
   store: number | null
   orderQty: number | null
   counted: number | null
+  notes: string | null
   productKey: string
 }
 
@@ -142,8 +143,7 @@ export default function StockSheetPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
-  const [addOpen, setAddOpen] = useState(false)
-  const [addTab, setAddTab] = useState<'manual' | 'import'>('manual')
+  const [uoms, setUoms] = useState<Array<{ id: string; name: string }>>([])
   const gridApi = useRef<GridApi<StockRow> | null>(null)
 
   const typeForTab: Record<TabId, string> = { bar: 'BEVERAGE', kitchen: 'FOOD' }
@@ -176,13 +176,14 @@ export default function StockSheetPage() {
       const storeParams = store ? new URLSearchParams({ from: start, to, location_id: store }) : null
       if (storeParams) storeParams.set('inventory_type', type)
 
-      const [sheetRes, storeRes, prodRes, dailyRes, catRes, supRes] = await Promise.all([
+      const [sheetRes, storeRes, prodRes, dailyRes, catRes, supRes, uomRes] = await Promise.all([
         fetch(`/api/inventory/stock-sheet?${sheetParams.toString()}`),
         storeParams ? fetch(`/api/inventory/stock-sheet?${storeParams.toString()}`) : null,
         fetch('/api/inventory/products?page_size=500'),
         fetch(`/api/inventory/daily-stock?location_id=${main}&date=${today}`),
         fetch('/api/inventory/categories'),
         fetch('/api/inventory/suppliers?page_size=100'),
+        fetch('/api/inventory/uoms'),
       ])
 
       const sheetJson = await sheetRes.json()
@@ -192,6 +193,8 @@ export default function StockSheetPage() {
       const dailyJson = await dailyRes.json()
       const catJson = await catRes.json()
       const supJson = await supRes.json()
+      const uomJson = await uomRes.json()
+      setUoms(((uomJson.data ?? []) as Array<{ id: string; name: string }>).filter(u => u && typeof u.name === 'string'))
 
       setCategories(flattenCategories((catJson.data ?? []) as CategoryApiRow[]))
       setSuppliers(((supJson.data ?? []) as SupplierApiRow[]).map(s => ({ id: s.id, name: s.name })))
@@ -241,6 +244,7 @@ export default function StockSheetPage() {
           store: storeMap.get(id) ?? null,
           orderQty,
           counted: countedMap.get(id) ?? null,
+          notes: null,
           productKey: id,
         })
       }
@@ -276,6 +280,85 @@ export default function StockSheetPage() {
     for (const s of suppliers) byName.set(s.name, s.id)
     return { byName, names: [...byName.keys()].sort((a, b) => a.localeCompare(b)) }
   }, [suppliers])
+
+  // UOM picklist (name → id) for the in-grid UNIT dropdown
+  const uomOptions = useMemo(() => {
+    const byName = new Map<string, string>()
+    for (const u of uoms) byName.set(u.name, u.id)
+    return { byName, names: [...byName.keys()].sort((a, b) => a.localeCompare(b)) }
+  }, [uoms])
+
+  // Creates a product on the fly when a NEW row (no product picked) gets its
+  // first stock movement or count — SKU / category / unit / supplier come
+  // straight from the grid row, so adding stock never leaves the sheet.
+  const ensureProduct = async (row: StockRow): Promise<string> => {
+    if (row.productId) return row.productId
+    const name = String(row.productName ?? '').trim()
+    if (!name) throw new Error('Type an item name in the STOCK ITEM cell first')
+    const categoryId = row.category ? categoryOptions.byName.get(row.category) ?? null : null
+    const supplierId = row.supplier ? supplierOptions.byName.get(row.supplier) ?? null : null
+    const unitId = row.unit ? uomOptions.byName.get(row.unit) ?? null : null
+    const body: Record<string, unknown> = {
+      name,
+      inventory_type: typeForTab[tab],
+      sku: row.sku ? String(row.sku).trim() || null : null,
+    }
+    if (categoryId) body.category_id = categoryId
+    if (supplierId) body.preferred_supplier_id = supplierId
+    if (unitId) body.uoms = [{ uom_id: unitId, is_base: true, is_display: true, conversion_factor: 1 }]
+    const res = await fetch('/api/inventory/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const json = await res.json()
+    if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Could not create item')
+    const product = (json.data ?? json) as { id: string }
+    if (!product?.id) throw new Error('Item created but no id returned')
+    setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, productId: product.id, productKey: `p-${product.id}` } : r))
+    return product.id
+  }
+
+  const postReceived = async (row: StockRow, newValue: number) => {
+    const productId = await ensureProduct(row)
+    const delta = newValue - (row.received || 0)
+    if (delta < 0) throw new Error('To reduce RECEIVED, log it via WASTE or an adjustment — only increases are posted')
+    const res = await fetch('/api/inventory/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_id: productId,
+        location_id: mainLocId,
+        transaction_type: 'purchase',
+        reason_type: 'DELIVERY',
+        quantity: delta,
+        unit_cost: row.price > 0 ? row.price : null,
+        reason_notes: row.notes ? String(row.notes).trim() || null : null,
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Could not post received')
+  }
+
+  const postWaste = async (row: StockRow, newValue: number) => {
+    const productId = await ensureProduct(row)
+    const delta = newValue - (row.waste || 0)
+    if (delta < 0) throw new Error('To reduce WASTE, log a restock — only increases are posted')
+    const res = await fetch('/api/inventory/waste', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_id: productId,
+        location_id: mainLocId,
+        transaction_type: 'WASTE',
+        reason_type: 'WASTE',
+        quantity: delta,
+        reason_notes: row.notes ? String(row.notes).trim() || 'Stock sheet entry' : 'Stock sheet entry',
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Could not post waste')
+  }
 
   // ---------------------------- cell editing ----------------------------
 
@@ -331,14 +414,22 @@ export default function StockSheetPage() {
 
   const onCellValueChanged = async (params: CellValueChangedEvent<StockRow>) => {
     const key = params.colDef.field
+    if (!key) return
+    const row = params.data
+    const isDraft = row.productId === ''
+
     if (key === 'counted') {
       const raw = params.newValue as number | null | undefined
       const counted = raw == null || Number.isNaN(Number(raw)) ? null : Number(raw)
-      const productId = params.data.productId
+      let productId = row.productId
       if (!productId) {
-        flash('Pick a product in the STOCK ITEM column first')
-        setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, counted: params.oldValue as number | null } : r))
-        return
+        try {
+          productId = await ensureProduct(row)
+        } catch (e) {
+          flash(e instanceof Error ? e.message : 'Pick a product first')
+          setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, counted: params.oldValue as number | null } : r))
+          return
+        }
       }
       // Optimistic local update first, then a debounced ledger save.
       setRows(prev => prev.map(r => (r.productId === productId ? { ...r, counted } : r)))
@@ -351,41 +442,44 @@ export default function StockSheetPage() {
       return
     }
 
-    if (key === 'category' || key === 'supplier') {
+    if (key === 'category' || key === 'supplier' || key === 'unit') {
       const isCat = key === 'category'
+      const isSup = key === 'supplier'
+      const byName = isCat ? categoryOptions.byName : isSup ? supplierOptions.byName : uomOptions.byName
       const value = String(params.newValue ?? '').trim()
-      const byName = isCat ? categoryOptions.byName : supplierOptions.byName
       const id = value === '' ? null : (byName.get(value) ?? null)
       if (value !== '' && !id) {
         // Not a valid picklist entry — revert to the previous value.
-        setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, [key]: params.oldValue as string | null } : r))
-        flash(`Pick a ${isCat ? 'category' : 'supplier'} from the dropdown list`)
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, [key]: params.oldValue as string | null } : r))
+        flash(`Pick a ${isCat ? 'category' : isSup ? 'supplier' : 'unit'} from the dropdown list`)
         return
       }
-      const productId = params.data.productId
-      if (!productId) {
-        flash('Pick a product in the STOCK ITEM column first')
-        setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, [key]: params.oldValue as string | null } : r))
-        return
+      setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, [key]: value === '' ? null : value } : r))
+      if (!isDraft && id) {
+        queueSave(() => patchProduct(row.productId, isCat ? { category_id: id } : isSup ? { preferred_supplier_id: id } : { uom_id: id }))
       }
-      setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, [key]: value === '' ? null : value } : r))
-      queueSave(() => patchProduct(productId, isCat ? { category_id: id } : { preferred_supplier_id: id }))
       return
     }
 
     if (key === 'productName') {
-      // Re-pick the product for this row (renames the counted entry)
+      // NEW row: keep whatever was typed — the item is created on its first
+      // movement or count (see ensureProduct).
+      if (isDraft) {
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, productName: String(params.newValue ?? '') } : r))
+        return
+      }
+      // Existing row: re-pick the product (renames the counted entry).
       const name = String(params.newValue ?? '').trim().toLowerCase()
       const product = productOptions.find(o => o.name.toLowerCase() === name || ((o.sku ?? '').toLowerCase() === name))
       if (!product) {
-        setRows(prev => prev.map(r => r.productKey === params.data.productKey ? { ...r, productName: params.oldValue as string } : r))
-        flash('Product not found — pick from the list')
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, productName: params.oldValue as string } : r))
+        flash('Product not found — pick from the list (or use + ADD STOCK for a new item)')
         return
       }
-      const oldId = params.data.productId
+      const oldId = row.productId
       if (oldId === product.id) return
       try {
-        const counted = params.data.counted
+        const counted = row.counted
         await removeCounted(oldId)
         if (counted != null) await saveCounted(product.id, counted)
         flash('Row moved to ' + product.name)
@@ -393,18 +487,80 @@ export default function StockSheetPage() {
         setError(e instanceof Error ? e.message : 'Could not reassign row')
       }
       await load()
+      return
+    }
+
+    if (key === 'sku') {
+      const sku = params.newValue == null ? null : String(params.newValue).trim() || null
+      setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, sku } : r))
+      if (!isDraft) {
+        try {
+          await patchProduct(row.productId, { sku })
+        } catch (e) {
+          setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, sku: params.oldValue as string | null } : r))
+          flash(e instanceof Error ? e.message : 'Could not update SKU')
+        }
+      }
+      return
+    }
+
+    if (key === 'price') {
+      const raw = params.newValue as number | null | undefined
+      const price = raw == null || Number.isNaN(Number(raw)) ? 0 : Number(raw)
+      setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, price } : r))
+      if (!isDraft && price >= 0) {
+        queueSave(() => patchProduct(row.productId, { unit_cost: price === 0 ? null : price }))
+      }
+      return
+    }
+
+    if (key === 'received') {
+      const raw = params.newValue as number | null | undefined
+      const value = raw == null || Number.isNaN(Number(raw)) ? 0 : Number(raw)
+      if (value === (row.received || 0)) return
+      try {
+        await postReceived(row, value)
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, received: value } : r))
+        flash(`+ ${formatQty(value - (row.received || 0))} received`)
+      } catch (e) {
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, received: params.oldValue as number } : r))
+        flash(e instanceof Error ? e.message : 'Could not post received')
+      }
+      return
+    }
+
+    if (key === 'waste') {
+      const raw = params.newValue as number | null | undefined
+      const value = raw == null || Number.isNaN(Number(raw)) ? 0 : Number(raw)
+      if (value === (row.waste || 0)) return
+      try {
+        await postWaste(row, value)
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, waste: value } : r))
+        flash(`- ${formatQty(value - (row.waste || 0))} waste logged`)
+      } catch (e) {
+        setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, waste: params.oldValue as number } : r))
+        flash(e instanceof Error ? e.message : 'Could not post waste')
+      }
+      return
+    }
+
+    if (key === 'notes') {
+      const value = params.newValue == null ? null : String(params.newValue)
+      setRows(prev => prev.map(r => r.productKey === row.productKey ? { ...r, notes: value } : r))
     }
   }
 
-  const addNewRow = () => {
+  const addNewRow = (atTop = false) => {
     const key = `new-${Date.now()}`
     const blank: StockRow = {
       productId: '', productName: '', sku: null, unit: null, category: null, supplier: null,
       price: 0, opening: 0, received: 0, used: 0, waste: 0, closing: 0,
-      store: null, orderQty: null, counted: 0, productKey: key,
+      store: null, orderQty: null, counted: 0, notes: null, productKey: key,
     }
-    setRows(prev => [...prev, blank])
-    flash('Type the item name in the new row and press Enter')
+    setRows(prev => (atTop ? [blank, ...prev] : [...prev, blank]))
+    flash(atTop
+      ? 'New row added on top — type the item name, then COUNTED / RECEIVED / WASTE'
+      : 'Type the item name in the new row and press Enter')
   }
 
   const deleteRow = async (productId: string, productKey: string) => {
@@ -434,6 +590,10 @@ export default function StockSheetPage() {
     const isBar = tab === 'bar'
     const base: ColDef<StockRow>[] = [
       {
+        field: 'sku', headerName: 'SKU / CODE', width: 110, pinned: 'left', editable: true,
+        valueFormatter: p => String(p.value ?? ''),
+      },
+      {
         field: 'productName', headerName: 'STOCK ITEM', minWidth: 210, pinned: 'left', editable: true, cellEditor: ProductCellEditor,
         cellClass: (p: CellClassParams) => (p.data?.productId === '' ? 'cell-new' : p.data?.counted != null ? 'cell-item-counted' : ''),
         valueFormatter: p => String(p.value ?? ''),
@@ -444,7 +604,7 @@ export default function StockSheetPage() {
         cellEditorParams: { values: categoryOptions.names },
         valueFormatter: p => String(p.value ?? '—'),
       },
-      { field: 'unit', headerName: isBar ? 'UNIT OF MEASURE' : 'UNIT', width: 120, editable: false, valueFormatter: p => String(p.value ?? '—') },
+      { field: 'unit', headerName: isBar ? 'UNIT OF MEASURE' : 'UNIT', width: 120, editable: true, cellEditor: 'agSelectCellEditor', cellEditorParams: { values: uomOptions.names }, valueFormatter: p => String(p.value ?? '—') },
     ]
     if (!isBar) {
       base.push({
@@ -455,16 +615,16 @@ export default function StockSheetPage() {
       })
     }
     base.push(
-      { field: 'price', headerName: 'PRICE', width: 90, editable: false, type: 'rightAligned', valueFormatter: p => fmtNum(p.value as number, 0) },
+      { field: 'price', headerName: 'PRICE', width: 94, editable: true, cellEditor: 'agNumberCellEditor', cellEditorParams: { min: 0 }, type: 'rightAligned', valueFormatter: p => fmtNum((p.value as number) ?? 0, 0), cellClass: 'cell-warn' },
       { field: 'opening', headerName: 'OPENING', width: 92, editable: false, type: 'rightAligned', valueFormatter: numFmt },
-      { field: 'received', headerName: 'RECEIVED', width: 96, editable: false, type: 'rightAligned', valueFormatter: numFmt, cellClass: 'cell-positive' },
+      { field: 'received', headerName: 'RECEIVED', width: 96, editable: true, cellEditor: 'agNumberCellEditor', cellEditorParams: { min: 0 }, type: 'rightAligned', valueFormatter: numFmt, cellClass: 'cell-positive' },
     )
     if (isBar) {
       base.push({ field: 'store', headerName: 'STORE ROOM', width: 96, editable: false, type: 'rightAligned', valueFormatter: p => p.value == null ? '—' : fmtNum(p.value as number) })
     }
     base.push(
       { field: 'used', headerName: 'ISSUED', width: 88, editable: false, type: 'rightAligned', valueFormatter: numFmt, cellClass: 'cell-issued' },
-      { field: 'waste', headerName: 'WASTE', width: 88, editable: false, type: 'rightAligned', valueFormatter: numFmt, cellClass: 'cell-negative' },
+      { field: 'waste', headerName: 'WASTE', width: 88, editable: true, cellEditor: 'agNumberCellEditor', cellEditorParams: { min: 0 }, type: 'rightAligned', valueFormatter: numFmt, cellClass: 'cell-negative' },
       { field: 'orderQty', headerName: 'ORDER QTY', width: 96, editable: false, type: 'rightAligned', valueFormatter: p => p.value == null ? '' : fmtNum(p.value as number), cellClass: 'cell-warn' },
       { field: 'closing', headerName: 'CLOSING', width: 96, editable: false, type: 'rightAligned', valueFormatter: numFmt, cellClass: 'cell-strong' },
       {
@@ -486,55 +646,14 @@ export default function StockSheetPage() {
         valueFormatter: numFmt,
         cellClass: 'cell-strong',
       },
+      { field: 'notes', headerName: 'NOTES', width: 150, editable: true, valueFormatter: p => String(p.value ?? '') },
       {
         headerName: '', width: 44, pinned: 'right', sortable: false, filter: false, resizable: false,
         cellRenderer: actionRenderer,
       },
     )
     return base
-  }, [tab, categoryOptions, supplierOptions])
-
-  // ---------------------------- add stock (manual) ----------------------------
-
-  const [addProduct, setAddProduct] = useState('')
-  const [addQty, setAddQty] = useState('')
-  const [addCost, setAddCost] = useState('')
-  const [addNotes, setAddNotes] = useState('')
-  const [addBusy, setAddBusy] = useState(false)
-
-  const submitAddStock = async () => {
-    const product = productOptions.find(o => o.name.toLowerCase() === addProduct.trim().toLowerCase())
-    if (!product) { flash('Pick a product from the list'); return }
-    const qty = Number(addQty)
-    const cost = addCost.trim() === '' ? null : Number(addCost)
-    if (!Number.isFinite(qty) || qty <= 0) { flash('Enter a quantity'); return }
-    setAddBusy(true)
-    try {
-      const res = await fetch('/api/inventory/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product_id: product.id,
-          location_id: mainLocId,
-          transaction_type: 'purchase',
-          reason_type: 'DELIVERY',
-          quantity: qty,
-          unit_cost: cost,
-          reason_notes: addNotes.trim() || null,
-        }),
-      })
-      const json = await res.json()
-      if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Add failed')
-      flash(`+ ${formatQty(qty)} ${product.name} added`)
-      setAddOpen(false)
-      setAddProduct(''); setAddQty(''); setAddCost(''); setAddNotes('')
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not add stock')
-    } finally {
-      setAddBusy(false)
-    }
-  }
+  }, [tab, categoryOptions, supplierOptions, uomOptions])
 
   // ---------------------------- export ----------------------------
 
@@ -585,20 +704,32 @@ export default function StockSheetPage() {
     <div>
       <style>{`
         .ag-theme-quartz-dark {
-          --ag-background-color: #1C1710;
-          --ag-foreground-color: #E8DFD0;
-          --ag-border-color: #332B21;
-          --ag-header-background-color: #211B12;
-          --ag-header-foreground-color: #C8A04E;
-          --ag-odd-row-background-color: #171310;
-          --ag-row-hover-color: #2A2318;
-          --ag-selected-row-background-color: rgba(200,160,78,0.18);
-          --ag-input-focus-border-color: #C8A04E;
-          --ag-active-color: #C8A04E;
+          --ag-background-color: #1C1710 !important;
+          --ag-foreground-color: #E8DFD0 !important;
+          --ag-border-color: #332B21 !important;
+          --ag-header-background-color: #211B12 !important;
+          --ag-header-foreground-color: #C8A04E !important;
+          --ag-odd-row-background-color: #171310 !important;
+          --ag-row-hover-color: #2A2318 !important;
+          --ag-selected-row-background-color: rgba(200,160,78,0.18) !important;
+          --ag-input-focus-border-color: #C8A04E !important;
+          --ag-active-color: #C8A04E !important;
           --ag-font-size: 13px;
           --ag-row-height: 34px;
           --ag-header-height: 38px;
+          --ag-cell-horizontal-padding: 8px;
         }
+        .ag-theme-quartz-dark .ag-root-wrapper,
+        .ag-theme-quartz-dark .ag-row,
+        .ag-theme-quartz-dark .ag-header {
+          background-color: #1C1710 !important;
+        }
+        .ag-theme-quartz-dark .ag-header-cell { background-color: #211B12 !important; }
+        .ag-theme-quartz-dark .ag-pinned-left-cols-container,
+        .ag-theme-quartz-dark .ag-pinned-right-cols-container { background-color: #191511 !important; }
+        .ag-theme-quartz-dark .ag-cell { color: #E8DFD0; }
+        .ag-theme-quartz-dark .ag-ltr .ag-cell-focus:not(.ag-cell-range-selected):focus-within,
+        .ag-theme-quartz-dark .ag-cell-inline-editing { background: #221B11 !important; }
         .cell-counted { font-weight: 800; color: #F0EBE3; background: rgba(200,160,78,0.10); }
         .cell-new { color: #C8A04E; font-style: italic; }
         .cell-item-counted { font-weight: 700; }
@@ -611,10 +742,10 @@ export default function StockSheetPage() {
 
       <PageTitle
         title="Stock Sheet"
-        subtitle="Excel-style live sheet — type in COUNTED, press Enter to move down. Opening, received, issued, closing and prices are calculated from the ledger."
+        subtitle="Excel-style live sheet — single-click any cell to edit. RECEIVED and WASTE post straight to the ledger; COUNTED saves your daily count."
         right={
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Button variant="success" onClick={() => { setAddTab('manual'); setAddOpen(true) }}>+ ADD STOCK</Button>
+            <Button variant="success" onClick={() => addNewRow(true)}>+ ADD STOCK</Button>
             <Button variant="ghost" onClick={doExport} disabled={rows.length === 0}>Export CSV</Button>
           </div>
         }
@@ -666,13 +797,13 @@ export default function StockSheetPage() {
           )}
 
           <Button variant="ghost" onClick={() => void load()} disabled={loading}>⟳ Refresh</Button>
-          <Button variant="ghost" onClick={addNewRow}>+ Add Row</Button>
-          <Button variant="ghost" onClick={() => { setAddTab('import'); setAddOpen(true) }}>⤓ Import</Button>
+          <Button variant="ghost" onClick={() => addNewRow(false)}>+ Add Row</Button>
+          <Button variant="ghost"><Link href="/admin/operations/imports/new" style={{ textDecoration: 'none', color: 'inherit' }}>⤓ Import wizard</Link></Button>
         </div>
 
         <div style={{ marginTop: 10, fontSize: 12, color: C.textMuted }}>
-          Tips: <b>double-click</b> (or press <b>Enter</b>) to start editing a cell · <b>Enter</b> commits and moves down ·{' '}
-          <b>Tab</b> moves right — like Excel · <b>✕</b> removes a row's counted entry · Gold italic names are rows waiting for a product pick.
+          Tips: <b>single-click</b> any cell to edit inline · <b>Enter</b> commits and moves down · <b>Tab</b> moves right — like Excel ·{' '}
+          <b>RECEIVED</b>/<b>WASTE</b> post straight to the ledger · Gold italic names are new items — type a name, SKU, price, then COUNTED / RECEIVED to create it.
         </div>
       </Card>
 
@@ -697,13 +828,14 @@ export default function StockSheetPage() {
         >{error || saved}</div>
       )}
 
-      <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 420px)', minHeight: 420, borderRadius: 12, overflow: 'hidden', border: `1px solid ${C.border}` }}>
+      <div className="ag-theme-quartz-dark" style={{ height: 650, borderRadius: 12, overflow: 'hidden', border: `1px solid ${C.border}` }}>
         <AgGridReact<StockRow>
           rowData={rows}
           columnDefs={columns}
           getRowId={p => p.data.productKey}
           enterNavigatesVertically
           enterNavigatesVerticallyAfterEdit
+          singleClickEdit
           enableRangeSelection
           copyHeadersToClipboard
           stopEditingWhenCellsLoseFocus
@@ -720,90 +852,6 @@ export default function StockSheetPage() {
           <option key={o.id} value={o.name}>{o.sku ? `${o.sku} · ` : ''}{o.name}{o.unit ? ` · ${o.unit}` : ''}</option>
         ))}
       </datalist>
-
-      {/* ADD STOCK modal */}
-      {addOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setAddOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: 520, maxWidth: '100%', background: '#1C1710', border: `1px solid ${C.border}`,
-            borderRadius: 14, padding: 22, color: C.text,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Add Stock</h3>
-              <button onClick={() => setAddOpen(false)} style={{ background: 'transparent', border: 'none', color: '#B08968', fontSize: 18, fontWeight: 800, cursor: 'pointer' }}>✕</button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 6, background: '#14100B', border: '1px solid #332B21', borderRadius: 10, padding: 3, marginBottom: 16 }}>
-              {([['manual', 'Enter manually'], ['import', 'Import Excel / CSV']] as const).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setAddTab(id)}
-                  style={{
-                    flex: 1, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
-                    border: 'none', background: addTab === id ? '#C8A04E' : 'transparent', color: addTab === id ? '#171208' : '#B8B0A0',
-                  }}
-                >{label}</button>
-              ))}
-            </div>
-
-            {addTab === 'manual' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.textMuted, marginBottom: 5 }}>Product</label>
-                  <input
-                    list="inv-stock-product-options"
-                    value={addProduct}
-                    onChange={e => setAddProduct(e.target.value)}
-                    placeholder="Start typing a product name…"
-                    style={{
-                      width: '100%', boxSizing: 'border-box', background: '#14100B', border: `1px solid ${C.border}`,
-                      borderRadius: 9, padding: '10px 12px', color: C.text, fontSize: 13.5, outline: 'none',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.textMuted, marginBottom: 5 }}>Quantity</label>
-                    <input type="number" min={0} step="any" value={addQty} onChange={e => setAddQty(e.target.value)} placeholder="e.g. 12"
-                      style={{ width: '100%', boxSizing: 'border-box', background: '#14100B', border: `1px solid ${C.border}`, borderRadius: 9, padding: '10px 12px', color: C.text, fontSize: 13.5, outline: 'none' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.textMuted, marginBottom: 5 }}>Unit cost (R)</label>
-                    <input type="number" min={0} step="any" value={addCost} onChange={e => setAddCost(e.target.value)} placeholder="e.g. 145"
-                      style={{ width: '100%', boxSizing: 'border-box', background: '#14100B', border: `1px solid ${C.border}`, borderRadius: 9, padding: '10px 12px', color: C.text, fontSize: 13.5, outline: 'none' }} />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.textMuted, marginBottom: 5 }}>Notes</label>
-                  <input value={addNotes} onChange={e => setAddNotes(e.target.value)} placeholder="Delivery note, invoice no…" style={{
-                    width: '100%', boxSizing: 'border-box', background: '#14100B', border: `1px solid ${C.border}`,
-                    borderRadius: 9, padding: '10px 12px', color: C.text, fontSize: 13.5, outline: 'none',
-                  }} />
-                </div>
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-                  <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-                  <Button variant="success" onClick={() => void submitAddStock()} disabled={addBusy}>{addBusy ? 'Adding…' : 'Add to stock'}</Button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: C.textSoft, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ margin: 0 }}>Prefer a spreadsheet? Fill in the template, upload it here and the system maps products automatically:</p>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <Button variant="ghost" onClick={() => { setAddOpen(false) }}>
-                    <a href="/api/inventory/imports/template?type=supplier_delivery" download style={{ textDecoration: 'none', color: 'inherit' }}>⬇ Delivery template</a>
-                  </Button>
-                  <Button variant="ghost" onClick={() => { setAddOpen(false) }}>
-                    <a href="/api/inventory/imports/template?type=physical_count" download style={{ textDecoration: 'none', color: 'inherit' }}>⬇ Stock count template</a>
-                  </Button>
-                </div>
-                <p style={{ margin: 0 }}>
-                  Then open the full import wizard: <Link href="/admin/operations/imports/new" style={{ color: '#C8A04E' }}>Import wizard →</Link>
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {loading && <p style={{ fontSize: 12, color: C.textMuted, marginTop: 10 }}>Loading the ledger…</p>}
     </div>

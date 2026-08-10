@@ -62,6 +62,7 @@ export async function PATCH(
       'preferred_supplier_id', 'supplier_code',
       'reorder_threshold', 'reorder_quantity',
       'has_expiry', 'shelf_life_days',
+      'uom_id', 'unit_cost',
     ]
 
     const updates: Record<string, unknown> = {}
