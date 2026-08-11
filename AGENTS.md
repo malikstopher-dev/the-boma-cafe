@@ -911,3 +911,28 @@ ext build's tsc step. Fixed: wait query.select('*') and count via deletedRows.l
 pm run build green (app compiles in 4.5min; global tsc step now passes too)
 - Migration 068 already applied to prod by owner (sheets + cells tables live)
 - Commit  a6d793 pushed to main (Vercel auto-deploy)
+
+---
+
+## Session: Stock Sheet Production Bug Fixes (2026-08-11) ? commit db0c5c7
+
+### Objective
+Fix 7 production bugs surfaced by owner screenshots 545?561 (another AI's advice was hallucinated: wrong table names inventory_ledger, @supabase/auth-helpers-nextjs, uom_id column on inventory_products ? ignored). AG Grid was uninstalled by the owner; its CSS imports removed from src/app/inv/layout.tsx.
+
+### Bugs fixed (all verified against prod DB)
+1. **uom_id PGRST106 schema error** (screenshots 553/554): stock page UNIT cell PATCHed { uom_id } onto inventory_products ? column does not exist (UOM links live in inventory_product_uoms, which was empty). Fix: products/[id]/route.ts handles uom_id in body by deleting + re-inserting the product's base/display UOM link (is_base+is_display+factor 1); uom_id removed from the products PATCH allowlist.
+2. **WASTE transaction_type CHECK error** (561): page posted 	ransaction_type: 'WASTE' uppercase; ecordWaste() requires lowercase (waste, breakage, spillage, comp, expiry_loss, theft, donation). Fix: lowercase 'waste' (reason_type stays uppercase ? CHECK in migration 051 is uppercase).
+3. **"Location not found: main"** (560): 	ransactions/route.ts POST passed location_id straight to createTransaction(); 'main' is an alias, not a UUID. Fix: route now calls esolveLocationId() (same as every other route).
+4. **Daily-stock stuck on "Loading locations?"** (545): page checked Array.isArray(data) but the API returns the { data: [...] } envelope ? never an array. Fix: read json.data ?? json.
+5. **"UNIT showing BASE"** (548): daily-stock/page.tsx rendered countUomName ?? 'base'. Fix: fallback 'units'.
+6. **Category dropdown only Mixers + Spirits** (550?552): prod had 20 categories = 10x 'Mixers' + 10x 'Spirits' (import pollution). Migration 069 dedupes (earliest id per name kept, products remapped) + seeds 13 real categories: bar (Wines & Bubbles, Beers & Ciders, Liqueurs, Non-Alcoholic) + kitchen (Meat & Poultry, Seafood, Dairy, Produce, Dry Store, Sauces & Spices, Bakery, Frozen, Packaging). 15 categories live now, 1 each.
+7. **Kitchen location missing** (546): migration 069 seeds Kitchen (code KITCHEN) with the Kitchen cost centre (NOT NULL since 066).
+
+### Notes
+- Migration 069 first attempt failed twice (CTE scope error; inverted delete condition) ? both rolled back transactionally, prod untouched; final version applied via supabase db push (069 marked applied local+remote).
+- inventory_product_uoms is empty in prod; the UNIT select in the stock sheet PATCH now populates it per product.
+- AG Grid: never used by any page; uninstalled (4 packages) to slim the build.
+
+### Verification
+- Temp tsconfig strict typecheck of 5 edited files clean; 62/62 vitest; strict inventory tsc clean; 
+pm run build green; migration 069 live in prod (15 categories 1x each, Kitchen location with cost centre, 6 products remapped).
