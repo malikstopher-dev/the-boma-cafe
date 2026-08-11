@@ -69,27 +69,11 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Overview',
+    label: 'Admin · Overview',
     items: [
       { label: 'Owner Dashboard', icon: <Landmark size={18} />, href: '/dashboard' },
       { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/dashboard' },
       { label: 'Background Jobs', icon: <Zap size={18} />, href: '/admin/background-jobs' },
-    ],
-  },
-  {
-    label: 'Orders',
-    items: [
-      { label: 'Orders', icon: <ClipboardList size={18} />, href: '/admin/orders' },
-      { label: 'Kitchen', icon: <ChefHat size={18} />, href: '/admin/kitchen' },
-    ],
-  },
-  {
-    label: 'Bookings',
-    items: [
-      { label: 'Bookings', icon: <Calendar size={18} />, href: '/admin/bookings' },
-      { label: 'Quotes', icon: <FileText size={18} />, href: '/admin/quotes' },
-      { label: 'Pricing', icon: <DollarSign size={18} />, href: '/admin/pricing' },
-      { label: 'Availability', icon: <CalendarDays size={18} />, href: '/admin/availability' },
     ],
   },
   {
@@ -157,6 +141,22 @@ const navGroups: NavGroup[] = [
     label: 'Operations & Stock · Settings',
     items: [
       { label: 'Settings', icon: <Settings size={18} />, href: '/admin/operations/settings' },
+    ],
+  },
+  {
+    label: 'Orders',
+    items: [
+      { label: 'Orders', icon: <ClipboardList size={18} />, href: '/admin/orders' },
+      { label: 'Kitchen', icon: <ChefHat size={18} />, href: '/admin/kitchen' },
+    ],
+  },
+  {
+    label: 'Bookings',
+    items: [
+      { label: 'Bookings', icon: <Calendar size={18} />, href: '/admin/bookings' },
+      { label: 'Quotes', icon: <FileText size={18} />, href: '/admin/quotes' },
+      { label: 'Pricing', icon: <DollarSign size={18} />, href: '/admin/pricing' },
+      { label: 'Availability', icon: <CalendarDays size={18} />, href: '/admin/availability' },
     ],
   },
   {
