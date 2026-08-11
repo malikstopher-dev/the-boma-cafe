@@ -10,7 +10,7 @@ const SECTIONS = [
 export default function SettingsHubPage() {
   return (
     <AdminPage title="Settings" description="Reference data and configuration">
-      <div className="grid md:grid-cols-3 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
         {SECTIONS.map(section => (
           <Link
             key={section.href}
