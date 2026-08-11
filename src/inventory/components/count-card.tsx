@@ -16,6 +16,20 @@ interface CountCardProps {
   onPrev: () => void
 }
 
+const CARD: React.CSSProperties = {
+  background: '#242018',
+  border: '1px solid #3A3428',
+  borderRadius: 12,
+  padding: 24,
+  color: '#F0EBE3',
+  fontFamily: "'Inter', -apple-system, sans-serif",
+}
+
+const MUTED = '#A09888'
+const DIM = '#6B6358'
+const GOLD = '#C8A04E'
+const GREEN = '#34D399'
+
 export function CountCard({
   productName,
   productSku,
@@ -78,46 +92,81 @@ export function CountCard({
     }
   }
 
+  const roundBtn: React.CSSProperties = {
+    width: 48, height: 48, borderRadius: '50%',
+    background: '#2A261E', border: '1px solid #4A4438',
+    color: '#F0EBE3', fontSize: 22, fontWeight: 700,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', flexShrink: 0,
+  }
+
+  const smallBtn: React.CSSProperties = {
+    padding: '6px 14px', fontSize: 12, borderRadius: 8,
+    background: '#2A261E', border: '1px solid #4A4438',
+    color: '#D8D0C0', cursor: 'pointer',
+  }
+
+  const primaryBtn: React.CSSProperties = {
+    padding: '10px 22px', fontSize: 13.5, borderRadius: 9,
+    background: '#34D399', border: 'none', color: '#0F1F18',
+    fontWeight: 700, cursor: 'pointer',
+  }
+
+  const ghostBtn: React.CSSProperties = {
+    padding: '10px 18px', fontSize: 13.5, borderRadius: 9,
+    background: 'transparent', border: '1px solid #4A4438',
+    color: '#D8D0C0', cursor: 'pointer',
+  }
+
   return (
-    <div className="bg-white rounded-lg border p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-gray-500">
+    <div style={CARD}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ fontSize: 13, color: MUTED }}>
           Product {productIndex + 1} of {totalProducts}
         </div>
-        <div className="flex gap-1">
-          <span className={`inline-block w-2 h-2 rounded-full ${saved ? 'bg-green-500' : 'bg-gray-300'}`} />
-        </div>
+        <span style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: saved ? GREEN : '#4A4438',
+        }} />
       </div>
 
-      <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-        <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${((productIndex + 1) / totalProducts) * 100}%` }} />
+      <div style={{ height: 8, borderRadius: 999, background: '#2A261E', marginBottom: 24, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%', borderRadius: 999,
+          background: 'linear-gradient(90deg, #34D399, #C8A04E)',
+          transition: 'width 0.3s ease',
+          width: `${Math.min(100, ((productIndex + 1) / Math.max(1, totalProducts)) * 100)}%`,
+        }} />
       </div>
 
-      <h2 className="text-xl font-semibold mb-1">{productName}</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 4px', color: '#F0EBE3' }}>{productName}</h2>
       {(productSku || productBarcode) && (
-        <p className="text-sm text-gray-400 mb-4">
+        <p style={{ fontSize: 12.5, color: DIM, margin: '0 0 16px' }}>
           {productSku && <>SKU: {productSku}</>}
           {productSku && productBarcode && ' · '}
-          {productBarcode && <span className="font-mono">Barcode: {productBarcode}</span>}
+          {productBarcode && <span style={{ fontFamily: 'monospace' }}>Barcode: {productBarcode}</span>}
         </p>
       )}
 
-      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-        <div className="text-sm text-gray-500 mb-1">Expected Balance</div>
-        <div className="text-2xl font-bold">{expectedQuantity !== null ? expectedQuantity.toFixed(2) : '—'}</div>
+      <div style={{ background: '#1E1A12', border: '1px solid #3A3428', borderRadius: 10, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: MUTED, marginBottom: 4 }}>Expected Balance</div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: '#F0EBE3', fontVariantNumeric: 'tabular-nums' }}>
+          {expectedQuantity !== null ? expectedQuantity.toFixed(2) : '—'}
+        </div>
       </div>
 
-      <div className="mb-6">
-        <div className="text-sm font-medium text-gray-700 mb-2">Physical Count</div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => adjust(-1)}
-            className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-xl font-bold flex items-center justify-center"
-          >−</button>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#D8D0C0', marginBottom: 10 }}>Physical Count</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, justifyContent: 'center' }}>
+          <button onClick={() => adjust(-1)} style={roundBtn} aria-label="Decrease by one">−</button>
 
           {editingDirect ? (
             <input
-              className="text-center text-3xl font-bold w-32 border-b-2 border-emerald-500 outline-none"
+              style={{
+                textAlign: 'center', fontSize: 28, fontWeight: 700, width: 128,
+                background: '#171208', border: '2px solid #34D399', borderRadius: 10,
+                color: '#F0EBE3', outline: 'none', padding: '6px 8px', fontVariantNumeric: 'tabular-nums',
+              }}
               type="number"
               min="0"
               step="0.5"
@@ -128,40 +177,45 @@ export function CountCard({
               autoFocus
             />
           ) : (
-            <div className="text-center text-3xl font-bold w-32 cursor-pointer" onClick={startDirectEdit}>
+            <div
+              style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, width: 128, cursor: 'pointer', color: '#F0EBE3', fontVariantNumeric: 'tabular-nums' }}
+              onClick={startDirectEdit}
+            >
               {quantity.toFixed(1)}
             </div>
           )}
 
-          <button
-            onClick={() => adjust(1)}
-            className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-xl font-bold flex items-center justify-center"
-          >+</button>
+          <button onClick={() => adjust(1)} style={roundBtn} aria-label="Increase by one">+</button>
         </div>
 
-        <div className="flex gap-2 mt-2 justify-center">
-          <button onClick={() => adjust(-10)} className="px-3 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200">−10</button>
-          <button onClick={() => adjust(10)} className="px-3 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200">+10</button>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 10 }}>
+          <button onClick={() => adjust(-10)} style={smallBtn}>−10</button>
+          <button onClick={() => adjust(10)} style={smallBtn}>+10</button>
         </div>
       </div>
 
       {expectedQuantity !== null && quantity !== expectedQuantity && (
-        <div className={`text-sm mb-4 p-2 rounded ${Math.abs(variancePct) > 10 ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700'}`}>
+        <div style={{
+          fontSize: 13, marginBottom: 16, padding: 10, borderRadius: 8,
+          background: Math.abs(variancePct) > 10 ? 'rgba(248,113,113,0.12)' : 'rgba(251,191,36,0.12)',
+          border: `1px solid ${Math.abs(variancePct) > 10 ? 'rgba(248,113,113,0.4)' : 'rgba(251,191,36,0.4)'}`,
+          color: Math.abs(variancePct) > 10 ? '#F87171' : '#FBBF24',
+        }}>
           Variance: {variance > 0 ? '+' : ''}{variance.toFixed(2)} ({variancePct > 0 ? '+' : ''}{variancePct.toFixed(1)}%)
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {productIndex > 0 && (
-          <button onClick={onPrev} className="px-4 py-2 text-sm rounded border hover:bg-gray-50">Previous</button>
+          <button onClick={onPrev} style={ghostBtn}>Previous</button>
         )}
-        <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50">
+        <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save'}
         </button>
-        <button onClick={onSkip} className="px-4 py-2 text-sm rounded border hover:bg-gray-50">Skip</button>
+        <button onClick={onSkip} style={ghostBtn}>Skip</button>
         <button
           onClick={() => { handleSave().then(() => onNext()) }}
-          className="px-4 py-2 text-sm rounded bg-gray-800 text-white hover:bg-gray-900 ml-auto"
+          style={{ ...primaryBtn, background: GOLD, color: '#171208', marginLeft: 'auto' }}
         >Next →</button>
       </div>
     </div>
@@ -184,46 +238,70 @@ export function VarianceTable({
   const totalVariance = items.reduce((s: number, i: any) => s + Number(i.variance ?? 0), 0)
   const significant = items.filter((i: any) => Math.abs(Number(i.variance ?? 0)) > 0)
 
+  const kpi: React.CSSProperties = {
+    background: '#242018', border: '1px solid #3A3428', borderRadius: 12, padding: 16,
+  }
+  const kpiLabel: React.CSSProperties = { fontSize: 12, color: MUTED, marginBottom: 4 }
+  const kpiValue: React.CSSProperties = { fontSize: 24, fontWeight: 700, color: '#F0EBE3', fontVariantNumeric: 'tabular-nums' }
+
+  const ghostBtn: React.CSSProperties = {
+    padding: '10px 18px', fontSize: 13.5, borderRadius: 9,
+    background: 'transparent', border: '1px solid #4A4438',
+    color: '#D8D0C0', cursor: 'pointer',
+  }
+  const primaryBtn: React.CSSProperties = {
+    padding: '10px 22px', fontSize: 13.5, borderRadius: 9,
+    background: '#34D399', border: 'none', color: '#0F1F18',
+    fontWeight: 700, cursor: 'pointer',
+  }
+
   return (
-    <div>
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border p-4">
-          <div className="text-sm text-gray-500">Expected</div>
-          <div className="text-2xl font-bold">{totalExpected.toFixed(2)}</div>
+    <div style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div style={kpi}>
+          <div style={kpiLabel}>Expected</div>
+          <div style={kpiValue}>{totalExpected.toFixed(2)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="text-sm text-gray-500">Physical</div>
-          <div className="text-2xl font-bold">{totalPhysical.toFixed(2)}</div>
+        <div style={kpi}>
+          <div style={kpiLabel}>Physical</div>
+          <div style={kpiValue}>{totalPhysical.toFixed(2)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="text-sm text-gray-500">Variance</div>
-          <div className={`text-2xl font-bold ${totalVariance === 0 ? '' : totalVariance > 0 ? 'text-green-600' : 'text-red-600'}`}>
+        <div style={kpi}>
+          <div style={kpiLabel}>Variance</div>
+          <div style={{ ...kpiValue, color: totalVariance === 0 ? '#F0EBE3' : totalVariance > 0 ? '#34D399' : '#F87171' }}>
             {totalVariance > 0 ? '+' : ''}{totalVariance.toFixed(2)}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border overflow-hidden mb-4">
-        <table className="w-full text-sm">
+      <div style={{ background: '#242018', border: '1px solid #3A3428', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+        <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
           <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="text-left p-2">Product</th>
-              <th className="text-right p-2">Expected</th>
-              <th className="text-right p-2">Physical</th>
-              <th className="text-right p-2">Variance</th>
+            <tr style={{ borderBottom: '1px solid #3A3428', background: '#1E1A12' }}>
+              <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: MUTED }}>Product</th>
+              <th style={{ textAlign: 'right', padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: MUTED }}>Expected</th>
+              <th style={{ textAlign: 'right', padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: MUTED }}>Physical</th>
+              <th style={{ textAlign: 'right', padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: MUTED }}>Variance</th>
             </tr>
           </thead>
           <tbody>
             {significant.length === 0 ? (
-              <tr><td colSpan={4} className="p-4 text-center text-gray-400 text-sm">No variances — all products match</td></tr>
+              <tr>
+                <td colSpan={4} style={{ padding: 24, textAlign: 'center', color: MUTED, fontSize: 13 }}>
+                  No variances — all products match
+                </td>
+              </tr>
             ) : significant.map((item: any) => {
               const v = Number(item.variance ?? 0)
               return (
-                <tr key={item.id} className="border-b">
-                  <td className="p-2">{item.inventory_products?.name || item.product_id}</td>
-                  <td className="p-2 text-right">{Number(item.expected_quantity ?? 0).toFixed(2)}</td>
-                  <td className="p-2 text-right">{Number(item.physical_quantity).toFixed(2)}</td>
-                  <td className={`p-2 text-right font-mono ${v === 0 ? '' : v > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <tr key={item.id} style={{ borderBottom: '1px solid #3A3428' }}>
+                  <td style={{ padding: '12px 16px', color: '#F0EBE3' }}>{item.inventory_products?.name || item.product_id}</td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', color: '#D8D0C0', fontVariantNumeric: 'tabular-nums' }}>{Number(item.expected_quantity ?? 0).toFixed(2)}</td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', color: '#D8D0C0', fontVariantNumeric: 'tabular-nums' }}>{Number(item.physical_quantity).toFixed(2)}</td>
+                  <td style={{
+                    padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace',
+                    color: v === 0 ? '#D8D0C0' : v > 0 ? '#34D399' : '#F87171',
+                  }}>
                     {v > 0 ? '+' : ''}{v.toFixed(2)}
                   </td>
                 </tr>
@@ -233,9 +311,9 @@ export function VarianceTable({
         </table>
       </div>
 
-      <div className="flex gap-2">
-        <button onClick={onBack} className="px-4 py-2 text-sm rounded border hover:bg-gray-50">Back to Count</button>
-        <button onClick={onApprove} disabled={approving} className="px-4 py-2 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 ml-auto">
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={onBack} style={ghostBtn}>Back to Count</button>
+        <button onClick={onApprove} disabled={approving} style={{ ...primaryBtn, marginLeft: 'auto', opacity: approving ? 0.6 : 1 }}>
           {approving ? 'Approving...' : 'Approve Count'}
         </button>
       </div>

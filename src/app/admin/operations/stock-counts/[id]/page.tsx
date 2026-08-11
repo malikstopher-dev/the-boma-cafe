@@ -72,7 +72,7 @@ export default function StockCountDetailPage() {
   const uncountedProducts = products.filter((p: any) => !countedProductIds.has(p.id))
 
   if (isLoading) return <AdminPage title="Stock Count"><SkeletonCard /></AdminPage>
-  if (error || !data || !stockCount) return <AdminPage title="Stock Count"><div className="text-red-500">{error || 'Not found'}</div></AdminPage>
+  if (error || !data || !stockCount) return <AdminPage title="Stock Count"><div style={{ color: '#F87171', fontSize: 14 }}>{error || 'Not found'}</div></AdminPage>
 
   const isInProgress = stockCount.status === 'in_progress'
   const isSubmitted = stockCount.status === 'submitted'
@@ -213,7 +213,7 @@ export default function StockCountDetailPage() {
       </div>
 
       {isInProgress && mode === 'count' && (
-        <div className="max-w-lg mx-auto mb-4">
+        <div style={{ maxWidth: 512, margin: '0 auto 16px' }}>
           <div style={{display:'flex',alignItems:'center',gap:8,background:'#1E1A14',border:'1px solid #3A3428',borderRadius:8,padding:12}}>
             <span style={{color:'#6B6358'}}>🔍</span>
             <input
@@ -237,14 +237,14 @@ export default function StockCountDetailPage() {
       )}
 
       {isInProgress && mode === 'count' && totalForCounting === 0 && (
-        <div style={{maxWidth:'lg',margin:'0 auto',background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:24,textAlign:'center'}}>
+        <div style={{ maxWidth: 512, margin: '0 auto', background: '#1E1A14', borderRadius: 8, border: '1px solid #3A3428', padding: 24, textAlign: 'center' }}>
           <p style={{fontSize:14,color:'#A09888',fontWeight:500,marginBottom:4,fontFamily:'Inter, sans-serif'}}>Nothing to count</p>
           <p style={{fontSize:12,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>No uncounted products found at this location. Cancel this count to start over.</p>
         </div>
       )}
 
       {isInProgress && mode === 'count' && currentProduct && (
-        <div className="max-w-lg mx-auto">
+        <div style={{ maxWidth: 512, margin: '0 auto' }}>
           <CountCard
             key={currentProduct.id}
             productName={currentProduct.name}
@@ -261,7 +261,7 @@ export default function StockCountDetailPage() {
           />
 
           {(countItems.length > 0 || currentIndex >= totalForCounting - 1) && (
-            <div className="mt-4 text-center">
+            <div style={{ marginTop: 16, textAlign: 'center' }}>
               <button onClick={handleSubmit} disabled={submitting} style={{padding:'12px 24px',background:'#4CAF50',color:'white',borderRadius:8,border:'none',fontSize:14,fontWeight:500,cursor:'pointer',fontFamily:'Inter, sans-serif',opacity:submitting?0.5:1}}>
                 {submitting ? 'Submitting...' : 'Submit Count for Review'}
               </button>
