@@ -87,8 +87,9 @@ export async function PATCH(
           .insert({
             product_id: id,
             uom_id: uomId,
+            // one_base_uom CHECK forbids is_base AND is_display together.
             is_base: true,
-            is_display: true,
+            is_display: false,
             conversion_factor: 1,
           })
         if (insertErr) {

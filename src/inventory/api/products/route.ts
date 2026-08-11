@@ -134,13 +134,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     if (Array.isArray(uoms)) {
       for (const uom of uoms) {
+        // one_base_uom CHECK forbids is_base AND is_display on the same row.
+        const isBase = uom.is_base ?? false
         await supabase
           .from('inventory_product_uoms')
           .insert({
             product_id: productId,
             uom_id: uom.uom_id,
-            is_base: uom.is_base ?? false,
-            is_display: uom.is_display ?? false,
+            is_base: isBase,
+            is_display: isBase ? false : (uom.is_display ?? false),
             conversion_factor: uom.conversion_factor ?? 1,
           })
       }

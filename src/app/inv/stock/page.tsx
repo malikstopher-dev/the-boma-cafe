@@ -516,7 +516,7 @@ export default function StockSheetPage() {
     }
     if (categoryId) body.category_id = categoryId
     if (supplierId) body.preferred_supplier_id = supplierId
-    if (unitId) body.uoms = [{ uom_id: unitId, is_base: true, is_display: true, conversion_factor: 1 }]
+    if (unitId) body.uoms = [{ uom_id: unitId, is_base: true, is_display: false, conversion_factor: 1 }]
     const res = await fetch('/api/inventory/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
