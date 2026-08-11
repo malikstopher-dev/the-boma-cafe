@@ -23,7 +23,6 @@ const NAV_GROUPS: Array<{ label: string; items: Array<{ href: string; label: str
   {
     label: 'Purchasing',
     items: [
-      { href: '/inv/add-stock', label: '+ Add Stock' },
       { href: '/inv/purchases', label: 'Receive Stock' },
       { href: '/inv/payables', label: 'Supplier Payables' },
     ],

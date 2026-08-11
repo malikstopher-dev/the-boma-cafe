@@ -173,8 +173,8 @@ export default function DailyStockInput() {
             {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
           <Button variant="secondary" size="md" onClick={() => void load()}>↻ Reload</Button>
-          <Link href="/inv/add-stock" style={{ textDecoration: 'none' }}>
-            <Button variant="primary" size="md">+ Add Stock</Button>
+          <Link href="/inv/stock" style={{ textDecoration: 'none' }}>
+            <Button variant="primary" size="md">Open Stock Sheet</Button>
           </Link>
         </>
       }

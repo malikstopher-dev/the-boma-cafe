@@ -17,6 +17,11 @@ const nextConfig = {
   },
   redirects: async () => [
     {
+      source: '/inv/add-stock',
+      destination: '/inv/stock',
+      permanent: true,
+    },
+    {
       source: '/admin/operations/checklist',
       destination: '/admin/operations',
       permanent: true,
