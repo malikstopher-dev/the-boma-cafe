@@ -62,8 +62,43 @@ export async function PATCH(
       'preferred_supplier_id', 'supplier_code',
       'reorder_threshold', 'reorder_quantity',
       'has_expiry', 'shelf_life_days',
-      'uom_id', 'unit_cost',
+      'unit_cost',
     ]
+
+    // Unit swap: inventory_products has no uom_id column (UOM links live in
+    // inventory_product_uoms). Replace the product's base/display UOM with
+    // the requested one before applying the other field updates.
+    if ('uom_id' in body) {
+      const uomId = body.uom_id as string | null
+      delete body.uom_id
+      if (uomId) {
+        const { error: deleteErr } = await supabase
+          .from('inventory_product_uoms')
+          .delete()
+          .eq('product_id', id)
+        if (deleteErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: deleteErr.message } },
+            { status: 500 },
+          )
+        }
+        const { error: insertErr } = await supabase
+          .from('inventory_product_uoms')
+          .insert({
+            product_id: id,
+            uom_id: uomId,
+            is_base: true,
+            is_display: true,
+            conversion_factor: 1,
+          })
+        if (insertErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: insertErr.message } },
+            { status: 500 },
+          )
+        }
+      }
+    }
 
     const updates: Record<string, unknown> = {}
     for (const field of allowedFields) {

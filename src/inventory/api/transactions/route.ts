@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { createTransaction } from '@/inventory/engine/ledger'
 import { getInventoryTypeFilter } from '@/inventory/lib/api-utils'
+import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, InventoryTransaction, CreateTransactionInput } from '@/inventory/engine/types'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
 
@@ -96,7 +97,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    const tx = await createTransaction(body)
+    // 'main' / 'default' / absent → resolve to the first active location,
+    // matching every other inventory API route.
+    const resolvedLocationId = await resolveLocationId(body.location_id)
+    if (!resolvedLocationId) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'No active location configured' } },
+        { status: 400 },
+      )
+    }
+
+    const tx = await createTransaction({ ...body, location_id: resolvedLocationId })
     return NextResponse.json({ data: tx }, { status: 201 })
   } catch (error) {
     if (error instanceof InsufficientStockError) {

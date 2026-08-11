@@ -71,7 +71,10 @@ export default function DailyStockInput() {
   useEffect(() => {
     fetch('/api/inventory/locations')
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length) setLocations(data.filter((l: { is_active?: boolean }) => l.is_active !== false)) })
+      .then(json => {
+        const list = Array.isArray(json) ? json : (json.data ?? [])
+        if (Array.isArray(list) && list.length) setLocations(list.filter((l: { is_active?: boolean }) => l.is_active !== false))
+      })
       .catch(() => {})
   }, [])
 
@@ -231,7 +234,7 @@ export default function DailyStockInput() {
                       <td style={{ padding: '6px 12px', color: '#C8A04E', fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{r.sectionLabel}</td>
                       <td style={{ padding: '6px 12px', color: '#F0EBE3', fontWeight: 500 }}>{r.productName}</td>
                       <td style={{ padding: '6px 12px', color: '#6B6358', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}>{r.sku ?? '—'}</td>
-                      <td style={{ padding: '6px 12px', color: '#8C8275', fontSize: 12 }}>{r.countUomName ?? 'base'}</td>
+                      <td style={{ padding: '6px 12px', color: '#8C8275', fontSize: 12 }}>{r.countUomName ?? 'units'}</td>
                       <td style={{ padding: '6px 12px', color: '#A09888', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(r.expectedUnits)}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center', width: 130 }}>
                         {sheet.sessionStatus === 'approved' ? (

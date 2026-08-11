@@ -562,7 +562,7 @@ export default function StockSheetPage() {
       body: JSON.stringify({
         product_id: row.productId,
         location_id: loc,
-        transaction_type: 'WASTE',
+        transaction_type: 'waste',
         reason_type: 'WASTE',
         quantity: delta,
         reason_notes: row.notes ? String(row.notes).trim() || 'Stock sheet entry' : 'Stock sheet entry',
