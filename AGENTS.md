@@ -882,3 +882,32 @@ Phases A–D of the owner-approved admin plan: highlight + rename the inventory se
 ### Notes
 - `inventory_count_profiles` table exists but is empty — Daily Stock Input currently uses the "All Products" fallback; profiles can be configured later via the count-profiles API.
 - Legacy orphaned `inventory_stock_count_items` rows remain in prod (sessions deleted) — harmless, invisible to reports.
+
+---
+
+## Session: Stock Sheet Spreadsheet Polish (2026-08-11) ? commit  a6d793
+
+### Objective
+Finish the Google-Sheets-style Stock Sheet at /inv/stock: live item search, true Excel cell addresses in the fx bar, variance warnings, click-to-add row, and one-click .XLSX Import/Export.
+
+### What was done (all in src/app/inv/stock/page.tsx)
+- **Search box** in the toolbar: filters rows by item name or SKU (case-insensitive) via new renderList memo; empty-state message adapts when searching.
+- **fx bar cell ref**: now shows real Excel addresses (A4, F5?) via letterOf map instead of bare column names.
+- **Variance column**: negative variance renders with a ???? flag next to the number (in addition to the existing red colouring).
+- **Click-to-Add Item**: dashed footer row under the grid appends a new draft row (same as + ADD STOCK).
+- **Import .XLSX**: file picker reads the first sheet (raw:false), finds the header row by scanning for an item/product column, maps columns by name (STOCK ITEM/ITEM/PRODUCT/SKU/CODE/CATEGORY/UNIT/UOM/SUPPLIER/PRICE/RECEIVED/DELIVERED/COUNTED/PHYSICAL/WASTE/NOTES). New items become draft rows (name/SKU/category/unit/supplier/price/notes pre-filled); RECEIVED/WASTE/COUNTED cells commit through the same commitCell engine as typing (auto-creates products, posts REAL ledger movements). Fixed a stale-closure bug in the multi-draft case (local nextIdx cursor).
+- **Export .XLSX**: exports the full grid (computed cells as numbers, raw formulas as values) via the same dynamic xlsx import; button shows Exporting? state; flash summary of rows exported.
+- Import/Export both use dynamic import('xlsx') (SheetJS 0.20.3 tarball pin in package.json ? prior session) and show importing/exporting state; errors flash to the error banner.
+- Also removed a dead key === 'comments' branch and restored the missing gridAnchor ref declaration.
+
+### Build-blocking fix (unrelated to the UI work)
+- src/app/api/inventory/sheets/[id]/cells/route.ts:100 used query.select('*', { count: 'exact', head: true }) on a DELETE chain — supabase-js v2 types only allow 1 arg there, failing 
+ext build's tsc step. Fixed: wait query.select('*') and count via deletedRows.length (PostgREST RETURNING). This file (and sheets/route.ts, migration 068) were untracked leftovers from the prior session — now committed.
+
+### Verification
+- Page + sheets API typecheck clean (temp tsconfig with strict:true, deleted after)
+- 62/62 vitest passing; strict inventory tsc clean
+- 
+pm run build green (app compiles in 4.5min; global tsc step now passes too)
+- Migration 068 already applied to prod by owner (sheets + cells tables live)
+- Commit  a6d793 pushed to main (Vercel auto-deploy)
