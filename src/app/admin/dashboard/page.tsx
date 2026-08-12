@@ -171,8 +171,8 @@ export default function AdminDashboard() {
       fetch('/api/inventory/stock-counts').then(r => r.json()).catch(() => []),
       fetch('/api/inventory/locations').then(r => r.json()).catch(() => []),
     ]).then(([countsRes, locationsRes]) => {
-      const counts = Array.isArray(countsRes) ? countsRes : []
-      const locations = Array.isArray(locationsRes) ? locationsRes : []
+      const counts = Array.isArray(countsRes) ? countsRes : ((countsRes as any)?.data ?? [])
+      const locations = Array.isArray(locationsRes) ? locationsRes : ((locationsRes as any)?.data ?? [])
       const nameById = new Map(locations.map((l: { id: string; name: string }) => [l.id, l.name]))
       const byLoc = new Map<string, DailyStatusRow>()
       for (const sc of counts) {

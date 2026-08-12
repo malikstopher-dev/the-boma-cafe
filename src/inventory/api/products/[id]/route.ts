@@ -109,6 +109,20 @@ export async function PATCH(
     }
 
     if (Object.keys(updates).length === 0) {
+      if ('uom_id' in body) {
+        const { data: product, error: getErr } = await supabase
+          .from('inventory_products')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle()
+        if (getErr || !product) {
+          return NextResponse.json(
+            { error: { code: getErr?.code === 'PGRST116' ? 'NOT_FOUND' : 'DB_ERROR', message: getErr?.message ?? `Product not found: ${id}` } },
+            { status: getErr?.code === 'PGRST116' ? 404 : 500 },
+          )
+        }
+        return NextResponse.json({ data: product as unknown as InventoryProduct })
+      }
       return NextResponse.json(
         { error: { code: 'VALIDATION_ERROR', message: 'No valid fields to update' } },
         { status: 400 },

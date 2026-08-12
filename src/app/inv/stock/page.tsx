@@ -477,7 +477,7 @@ export default function StockSheetPage() {
     const res = await fetch(`/api/inventory/daily-stock/${sessionId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, counted_units: counted }),
+      body: JSON.stringify({ productId, counted }),
     })
     const json = await res.json()
     if (!res.ok || json.error) throw new Error(json.error?.message ?? 'Save failed')

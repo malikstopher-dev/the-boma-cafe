@@ -96,13 +96,16 @@ export async function saveCountItem(
 
     const { data, error } = await supabase
       .from('inventory_stock_count_items')
-      .upsert({
-        stock_count_id: stockCountId,
-        product_id: productId,
-        physical_quantity: physicalQuantity,
-        expected_quantity: expectedQuantity,
-        variance_reason: varianceReason ?? null,
-      })
+      .upsert(
+        {
+          stock_count_id: stockCountId,
+          product_id: productId,
+          physical_quantity: physicalQuantity,
+          expected_quantity: expectedQuantity,
+          variance_reason: varianceReason ?? null,
+        },
+        { onConflict: 'stock_count_id,product_id' },
+      )
       .select()
       .single()
 
