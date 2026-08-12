@@ -225,32 +225,48 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
   }, [])
 
   useEffect(() => {
+    let authId: string | null = null
+    let cancelled = false
     const fetchUnread = async () => {
       try {
         const sessionRes = await fetch('/api/staff/session')
         if (!sessionRes.ok) return
         const session = await sessionRes.json()
         if (!session.authenticated) return
+        authId = session.staff.id
 
         const res = await fetch(`/api/staff/conversations?user_id=${session.staff.id}`)
         if (res.ok) {
           const conversations = await res.json()
           const total = conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0)
-          setUnreadCount(total)
+          if (!cancelled) setUnreadCount(total)
         }
       } catch { /* ignore */ }
     }
-    fetchUnread()
 
-    const supabase = createBrowserClient()
-    const channel = supabase
-      .channel('sidebar-unread')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_messages' }, () => {
-        fetchUnread()
-      })
-      .subscribe()
+    const setup = async () => {
+      await fetchUnread()
 
-    return () => { supabase.removeChannel(channel) }
+      const supabase = createBrowserClient()
+      const channel = supabase
+        .channel('sidebar-unread')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'staff_messages',
+          ...(authId ? { filter: `sender_id=neq.${authId}` } : {}),
+        }, () => {
+          fetchUnread()
+        })
+        .subscribe()
+
+      return () => { supabase.removeChannel(channel) }
+    }
+
+    let cleanup: (() => void) | undefined
+    void setup().then(fn => { cleanup = fn })
+
+    return () => { cancelled = true; cleanup?.() }
   }, [])
 
   return (
