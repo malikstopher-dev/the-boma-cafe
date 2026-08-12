@@ -49,14 +49,6 @@ const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff'])
 const PRODUCED_TYPES = new Set(['production'])
 const RECEIVED_TYPES = new Set(['purchase', 'return'])
 
-interface RawEntry {
-  product_id: string
-  quantity: number
-  unit_cost: number | null
-  transaction_type: string
-  created_at: string
-}
-
 function bucket(qty: number, type: string): { received: number; used: number; waste: number; adjustments: number } {
   const t = (type || '').toLowerCase()
   const q = Number(qty) || 0
@@ -82,41 +74,38 @@ export async function getStockSheet(
 
   const startIso = `${from}T00:00:00.000Z`
   const endIso = new Date(new Date(`${to}T00:00:00.000Z`).getTime() + 86400000).toISOString()
-  const MAX = 10000
 
-  const rangeQuery = supabase
-    .from('inventory_transactions')
-    .select('product_id, quantity, unit_cost, transaction_type, created_at')
-    .gte('created_at', startIso)
-    .lt('created_at', endIso)
-    .order('created_at', { ascending: false })
-    .limit(MAX)
+  // Aggregated server-side (RPC, migration 070) instead of downloading ledger
+  // rows: egress is one row per (product, type) regardless of ledger size, and
+  // the old "before range" scan no longer re-downloads the product's entire
+  // lifetime movement capped at 10k rows. The RPC returns sign-split sums so
+  // the per-row bucketing semantics of bucket() stay exact.
+  interface OpeningRow { product_id: string; opening: number | null }
+  interface MovementRow { product_id: string; transaction_type: string; positive_qty: number | null; negative_qty: number | null }
 
-  const beforeQuery = supabase
-    .from('inventory_transactions')
-    .select('product_id, quantity')
-    .lt('created_at', startIso)
-    .limit(MAX)
-
-  const [rangeRes, beforeRes, locRes] = await Promise.all([
-    location ? rangeQuery.eq('location_id', location) : rangeQuery,
-    location ? beforeQuery.eq('location_id', location) : beforeQuery,
+  const [openingRes, movementsRes, locRes] = await Promise.all([
+    supabase.rpc('stock_sheet_opening', { p_start: startIso, p_location: location }) as unknown as Promise<{ data: OpeningRow[] | null; error: { message: string } | null }>,
+    supabase.rpc('stock_sheet_movements', { p_start: startIso, p_end: endIso, p_location: location }) as unknown as Promise<{ data: MovementRow[] | null; error: { message: string } | null }>,
     getInventoryClient().from('inventory_locations').select('id, name').eq('is_active', true),
   ])
 
-  const rangeTxns = (rangeRes.data ?? []) as unknown as RawEntry[]
-  const beforeTxns = (beforeRes.data ?? []) as unknown as RawEntry[]
+  if (openingRes.error || movementsRes.error) {
+    throw new Error(`Failed to aggregate stock movements: ${openingRes.error?.message ?? movementsRes.error?.message}`)
+  }
+
+  const openingAggs = (openingRes.data ?? []) as OpeningRow[]
+  const movementAggs = (movementsRes.data ?? []) as MovementRow[]
 
   // Opening balance per product (ledger sum before the range)
   const openingMap = new Map<string, number>()
-  for (const t of beforeTxns) {
-    openingMap.set(t.product_id, (openingMap.get(t.product_id) ?? 0) + (Number(t.quantity) || 0))
+  for (const a of openingAggs) {
+    openingMap.set(a.product_id, (openingMap.get(a.product_id) ?? 0) + (Number(a.opening) ?? 0))
   }
 
   // Persist rows in the same shape (products may appear in one query but not the other)
   const productIds = new Set<string>()
-  for (const t of rangeTxns) productIds.add(t.product_id)
-  for (const t of beforeTxns) productIds.add(t.product_id)
+  for (const a of openingAggs) productIds.add(a.product_id)
+  for (const a of movementAggs) productIds.add(a.product_id)
 
   // Product metadata
   const productMeta = new Map<string, {
@@ -185,14 +174,19 @@ export async function getStockSheet(
     return row
   }
 
-  for (const t of beforeTxns) ensure(t.product_id)
-  for (const t of rangeTxns) {
-    const row = ensure(t.product_id)
-    const b = bucket(t.quantity, t.transaction_type)
-    row.received += b.received
-    row.used += b.used
-    row.waste += b.waste
-    row.adjustments += b.adjustments
+  for (const a of openingAggs) ensure(a.product_id)
+
+  // The RPC returns sign-split sums per (product, type); feeding each sign
+  // through the same per-row bucket() preserves the exact old semantics
+  // (e.g. negative purchase rows never count toward received).
+  for (const a of movementAggs) {
+    const row = ensure(a.product_id)
+    const pos = bucket(Number(a.positive_qty) ?? 0, a.transaction_type)
+    const neg = bucket(Number(a.negative_qty) ?? 0, a.transaction_type)
+    row.received += pos.received + neg.received
+    row.used += pos.used + neg.used
+    row.waste += pos.waste + neg.waste
+    row.adjustments += pos.adjustments + neg.adjustments
   }
 
   const rows: StockSheetRow[] = []
