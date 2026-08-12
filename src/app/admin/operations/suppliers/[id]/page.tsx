@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import AdminPage from '@/components/admin/design-system/AdminPage'
@@ -8,6 +8,7 @@ import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import SupplierProductsModal, { adminModalTheme, type ProductSummary } from '@/inventory/components/supplier-products-modal'
 
 interface SupplierDetail {
   id: string
@@ -32,11 +33,14 @@ export default function SupplierDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<Record<string, string>>({})
+  const [showProductsModal, setShowProductsModal] = useState(false)
+  const [allProducts, setAllProducts] = useState<ProductSummary[] | null>(null)
 
-  useEffect(() => {
+  const loadDetail = useCallback(() => {
     const id = params?.id as string
     if (!id) return
 
+    setIsLoading(true)
     fetch(`/api/inventory/suppliers/${id}`)
       .then(r => r.json())
       .then(json => {
@@ -57,6 +61,28 @@ export default function SupplierDetailPage() {
       .catch(() => setError('Failed to load supplier'))
       .finally(() => setIsLoading(false))
   }, [params?.id])
+
+  useEffect(() => { loadDetail() }, [loadDetail])
+
+  function openProductsModal() {
+    setShowProductsModal(true)
+    if (allProducts) return
+    fetch('/api/inventory/products?page_size=500&show_archived=false')
+      .then(r => r.json())
+      .then(json => setAllProducts(Array.isArray(json.data) ? json.data as ProductSummary[] : []))
+      .catch(() => setAllProducts([]))
+  }
+
+  function handleProductsChange(updates: { id: string; preferred_supplier_id: string | null }[]) {
+    setAllProducts(prev => {
+      if (!prev) return prev
+      const map: Record<string, string | null> = {}
+      for (const u of updates) map[u.id] = u.preferred_supplier_id
+      return prev.map(p => (p.id in map ? { ...p, preferred_supplier_id: map[p.id] ?? null } : p))
+    })
+    setShowProductsModal(false)
+    loadDetail()
+  }
 
   async function handleSave() {
     if (!supplier) return
@@ -136,7 +162,10 @@ export default function SupplierDetailPage() {
         </div>
 
         <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,gridColumn:'span 2'}}>
-          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Products from this Supplier</h3>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{fontWeight:600,margin:0,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Products from this Supplier</h3>
+            <Button onClick={openProductsModal} size="sm">Assign Products</Button>
+          </div>
           {(!supplier.products || supplier.products.length === 0) ? (
             <p style={{fontSize:14,color:'#6B6358',fontFamily:'Inter, sans-serif'}}>No products linked to this supplier</p>
           ) : (
@@ -161,6 +190,17 @@ export default function SupplierDetailPage() {
           )}
         </div>
       </div>
+
+      {showProductsModal && supplier && allProducts && (
+        <SupplierProductsModal
+          supplierId={supplier.id}
+          supplierName={supplier.name}
+          products={allProducts}
+          onProductsChange={handleProductsChange}
+          onClose={() => setShowProductsModal(false)}
+          theme={adminModalTheme}
+        />
+      )}
     </AdminPage>
   )
 }

@@ -44,6 +44,27 @@ export interface OwnerSupplierRow {
   outstanding: number
 }
 
+export interface OwnerPayment {
+  supplierId: string | null
+  supplierName: string
+  amount: number
+  at: string
+}
+
+export type StockGroup = 'food' | 'beverage' | 'general' | 'gas'
+
+export interface OwnerBoard {
+  key: StockGroup
+  label: string
+  href: string
+  items: number
+  value: number
+  purchased: number
+  used: number
+  wastage: number
+  cylinders: number | null
+}
+
 export interface OwnerAlert {
   severity: 'high' | 'medium' | 'low'
   message: string
@@ -70,6 +91,9 @@ export interface OwnerDashboardData {
   kpi: OwnerKpi
   locations: OwnerLocationRow[]
   suppliers: OwnerSupplierRow[]
+  supplierTotal: number
+  recentPayments: OwnerPayment[]
+  boards: OwnerBoard[]
   alerts: OwnerAlert[]
   activity: OwnerActivityItem[]
   movement: OwnerMovementPoint[]
@@ -155,11 +179,53 @@ export interface RawTxn {
   unit_cost: number | null
   transaction_type: string
   created_at: string
+  inventory_type?: string | null
 }
 
 const PURCHASE_TYPES = new Set(['purchase', 'return'])
-const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff', 'production', 'waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'stolen'])
+const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff', 'production', 'waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'stolen', 'gas_usage'])
 const WASTE_TYPES = new Set(['waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'breakage'])
+
+function typeGroup(t: string | null | undefined): StockGroup {
+  const v = (t ?? '').toUpperCase()
+  if (v === 'FOOD') return 'food'
+  if (v === 'BEVERAGE') return 'beverage'
+  if (v === 'GAS') return 'gas'
+  return 'general' // CLEANING, PACKAGING, GENERAL, unknown
+}
+
+export interface GroupTotals {
+  purchased: number
+  used: number
+  wastage: number
+  adjustments: number
+}
+
+export function summarizeTxnsByGroup(txns: RawTxn[]): Record<StockGroup, GroupTotals> {
+  const out: Record<StockGroup, GroupTotals> = {
+    food: { purchased: 0, used: 0, wastage: 0, adjustments: 0 },
+    beverage: { purchased: 0, used: 0, wastage: 0, adjustments: 0 },
+    general: { purchased: 0, used: 0, wastage: 0, adjustments: 0 },
+    gas: { purchased: 0, used: 0, wastage: 0, adjustments: 0 },
+  }
+
+  for (const t of txns) {
+    const type = (t.transaction_type || '').toLowerCase()
+    const qty = Number(t.quantity) || 0
+    const cost = Number(t.unit_cost) || 0
+    const val = Math.abs(qty) * cost
+    const row = out[typeGroup(t.inventory_type)]
+
+    if (row) {
+      if (PURCHASE_TYPES.has(type) && qty > 0) row.purchased += val
+      if (USED_TYPES.has(type) && qty < 0) row.used += val
+      if (WASTE_TYPES.has(type) && qty < 0) row.wastage += val
+      if (type === 'adjustment') row.adjustments += val
+    }
+  }
+
+  return out
+}
 
 export function summarizeTxns(txns: RawTxn[]): { purchased: number; used: number; wastage: number; adjustments: number } {
   let purchased = 0
@@ -186,25 +252,37 @@ export async function fetchTxns(start: string, end: string): Promise<RawTxn[]> {
   const supabase = getInventoryClient()
   const { data, error } = await supabase
     .from('inventory_transactions')
-    .select('quantity, unit_cost, transaction_type, created_at')
+    .select('quantity, unit_cost, transaction_type, created_at, inventory_products(inventory_type)')
     .gte('created_at', start)
     .lt('created_at', end)
 
   if (error) return []
-  return (data ?? []) as unknown as RawTxn[]
+  return ((data ?? []) as unknown as any[]).map(t => ({
+    quantity: t.quantity,
+    unit_cost: t.unit_cost,
+    transaction_type: t.transaction_type,
+    created_at: t.created_at,
+    inventory_type: t.inventory_products?.inventory_type ?? null,
+  }))
 }
 
 async function fetchTxnsByLocation(locationId: string, start: string, end: string): Promise<RawTxn[]> {
   const supabase = getInventoryClient()
   const { data, error } = await supabase
     .from('inventory_transactions')
-    .select('quantity, unit_cost, transaction_type, created_at')
+    .select('quantity, unit_cost, transaction_type, created_at, inventory_products(inventory_type)')
     .eq('location_id', locationId)
     .gte('created_at', start)
     .lt('created_at', end)
 
   if (error) return []
-  return (data ?? []) as unknown as RawTxn[]
+  return ((data ?? []) as unknown as any[]).map(t => ({
+    quantity: t.quantity,
+    unit_cost: t.unit_cost,
+    transaction_type: t.transaction_type,
+    created_at: t.created_at,
+    inventory_type: t.inventory_products?.inventory_type ?? null,
+  }))
 }
 
 // ---------------------------------------------------------------------------
@@ -240,6 +318,74 @@ async function stockValue(locationId: string): Promise<{ value: number; items: n
   }
 
   return { value, items }
+}
+
+// ---------------------------------------------------------------------------
+// Stock value + counts grouped by inventory type (Kitchen / Bar / General / Gas)
+// ---------------------------------------------------------------------------
+
+async function stockValueByGroup(): Promise<Record<StockGroup, { value: number; items: number }>> {
+  const supabase = getInventoryClient()
+  const [balancesRes, productsRes, costsRes] = await Promise.all([
+    supabase.from('inventory_product_balances').select('product_id, balance'),
+    supabase.from('inventory_products').select('id, inventory_type').eq('is_active', true),
+    supabase
+      .from('inventory_transactions')
+      .select('product_id, unit_cost')
+      .not('unit_cost', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(20000),
+  ])
+
+  const lastCost = new Map<string, number>()
+  for (const c of (costsRes.data ?? []) as any[]) {
+    const pid = c.product_id as string
+    if (!lastCost.has(pid)) lastCost.set(pid, Number(c.unit_cost) || 0)
+  }
+
+  const typeById = new Map<string, StockGroup>()
+  for (const p of (productsRes.data ?? []) as any[]) {
+    typeById.set(p.id as string, typeGroup(p.inventory_type as string | null))
+  }
+
+  const out: Record<StockGroup, { value: number; items: number }> = {
+    food: { value: 0, items: 0 },
+    beverage: { value: 0, items: 0 },
+    general: { value: 0, items: 0 },
+    gas: { value: 0, items: 0 },
+  }
+
+  for (const b of (balancesRes.data ?? []) as any[]) {
+    const balance = Number(b.balance)
+    if (balance <= 0) continue
+    const g = typeById.get(b.product_id as string) ?? 'general'
+    const row = out[g]
+    if (row) {
+      row.items += 1
+      row.value += balance * (lastCost.get(b.product_id as string) ?? 0)
+    }
+  }
+
+  return out
+}
+
+async function gasCylindersOnHand(): Promise<number> {
+  const supabase = getInventoryClient()
+  const { data: gasProducts } = await supabase
+    .from('inventory_products')
+    .select('id')
+    .eq('inventory_type', 'GAS')
+    .eq('is_active', true)
+
+  const ids = (gasProducts ?? []).map((p: any) => p.id as string)
+  if (ids.length === 0) return 0
+
+  const { data: balances } = await supabase
+    .from('inventory_product_balances')
+    .select('balance')
+    .in('product_id', ids)
+
+  return (balances ?? []).reduce((sum: number, b: any) => sum + (Number(b.balance) || 0), 0)
 }
 
 // ---------------------------------------------------------------------------
@@ -340,6 +486,32 @@ async function supplierPaymentsInRange(start: string, end: string): Promise<{ am
     return { amount: (data ?? []).reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0), enabled: true }
   } catch {
     return { amount: 0, enabled: false }
+  }
+}
+
+/** Payments recorded in the selected period, newest first, with supplier names. */
+async function supplierRecentPayments(start: string, end: string): Promise<OwnerPayment[]> {
+  try {
+    const supabase = getInventoryClient()
+    const { data, error } = await supabase
+      .from('inventory_supplier_payments')
+      .select('amount, paid_at, inventory_supplier_invoices(supplier_id, inventory_suppliers(name))')
+      .gte('paid_at', start)
+      .lt('paid_at', end)
+      .order('paid_at', { ascending: false })
+      .limit(25)
+
+    if (error) return []
+    return ((data ?? []) as any[])
+      .map((p: any) => ({
+        supplierId: (p.inventory_supplier_invoices?.supplier_id as string) ?? null,
+        supplierName: (p.inventory_supplier_invoices?.inventory_suppliers?.name as string) ?? 'Unknown supplier',
+        amount: Number(p.amount) || 0,
+        at: p.paid_at as string,
+      }))
+      .filter(p => p.amount > 0)
+  } catch {
+    return []
   }
 }
 
@@ -492,11 +664,62 @@ export async function getOwnerDashboard(
 
   const stockValuePrev = await stockValueAt(range.previousStart)
 
-  const [alerts, activity, movement] = await Promise.all([
+  const [alerts, activity, movement, stockByGroup, recentPayments, gasCylinders] = await Promise.all([
     buildAlerts(locationId),
     buildActivity(),
     buildMovement(range),
+    stockValueByGroup(),
+    supplierRecentPayments(range.start, range.end),
+    gasCylindersOnHand(),
   ])
+
+  const byGroup = summarizeTxnsByGroup(currentTxns)
+  const boards: OwnerBoard[] = [
+    {
+      key: 'food',
+      label: 'Kitchen Stock',
+      href: '/admin/operations/food/products',
+      items: stockByGroup.food.items,
+      value: stockByGroup.food.value,
+      purchased: byGroup.food.purchased,
+      used: byGroup.food.used,
+      wastage: byGroup.food.wastage,
+      cylinders: null,
+    },
+    {
+      key: 'beverage',
+      label: 'Bar Stock',
+      href: '/admin/operations/beverage/products',
+      items: stockByGroup.beverage.items,
+      value: stockByGroup.beverage.value,
+      purchased: byGroup.beverage.purchased,
+      used: byGroup.beverage.used,
+      wastage: byGroup.beverage.wastage,
+      cylinders: null,
+    },
+    {
+      key: 'general',
+      label: 'General Stock',
+      href: '/admin/operations/products',
+      items: stockByGroup.general.items,
+      value: stockByGroup.general.value,
+      purchased: byGroup.general.purchased,
+      used: byGroup.general.used,
+      wastage: byGroup.general.wastage,
+      cylinders: null,
+    },
+    {
+      key: 'gas',
+      label: 'Gas Tracker',
+      href: '/admin/operations/gas',
+      items: stockByGroup.gas.items,
+      value: stockByGroup.gas.value,
+      purchased: byGroup.gas.purchased,
+      used: byGroup.gas.used,
+      wastage: byGroup.gas.wastage,
+      cylinders: gasCylinders,
+    },
+  ]
 
   return {
     range,
@@ -518,6 +741,9 @@ export async function getOwnerDashboard(
     },
     locations: located,
     suppliers: payables.rows,
+    supplierTotal: payables.rows.length,
+    recentPayments,
+    boards,
     alerts,
     activity,
     movement,

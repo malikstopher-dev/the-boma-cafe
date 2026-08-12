@@ -17,7 +17,9 @@ interface WasteEvent {
 interface Product { id: string; name: string | null; sku: string | null }
 interface Location { id: string; name: string; is_active: boolean }
 
-const WASTE_TYPES = ['WASTE', 'BREAKAGE', 'SPILLAGE', 'COMP', 'EXPIRY_LOSS', 'THEFT', 'DONATION']
+const WASTE_TYPES = ['waste', 'breakage', 'spillage', 'comp', 'expiry_loss', 'theft', 'donation']
+
+const displayType = (t: string) => t.replace(/_/g, ' ').toUpperCase()
 
 export default function WastePage() {
   const [events, setEvents] = useState<WasteEvent[]>([])
@@ -25,7 +27,7 @@ export default function WastePage() {
   const [locations, setLocations] = useState<Location[]>([])
   const [productId, setProductId] = useState('')
   const [locationId, setLocationId] = useState('')
-  const [type, setType] = useState('WASTE')
+  const [type, setType] = useState('waste')
   const [qty, setQty] = useState('')
   const [notes, setNotes] = useState('')
   const [message, setMessage] = useState('')
@@ -72,7 +74,7 @@ export default function WastePage() {
     const json = await res.json()
     if (json.error) setError(json.error.message)
     else {
-      setMessage(`${type.replace(/_/g, ' ')} event recorded — stock reduced.`)
+      setMessage(`${displayType(type)} event recorded — stock reduced.`)
       setQty('')
       setNotes('')
       void load()
@@ -100,7 +102,7 @@ export default function WastePage() {
             {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
           <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
-            {WASTE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+            {WASTE_TYPES.map((t) => <option key={t} value={t}>{displayType(t)}</option>)}
           </select>
           <input placeholder="Qty" value={qty} onChange={(e) => setQty(e.target.value)} style={inputStyle} />
           <input placeholder="Notes…" value={notes} onChange={(e) => setNotes(e.target.value)} style={inputStyle} />
@@ -134,7 +136,7 @@ export default function WastePage() {
                     <span style={{
                       background: '#3A1216', color: '#E06060', fontSize: 11, fontWeight: 600,
                       padding: '3px 8px', borderRadius: 6, letterSpacing: '0.04em',
-                    }}>{e.transaction_type}</span>
+                    }}>{displayType(e.transaction_type)}</span>
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 600, color: '#E05656' }}>{e.quantity ?? 0}</td>
                   <td style={tdStyle}>{e.reason_notes ?? '—'}</td>

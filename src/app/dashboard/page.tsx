@@ -8,6 +8,8 @@ import type { CSSProperties, ReactNode } from 'react'
 // Data contract (mirrors src/inventory/engine/owner-dashboard.ts)
 // ---------------------------------------------------------------------------
 
+type StockGroup = 'food' | 'beverage' | 'general' | 'gas'
+
 interface OwnerDashboardData {
   range: { start: string; end: string; label: string; previousStart: string; previousEnd: string }
   location: string | null
@@ -28,6 +30,19 @@ interface OwnerDashboardData {
   }
   locations: Array<{ locationId: string; name: string; items: number; value: number; pct: number; movement: number }>
   suppliers: Array<{ supplierId: string | null; supplierName: string; week: number; month: number; outstanding: number }>
+  supplierTotal: number
+  recentPayments: Array<{ supplierId: string | null; supplierName: string; amount: number; at: string }>
+  boards: Array<{
+    key: StockGroup
+    label: string
+    href: string
+    items: number
+    value: number
+    purchased: number
+    used: number
+    wastage: number
+    cylinders: number | null
+  }>
   alerts: Array<{ severity: 'high' | 'medium' | 'low'; message: string; href?: string }>
   activity: Array<{ kind: string; description: string; person: string; at: string }>
   movement: Array<{ date: string; purchased: number; used: number }>
@@ -53,6 +68,13 @@ const theme = {
   amber: '#FBBF24',
   blue: '#60A5FA',
   border: '#2A3648',
+}
+
+const boardAccent: Record<StockGroup, { color: string; bg: string }> = {
+  food: { color: '#F2B96B', bg: '#2A2014' },
+  beverage: { color: '#7FB0EF', bg: '#14203A' },
+  general: { color: '#9FC89F', bg: '#14281A' },
+  gas: { color: '#F0876B', bg: '#331A14' },
 }
 
 const fmtR0 = (n: number | null | undefined): string =>
@@ -103,6 +125,7 @@ export default function OwnerDashboardPage() {
   const [data, setData] = useState<OwnerDashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showAllSuppliers, setShowAllSuppliers] = useState(false)
 
   const load = useCallback(async (p: string, from?: string, to?: string) => {
     setIsLoading(true)
@@ -128,7 +151,14 @@ export default function OwnerDashboardPage() {
     load(period, customFrom, customTo)
   }, [load, period, customFrom, customTo])
 
+  // Auto-refresh every 60s so admin-side changes show up without a page reload
+  useEffect(() => {
+    const timer = setInterval(() => { void load(period, customFrom, customTo) }, 60000)
+    return () => clearInterval(timer)
+  }, [load, period, customFrom, customTo])
+
   const pickPeriod = (p: string) => setPeriod(p)
+  const refresh = () => void load(period, customFrom, customTo)
 
   const kpiCards: Array<{ label: string; value: ReactNode; sub: ReactNode; subColor?: string; href?: string }> = data
     ? [
@@ -155,7 +185,7 @@ export default function OwnerDashboardPage() {
         {
           label: 'Supplier Outstanding',
           value: fmtR0(data.kpi.supplierOutstanding),
-          sub: 'Amount currently owed to suppliers',
+          sub: owedSummary(data),
           href: '/inv/suppliers',
         },
         {
@@ -172,6 +202,9 @@ export default function OwnerDashboardPage() {
       ]
     : []
 
+  const owedSuppliers = data?.suppliers.filter(s => s.outstanding > 0.004) ?? []
+  const visibleSuppliers = showAllSuppliers ? (data?.suppliers ?? []) : owedSuppliers
+
   return (
     <div style={{ minHeight: '100vh', background: theme.bg, color: theme.ink }}>
       {/* Top header */}
@@ -181,7 +214,7 @@ export default function OwnerDashboardPage() {
             <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: '0.02em' }}>OWNER DASHBOARD</span>
             <span style={{ fontSize: 12, color: theme.gold, fontWeight: 600, padding: '3px 10px', border: `1px solid ${theme.gold}55`, borderRadius: 999 }}>Boma Cafe</span>
           </div>
-          <p style={{ margin: 0, fontSize: 13.5, color: theme.textDim }}>Financial &amp; Inventory Overview</p>
+          <p style={{ margin: 0, fontSize: 13.5, color: theme.textDim }}>Financial &amp; Inventory Overview — live from the ledger</p>
 
           {/* Period selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
@@ -209,6 +242,17 @@ export default function OwnerDashboardPage() {
             <span style={{ fontSize: 12.5, color: theme.textDim, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>
               {data ? `${formatRange(data.range.start, data.range.end)}  |  ${data.range.label}` : '\u00A0'}
             </span>
+            <button
+              onClick={refresh}
+              style={{
+                padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                border: `1px solid ${theme.gold}66`, background: theme.panel, color: theme.gold,
+              }}
+              title="Reload figures from the ledger"
+            >
+              ↻ Refresh
+            </button>
+            <span style={{ fontSize: 11, color: theme.textDim }}>auto-refreshes every 60s</span>
           </div>
         </div>
       </div>
@@ -245,6 +289,135 @@ export default function OwnerDashboardPage() {
                   <p style={{ margin: 0, fontSize: 11.5, fontWeight: 600 }}>{card.sub}</p>
                 </Link>
               ))}
+            </div>
+
+            {/* ── Stock used boards: Kitchen / Bar / General / Gas ── */}
+            <div style={{ marginBottom: 26 }}>
+              <SectionHeadingTitle title="STOCK USED - WHERE IT SITS" subtitle="What you bought and used in this period, split by section. Click a board to open it." />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginTop: 14 }}>
+                {data.boards.map(board => (
+                  <StockBoardCard key={board.key} board={board} theme={theme} accent={boardAccent[board.key]} />
+                ))}
+              </div>
+              <p style={{ marginTop: 10, fontSize: 11, color: theme.textDim }}>
+                Values at last known cost per unit, from the live ledger. Gas cylinders are counted on hand, not costed.
+              </p>
+            </div>
+
+            {/* ── Suppliers: what you owe + recently paid ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 16, marginBottom: 22 }}>
+              <ExcelCard
+                title="WHAT YOU OWE SUPPLIERS"
+                subtitle={data.supplierPaymentsEnabled ? 'Open invoices, net of payments' : 'Invoicing not yet enabled (migration 064)'}
+                top={
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: owedSuppliers.length > 0 ? theme.red : theme.green, fontVariantNumeric: 'tabular-nums' }}>
+                      {fmtR0(data.kpi.supplierOutstanding)}
+                    </span>
+                    <span style={{ fontSize: 11.5, color: theme.textDim }}>
+                      {owedSuppliers.length === 0 ? 'Nothing owed' : `${owedSuppliers.length} supplier${owedSuppliers.length > 1 ? 's' : ''} owed`}
+                    </span>
+                  </div>
+                }
+              >
+                {visibleSuppliers.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: theme.textDim }}>
+                    No suppliers on file, or no open balances.
+                  </p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={table}>
+                      <thead>
+                        <tr>
+                          <th style={thStyle}>Supplier</th>
+                          <th style={thRight}>Invoiced This Week</th>
+                          <th style={thRight}>Invoiced This Month</th>
+                          <th style={thRight}>Outstanding</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleSuppliers.map(s => {
+                          const owed = s.outstanding > 0.004
+                          return (
+                            <tr key={s.supplierId ?? s.supplierName} style={{ opacity: owed ? 1 : 0.55 }}>
+                              <td style={tdStyle}>
+                                <Link href={s.supplierId ? `/admin/operations/suppliers/${s.supplierId}` : '#'} style={{ color: theme.ink, textDecoration: 'none' }}>
+                                  {s.supplierName}
+                                </Link>
+                                {owed && <span style={{ marginLeft: 8, fontSize: 10, color: theme.red, fontWeight: 700 }}>●&nbsp;OWED</span>}
+                              </td>
+                              <td style={tdRight}>{fmtR0(s.week)}</td>
+                              <td style={tdRight}>{fmtR0(s.month)}</td>
+                              <td style={{ ...tdRight, fontWeight: 600, color: owed ? theme.red : theme.textDim }}>
+                                {fmtR0(s.outstanding)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ fontWeight: 700 }}>
+                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58', fontWeight: 700, color: theme.gold, fontSize: 12 }}>
+                            {showAllSuppliers ? `TOTAL (all ${data.supplierTotal} suppliers)` : 'TOTAL OUTSTANDING'}
+                          </td>
+                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58' }}></td>
+                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58' }}></td>
+                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58', fontWeight: 700, color: theme.gold }}>
+                            {fmtR0(showAllSuppliers ? data.suppliers.reduce((a, s) => a + s.outstanding, 0) : data.kpi.supplierOutstanding)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+                <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setShowAllSuppliers(v => !v)}
+                    style={{
+                      background: 'none', border: `1px solid ${theme.border}`, color: theme.gold,
+                      borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {showAllSuppliers ? '▲ Show only what is owed' : `▼ Show all ${data.supplierTotal} suppliers & full history`}
+                  </button>
+                  <Link href="/inv/suppliers" style={{ fontSize: 12, color: theme.gold, fontWeight: 600 }}>Manage suppliers →</Link>
+                </div>
+              </ExcelCard>
+
+              <ExcelCard
+                title="RECENTLY PAID"
+                subtitle={`Payments recorded in ${data.range.label.toLowerCase()}`}
+              >
+                {data.recentPayments.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: theme.textDim }}>
+                    No supplier payments recorded in this period.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {data.recentPayments.map((p, i) => (
+                      <div key={`${p.supplierId}-${p.at}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', borderRadius: 8, background: '#101A26', border: `1px solid ${theme.border}55` }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: theme.green }}>✓</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ margin: 0, fontSize: 13, color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.supplierName}</p>
+                          <p style={{ margin: '1px 0 0', fontSize: 11, color: theme.textDim }}>
+                            {new Date(p.at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: theme.green, fontVariantNumeric: 'tabular-nums' }}>{fmtR0(p.amount)}</span>
+                      </div>
+                    ))}
+                    {data.kpi.supplierPayments > 0 && (
+                      <p style={{ marginTop: 8, fontSize: 12, color: theme.textDim }}>
+                        Total paid this period:{' '}
+                        <span style={{ color: theme.green, fontWeight: 700 }}>{fmtR0(data.kpi.supplierPayments)}</span>
+                      </p>
+                    )}
+                  </div>
+                )}
+                <div style={{ marginTop: 12 }}>
+                  <Link href="/admin/operations/purchase-orders" style={{ fontSize: 12, color: theme.gold, fontWeight: 600 }}>Purchase orders &amp; payments →</Link>
+                </div>
+              </ExcelCard>
             </div>
 
             {/* This Week / This Month summary tables */}
@@ -302,57 +475,6 @@ export default function OwnerDashboardPage() {
               <p style={{ fontSize: 11, color: theme.textDim, marginTop: 8 }}>*Net movement = purchases minus usage in the selected period, at cost.</p>
             </ExcelCard>
 
-            {/* Supplier amount owed */}
-            <div style={{ marginTop: 22 }}>
-              <ExcelCard
-                title="SUPPLIER AMOUNTS OWED"
-                subtitle={data.supplierPaymentsEnabled ? 'Value of open invoices not yet fully paid' : 'Supplier invoicing is not set up yet — enable migration 064 for live outstanding figures'}
-              >
-                {data.suppliers.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: 13, color: theme.textDim }}>
-                    No suppliers on file, or no open balances.
-                  </p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={table}>
-                      <thead>
-                        <tr>
-                          <th style={thStyle}>Supplier</th>
-                          <th style={thRight}>This Week</th>
-                          <th style={thRight}>This Month</th>
-                          <th style={thRight}>Outstanding</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.suppliers.map(s => (
-                          <tr key={s.supplierId ?? s.supplierName}>
-                            <td style={tdStyle}>
-                              <Link href={s.supplierId ? `/admin/operations/suppliers/${s.supplierId}` : '#'} style={{ color: theme.ink, textDecoration: 'none' }}>
-                                {s.supplierName}
-                              </Link>
-                            </td>
-                            <td style={tdRight}>{fmtR0(s.week)}</td>
-                            <td style={tdRight}>{fmtR0(s.month)}</td>
-                            <td style={{ ...tdRight, fontWeight: 600, color: s.outstanding > 0 ? theme.red : theme.textDim }}>
-                              {fmtR0(s.outstanding)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr style={{ fontWeight: 700 }}>
-                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58', fontWeight: 700, color: theme.gold }}>TOTAL OUTSTANDING</td>
-                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58' }}></td>
-                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58' }}></td>
-                          <td style={{ padding: '9px 12px', borderTop: '2px solid #2A3A58', fontWeight: 700, color: theme.gold }}>{fmtR0(data.kpi.supplierOutstanding)}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                )}
-              </ExcelCard>
-            </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, marginTop: 22 }}>
               {/* Requires attention */}
               <ExcelCard title="REQUIRES ATTENTION" subtitle="Only what actually needs action">
@@ -409,6 +531,88 @@ export default function OwnerDashboardPage() {
 }
 
 // ---------------------------------------------------------------------------
+// Section heading
+// ---------------------------------------------------------------------------
+
+function SectionHeadingTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+      <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: theme.ink }}>{title}</h2>
+      {subtitle && <span style={{ fontSize: 11, color: theme.textDim }}>{subtitle}</span>}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Stock used board (Kitchen / Bar / General / Gas)
+// ---------------------------------------------------------------------------
+
+function StockBoardCard({ board, theme, accent }: { board: OwnerDashboardData['boards'][number]; theme: any; accent: { color: string; bg: string } }) {
+  const maxV = Math.max(board.purchased, board.used, 1)
+  const net = board.purchased - board.used
+  const initial = board.label.replace(' Stock', '').replace(' Tracker', '').slice(0, 3).toUpperCase()
+
+  return (
+    <Link
+      href={board.href}
+      style={{
+        display: 'block', textDecoration: 'none',
+        background: theme.panel, border: `1px solid ${theme.panelBorder}`, borderRadius: 12,
+        padding: '16px 18px 14px',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{ width: 34, height: 34, borderRadius: 9, background: accent.bg, color: accent.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, letterSpacing: '0.04em' }}>
+          {board.key === 'gas' ? 'FLAME' : initial}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: theme.ink }}>{board.label}</p>
+          <p style={{ margin: '1px 0 0', fontSize: 11, color: theme.textDim }}>
+            {board.key === 'gas' && board.cylinders != null
+              ? `${board.cylinders} cylinder${board.cylinders === 1 ? '' : 's'} on hand`
+              : `${board.items} item${board.items === 1 ? '' : 's'} on hand`}
+          </p>
+        </div>
+        <span style={{ fontSize: 15, color: theme.textDim }}>→</span>
+      </div>
+
+      <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: theme.ink, fontVariantNumeric: 'tabular-nums' }}>
+        {fmtR0(board.value)}
+      </p>
+      <p style={{ margin: '0 0 10px', fontSize: 10.5, color: theme.textDim, fontWeight: 600 }}>STOCK VALUE AT COST</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 42, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', color: theme.gold }}>BOUGHT</span>
+          <div style={{ flex: 1, height: 8, background: '#1A2434', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.max(2, (board.purchased / maxV) * 100)}%`, height: '100%', background: theme.gold, borderRadius: 4 }} />
+          </div>
+          <span style={{ width: 74, textAlign: 'right', fontSize: 12, fontWeight: 700, color: theme.gold, fontVariantNumeric: 'tabular-nums' }}>{fmtR0(board.purchased)}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 42, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', color: theme.blue }}>USED</span>
+          <div style={{ flex: 1, height: 8, background: '#1A2434', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.max(2, (board.used / maxV) * 100)}%`, height: '100%', background: theme.blue, borderRadius: 4 }} />
+          </div>
+          <span style={{ width: 74, textAlign: 'right', fontSize: 12, fontWeight: 700, color: theme.blue, fontVariantNumeric: 'tabular-nums' }}>{fmtR0(board.used)}</span>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
+        <span style={{ fontSize: 11.5, color: net > 0 ? theme.green : theme.textDim, fontWeight: 600 }}>
+          Net: {net > 0 ? '+' : ''}{fmtR0(net)} {net > 0 ? 'stocked up' : net < 0 ? 'drawn down' : 'even'}
+        </span>
+        {board.wastage > 0.004 && (
+          <span style={{ marginLeft: 12, fontSize: 11.5, color: theme.red, fontWeight: 600 }}>
+            Wastage {fmtR0(board.wastage)}
+          </span>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Small presentational components
 // ---------------------------------------------------------------------------
 
@@ -418,6 +622,16 @@ function LoadBar() {
       <span style={{ width: 14, height: 14, borderRadius: 999, border: `2px solid ${theme.panelBorder}`, borderTopColor: theme.gold, display: 'inline-block' }} />
       Loading the financial overview...
     </div>
+  )
+}
+
+function owedSummary(data: OwnerDashboardData): ReactNode {
+  const owed = data.suppliers.filter(s => s.outstanding > 0.004).length
+  if (owed === 0) return <span style={{ color: theme.green }}>Nothing owed right now</span>
+  return (
+    <span>
+      {owed} supplier{owed > 1 ? 's' : ''} owed · {data.recentPayments.length} payment{data.recentPayments.length === 1 ? '' : 's'} this period
+    </span>
   )
 }
 
