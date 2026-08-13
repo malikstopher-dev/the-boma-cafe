@@ -173,7 +173,7 @@ export default function AdminDashboard() {
     ]).then(([countsRes, locationsRes]) => {
       const counts = Array.isArray(countsRes) ? countsRes : ((countsRes as any)?.data ?? [])
       const locations = Array.isArray(locationsRes) ? locationsRes : ((locationsRes as any)?.data ?? [])
-      const nameById = new Map(locations.map((l: { id: string; name: string }) => [l.id, l.name]))
+      const nameById = new Map((locations as { id: string; name: string }[]).map(l => [l.id, l.name] as [string, string]))
       const byLoc = new Map<string, DailyStatusRow>()
       for (const sc of counts) {
         const isDaily = typeof sc.notes === 'string' && sc.notes.startsWith('daily:')

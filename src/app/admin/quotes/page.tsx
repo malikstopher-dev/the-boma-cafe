@@ -94,10 +94,10 @@ export default function AdminQuotes() {
         } else {
           setQuotes(quotes.map(q => q.id === quoteId ? {
             ...q,
-            pdf_path: data.pdf_path,
-            storage_path: data.storage_path,
-            pdf_version: data.pdf_version,
-            version: data.version,
+            ...(data.pdf_path ? { pdf_path: data.pdf_path } : {}),
+            ...(data.storage_path ? { storage_path: data.storage_path } : {}),
+            pdf_version: data.pdf_version ?? q.pdf_version,
+            version: data.version ?? q.version,
           } : q))
           success('PDF regenerated successfully')
         }

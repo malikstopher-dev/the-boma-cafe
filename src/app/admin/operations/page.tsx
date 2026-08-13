@@ -119,12 +119,13 @@ export default function OpeningChecklistPage() {
       const res = await fetch('/api/inventory/dashboard?section=combined&location_id=main')
       const json = await res.json()
       const d = json.data
-      if (d) {
+      const s = d?.summary
+      if (d && s) {
         setKpiData([
-          { label: 'Products', value: d.total_products ?? 0 },
-          { label: 'Inventory Value', value: `R${(d.inventory_value ?? 0).toLocaleString()}` },
-          { label: 'Low Stock', value: d.low_stock ?? 0 },
-          { label: 'Out of Stock', value: d.out_of_stock ?? 0 },
+          { label: 'Products', value: s.totalProducts ?? 0 },
+          { label: 'Inventory Value', value: `R${(s.inventoryValue ?? 0).toLocaleString()}` },
+          { label: 'Low Stock', value: s.lowStockCount ?? 0 },
+          { label: 'Out of Stock', value: s.outOfStockCount ?? 0 },
         ])
       }
     } catch { /* ignore */ }

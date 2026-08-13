@@ -139,3 +139,63 @@ no remnants. (Session also carried the earlier applied fixes: admin-dashboard en
 2. Apply **R2** (Sidebar unread realtime filter) — ~15m.
 3. Re-check the Supabase egress meter after 24h: expected to drop from the worker/poll
    floor; payload should stay sub-1GB/mo at current volumes.
+
+---
+
+## Part 4 — Ingress pass (admin inventory dashboard + sub-pages, 2026-08-12)
+
+User report: the **ingress** meter is over the free allocation. Measured against the live
+codebase; the profile has tiny write payloads, so the driver is **request volume** - every
+Supabase REST round-trip carries header overhead regardless of payload size.
+
+### What the dashboard + sub-pages were sending
+
+| Consumer | Supabase requests | Rate | Notes |
+|---|---|---|---|
+| `/admin/operations/dashboard` (combined poll) | **17 per poll** | 300s / open tab | summary(4) + alerts(2) + recent(2) + fast(2) + slow(2) + value(1) + today(1) + POs(3) |
+| `/admin/operations` landing | 17 per mount | on open | same combined route + reconciliation section |
+| `/admin/operations/notifications` 60s poll | 2 per min | 60s | list + separate unread-count call (redundant) |
+| Sidebar inventory badge (all admin tabs) | 1 per min | 60s | unread-count on every one of the ~80 admin pages |
+
+Rough estimate: one dashboard tab open 12h/day = ~288 polls/day = ~4.9k Supabase
+requests/day (~290 MB/month/tab in request overhead). Two open tabs or a device left
+on overnight clears the free ingress allocation by itself.
+
+### Changes applied (this session)
+
+1. **Migration 072 — `combined_dashboard()` RPC.** One call returns every combined section
+   (summary/alerts/recent/fastMovers/slowMovers/value/todayTransactions/purchaseOrders),
+   replicating engine semantics exactly (bug-for-bug parity listed in the migration header,
+   incl. the all-location "today" bucket, threshold-flagged lowStockCount, capped
+   overdueCount, 'Unknown' fallback). Combined route: 17 requests -> 1. PostgREST aggregates
+   are disabled on this project, so it follows the migration 070/071 RPC pattern.
+2. **Fallback in `dashboard/route.ts`** — if the RPC errors (migration not yet applied),
+   the route silently uses the old engine path; no prod downtime either way.
+3. **Visibility-gated polling** everywhere in the inventory admin surface
+   (`src/inventory/lib/use-visible-interval.ts`): zero requests from hidden tabs + a fresh
+   fetch the moment the tab is shown again. Applied to operations/dashboard (300s),
+   operations/notifications (60s -> 300s) and the Sidebar inventory badge (60s -> 300s).
+4. **Notifications page** — dropped the redundant unread-count fetch (derived client-side):
+   2 API calls -> 1 per poll.
+5. **Correctness fix found during the pass:** the operations landing page reads
+   `d.total_products` (flat snake_case) but the combined route returns
+   `d.summary.totalProducts` — the 4 landing KPIs rendered as permanent 0. Mapped correctly.
+6. **Build blocker fixed (pre-existing at HEAD):** `admin/dashboard/page.tsx` lost its
+   `Map` tuple type (`locationName: unknown`) and the next build type-check failed.
+   One-line tuple cast; global `npx tsc --noEmit` now clean.
+
+### Deploy
+- Apply **migration 072** (supabase db push / SQL editor). Route falls back until then.
+- Re-check the ingress meter after 24h: dashboard traffic per tab drops ~20x (17 -> 1
+  request per poll with a ~60s-visibility multiplier), and hidden tabs stop polling entirely.
+
+### Verification
+- Inventory strict tsc clean; temp UI tsconfig over edited pages clean; global tsc clean;
+  62/62 vitest; `next build` green (Turbopack, font CDN fetch transiently failed once, retried OK).
+- RPC not smoke-tested (no local stack; prod untouched this session). First live combined load
+  post-apply exercises it; the graceful fallback covers any failure.
+
+### Remaining out-of-scope ingress (not touched)
+- Background worker poll loop (15s + 30s scheduler, ~7.7k req/day) and realtime sockets on
+  non-inventory pages — flagged previously; the worker loop is the largest single request
+  source project-wide if the meter stays red after 072 + visibility gating.

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createBrowserClient } from '@/lib/supabase'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 import styles from './Sidebar.module.css'
 import {
   LayoutDashboard,
@@ -209,20 +210,21 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
-  useEffect(() => {
-    const fetchInventoryUnread = async () => {
-      try {
-        const res = await fetch('/api/inventory/notifications/unread-count?location_id=main')
-        if (res.ok) {
-          const json = await res.json()
-          setInventoryUnread(json.data?.count ?? 0)
-        }
-      } catch { /* ignore */ }
-    }
-    fetchInventoryUnread()
-    const timer = setInterval(fetchInventoryUnread, 60000)
-    return () => clearInterval(timer)
+  const fetchInventoryUnread = useCallback(async () => {
+    try {
+      const res = await fetch('/api/inventory/notifications/unread-count?location_id=main')
+      if (res.ok) {
+        const json = await res.json()
+        setInventoryUnread(json.data?.count ?? 0)
+      }
+    } catch { /* ignore */ }
   }, [])
+
+  useEffect(() => {
+    void fetchInventoryUnread()
+  }, [fetchInventoryUnread])
+
+  useVisibleInterval(fetchInventoryUnread, 300000)
 
   useEffect(() => {
     let authId: string | null = null

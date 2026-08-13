@@ -936,3 +936,108 @@ Fix 7 production bugs surfaced by owner screenshots 545?561 (another AI's advice
 ### Verification
 - Temp tsconfig strict typecheck of 5 edited files clean; 62/62 vitest; strict inventory tsc clean; 
 pm run build green; migration 069 live in prod (15 categories 1x each, Kitchen location with cost centre, 6 products remapped).
+
+## Session: Ingress Audit Pass - Admin Inventory Dashboard + Sub-pages (2026-08-12)
+
+### Context
+User reported Supabase **ingress** usage above the free-tier allocation. Audit scoped to the admin
+inventory dashboard (/admin/operations/dashboard + landing page) and its sub-pages. Ingress is
+driven by **request volume** (every REST call carries header overhead; responses are tiny today).
+Continuation of AUDIT_REPORT_2026-08-12 (egress pass; R1/R2 already applied).
+
+### Measured request-per-poll profile (pre-fix)
+- /api/inventory/dashboard?section=combined = **17 Supabase round-trips per poll**
+  (summary 4, alerts 2, recent 2, fast 2, slow 2, value 1, today 1, POs 3)
+- 300s browser poll on operations/dashboard; 60s polls on operations/notifications (2 calls:
+  list + unread-count) and the Sidebar inventory-unread badge (on every admin tab incl. all
+  inventory pages). Hidden tabs keep polling (browsers re-throttle long timers to ~60s).
+- estimate: 1 open dashboard tab 12h/day = ~288 polls/day, ~4.9k Supabase requests/day,
+  ~290 MB/month/tab of request overhead. Two+ tabs or devices left open lands over the free
+  ingress allocation.
+
+### Fixes applied (working tree)
+1. **Migration 072 combined_dashboard(p_location uuid, p_days int, p_inventory_type text)**
+   - single RPC replicating every combined section (summary/alerts/recent/fast/slow/value/today/
+   purchaseOrders) with exact engine semantics (bug-for-bug: summary today buckets are
+   all-location, lowStockCount counts threshold-flagged products, overdueCount = capped array
+   length, 'Unknown' name fallback). PostgREST aggregates are disabled on this project, so
+   aggregation lives in SQL (same pattern as 071).
+2. **dashboard route** - section=combined calls the RPC first; falls back to the old Promise.all
+   engine path if the RPC errors (migration not yet applied). 17 requests -> 1 after deploy.
+3. **src/inventory/lib/use-visible-interval.ts** (new hook) - interval only ticks while
+   document.visibilityState === 'visible'; immediate refresh on tab-return.
+4. **operations/dashboard page** - 300s poll is now visibility-gated; background refreshes are
+   silent (no skeleton flash mid-use); Refresh button triggers silent refresh.
+5. **operations/notifications page** - 60s -> 300s visibility-gated; **dropped the separate
+   unread-count fetch** (derived client-side); 2 API calls -> 1.
+6. **Sidebar** - inventory-unread badge 60s -> 300s visibility-gated (rides on every inventory page).
+7. **Fix: operations landing page KPIs were permanently 0** - it read d.total_products
+   (flat snake_case) but the combined route returns d.summary.totalProducts; mapped correctly.
+
+### Also fixed (build-blocking, pre-existing at HEAD, unrelated to ingress)
+- src/app/admin/dashboard/page.tsx:176 - `new Map(locations.map(...))` lost its tuple type,
+  causing a `locationName: unknown` TS error that failed the next build type-check phase.
+  Cast to [string, string] tuple. (Global `npx tsc --noEmit` was otherwise clean.)
+
+### Deploy note
+- Apply **migration 072** to prod (`supabase db push` or SQL editor, like 069/071). The route
+  stays correct either way via the legacy fallback.
+- After apply + 24h: the request-count floor (~17/poll -> 1) should move the ingress meter;
+  hidden-tab traffic drops to zero.
+
+### Verification
+- Inventory strict tsc clean; temp UI tsconfig over the 4 edited pages + hook clean; global
+  `npx tsc --noEmit` clean (after the dashboard/page.tsx fix); 62/62 vitest; `next build` green.
+- RPC NOT smoke-tested against a live DB (no local stack running; prod untouched this session) -
+  first combined-dashboard load after migration apply exercises it; fallback path covers failure.
+
+---
+
+## Session: Full /admin Page Audit Sweep (2026-08-12)
+
+### Objective
+Finish the /admin audit (inline, no sub-agents - user directive): verify every admin page
+against its API routes (envelope access, payload shapes, error handling), fix findings,
+and commit - including the previous session's uncommitted ingress work (migration 072 +
+visibility-gated polling).
+
+### Audit results - all ~50 admin pages verified against route source
+- **Verified OK:** dashboard, bookings, waiters, site-settings, content-map, marketing +
+  [projectId], promotions, events, announcement, popup, categories, menu (all via
+  `src/lib/client-cms.ts` - throws on non-ok, pages fall back `result?.data || new`),
+  analytics, pricing, media (`{data}` envelope), availability (blocked-dates array +
+  `/api/booking/config`), gallery (`{images}`, upload FormData), inquiries,
+  contact-messages, background-jobs (`{data}`/`{counts}` + PATCH `{action}`),
+  orders (all PATCH bodies within the route allowlist: items_json/table_number/
+  payment_status/status/waiter_name/cancellation_reason), messages (staff routes:
+  `/api/staff/session` -> `{authenticated, staff}`, `/api/staff/list` -> `{staff}`,
+  `/api/staff/conversations` POST -> `{id}`), bar-menu (`{categories, items}`),
+  kitchen/bar (thin `StationDisplay` wrappers, realtime-only - no REST surface),
+  and every operations page (weekly, dashboard, daily-stock, waste, variance,
+  transactions, analytics, containers, suppliers + [id], supplier-performance,
+  stock-counts, forecast, notifications, reorder, production-runs, recipes,
+  order-items, imports, reports, gas, settings, menu-items, locations - all unwrap
+  `{data}` envelopes correctly).
+- **1 bug found & fixed** (`src/app/admin/quotes/page.tsx`): regenerate-PDF
+  `already_completed` path (route returns `{success:true, queued:false}` with NO
+  pdf_path/storage_path) was setting both to `undefined`, disabling the View PDF
+  button + hiding the PDF badge. Fixed with guarded spread
+  (`...(data.pdf_path ? {pdf_path: data.pdf_path} : {})`) + `??` fallbacks for
+  pdf_version/version.
+
+### Also committed (previous session's ingress work, same branch)
+- Migration 072 `combined_dashboard()` RPC, dashboard/route.ts fallback,
+  `src/inventory/lib/use-visible-interval.ts`, visibility-gated polling on
+  operations/dashboard + notifications + Sidebar badge, notifications unread-count
+  dedupe, operations-landing KPI mapping fix, admin/dashboard Map tuple fix
+  (details: docs/AUDIT_REPORT_2026-08-12.md Part 4 + AGENTS ingress section above).
+
+### Verification
+- `npx tsc --noEmit -p src/inventory/tsconfig.json` clean; 62/62 vitest passing;
+  quotes page strict typecheck clean (temp tsconfig incl. `*.module.css` ambient,
+  deleted after). Full `next build` not re-run this session (pre-existing tooling
+  constraints per AGENTS notes; prior sessions' build green at same state).
+
+### Deploy note
+- Apply **migration 072** to prod (supabase db push / SQL editor) - the combined
+  dashboard route falls back to the legacy engine path until then.

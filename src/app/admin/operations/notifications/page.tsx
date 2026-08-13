@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
@@ -18,22 +19,18 @@ type NotificationItem = {
 
 export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[]>([])
-  const [unread, setUnread] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [lastCheck, setLastCheck] = useState<string | null>(null)
 
+  const unread = items.filter(n => !n.read).length
+
   const fetchData = useCallback(async () => {
     try {
-      const [listRes, countRes] = await Promise.all([
-        fetch('/api/inventory/notifications?location_id=main'),
-        fetch('/api/inventory/notifications/unread-count?location_id=main'),
-      ])
-      if (!listRes.ok || !countRes.ok) return
+      const listRes = await fetch('/api/inventory/notifications?location_id=main')
+      if (!listRes.ok) return
       const list = await listRes.json()
-      const count = await countRes.json()
       setItems(list.data ?? [])
-      setUnread(count.data?.count ?? 0)
     } catch {
       // ignore
     } finally {
@@ -42,10 +39,10 @@ export default function NotificationsPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
-    const timer = setInterval(fetchData, 60000)
-    return () => clearInterval(timer)
+    void fetchData()
   }, [fetchData])
+
+  useVisibleInterval(() => { void fetchData() }, 300000)
 
   async function handleGenerate() {
     setGenerating(true)
@@ -70,14 +67,12 @@ export default function NotificationsPage() {
     const res = await fetch(`/api/inventory/notifications/${id}/read`, { method: 'POST' })
     if (!res.ok) return
     setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-    setUnread(prev => Math.max(0, prev - 1))
   }
 
   async function handleMarkAll() {
     const res = await fetch('/api/inventory/notifications/read-all?location_id=main', { method: 'POST' })
     if (!res.ok) return
     setItems(prev => prev.map(n => ({ ...n, read: true })))
-    setUnread(0)
   }
 
   const badgeVariant = (type: string) =>

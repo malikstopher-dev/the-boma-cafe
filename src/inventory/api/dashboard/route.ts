@@ -120,6 +120,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       }
 
       case 'combined': {
+        const supabase = getInventoryClient()
+        const rpcRes = await supabase.rpc('combined_dashboard', {
+          p_location: locationId,
+          p_days: days,
+          p_inventory_type: inventoryType ?? null,
+        }) as unknown as { data: unknown | null; error: { message: string } | null }
+
+        if (!rpcRes.error && rpcRes.data != null) {
+          return NextResponse.json({ data: rpcRes.data })
+        }
+
+        // Fallback: RPC not yet applied to the DB (migration 072) — keep the
+        // old multi-query path so the page keeps working until then.
         const [summary, alerts, recent, fastMovers, slowMovers, value, today, poResult] = await Promise.all([
           getDashboardSummary(locationId, inventoryType),
           getAlerts(locationId, inventoryType),

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
@@ -52,8 +53,8 @@ export default function InventoryDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeType, setActiveType] = useState<InventoryTypeFilter>('')
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true)
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true)
     try {
       const typeParam = activeType ? `&inventory_type=${activeType}` : ''
       const res = await fetch(`/api/inventory/dashboard?section=combined&location_id=main&limit=10&days=30${typeParam}`)
@@ -62,15 +63,15 @@ export default function InventoryDashboardPage() {
     } catch {
       // ignore
     } finally {
-      setIsLoading(false)
+      if (!silent) setIsLoading(false)
     }
   }, [activeType])
 
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 300000)
-    return () => clearInterval(interval)
+    void fetchData()
   }, [fetchData])
+
+  useVisibleInterval(() => { void fetchData(true) }, 300000)
 
   if (isLoading) {
     return (
@@ -120,7 +121,7 @@ export default function InventoryDashboardPage() {
   }
 
   return (
-    <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs" actions={<Button onClick={fetchData} variant="secondary" size="sm">Refresh</Button>}>
+    <AdminPage title="Inventory Dashboard" description="Stock overview and KPIs" actions={<Button onClick={() => void fetchData(true)} variant="secondary" size="sm">Refresh</Button>}>
       <div className={styles.tabBar} style={{ marginBottom: 24 }}>
         {typeTabs.map(tab => (
           <button
