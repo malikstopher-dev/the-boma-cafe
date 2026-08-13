@@ -119,6 +119,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       performed_by: input.performed_by ?? null,
       notes: input.notes ?? null,
       import_batch_id: input.import_batch_id ?? null,
+      reservation_id: input.reservation_id ?? null,
     })
     .select()
     .single()

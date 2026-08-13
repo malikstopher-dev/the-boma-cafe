@@ -44,14 +44,26 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update status
-    const { error: updateError } = await client
+    // Update status — guarded with the previously-read status so a
+    // concurrent PATCH (double-click, retry) cannot both claim the
+    // transition: only the winner runs the lifecycle hooks below
+    // (reservation consumption must fire exactly once).
+    const { data: updatedRows, error: updateError } = await client
       .from('bookings')
       .update({ status: new_status })
       .eq('id', booking_id)
+      .eq('status', previousStatus)
+      .select('id')
 
     if (updateError) {
       return NextResponse.json({ error: 'Failed to update status' }, { status: 500 })
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      return NextResponse.json(
+        { error: 'Booking status was changed by another request — please refresh and try again' },
+        { status: 409 },
+      )
     }
 
     // Handle inventory reservations on status transitions

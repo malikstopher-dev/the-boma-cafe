@@ -127,16 +127,40 @@ export async function consumeReservation(id: string): Promise<InventoryReservati
   const remaining = reservation.quantity_reserved - reservation.quantity_consumed
   if (remaining <= 0) throw new Error(`Reservation has no remaining quantity to consume`)
 
-  await createTransaction({
-    product_id: reservation.product_id,
-    location_id: reservation.location_id,
-    transaction_type: 'sale',
-    quantity: remaining,
-    reference_type: 'booking',
-    reference_id: reservation.booking_id,
-    notes: `Consumed from reservation ${reservation.id}`,
-  })
+  try {
+    await createTransaction({
+      product_id: reservation.product_id,
+      location_id: reservation.location_id,
+      transaction_type: 'sale',
+      quantity: remaining,
+      reference_type: 'booking',
+      reference_id: reservation.booking_id,
+      notes: `Consumed from reservation ${reservation.id}`,
+      reservation_id: reservation.id,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('duplicate key value violates unique constraint')) {
+      // H2: this reservation's SALE already exists — a concurrent consume
+      // won the insert, or a retry after a crash between createTransaction
+      // and the status update below. Reuse the posted txn (unique index
+      // 077 guarantees at most one per reservation); never post a second.
+      const { data: existing } = await supabase
+        .from('inventory_transactions')
+        .select('id')
+        .eq('reservation_id', reservation.id)
+        .eq('transaction_type', 'sale')
+        .maybeSingle()
+      if (!existing) throw error
+    } else {
+      throw error
+    }
+  }
 
+  // Guarded update: only transitions from active/partially_consumed. If it
+  // affects zero rows, another request consumed (or cancelled) this
+  // reservation between our read and this write. Already-consumed is
+  // treated as an idempotent success so a re-invocation after a crash never
+  // errors the batch loop; anything else is a hard error.
   const { data, error } = await supabase
     .from('inventory_reservations')
     .update({
@@ -145,10 +169,19 @@ export async function consumeReservation(id: string): Promise<InventoryReservati
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .in('status', ['active', 'partially_consumed'])
     .select()
-    .single()
+    .maybeSingle()
 
   if (error) throw new Error(`Failed to consume reservation: ${error.message}`)
+
+  if (!data) {
+    const current = await getReservation(id)
+    if (!current) throw new Error(`Reservation not found: ${id}`)
+    if (current.status === 'consumed') return current
+    throw new Error(`Cannot consume a reservation in status ${current.status}`)
+  }
+
   return data as InventoryReservation
 }
 

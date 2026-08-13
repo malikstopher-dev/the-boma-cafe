@@ -1041,3 +1041,49 @@ visibility-gated polling).
 ### Deploy note
 - Apply **migration 072** to prod (supabase db push / SQL editor) - the combined
   dashboard route falls back to the legacy engine path until then.
+---
+
+## Session: Ships 1-5 — Import Rollback, Booking Guards, Stock-Count Idempotency, Atomic RPCs (2026-08-13)
+
+### Objective
+Implement the first five ships of the P0/P1 remediation blueprint (from the PASS 1-3 audit). Code + local-only migrations, fully tested. **No production push, no prod data cleanup.** F2 (order->inventory) and F3 (attribution) remain deferred until Ships 1-5 are audited.
+
+### Ship 1 (F1) — Import rollback sign bug — `src/inventory/import/ImportRollbackService.ts` (rewritten)
+- Claim-first optimistic lock: `UPDATE status='rolled_back' WHERE id=? AND status='applied'` BEFORE creating reversals; 0 rows -> "already rolled back" (concurrent double-click rejected before posting anything).
+- Exact sign negation: reversal = `-Number(tx.quantity)` (a -4 adjustment reverses to +4; Math.abs previously reversed by ADDING stock).
+- Reversals never carry `import_batch_id`; original-movement query excludes prior reversals via `.not('notes','like','Rollback of import batch %')` -> retries never double-post.
+- `unit_cost` passed through; on mid-loop failure best-effort restore to 'applied' + rethrow.
+
+### Ship 2 (F6) — Booking consumption race
+- `src/app/api/booking/status/route.ts`: status PATCH now guarded with `.eq('status', previousStatus)` + `.select('id')` -> 409 "changed by another request" on 0 rows. Only the winning PATCH runs lifecycle hooks (reservation consumption fires once).
+- `src/inventory/engine/reservations.ts:consumeReservation`: final update guarded with `.in('status',['active','partially_consumed'])` + `.select().maybeSingle()`; 0 rows -> re-fetch: consumed -> idempotent return of current row; else throw (cancel race).
+
+### Ship 3 (F7) — Stock-count approval idempotency
+- Migration `073_stock_count_item_transaction_link.sql`: `inventory_stock_count_items.transaction_id` UUID FK (ON DELETE SET NULL) + index; status CHECK re-created to include `'approving'`.
+- `approveStockCount` (stock-counts.ts): status check allows submitted/approving; claim `.eq('status','submitted')` -> 'approving' BEFORE any txns (0 rows: approved -> return, approving -> re-enter); items with `transaction_id` skipped (retry-safety, production-runs precedent); stamp after each createTransaction; final guarded `.eq('status','approving')` update; on error restore 'submitted' + rethrow. `StockCountStatus` type + `InventoryStockCountItem.transaction_id` added (types.ts).
+
+### Ship 4 (F5) — Atomic receiving
+- Migration `074_receive_purchase_order_rpc.sql`: `receive_purchase_order(p_po_id,p_invoice_number,p_notes,p_received_by,p_cost_centre_id,p_items jsonb)` — single transaction: PO locked FOR UPDATE (ordered/partial only), item ownership validated (po_item_id :: product_id :: po_id), cost-centre resolution with engine-identical messages, ledger-parity checks, one 'purchase' txn per line + audit + balance-cache upsert, status partial/received. SECURITY DEFINER + search_path, service-role only, NOTIFY pgrst.
+- `receive/route.ts`: RPC-first; on error falls back to engine `receiveItems` (typed-error mapping preserved).
+
+### Ship 5 (F4) — Atomic + idempotent import apply
+- Migration `075_apply_import_batch_rpc.sql`: `apply_import_batch(p_import_id,p_decisions,p_performed_by,p_import_type,p_filename)` — batch row locked; 'applied' -> idempotent no-op returning existing txn ids; 'rolled_back' -> rejected; missing row only insertable with meta (direct mode); per-decision create_product (metadata incl. sku/barcode/inventory_type/reorder + base UOM link) + ledger txn with ledger-normalized signs, decrease-type balance checks, cost-centre resolution, audit + balance upserts; status 'applied' set only at end (whole batch rolls back on any RAISE).
+- `imports/[id]/apply/route.ts`: RPC-first (maps jsonb -> ImportApplyResult) with engine fallback; `performed_by` passthrough.
+- `ImportExecutor.ts`: dropped `Math.abs` on quantity (sign-preserving — negative adjustments no longer flip to positive); create_product now writes sku/barcode/inventory_type/reorder_threshold/reorder_quantity + `inventory_product_uoms` base link (is_base true, is_display false, factor 1).
+- `ImportTypes.ts`: ImportDecision + `newProductSku/newProductBarcode/newProductInventoryType/newProductParLevel/newProductReorderPoint`.
+
+### Tests (new/updated)
+- `__tests__/rollback.test.ts` (9): sign negation (+10->-10, -4->+4), notes-signature exclusion, not-found/not-applied/24h-expiry, claim race, mid-loop restore, claim error.
+- `__tests__/stock-counts.test.ts` (7): signed variances, transaction_id skip, concurrent-approved idempotent return, re-enter 'approving', mid-loop restore, status rejection, claim error.
+- `reservations.test.ts`: consume mocks updated to `.in()`+`.maybeSingle()` chains; 2 new race tests (idempotent consumed return, cancel-race error); batch test rewritten honestly (now asserts count 2 + 2 txns — previously swallowed mock errors and asserted 0).
+- **Mock pitfalls documented:** `.eq('id', 'res-1')` first arg is the COLUMN name — key mock lookups on the second (value) arg; `mockRejectedValueOnce` fires on the FIRST call (FIFO before base impl) — queue successful `mockImplementationOnce`s first; `from()` receives only the table (patch tracking needs a dedicated spy).
+
+### Verification (2026-08-13)
+- `npx vitest run src/inventory/` — **80/80 passing** (8 files; was 62 before this session)
+- `npx tsc --noEmit -p src/inventory/tsconfig.json` — clean (strict + noUncheckedIndexedAccess)
+- 3 edited app routes typechecked clean via temp `tsconfig.ui.json` (extends root, strict:false, includes ambient.d.ts); restored tracked file after
+- No production failures found in the full suite run — all intermediate failures were test-mock bugs, fixed in tests only (production implementation unchanged to satisfy tests)
+- `git status` clean of unintended changes; **nothing committed, nothing pushed**
+
+### Deploy notes (future, NOT done)
+- Apply migrations 073, 074, 075 to prod (`supabase db push`) in one batch; routes fall back to legacy engine paths until applied (PGRST202). Then optionally re-run the live E2E for receive/apply. F2/F3 remain deferred.

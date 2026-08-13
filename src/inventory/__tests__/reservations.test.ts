@@ -462,18 +462,20 @@ describe('reservations', () => {
             })),
             update: vi.fn(() => ({
               eq: vi.fn(() => ({
-                select: vi.fn(() => ({
-                  single: vi.fn(() => res({
-                    id: 'res-1',
-                    booking_id: 'booking-1',
-                    product_id: 'prod-1',
-                    location_id: 'loc-1',
-                    quantity_reserved: 10,
-                    quantity_consumed: 10,
-                    status: 'consumed',
-                    notes: null,
-                    created_at: now,
-                    updated_at: now,
+                in: vi.fn(() => ({
+                  select: vi.fn(() => ({
+                    maybeSingle: vi.fn(() => res({
+                      id: 'res-1',
+                      booking_id: 'booking-1',
+                      product_id: 'prod-1',
+                      location_id: 'loc-1',
+                      quantity_reserved: 10,
+                      quantity_consumed: 10,
+                      status: 'consumed',
+                      notes: null,
+                      created_at: now,
+                      updated_at: now,
+                    })),
                   })),
                 })),
               })),
@@ -493,6 +495,7 @@ describe('reservations', () => {
         reference_type: 'booking',
         reference_id: 'booking-1',
         notes: 'Consumed from reservation res-1',
+        reservation_id: 'res-1',
       })
       expect(result.status).toBe('consumed')
       expect(result.quantity_consumed).toBe(10)
@@ -541,32 +544,237 @@ describe('reservations', () => {
 
       await expect(consumeReservation('res-1')).rejects.toThrow('Cannot consume a cancelled reservation')
     })
-  })
 
-  describe('consumeReservationsForBooking', () => {
-    it('should consume all active reservations for a booking', async () => {
-      let getCallCount = 0
+    it('should return idempotently when another request already consumed it', async () => {
+      // First getReservation returns the active row; the guarded update
+      // affects zero rows (another request consumed it first); the re-fetch
+      // returns the consumed row — the caller succeeds without posting a
+      // second transaction.
+      let selectCallCount = 0
       mockClient.from.mockImplementation((table: string) => {
         if (table === 'inventory_reservations') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                order: vi.fn(() => {
-                  getCallCount++
-                  if (getCallCount === 1) {
-                    return res([
-                      { id: 'res-1', status: 'active' },
-                      { id: 'res-2', status: 'active' },
-                    ])
+                maybeSingle: vi.fn(() => {
+                  selectCallCount++
+                  if (selectCallCount === 1) {
+                    return res({
+                      id: 'res-1',
+                      booking_id: 'booking-1',
+                      product_id: 'prod-1',
+                      location_id: 'loc-1',
+                      quantity_reserved: 10,
+                      quantity_consumed: 0,
+                      status: 'active',
+                      notes: null,
+                      created_at: now,
+                      updated_at: now,
+                    })
                   }
-                  return res([])
+                  return res({
+                    id: 'res-1',
+                    booking_id: 'booking-1',
+                    product_id: 'prod-1',
+                    location_id: 'loc-1',
+                    quantity_reserved: 10,
+                    quantity_consumed: 10,
+                    status: 'consumed',
+                    notes: null,
+                    created_at: now,
+                    updated_at: now,
+                  })
                 }),
               })),
             })),
             update: vi.fn(() => ({
               eq: vi.fn(() => ({
-                select: vi.fn(() => ({
-                  single: vi.fn(() => res(null)),
+                in: vi.fn(() => ({
+                  select: vi.fn(() => ({
+                    maybeSingle: vi.fn(() => res(null)),
+                  })),
+                })),
+              })),
+            })),
+          }
+        }
+        return { select: vi.fn(), update: vi.fn() }
+      })
+
+      const result = await consumeReservation('res-1')
+
+      expect(mockCreateTransaction).toHaveBeenCalledTimes(1)
+      expect(result.status).toBe('consumed')
+      expect(result.quantity_consumed).toBe(10)
+    })
+
+    it('should reuse the posted SALE when a concurrent consume already created it (H2: no double-post)', async () => {
+      // First getReservation returns the active row; createTransaction
+      // rejects with the duplicate-key error (unique index 077 — the SALE
+      // was already posted by a concurrent consume or a crashed retry);
+      // the engine fetches the existing SALE and proceeds to mark the
+      // reservation consumed — no second transaction is posted.
+      let selectCallCount = 0
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_reservations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => {
+                  selectCallCount++
+                  if (selectCallCount === 1) {
+                    return res({
+                      id: 'res-1',
+                      booking_id: 'booking-1',
+                      product_id: 'prod-1',
+                      location_id: 'loc-1',
+                      quantity_reserved: 10,
+                      quantity_consumed: 0,
+                      status: 'active',
+                      notes: null,
+                      created_at: now,
+                      updated_at: now,
+                    })
+                  }
+                  return res(null)
+                }),
+              })),
+            })),
+            update: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                in: vi.fn(() => ({
+                  select: vi.fn(() => ({
+                    maybeSingle: vi.fn(() => res({
+                      id: 'res-1',
+                      booking_id: 'booking-1',
+                      product_id: 'prod-1',
+                      location_id: 'loc-1',
+                      quantity_reserved: 10,
+                      quantity_consumed: 10,
+                      status: 'consumed',
+                      notes: null,
+                      created_at: now,
+                      updated_at: now,
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'txn-winner' })),
+                })),
+              })),
+            })),
+          }
+        }
+        return { select: vi.fn(), update: vi.fn() }
+      })
+
+      mockCreateTransaction.mockRejectedValueOnce(
+        new Error('Failed to create transaction: duplicate key value violates unique constraint "idx_inventory_transactions_reservation_sale"'),
+      )
+
+      const result = await consumeReservation('res-1')
+
+      expect(mockCreateTransaction).toHaveBeenCalledTimes(1)
+      expect(mockCreateTransaction).toHaveBeenCalledWith(expect.objectContaining({ reservation_id: 'res-1' }))
+      expect(result.status).toBe('consumed')
+      expect(result.quantity_consumed).toBe(10)
+    })
+
+    it('should throw when the guarded update races with a cancel', async () => {
+      // The update affects zero rows and the re-fetch reveals the
+      // reservation was cancelled in the meantime — hard error.
+      let selectCallCount = 0
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_reservations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => {
+                  selectCallCount++
+                  if (selectCallCount === 1) {
+                    return res({
+                      id: 'res-1',
+                      booking_id: 'booking-1',
+                      product_id: 'prod-1',
+                      location_id: 'loc-1',
+                      quantity_reserved: 10,
+                      quantity_consumed: 0,
+                      status: 'active',
+                      notes: null,
+                      created_at: now,
+                      updated_at: now,
+                    })
+                  }
+                  return res({
+                    id: 'res-1',
+                    booking_id: 'booking-1',
+                    product_id: 'prod-1',
+                    location_id: 'loc-1',
+                    quantity_reserved: 10,
+                    quantity_consumed: 0,
+                    status: 'cancelled',
+                    notes: null,
+                    created_at: now,
+                    updated_at: now,
+                  })
+                }),
+              })),
+            })),
+            update: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                in: vi.fn(() => ({
+                  select: vi.fn(() => ({
+                    maybeSingle: vi.fn(() => res(null)),
+                  })),
+                })),
+              })),
+            })),
+          }
+        }
+        return { select: vi.fn(), update: vi.fn() }
+      })
+
+      await expect(consumeReservation('res-1')).rejects.toThrow('Cannot consume a reservation in status cancelled')
+    })
+  })
+
+  describe('consumeReservationsForBooking', () => {
+    it('should consume all active reservations for a booking', async () => {
+      const fullRows: Record<string, Record<string, unknown>> = {
+        'res-1': { id: 'res-1', booking_id: 'booking-1', product_id: 'prod-1', location_id: 'loc-1', quantity_reserved: 10, quantity_consumed: 0, status: 'active', notes: null, created_at: now, updated_at: now },
+        'res-2': { id: 'res-2', booking_id: 'booking-1', product_id: 'prod-2', location_id: 'loc-1', quantity_reserved: 5, quantity_consumed: 0, status: 'active', notes: null, created_at: now, updated_at: now },
+      }
+      let listCalls = 0
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_reservations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn((key: string, val?: string) =>
+                key === 'booking_id'
+                  ? { order: vi.fn(() => {
+                      listCalls++
+                      return listCalls === 1 ? res([{ id: 'res-1', status: 'active' }, { id: 'res-2', status: 'active' }]) : res([])
+                    }) }
+                  : { maybeSingle: vi.fn(() => res(fullRows[val ?? ''] ?? null)) },
+              ),
+            })),
+            update: vi.fn(() => ({
+              eq: vi.fn((key: string, val?: string) => ({
+                in: vi.fn(() => ({
+                  select: vi.fn(() => ({
+                    maybeSingle: vi.fn(() => {
+                      const row = fullRows[val ?? '']
+                      return res({ ...row, quantity_consumed: row?.quantity_reserved, status: 'consumed' })
+                    }),
+                  })),
                 })),
               })),
             })),
@@ -576,7 +784,8 @@ describe('reservations', () => {
       })
 
       const count = await consumeReservationsForBooking('booking-1')
-      expect(count).toBe(0)
+      expect(count).toBe(2)
+      expect(mockCreateTransaction).toHaveBeenCalledTimes(2)
     })
   })
 

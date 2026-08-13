@@ -181,49 +181,143 @@ export async function approveStockCount(id: string, approvedBy: string | null = 
 
   const session = await getStockCount(id)
   if (!session) throw new Error(`Stock count not found: ${id}`)
-  if (session.stockCount.status !== 'submitted') throw new Error(`Stock count is ${session.stockCount.status}, cannot approve`)
+  // 'approving' is re-enterable: a crash mid-approval leaves the session in
+  // this state, and retrying the approve action resumes (items whose
+  // transaction_id is already set are skipped, so nothing double-posts).
+  if (!['submitted', 'approving'].includes(session.stockCount.status)) {
+    throw new Error(`Stock count is ${session.stockCount.status}, cannot approve`)
+  }
 
-  for (const item of session.items) {
-    const variance = Number(item.variance ?? 0)
-    if (variance !== 0) {
-      await createTransaction({
-        product_id: item.product_id,
-        location_id: session.stockCount.location_id,
-        transaction_type: 'physical_count',
-        quantity: variance,
-        reference_type: 'stock_count',
-        reference_id: id,
-        performed_by: approvedBy ?? null,
-        notes: `Stock count adjustment: variance was ${variance > 0 ? '+' : ''}${variance}`,
-      } satisfies CreateTransactionInput)
+  // C2 preflight: the stamp below writes inventory_stock_count_items.
+  // transaction_id (migration 073). If the column is missing (PGRST204 —
+  // code deployed before the migration), fail cleanly BEFORE claiming or
+  // creating any transactions; without this, every approval posts item
+  // adjustments and then dies on the first stamp, and each retry stacks a
+  // duplicate adjustment.
+  const { error: preflightError } = await supabase
+    .from('inventory_stock_count_items')
+    .select('transaction_id')
+    .eq('id', '00000000-0000-0000-0000-000000000000')
+    .maybeSingle()
+
+  if (preflightError) {
+    throw new Error(
+      'Stock count approval is unavailable: migration 073 (inventory_stock_count_items.transaction_id) is not applied. ' +
+        'Apply it to the database before approving stock counts.',
+    )
+  }
+
+  // Claim the session BEFORE creating any transactions. The status
+  // predicate is an optimistic lock: a concurrent approve (double-click)
+  // affects zero rows and is rejected before it can post duplicate
+  // adjustments.
+  const { data: claimed, error: claimError } = await supabase
+    .from('inventory_stock_counts')
+    .update({ status: 'approving' })
+    .eq('id', id)
+    .eq('status', 'submitted')
+    .select('id')
+    .maybeSingle()
+
+  if (claimError) throw new Error(`Failed to start approval: ${claimError.message}`)
+
+  if (!claimed) {
+    const current = await getStockCount(id)
+    if (!current) throw new Error(`Stock count not found: ${id}`)
+    if (current.stockCount.status === 'approved') return current.stockCount
+    // 'approving' means an earlier attempt crashed mid-approval; re-enter.
+    if (current.stockCount.status !== 'approving') {
+      throw new Error(`Stock count is ${current.stockCount.status}, cannot approve`)
     }
   }
 
-  const { data: maxTx } = await supabase
-    .from('inventory_transactions')
-    .select('id')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  try {
+    for (const item of session.items) {
+      // Idempotency: an item already adjusted by a previous (interrupted)
+      // attempt is skipped — its transaction_id links it to the posted
+      // adjustment, so retrying never double-posts.
+      if (item.transaction_id) continue
 
-  const { data, error } = await supabase
-    .from('inventory_stock_counts')
-    .update({
-      status: 'approved',
-      snapshot_tx_after: maxTx?.id ?? null,
-      approved_by: approvedBy ?? null,
-      completed_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single()
+      const variance = Number(item.variance ?? 0)
+      if (variance !== 0) {
+        let txn: { id: string }
+        try {
+          txn = await createTransaction({
+            product_id: item.product_id,
+            location_id: session.stockCount.location_id,
+            transaction_type: 'physical_count',
+            quantity: variance,
+            reference_type: 'stock_count',
+            reference_id: id,
+            performed_by: approvedBy ?? null,
+            notes: `Stock count adjustment: variance was ${variance > 0 ? '+' : ''}${variance}`,
+          } satisfies CreateTransactionInput)
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('duplicate key value violates unique constraint')) {
+            // H1: this item's adjustment already exists — a concurrent
+            // approval won the insert, or a retry after a crash between
+            // createTransaction and the stamp. Reuse the posted txn
+            // (unique index 076 guarantees at most one) and stamp it;
+            // never post a second adjustment.
+            const { data: existing } = await supabase
+              .from('inventory_transactions')
+              .select('id')
+              .eq('reference_id', id)
+              .eq('product_id', item.product_id)
+              .eq('transaction_type', 'physical_count')
+              .maybeSingle()
+            if (!existing) throw error
+            txn = existing as { id: string }
+          } else {
+            throw error
+          }
+        }
 
-  if (error) throw new Error(`Failed to approve stock count: ${error.message}`)
+        const { error: stampError } = await supabase
+          .from('inventory_stock_count_items')
+          .update({ transaction_id: txn.id })
+          .eq('id', item.id)
+        if (stampError) throw new Error(`Failed to link adjustment to count item: ${stampError.message}`)
+      }
+    }
 
-  await refreshDashboardCache(session.stockCount.location_id)
-  await writeAuditLog('inventory_stock_counts', id, 'updated', { status: 'approved', approved_by: approvedBy ?? null }, approvedBy ?? null)
+    const { data: maxTx } = await supabase
+      .from('inventory_transactions')
+      .select('id')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-  return data as InventoryStockCount
+    const { data, error } = await supabase
+      .from('inventory_stock_counts')
+      .update({
+        status: 'approved',
+        snapshot_tx_after: maxTx?.id ?? null,
+        approved_by: approvedBy ?? null,
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('status', 'approving')
+      .select()
+      .single()
+
+    if (error) throw new Error(`Failed to approve stock count: ${error.message}`)
+
+    await refreshDashboardCache(session.stockCount.location_id)
+    await writeAuditLog('inventory_stock_counts', id, 'updated', { status: 'approved', approved_by: approvedBy ?? null }, approvedBy ?? null)
+
+    return data as InventoryStockCount
+  } catch (error) {
+    // Best-effort restore: back to 'submitted' so the approve action can be
+    // retried. Items already stamped with a transaction_id are skipped on
+    // retry, so a restored session never double-posts.
+    await supabase
+      .from('inventory_stock_counts')
+      .update({ status: 'submitted' })
+      .eq('id', id)
+      .eq('status', 'approving')
+    throw error
+  }
 }
 
 export async function cancelStockCount(id: string): Promise<InventoryStockCount> {

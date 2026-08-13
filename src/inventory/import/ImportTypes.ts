@@ -176,6 +176,13 @@ export interface ImportDecision {
   newProductName?: string | null
   newProductCategoryId?: string | null
   newProductUomId?: string | null
+  /** Metadata carried onto created products (previously dropped by
+   *  ImportExecutor.create_product). */
+  newProductSku?: string | null
+  newProductBarcode?: string | null
+  newProductInventoryType?: string | null
+  newProductParLevel?: number | null
+  newProductReorderPoint?: number | null
   quantity?: number | null
   locationId?: string | null
   unitCost?: number | null

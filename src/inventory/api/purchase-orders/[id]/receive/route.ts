@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
-import { receiveItems } from '@/inventory/engine/purchase-orders'
+import { receiveItems, getPurchaseOrder } from '@/inventory/engine/purchase-orders'
+import { getInventoryClient } from '@/inventory/lib/db'
 import { MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
 
 export async function POST(
@@ -25,6 +26,26 @@ export async function POST(
           { status: 400 },
         )
       }
+    }
+
+    // RPC path (migration 074): the entire receive is atomic. If the RPC is
+    // not yet applied (PGRST202) or raises a business error, fall back to
+    // the legacy engine path below — the engine validates identically, so
+    // the fallback surfaces the same errors, and the RPC rolls back its own
+    // partial work on any failure.
+    const supabase = getInventoryClient()
+    const rpcRes = await supabase.rpc('receive_purchase_order', {
+      p_po_id: id,
+      p_invoice_number: body.invoice_number ?? null,
+      p_notes: body.notes ?? null,
+      p_received_by: body.received_by ?? null,
+      p_cost_centre_id: body.cost_centre_id ?? null,
+      p_items: body.items,
+    }) as unknown as { data: { receipt_id: string } | null; error: { message: string } | null }
+
+    if (!rpcRes.error && rpcRes.data) {
+      const data = await getPurchaseOrder(id)
+      return NextResponse.json({ data })
     }
 
     const data = await receiveItems(id, body)

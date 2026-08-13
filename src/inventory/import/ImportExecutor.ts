@@ -2,7 +2,6 @@ import type { ImportDecision, ImportApplyResult, ImportType } from './ImportType
 import { getInventoryClient } from '../lib/db'
 import { createTransaction } from '../engine/ledger'
 import type { CreateTransactionInput, TransactionType } from '../engine/types'
-import { createId } from '../lib/id'
 import { resolveLocationId } from '../lib/location'
 
 export class ImportExecutor {
@@ -25,17 +24,44 @@ export class ImportExecutor {
       let productId = decision.productId ?? null
 
       if (decision.action === 'create_product' && decision.newProductName) {
-        const { data: newProduct } = await supabase
+        const productFields: Record<string, unknown> = {
+          name: decision.newProductName,
+          category_id: decision.newProductCategoryId ?? null,
+        }
+        // Metadata from the parsed row was previously dropped, leaving junk
+        // defaults (sku NULL, inventory_type GENERAL) on every imported
+        // product. Carry it through when the decision provides it.
+        if (decision.newProductSku) productFields.sku = decision.newProductSku
+        if (decision.newProductBarcode) productFields.barcode = decision.newProductBarcode
+        if (decision.newProductInventoryType) productFields.inventory_type = decision.newProductInventoryType
+        if (decision.newProductReorderPoint != null) productFields.reorder_threshold = decision.newProductReorderPoint
+        if (decision.newProductParLevel != null) productFields.reorder_quantity = decision.newProductParLevel
+
+        const { data: newProduct, error: productError } = await supabase
           .from('inventory_products')
-          .insert({
-            name: decision.newProductName,
-            category_id: decision.newProductCategoryId ?? null,
-          })
+          .insert(productFields)
           .select('id')
           .single()
+
+        if (productError) throw new Error(`Failed to create product: ${productError.message}`)
+
         if (newProduct) {
           productId = newProduct.id
           productIds.push(newProduct.id)
+
+          // Base UOM link (one_base_uom CHECK forbids is_base AND is_display)
+          if (decision.newProductUomId) {
+            const { error: uomError } = await supabase
+              .from('inventory_product_uoms')
+              .insert({
+                product_id: newProduct.id,
+                uom_id: decision.newProductUomId,
+                is_base: true,
+                is_display: false,
+                conversion_factor: 1,
+              })
+            if (uomError) throw new Error(`Failed to link product UOM: ${uomError.message}`)
+          }
         }
       }
 
@@ -56,7 +82,11 @@ export class ImportExecutor {
             product_id: productId,
             location_id: locationId,
             transaction_type: (decision.transactionType ?? 'purchase') as TransactionType,
-            quantity: Math.abs(decision.quantity),
+            // Sign-preserving: the ledger normalizes decrease types to
+            // negative and honors the sign of bidirectional types (adjustment,
+            // physical_count). Math.abs() here silently flipped negative
+            // adjustments (stock write-offs) into positive stock additions.
+            quantity: Number(decision.quantity),
             unit_cost: decision.unitCost ?? null,
             reference_type: 'import_batch',
             reference_id: importId,
@@ -73,9 +103,12 @@ export class ImportExecutor {
     }
     }
 
-    const batchId = createId()
     const result: ImportApplyResult = {
-      importBatchId: batchId,
+      // H3: the batch id returned to callers must be the id the row is
+      // upserted under. A fresh createId() here returned a non-existent id
+      // on the engine fallback path (the RPC path returns p_import_id),
+      // breaking anything keyed on it (navigation, rollback).
+      importBatchId: importId,
       transactionIds,
       productIds: [...new Set(productIds)],
       rowCount: appliedCount,

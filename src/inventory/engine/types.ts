@@ -16,7 +16,7 @@ export type MovementReason =
 
 export type ImportMode = 'initial' | 'delivery' | 'full_replacement'
 
-export type StockCountStatus = 'in_progress' | 'submitted' | 'approved' | 'cancelled'
+export type StockCountStatus = 'in_progress' | 'submitted' | 'approving' | 'approved' | 'cancelled'
 
 export type ImportStatus = 'pending' | 'previewed' | 'approved' | 'applied' | 'rolled_back' | 'failed'
 
@@ -123,6 +123,9 @@ export interface InventoryTransaction {
   performed_by: string | null
   notes: string | null
   import_batch_id: string | null
+  /** SALE posted by consumeReservation for this reservation (migration
+   *  077). At most one per reservation (unique index). */
+  reservation_id: string | null
   created_at: string
 }
 
@@ -147,6 +150,9 @@ export interface InventoryStockCountItem {
   expected_quantity: number | null
   variance: number | null
   variance_reason: string | null
+  /** Ledger transaction created for this item's variance on approval
+   *  (migration 073). Non-null items are skipped on approval retries. */
+  transaction_id?: string | null
 }
 
 export interface ImportBatch {
@@ -414,6 +420,9 @@ export interface CreateTransactionInput {
   performed_by?: string | null
   notes?: string | null
   import_batch_id?: string | null
+  /** Reservation this SALE was posted for (consumeReservation, migration
+   *  077). Nullable; only consumption txns carry it. */
+  reservation_id?: string | null
 }
 
 export interface WasteSummaryRow {
