@@ -1087,3 +1087,39 @@ Implement the first five ships of the P0/P1 remediation blueprint (from the PASS
 
 ### Deploy notes (future, NOT done)
 - Apply migrations 073, 074, 075 to prod (`supabase db push`) in one batch; routes fall back to legacy engine paths until applied (PGRST202). Then optionally re-run the live E2E for receive/apply. F2/F3 remain deferred.
+
+---
+
+## Session: E8 Production Cutover + RBAC Hole Fix + Self-Service Passwords (2026-08-14) - commits 89722de, 8120903, 6e58cfc
+
+### Objective
+Execute the user-approved E8 controlled cutover: migration 079 to prod, real passwords for the 5 admin accounts, deploy the E8 code, verify all five accounts + regression checklist live, and keep ADMIN_LEGACY_FALLBACK=true until the owner confirms a day of stability.
+
+### Done (all verified live against prod)
+1. **Migration 079 applied** (`supabase link` + `db push`) - only 079 was pending; Ships 073-078 were already applied to prod (remote migration history matches local 000-079).
+2. **Passwords set** for mahindra/chriselda/gibbs/isaac/khosi (bcrypt 12, temp script - deleted; never in repo). `must_change_password=false`, failed_attempts/locked_until cleared, bcrypt roundtrip-verified per account.
+3. **Self-service Change Password** (user request): `POST /api/admin/auth/change-password` (current+new, 6-char min, clears lock counters, ends OTHER sessions via `endAllSessionsForAdmin(..., exceptSessionId)`, audits `admin_accounts.password_change_self`) + "Change Password" button in the admin layout banner (individual sessions only, modal UI). 3 new tests (28 in admin-rbac file).
+4. **Next 15 params fix**: build failed because Next 15 requires `params: Promise<{id}>` in route handlers - fixed all 3 handlers in accounts/[id]/route.ts (this is why the git-push auto-deploy never appeared).
+5. **Deploy via CLI**: `vercel --prod` (git integration was silent; CLI deploy aliased to the-boma-cafe.vercel.app).
+6. **Live verification (automated, cleaned up after)**: 5/5 logins 200; wrong password 401; RBAC matrix live (owner/full_manager 200 on accounts+audit, managers/assistant 403; inventory dashboard 200 for all); audit trail rows show correct identities; public endpoints unaffected (booking/config, staff/list, accounts/public).
+
+### CRITICAL hole found during live verification + fixed
+**Khosi (assistant_manager) could create waiters (201) despite waiter.write=403 on /api/admin/accounts.**
+Root cause (two compounding bugs):
+1. `PROTECTED_API_PREFIXES` used trailing slashes (`'/api/waiters/'`) - `POST /api/waiters` (exact path, no slash) was NOT middleware-protected -> no identity headers (x-user-role/x-admin-role) attached.
+2. `getAdminContext()` early-returned null when the x-user-role header was absent, so the boma_admin_session cookie fallback never ran -> `requireAdminPermission` fell through to the legacy allow-all.
+Fixes (commit 6e58cfc): prefixes now match bare paths (`'/api/waiters'` etc.), and getAdminContext tries the cookie fallback regardless of header presence (the boma_admin_session cookie only exists for individual admin sessions - safe). New regression test: bare-path request + cookie fallback -> 403 for assistant_manager (next/headers now mocked in admin-rbac.test.ts for the cookie->getSession path).
+
+**Post-fix live proof**: mahindra POST /api/waiters 201, khosi POST /api/waiters **403**. All probe waiters/sessions/audit rows deleted.
+
+### Verification
+- 121/121 vitest (was 115 at session start; +3 change-password, +2 session-except, +1 bare-path regression, -0)
+- Inventory strict tsc clean; UI temp tsc clean; `next build` green on Vercel (2 CLI deploys)
+- Prod left clean: 0 probe waiters, 0 verification sessions, gibbs counter reset
+
+### Owner-side (NOT done - handover)
+- Legacy login + kitchen/bar/waiter real-device checks (needs env secrets, agent cannot forge)
+- Khosi sidebar/pin-reset visual check; MANAGEMENT ACTIVITY card visual check
+- Real booking status change check
+- After 1-2 stable days: set ADMIN_LEGACY_FALLBACK=false in Vercel env
+- Deferred (user directive, after stability): owner Security page (last login, active sessions, device list, force logout - force logout ALREADY exists owner-only, active-sessions data ALREADY tracked in admin_sessions) - "consider" items only
