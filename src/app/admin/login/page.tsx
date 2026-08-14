@@ -1,10 +1,26 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+interface PublicAccount {
+  username: string;
+  display_name: string;
+  role: string;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Owner',
+  full_manager: 'Main Manager',
+  manager: 'Manager',
+  assistant_manager: 'Assistant Manager',
+};
+
 function LoginForm() {
+  const [accounts, setAccounts] = useState<PublicAccount[]>([]);
+  const [accountsLoaded, setAccountsLoaded] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -13,20 +29,32 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/dashboard';
 
+  useEffect(() => {
+    fetch('/api/admin/accounts/public')
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((json) => {
+        const list = Array.isArray(json?.data) ? json.data : [];
+        setAccounts(list);
+        if (list.length > 0) setUsername(list[0].username);
+      })
+      .catch(() => { /* dropdown empty → legacy password-only mode */ })
+      .finally(() => setAccountsLoaded(true));
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    const success = await login(password);
-    
+    const success = await login(username, password);
+
     if (success) {
       router.replace(redirectTo);
       router.refresh();
     } else {
-      setError('Invalid password. Please try again.');
+      setError('Invalid credentials. Please try again.');
     }
-    
+
     setIsLoading(false);
   };
 
@@ -49,11 +77,76 @@ function LoginForm() {
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '2rem', color: '#F0EBE3', marginBottom: '0.5rem' }}>Admin Login</h1>
-          <p style={{ color: '#A09888' }}>Enter your password to access the dashboard</p>
+          <p style={{ color: '#A09888' }}>Sign in as yourself — every action is recorded</p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#F0EBE3', fontWeight: 500 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value="info@thebomacafe.co.za"
+              disabled
+              style={{
+                width: '100%',
+                padding: '1rem',
+                borderRadius: '12px',
+                border: '2px solid #3A3428',
+                background: '#221E17',
+                fontSize: '1rem',
+                color: '#A09888',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#F0EBE3', fontWeight: 500 }}>
+              Name
+            </label>
+            {accounts.length > 0 ? (
+              <select
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  border: '2px solid #3A3428',
+                  background: '#2A261E',
+                  fontSize: '1rem',
+                  color: '#F0EBE3',
+                }}
+                disabled={!accountsLoaded}
+              >
+                {accounts.map((a) => (
+                  <option key={a.username} value={a.username}>
+                    {a.display_name} — {ROLE_LABELS[a.role] || a.role}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={accountsLoaded ? 'Username (no accounts configured yet)' : 'Loading accounts…'}
+                disabled={!accountsLoaded}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  border: '2px solid #3A3428',
+                  background: '#2A261E',
+                  fontSize: '1rem',
+                  color: '#F0EBE3',
+                }}
+              />
+            )}
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#F0EBE3', fontWeight: 500 }}>
               Password
             </label>
@@ -61,7 +154,8 @@ function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
+              placeholder="Enter your password"
+              autoFocus
               style={{
                 width: '100%',
                 padding: '1rem',
@@ -90,11 +184,11 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !accountsLoaded}
             className="btn btn-primary"
-            style={{ width: '100%', opacity: isLoading ? 0.7 : 1 }}
+            style={{ width: '100%', opacity: isLoading || !accountsLoaded ? 0.7 : 1 }}
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

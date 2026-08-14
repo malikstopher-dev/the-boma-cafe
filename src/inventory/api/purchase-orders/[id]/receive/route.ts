@@ -3,6 +3,8 @@ import type { ApiResponse } from '@/inventory/engine/types'
 import { receiveItems, getPurchaseOrder } from '@/inventory/engine/purchase-orders'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 export async function POST(
   request: NextRequest,
@@ -33,6 +35,7 @@ export async function POST(
     // the legacy engine path below — the engine validates identically, so
     // the fallback surfaces the same errors, and the RPC rolls back its own
     // partial work on any failure.
+    const admin = await getAdminContext(request)
     const supabase = getInventoryClient()
     const rpcRes = await supabase.rpc('receive_purchase_order', {
       p_po_id: id,
@@ -45,10 +48,16 @@ export async function POST(
 
     if (!rpcRes.error && rpcRes.data) {
       const data = await getPurchaseOrder(id)
+      if (admin) {
+        await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.po_receive', targetType: 'inventory_purchase_orders', targetId: id, after: { invoice_number: body.invoice_number ?? null, items_received: body.items.length }, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
+      }
       return NextResponse.json({ data })
     }
 
     const data = await receiveItems(id, body)
+    if (admin) {
+      await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.po_receive', targetType: 'inventory_purchase_orders', targetId: id, after: { invoice_number: body.invoice_number ?? null, items_received: body.items.length }, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
+    }
     return NextResponse.json({ data })
   } catch (error) {
     if (error instanceof MissingCostCentreError) {

@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createHash, timingSafeEqual } from 'node:crypto'
+import { validateAdminSession } from '@/lib/admin/session'
 
 const ADMIN_COOKIE = 'boma_admin_auth'
 const KITCHEN_COOKIE = 'boma_kitchen_auth'
 const WAITER_COOKIE = 'boma_waiter_auth'
 const BAR_COOKIE = 'boma_bar_auth'
+const ADMIN_SESSION_COOKIE = 'boma_admin_session'
 
 export type Role = 'admin' | 'kitchen' | 'waiter' | 'bar'
 
@@ -51,8 +53,13 @@ export async function getSession(): Promise<Session | null> {
   const kitchen = cookieStore.get(KITCHEN_COOKIE)
   const waiter = cookieStore.get(WAITER_COOKIE)
   const bar = cookieStore.get(BAR_COOKIE)
+  const adminSession = cookieStore.get(ADMIN_SESSION_COOKIE)
 
-  // Highest precedence: admin → kitchen → bar → waiter
+  // Highest precedence: individual admin session → legacy admin → kitchen → bar → waiter
+  if (adminSession?.value) {
+    const info = await validateAdminSession(adminSession.value)
+    if (info) return { role: 'admin' }
+  }
   if (admin?.value && timingSafeCompare(admin.value, expectedCookieValue('admin'))) return { role: 'admin' }
   if (kitchen?.value && timingSafeCompare(kitchen.value, expectedCookieValue('kitchen'))) return { role: 'kitchen' }
   if (bar?.value && timingSafeCompare(bar.value, expectedCookieValue('bar'))) return { role: 'bar' }

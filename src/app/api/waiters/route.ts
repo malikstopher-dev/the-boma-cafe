@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/auth/requireRole'
+import { requireAdmin, requireAdminPermission } from '@/lib/auth/requireRole'
 import { hashPin } from '@/lib/staff/auth'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,8 +40,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'waiter.write')
   if (authError) return authError
+
+  const admin = await getAdminContext(request)
 
   try {
     const body = await request.json()
@@ -92,6 +96,20 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: 'Failed to create waiter' }, { status: 500 })
+
+    await logAdminAction({
+      adminId: admin?.adminId ?? null,
+      adminName: admin?.displayName ?? null,
+      adminRole: admin?.role ?? null,
+      action: 'waiters.create',
+      targetType: 'staff_profiles',
+      targetId: data.id,
+      after: { name: trimmedName, employee_id: trimmedId },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
+      sessionId: admin?.sessionId ?? null,
+    })
+
     return NextResponse.json(toWaiter(data), { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -99,8 +117,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'waiter.write')
   if (authError) return authError
+
+  const admin = await getAdminContext(request)
 
   try {
     const { searchParams } = new URL(request.url)
@@ -117,6 +137,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
     }
 
+    const { data: existing } = await getAdminClient()
+      .from('staff_profiles')
+      .select('id, name, employee_id, on_duty')
+      .eq('id', id)
+      .eq('role', 'waiter')
+      .maybeSingle()
+
+    if (!existing) return NextResponse.json({ error: 'Waiter not found' }, { status: 404 })
+
     const { data, error } = await getAdminClient()
       .from('staff_profiles')
       .update(updateBody)
@@ -126,6 +155,21 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: 'Failed to update waiter' }, { status: 500 })
+
+    await logAdminAction({
+      adminId: admin?.adminId ?? null,
+      adminName: admin?.displayName ?? null,
+      adminRole: admin?.role ?? null,
+      action: 'waiters.update',
+      targetType: 'staff_profiles',
+      targetId: id,
+      before: { name: existing.name, on_duty: existing.on_duty },
+      after: { name: updateBody.name ?? existing.name, on_duty: updateBody.on_duty ?? existing.on_duty },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
+      sessionId: admin?.sessionId ?? null,
+    })
+
     return NextResponse.json(toWaiter(data))
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -133,8 +177,10 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'waiter.write')
   if (authError) return authError
+
+  const admin = await getAdminContext(request)
 
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -161,6 +207,19 @@ export async function DELETE(request: NextRequest) {
   if (!data || data.length === 0) {
     return NextResponse.json({ error: 'Waiter not found' }, { status: 404 })
   }
+
+  await logAdminAction({
+    adminId: admin?.adminId ?? null,
+    adminName: admin?.displayName ?? null,
+    adminRole: admin?.role ?? null,
+    action: 'waiters.delete',
+    targetType: 'staff_profiles',
+    targetId: id,
+    before: { name: data[0].name },
+    ipAddress: request.headers.get('x-forwarded-for') || null,
+    userAgent: request.headers.get('user-agent') || null,
+    sessionId: admin?.sessionId ?? null,
+  })
 
   return NextResponse.json({ success: true, deleted: data[0] })
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
 import { approveStockCount } from '@/inventory/engine/stock-counts'
 import { isUuid, uuidError } from '@/inventory/lib/api-utils'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +22,11 @@ export async function POST(
     // staff UUID). Only a well-formed UUID may reach the approved_by FK.
     const approvedBy = body.approved_by && isUuid(body.approved_by) ? body.approved_by : null
 
+    const admin = await getAdminContext(request)
     const result = await approveStockCount(id, approvedBy)
+    if (admin) {
+      await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.stock_count_approve', targetType: 'inventory_stock_counts', targetId: id, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
+    }
     return NextResponse.json({ data: result })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'

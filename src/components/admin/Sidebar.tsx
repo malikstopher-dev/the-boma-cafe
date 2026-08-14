@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createBrowserClient } from '@/lib/supabase'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import { useAuth } from '@/lib/auth-context'
+import type { AdminPermission } from '@/lib/admin/permissions'
 import styles from './Sidebar.module.css'
+import { UserCog } from 'lucide-react'
 import {
   LayoutDashboard,
   Landmark,
@@ -61,6 +64,7 @@ interface NavItem {
   label: string
   icon: React.ReactNode
   href: string
+  permission?: AdminPermission
 }
 
 interface NavGroup {
@@ -72,7 +76,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'Admin · Overview',
     items: [
-      { label: 'Owner Dashboard', icon: <Landmark size={18} />, href: '/dashboard' },
+      { label: 'Owner Dashboard', icon: <Landmark size={18} />, href: '/dashboard', permission: 'view:owner_dashboard' },
       { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/dashboard' },
       { label: 'Background Jobs', icon: <Zap size={18} />, href: '/admin/background-jobs' },
     ],
@@ -109,8 +113,8 @@ const navGroups: NavGroup[] = [
       { label: 'Purchase Orders', icon: <ClipboardList size={18} />, href: '/admin/operations/purchase-orders' },
       { label: 'Receiving', icon: <Package size={18} />, href: '/admin/operations/receiving' },
       { label: 'Suppliers', icon: <Truck size={18} />, href: '/admin/operations/suppliers' },
-      { label: 'Supplier Performance', icon: <BarChart3 size={18} />, href: '/admin/operations/supplier-performance' },
-      { label: 'Price History', icon: <DollarSign size={18} />, href: '/admin/operations/price-history' },
+      { label: 'Supplier Performance', icon: <BarChart3 size={18} />, href: '/admin/operations/supplier-performance', permission: 'view:reports' },
+      { label: 'Price History', icon: <DollarSign size={18} />, href: '/admin/operations/price-history', permission: 'view:reports' },
     ],
   },
   {
@@ -135,13 +139,13 @@ const navGroups: NavGroup[] = [
   {
     label: 'Operations & Stock · Reports',
     items: [
-      { label: 'Reports', icon: <BarChart3 size={18} />, href: '/admin/operations/reports' },
+      { label: 'Reports', icon: <BarChart3 size={18} />, href: '/admin/operations/reports', permission: 'view:reports' },
     ],
   },
   {
     label: 'Operations & Stock · Settings',
     items: [
-      { label: 'Settings', icon: <Settings size={18} />, href: '/admin/operations/settings' },
+      { label: 'Settings', icon: <Settings size={18} />, href: '/admin/operations/settings', permission: 'view:settings' },
     ],
   },
   {
@@ -171,7 +175,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'Content',
     items: [
-      { label: 'Site Settings', icon: <Settings size={18} />, href: '/admin/site-settings' },
+      { label: 'Site Settings', icon: <Settings size={18} />, href: '/admin/site-settings', permission: 'view:settings' },
       { label: 'Events', icon: <PartyPopper size={18} />, href: '/admin/events' },
       { label: 'Promotions', icon: <Gift size={18} />, href: '/admin/promotions' },
       { label: 'Gallery', icon: <Image size={18} />, href: '/admin/gallery' },
@@ -185,7 +189,8 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Messages', icon: <MessageCircle size={18} />, href: '/admin/messages' },
       { label: 'Inquiries', icon: <Mail size={18} />, href: '/admin/inquiries' },
-      { label: 'Waiters', icon: <Users size={18} />, href: '/admin/waiters' },
+      { label: 'Waiters', icon: <Users size={18} />, href: '/admin/waiters', permission: 'view:staff_management' },
+      { label: 'Admin Accounts', icon: <UserCog size={18} />, href: '/admin/accounts', permission: 'view:accounts' },
     ],
   },
   {
@@ -205,6 +210,7 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
   const pathname = usePathname()
+  const { can } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
   const [inventoryUnread, setInventoryUnread] = useState(0)
 
@@ -284,10 +290,13 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
         </div>
 
         <nav className={styles.nav}>
-          {navGroups.map(group => (
-            <div key={group.label} className={styles.navGroup}>
-              <div className={styles.navGroupLabel}>{group.label}</div>
-              {group.items.map(item => (
+          {navGroups.map(group => {
+            const visibleItems = group.items.filter(item => !item.permission || can(item.permission))
+            if (visibleItems.length === 0) return null
+            return (
+              <div key={group.label} className={styles.navGroup}>
+                <div className={styles.navGroupLabel}>{group.label}</div>
+                {visibleItems.map(item => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -307,9 +316,10 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
                     </span>
                   )}
                 </Link>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            )
+          })}
         </nav>
 
         <div className={styles.footer}>

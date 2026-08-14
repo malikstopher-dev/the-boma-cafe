@@ -126,6 +126,23 @@ export default function OwnerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAllSuppliers, setShowAllSuppliers] = useState(false)
+  const [managementActivity, setManagementActivity] = useState<Array<{ id: string; admin_name: string | null; admin_role: string | null; action: string; target_type: string | null; created_at: string }>>([])
+
+  // Management activity (Mission E8): who did what in the admin system
+  const loadActivity = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/audit/recent?limit=10', { cache: 'no-store' })
+      if (!res.ok) return
+      const json = await res.json()
+      if (Array.isArray(json?.data)) setManagementActivity(json.data)
+    } catch { /* non-critical */ }
+  }, [])
+
+  useEffect(() => {
+    void loadActivity()
+    const timer = setInterval(() => { void loadActivity() }, 60000)
+    return () => clearInterval(timer)
+  }, [loadActivity])
 
   const load = useCallback(async (p: string, from?: string, to?: string) => {
     setIsLoading(true)
@@ -509,6 +526,30 @@ export default function OwnerDashboardPage() {
                   </div>
                 )}
               </ExcelCard>
+
+              {/* Management activity (Mission E8) */}
+              <ExcelCard title="MANAGEMENT ACTIVITY" subtitle="Latest admin actions, attributed to the manager who did them">
+                {managementActivity.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: theme.textDim }}>No management activity recorded yet.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    {managementActivity.map(a => (
+                      <div key={a.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: 15, width: 20, color: theme.gold }}>◆</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ margin: 0, fontSize: 13, color: theme.ink }}>
+                            <span style={{ color: theme.gold, fontWeight: 700 }}>{a.admin_name || 'Legacy admin'}</span>{' '}
+                            {adminActionLabel(a.action)} {a.target_type || ''}
+                          </p>
+                          <p style={{ margin: '1px 0 0', fontSize: 11, color: theme.textDim }}>
+                            {a.admin_role ? rolePretty(a.admin_role) : ''} · {new Date(a.created_at).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ExcelCard>
             </div>
 
             {/* Purchased vs Used (minimal chart, pure CSS) */}
@@ -732,6 +773,33 @@ function kindLabel(kind: string): string {
     sale: 'Sale',
   }
   return map[kind.toLowerCase()] ?? 'Stock movement'
+}
+
+function adminActionLabel(action: string): string {
+  const map: Record<string, string> = {
+    'auth.login': 'signed in',
+    'auth.logout': 'signed out',
+    'admin_accounts.create': 'created admin account',
+    'admin_accounts.update': 'updated admin account',
+    'admin_accounts.delete': 'deactivated admin account',
+    'admin_accounts.force_logout': 'force-logged-out',
+    'waiters.create': 'created waiter',
+    'waiters.update': 'updated waiter',
+    'waiters.delete': 'deleted waiter',
+    'staff.pin_reset': 'reset staff PIN',
+    'bookings.status_change': 'changed booking status',
+  }
+  return map[action] ?? action
+}
+
+function rolePretty(role: string): string {
+  const map: Record<string, string> = {
+    owner: 'Owner',
+    full_manager: 'Main Manager',
+    manager: 'Manager',
+    assistant_manager: 'Assistant Manager',
+  }
+  return map[role] ?? role
 }
 
 // ---------------------------------------------------------------------------

@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getSession, expectedCookieValue } from '@/lib/auth';
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { getSession } from '@/lib/auth';
+import { getAdminClient } from '@/lib/supabase';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyPassword } from '@/lib/admin/password';
+import { createAdminSession, endAdminSession, validateAdminSession, generateDeviceFingerprint } from '@/lib/admin/session';
+import { logAdminAction } from '@/lib/admin/audit';
 
 export const dynamic = 'force-dynamic'
 
 const ADMIN_COOKIE = 'boma_admin_auth';
-const KITCHEN_COOKIE = 'boma_kitchen_auth';
-const WAITER_COOKIE = 'boma_waiter_auth';
-const BAR_COOKIE = 'boma_bar_auth';
+const ADMIN_SESSION_COOKIE = 'boma_admin_session';
 
-const VALID_ROLES = ['admin', 'kitchen', 'waiter', 'bar'] as const;
+// Legacy shared-password admin login remains available during the E8
+// transition. Set ADMIN_LEGACY_FALLBACK=false to disable it (cutover).
+const LEGACY_ADMIN_FALLBACK = process.env.ADMIN_LEGACY_FALLBACK !== 'false';
+
+const ADMIN_EMAIL = 'info@thebomacafe.co.za';
 
 function timingSafeCompare(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -21,6 +27,18 @@ function timingSafeCompare(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
+function clearAdminCookies(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+  cookieStore.set(ADMIN_SESSION_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+}
+
+async function endCurrentAdminSession(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  const sessionCookie = cookieStore.get(ADMIN_SESSION_COOKIE);
+  if (sessionCookie?.value) {
+    await endAdminSession(sessionCookie.value, 'user_logout');
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
@@ -28,110 +46,131 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many login attempts. Try again later.' }, { status: 429 });
     }
 
+    const cookieStore = await cookies();
     const body = await request.json();
-    const { password, role, action } = body;
+    const { username, password, action } = body;
 
     if (action === 'logout') {
-      const cookieStore = await cookies();
-      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(BAR_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+      await endCurrentAdminSession(cookieStore);
+      clearAdminCookies(cookieStore);
       return NextResponse.json({ success: true });
     }
 
-    if (role === 'waiter') {
-      const waiterPassword = process.env.WAITER_PASSWORD;
-      if (!waiterPassword) {
-        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    const deviceFingerprint = generateDeviceFingerprint(userAgent, ip);
+
+    // ── Individual admin login: username + password ──
+    if (username && password) {
+      const supabase = getAdminClient();
+      const { data: account } = await supabase
+        .from('admin_accounts')
+        .select('*')
+        .eq('username', username.toLowerCase())
+        .maybeSingle();
+
+      if (account) {
+        if (!account.is_active) {
+          return NextResponse.json({ error: 'Account is disabled. Contact the owner.' }, { status: 403 });
+        }
+        if (account.locked_until && new Date(account.locked_until).getTime() > Date.now()) {
+          const remaining = Math.ceil((new Date(account.locked_until).getTime() - Date.now()) / 1000);
+          return NextResponse.json({ error: `Account locked. Try again in ${remaining} seconds.` }, { status: 429 });
+        }
+
+        const valid = account.password_hash && await verifyPassword(password, account.password_hash);
+
+        if (!valid) {
+          const attempts = (account.failed_attempts || 0) + 1;
+          const updates: Record<string, unknown> = { failed_attempts: attempts };
+          if (attempts >= 5) {
+            updates.locked_until = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+          }
+          await supabase.from('admin_accounts').update(updates).eq('id', account.id);
+          return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+        }
+
+        // Success: reset failures, record login, create session
+        await supabase.from('admin_accounts').update({
+          failed_attempts: 0,
+          locked_until: null,
+          last_login_at: new Date().toISOString(),
+        }).eq('id', account.id);
+
+        const session = await createAdminSession(
+          account,
+          deviceFingerprint,
+          'Web Browser',
+          userAgent,
+          ip,
+        );
+
+        if (!session) {
+          return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+        }
+
+        // Individual session cookie. Legacy admin cookie + staff cookies
+        // are NOT touched — staff sessions must remain independent.
+        clearAdminCookies(cookieStore);
+        cookieStore.set(ADMIN_SESSION_COOKIE, session.sessionId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+          maxAge: 8 * 60 * 60, // 8 hours
+        });
+
+        await logAdminAction({
+          adminId: account.id,
+          adminName: account.display_name,
+          adminRole: account.role,
+          action: 'auth.login',
+          targetType: 'admin_accounts',
+          targetId: account.id,
+          ipAddress: ip,
+          userAgent,
+          sessionId: session.sessionId,
+        });
+
+        return NextResponse.json({
+          success: true,
+          role: 'admin',
+          authenticated: true,
+          user: {
+            id: account.id,
+            username: account.username,
+            display_name: account.display_name,
+            role: account.role,
+            email: ADMIN_EMAIL,
+          },
+        });
       }
-      if (!password || !timingSafeCompare(password, waiterPassword)) {
-        return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-      }
-      const cookieStore = await cookies();
-      // Clear conflicting cookies when logging in as waiter
-      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(BAR_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(WAITER_COOKIE, expectedCookieValue('waiter'), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365,
-      });
-      return NextResponse.json({ success: true, role: 'waiter', authenticated: true });
+
+      // Unknown username → fall through to legacy only if enabled
     }
 
-    if (role === 'bar') {
-      const barPassword = process.env.BAR_PASSWORD;
-      if (!barPassword) {
-        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    // ── Legacy shared-password login (transition only) ──
+    if (LEGACY_ADMIN_FALLBACK) {
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      if (adminPassword && password && timingSafeCompare(password, adminPassword)) {
+        clearAdminCookies(cookieStore);
+        cookieStore.set(ADMIN_COOKIE, createHash('sha256').update(`admin:${adminPassword}`).digest('hex'), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7,
+        });
+
+        return NextResponse.json({
+          success: true,
+          role: 'admin',
+          authenticated: true,
+          user: { id: 'legacy', username: 'admin', display_name: 'Admin (legacy)', role: 'owner', email: ADMIN_EMAIL },
+        });
       }
-      if (!password || !timingSafeCompare(password, barPassword)) {
-        return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-      }
-      const cookieStore = await cookies();
-      // Clear conflicting cookies when logging in as bar
-      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(BAR_COOKIE, expectedCookieValue('bar'), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365,
-      });
-      return NextResponse.json({ success: true, role: 'bar', authenticated: true });
     }
 
-    if (role === 'kitchen') {
-      const kitchenPassword = process.env.KITCHEN_PASSWORD;
-      if (!kitchenPassword) {
-        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-      }
-      if (!password || !timingSafeCompare(password, kitchenPassword)) {
-        return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-      }
-      const cookieStore = await cookies();
-      // Clear conflicting cookies when logging in as kitchen
-      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(BAR_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(KITCHEN_COOKIE, expectedCookieValue('kitchen'), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365,
-      });
-      return NextResponse.json({ success: true, role: 'kitchen', authenticated: true });
-    }
-
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (!adminPassword) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
-
-    if (password && timingSafeCompare(password, adminPassword)) {
-      const cookieStore = await cookies();
-      // Clear conflicting cookies when logging in as admin
-      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(BAR_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(ADMIN_COOKIE, expectedCookieValue('admin'), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7,
-      });
-
-      return NextResponse.json({ success: true, role: 'admin', authenticated: true, user: { id: '1', username: 'admin', email: 'admin@thebomacafe.co.za' } });
-    }
-
-    return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
@@ -143,23 +182,58 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     if (searchParams.get('action') === 'logout') {
       const cookieStore = await cookies();
-      cookieStore.set(ADMIN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(KITCHEN_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(WAITER_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
-      cookieStore.set(BAR_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+      await endCurrentAdminSession(cookieStore);
+      clearAdminCookies(cookieStore);
       return NextResponse.redirect(new URL('/staff/login', request.url));
     }
 
-    const session = await getSession();
+    // Header identity set by middleware (admin session cookie)
+    const adminId = request.headers.get('x-admin-id');
+    const adminRole = request.headers.get('x-admin-role');
+    if (adminId && adminRole) {
+      return NextResponse.json({
+        authenticated: true,
+        role: 'admin',
+        user: {
+          id: adminId,
+          username: request.headers.get('x-admin-name') || adminId,
+          display_name: request.headers.get('x-admin-name') || adminId,
+          role: adminRole,
+          email: ADMIN_EMAIL,
+        },
+      });
+    }
 
+    // Fallback: cookie-based resolution (routes not covered by middleware)
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get(ADMIN_SESSION_COOKIE);
+    if (sessionCookie?.value) {
+      const info = await validateAdminSession(sessionCookie.value);
+      if (info) {
+        return NextResponse.json({
+          authenticated: true,
+          role: 'admin',
+          user: {
+            id: info.adminId,
+            username: info.username,
+            display_name: info.displayName,
+            role: info.role,
+            email: ADMIN_EMAIL,
+          },
+        });
+      }
+    }
+
+    const session = await getSession();
     if (session?.role === 'admin') {
       return NextResponse.json({
         authenticated: true,
         role: 'admin',
-        user: { id: '1', username: 'admin', email: 'admin@thebomacafe.co.za' }
+        user: { id: 'legacy', username: 'admin', display_name: 'Admin (legacy)', role: 'owner', email: ADMIN_EMAIL },
       });
     }
 
+    // Staff role identities (unchanged behavior — staff system independence)
     if (session?.role === 'kitchen') {
       return NextResponse.json({
         authenticated: true,

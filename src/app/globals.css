@@ -385,6 +385,12 @@ input, textarea, select {
   outline-offset: 2px;
 }
 
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
+}
+
 .btn-secondary {
   background: transparent;
   color: var(--primary);

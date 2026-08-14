@@ -14,12 +14,67 @@ const ConnectionStatus = dynamic(() => import('@/components/ui/ConnectionStatus'
 const FULL_WIDTH_PAGES = ['/admin/orders', '/admin/kitchen', '/admin/bar'];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, logout, isLoading } = useAuth();
+  const { isAuthenticated, user, roleLabel, logout, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<IncomingToast[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMessage, setPwMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const changePassword = async () => {
+    setPwMessage(null);
+    if (!pwCurrent || !pwNew) {
+      setPwMessage({ ok: false, text: 'Current and new password are required.' });
+      return;
+    }
+    if (pwNew.length < 6) {
+      setPwMessage({ ok: false, text: 'New password must be at least 6 characters.' });
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      setPwMessage({ ok: false, text: 'New password and confirmation do not match.' });
+      return;
+    }
+    setPwBusy(true);
+    try {
+      const res = await fetch('/api/admin/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: pwCurrent, new_password: pwNew }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPwMessage({ ok: false, text: data.error || 'Failed to change password.' });
+      } else {
+        setPwMessage({ ok: true, text: data.message || 'Password changed.' });
+        setPwCurrent('');
+        setPwNew('');
+        setPwConfirm('');
+      }
+    } catch {
+      setPwMessage({ ok: false, text: 'Network error. Please try again.' });
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const isIndividualAccount = !!user && !!user.id && user.id !== 'legacy';
+
+  const pwInputStyle: React.CSSProperties = {
+    padding: '9px 12px',
+    borderRadius: 8,
+    background: '#1A1610',
+    border: '1px solid #3A3428',
+    color: '#F0EBE3',
+    fontSize: 13.5,
+    outline: 'none',
+  };
 
   // Incoming message notifications (sound + popup toast)
   const handleNewMessage = useCallback((toast: IncomingToast) => {
@@ -139,6 +194,115 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ToastProvider>
       <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1610', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+        {/* Acting manager banner — every change is attributed to this identity */}
+        {isAuthenticated && user?.display_name && (
+          <div style={{
+            position: 'fixed',
+            top: 12,
+            right: 12,
+            zIndex: 102,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(200,160,78,0.12)',
+            border: '1px solid rgba(200,160,78,0.35)',
+            borderRadius: 999,
+            padding: '5px 14px',
+            fontSize: 12.5,
+            color: '#C8A04E',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(8px)',
+          }}>
+            <span style={{ fontWeight: 600 }}>Logged in as</span>
+            <span style={{ color: '#F0EBE3', fontWeight: 600 }}>{user.display_name}</span>
+            <span style={{ opacity: 0.85 }}>· {roleLabel()}</span>
+            {isIndividualAccount && (
+              <button
+                onClick={() => setPwModalOpen(true)}
+                style={{
+                  marginLeft: 8,
+                  padding: '2px 10px',
+                  borderRadius: 999,
+                  background: 'rgba(200,160,78,0.15)',
+                  border: '1px solid rgba(200,160,78,0.45)',
+                  color: '#C8A04E',
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Change Password
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Change password modal */}
+        {pwModalOpen && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }} onClick={() => setPwModalOpen(false)}>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: 360, maxWidth: '92vw',
+                background: '#242018', border: '1px solid #3A3428', borderRadius: 12,
+                padding: 24, color: '#F0EBE3',
+              }}
+            >
+              <h3 style={{ margin: '0 0 4px', fontSize: 16, color: '#C8A04E' }}>Change Password</h3>
+              <p style={{ margin: '0 0 16px', fontSize: 12.5, color: '#A09888' }}>
+                Signing out of your other devices after this change.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  value={pwCurrent}
+                  onChange={e => setPwCurrent(e.target.value)}
+                  style={pwInputStyle}
+                />
+                <input
+                  type="password"
+                  placeholder="New password (min 6 characters)"
+                  value={pwNew}
+                  onChange={e => setPwNew(e.target.value)}
+                  style={pwInputStyle}
+                />
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={pwConfirm}
+                  onChange={e => setPwConfirm(e.target.value)}
+                  style={pwInputStyle}
+                />
+                {pwMessage && (
+                  <p style={{ margin: 0, fontSize: 12.5, color: pwMessage.ok ? '#7BC86E' : '#E05B5B' }}>
+                    {pwMessage.text}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+                  <button
+                    onClick={() => setPwModalOpen(false)}
+                    style={{ padding: '7px 14px', borderRadius: 8, background: 'transparent', border: '1px solid #3A3428', color: '#A09888', cursor: 'pointer', fontSize: 13 }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={changePassword}
+                    disabled={pwBusy}
+                    style={{ padding: '7px 14px', borderRadius: 8, background: '#C8A04E', border: 'none', color: '#1A1610', fontWeight: 600, cursor: 'pointer', fontSize: 13, opacity: pwBusy ? 0.6 : 1 }}
+                  >
+                    {pwBusy ? 'Saving…' : 'Save Password'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sidebar */}
         <Sidebar
           open={sidebarOpen}

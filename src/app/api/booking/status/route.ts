@@ -5,6 +5,8 @@ import { statusUpdateSchema, BOOKING_STATUS_TRANSITIONS } from '@/lib/booking/va
 import { createAuditEntry } from '@/lib/booking/audit'
 import { releaseAvailability } from '@/lib/booking/availability'
 import { autoReserveForBooking, cancelReservationsForBooking, consumeReservationsForBooking } from '@/inventory/engine/reservations'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -100,6 +102,24 @@ export async function PATCH(request: NextRequest) {
       changed_by: 'admin',
       reason: reason || undefined,
     })
+
+    // Mission E8: attribute the change to the acting admin identity
+    const admin = await getAdminContext(request)
+    if (admin) {
+      await logAdminAction({
+        adminId: admin.adminId,
+        adminName: admin.displayName,
+        adminRole: admin.role,
+        action: 'bookings.status_change',
+        targetType: 'bookings',
+        targetId: booking_id,
+        before: { status: previousStatus },
+        after: { status: new_status, reason: reason || null },
+        ipAddress: request.headers.get('x-forwarded-for') || null,
+        userAgent: request.headers.get('user-agent') || null,
+        sessionId: admin.sessionId,
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch {

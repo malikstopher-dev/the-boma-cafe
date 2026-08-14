@@ -3,6 +3,8 @@ import { ImportService } from '@/inventory/import/ImportService'
 import type { ApiResponse } from '@/inventory/engine/types'
 import type { ImportApplyResult } from '@/inventory/import/ImportTypes'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 const importService = new ImportService()
 
@@ -42,6 +44,12 @@ export async function POST(
       )
     }
 
+    const admin = await getAdminContext(request)
+    const logApply = (appliedAt: string) => {
+      if (!admin) return
+      void logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.import_apply', targetType: 'inventory_imports', targetId: id, after: { row_count: Array.isArray(decisions) ? decisions.length : 0, applied_at: appliedAt }, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
+    }
+
     // RPC path (migration 075): the entire apply is a single transaction and
     // re-applying an already-applied batch is an idempotent no-op. If the
     // RPC is not yet applied (PGRST202) or raises a business error, fall
@@ -64,6 +72,7 @@ export async function POST(
         rowCount: rpcRes.data.row_count,
         appliedAt: rpcRes.data.applied_at,
       }
+      logApply(rpcRes.data.applied_at)
       return NextResponse.json({ data: result }, { status: 200 })
     }
 
@@ -95,6 +104,7 @@ export async function POST(
     }
 
     const result = await importService.apply(id, decisions as never, performedBy)
+    logApply(new Date().toISOString())
     return NextResponse.json({ data: result }, { status: 200 })
   } catch (error) {
     return NextResponse.json(

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
 import { approvePurchaseOrder } from '@/inventory/engine/purchase-orders'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +10,11 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<unknown>>> {
   try {
     const { id } = await params
+    const admin = await getAdminContext(request)
     const data = await approvePurchaseOrder(id)
+    if (admin) {
+      await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.po_approve', targetType: 'inventory_purchase_orders', targetId: id, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
+    }
     return NextResponse.json({ data })
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error'

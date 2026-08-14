@@ -4,6 +4,8 @@ import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, InventoryTransaction } from '@/inventory/engine/types'
 import { WasteValidationError } from '@/inventory/lib/errors'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
+import { getAdminContext } from '@/lib/admin/context'
+import { logAdminAction } from '@/lib/admin/audit'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction[]>>> {
   try {
@@ -49,6 +51,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
+    const admin = await getAdminContext(request)
     const tx = await recordWaste({
       product_id: body.product_id,
       location_id: locationId,
@@ -57,8 +60,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       reason_type: body.reason_type ?? null,
       reason_notes: body.reason_notes ?? null,
       cost_centre_id: body.cost_centre_id ?? null,
-      performed_by: body.performed_by ?? null,
+      performed_by: body.performed_by ?? admin?.displayName ?? null,
     })
+    if (admin) {
+      await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.waste_record', targetType: 'inventory_transactions', targetId: tx.id, after: { transaction_type: body.transaction_type, quantity: Number(body.quantity) }, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
+    }
     return NextResponse.json({ data: tx }, { status: 201 })
   } catch (error) {
     if (error instanceof WasteValidationError) {

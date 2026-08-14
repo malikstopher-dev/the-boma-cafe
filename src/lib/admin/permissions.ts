@@ -1,0 +1,78 @@
+// Admin RBAC permission map (Mission E8)
+import type { AdminRole } from './types'
+
+export type AdminPermission =
+  | 'view:owner_dashboard'
+  | 'view:reports'
+  | 'view:staff_management'
+  | 'view:settings'
+  | 'view:accounts'
+  | 'waiter.write'
+  | 'waiter.pin_reset'
+  | 'settings.write'
+  | 'pricing.write'
+  | 'cms.write'
+  | 'bar_menu.write'
+  | 'inventory.config.write'
+  | 'inventory.approve'
+  | 'inventory.destructive'
+  | 'accounts.write'
+  | 'accounts.delete'
+  | 'accounts.change_role'
+  | 'security.settings'
+  | 'security.sessions'
+
+const ALL: AdminPermission[] = [
+  'view:owner_dashboard',
+  'view:reports',
+  'view:staff_management',
+  'view:settings',
+  'view:accounts',
+  'waiter.write',
+  'waiter.pin_reset',
+  'settings.write',
+  'pricing.write',
+  'cms.write',
+  'bar_menu.write',
+  'inventory.config.write',
+  'inventory.approve',
+  'inventory.destructive',
+  'accounts.write',
+  'accounts.delete',
+  'accounts.change_role',
+  'security.settings',
+  'security.sessions',
+]
+
+// Manager: operational administration, no user/security/system config.
+const MANAGER: AdminPermission[] = [
+  'view:reports',
+  'view:staff_management',
+  'view:settings',
+  'waiter.write',
+  'waiter.pin_reset',
+  'cms.write',
+  'bar_menu.write',
+  'inventory.config.write',
+  'inventory.approve',
+]
+
+// Assistant manager: daily operations, no configuration/approvals that post ledger.
+const ASSISTANT_MANAGER: AdminPermission[] = [
+  'waiter.pin_reset', // reset of waiter PINs is a daily operational task (manager + assistant per examples)
+]
+
+const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
+  owner: ALL,
+  full_manager: ALL.filter(p => !['accounts.delete', 'accounts.change_role', 'security.settings', 'security.sessions'].includes(p)),
+  manager: MANAGER,
+  assistant_manager: ASSISTANT_MANAGER,
+}
+
+export function can(role: AdminRole, permission: AdminPermission): boolean {
+  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false
+}
+
+export function roleLabel(role: AdminRole): string {
+  return role === 'owner' ? 'Owner' : role === 'full_manager' ? 'Main Manager' : role === 'manager' ? 'Manager' : 'Assistant Manager'
+}

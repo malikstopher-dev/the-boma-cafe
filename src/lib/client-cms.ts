@@ -186,9 +186,9 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 export const cmsService = {
   // Auth
   verifyAuth: () => fetchApi<{ authenticated: boolean; user?: any }>('/api/admin/auth'),
-  login: (password: string) => fetchApi<{ success: boolean; user?: any }>('/api/admin/auth', {
+  login: (username: string, password: string) => fetchApi<{ success: boolean; user?: any }>('/api/admin/auth', {
     method: 'POST',
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ username, password }),
   }),
 
   // Unified All Settings (homepage, about, contact, promoBar, branding, seo)

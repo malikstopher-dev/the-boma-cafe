@@ -26,6 +26,10 @@ function err(msg: string): Promise<{ data: null; error: { message: string } }> {
   return Promise.resolve({ data: null, error: { message: msg } })
 }
 
+// Applied 1h ago — inside the 24h rollback window. (Hardcoded 2026-08-13 dates
+// made these fixtures expire once the clock passed the window.)
+const recentAppliedAt = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+
 describe('ImportRollbackService', () => {
   const service = new ImportRollbackService()
 
@@ -79,7 +83,7 @@ describe('ImportRollbackService', () => {
 
   it('reverses a +10 purchase with an exact -10 adjustment', async () => {
     mockChains({
-      batch: { id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' },
+      batch: { id: 'batch-1', status: 'applied', applied_at: recentAppliedAt },
       transactions: [
         { id: 'txn-1', product_id: 'prod-1', location_id: 'loc-1', quantity: 10, unit_cost: 250, transaction_type: 'purchase' },
       ],
@@ -109,7 +113,7 @@ describe('ImportRollbackService', () => {
 
   it('reverses a -4 adjustment with an exact +4 adjustment (sign negation, not Math.abs)', async () => {
     mockChains({
-      batch: { id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' },
+      batch: { id: 'batch-1', status: 'applied', applied_at: recentAppliedAt },
       transactions: [
         { id: 'txn-1', product_id: 'prod-1', location_id: 'loc-1', quantity: -4, unit_cost: null, transaction_type: 'adjustment' },
       ],
@@ -123,7 +127,7 @@ describe('ImportRollbackService', () => {
   it('excludes prior reversals via the notes signature (retry-safety)', async () => {
     const notSpy = vi.fn(() => res([]))
     mockChains({
-      batch: { id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' },
+      batch: { id: 'batch-1', status: 'applied', applied_at: recentAppliedAt },
       notSpy,
     })
 
@@ -163,7 +167,7 @@ describe('ImportRollbackService', () => {
             eq: vi.fn(() => ({
               maybeSingle: vi.fn(() => {
                 importSelects++
-                if (importSelects === 1) return res({ id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' })
+                if (importSelects === 1) return res({ id: 'batch-1', status: 'applied', applied_at: recentAppliedAt })
                 return res({ id: 'batch-1', status: 'rolled_back' })
               }),
             })),
@@ -209,7 +213,7 @@ describe('ImportRollbackService', () => {
             eq: vi.fn(() => ({
               maybeSingle: vi.fn(() => {
                 importSelects++
-                if (importSelects === 1) return res({ id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' })
+                if (importSelects === 1) return res({ id: 'batch-1', status: 'applied', applied_at: recentAppliedAt })
                 return res({ id: 'batch-1', status: 'rolled_back' })
               }),
             })),
@@ -251,7 +255,7 @@ describe('ImportRollbackService', () => {
 
   it('reuses an existing reversal on duplicate-key error (H4: no double reversal)', async () => {
     mockChains({
-      batch: { id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' },
+      batch: { id: 'batch-1', status: 'applied', applied_at: recentAppliedAt },
       transactions: [
         { id: 'txn-1', product_id: 'prod-1', location_id: 'loc-1', quantity: 10, unit_cost: null, transaction_type: 'purchase' },
       ],
@@ -270,7 +274,7 @@ describe('ImportRollbackService', () => {
 
   it('throws when re-entry reveals the batch is not rolled_back (defensive reject)', async () => {
     mockChains({
-      batch: { id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' },
+      batch: { id: 'batch-1', status: 'applied', applied_at: recentAppliedAt },
       claimResult: null,
       transactions: [
         { id: 'txn-1', product_id: 'prod-1', location_id: 'loc-1', quantity: 10, unit_cost: null, transaction_type: 'purchase' },
@@ -283,7 +287,7 @@ describe('ImportRollbackService', () => {
 
   it('restores status to applied and rethrows when a reversal fails mid-loop', async () => {
     mockChains({
-      batch: { id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' },
+      batch: { id: 'batch-1', status: 'applied', applied_at: recentAppliedAt },
       transactions: [
         { id: 'txn-1', product_id: 'prod-1', location_id: 'loc-1', quantity: 10, unit_cost: null, transaction_type: 'purchase' },
         { id: 'txn-2', product_id: 'prod-2', location_id: 'loc-1', quantity: 5, unit_cost: null, transaction_type: 'purchase' },
@@ -307,7 +311,7 @@ describe('ImportRollbackService', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() => res({ id: 'batch-1', status: 'applied', applied_at: '2026-08-13T08:00:00Z' })),
+              maybeSingle: vi.fn(() => res({ id: 'batch-1', status: 'applied', applied_at: recentAppliedAt })),
             })),
           })),
           update: vi.fn(() => ({

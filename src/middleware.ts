@@ -7,10 +7,15 @@ const KITCHEN_COOKIE = 'boma_kitchen_auth'
 const WAITER_COOKIE = 'boma_waiter_auth'
 const BAR_COOKIE = 'boma_bar_auth'
 const STAFF_SESSION_COOKIE = 'boma_staff_session'
+const ADMIN_SESSION_COOKIE = 'boma_admin_session'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD
 const WAITER_PASSWORD = process.env.WAITER_PASSWORD
 const BAR_PASSWORD = process.env.BAR_PASSWORD
+
+// Legacy shared-password admin cookie remains accepted during the E8
+// transition. Set ADMIN_LEGACY_FALLBACK=false to reject it (cutover).
+const LEGACY_ADMIN_FALLBACK = process.env.ADMIN_LEGACY_FALLBACK !== 'false'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -36,7 +41,13 @@ function timingSafeCompare(a: string, b: string): boolean {
   return diff === 0
 }
 
-type AuthResult = { role: 'admin' | 'kitchen' | 'waiter' | 'bar' } | null
+type AuthResult = {
+  role: 'admin' | 'kitchen' | 'waiter' | 'bar'
+  adminId?: string
+  adminName?: string
+  adminRole?: string
+  adminSession?: string
+} | null
 
 async function verifyRole(request: NextRequest): Promise<AuthResult> {
   if (!ADMIN_PASSWORD || !KITCHEN_PASSWORD || !WAITER_PASSWORD || !BAR_PASSWORD) return null
@@ -46,9 +57,62 @@ async function verifyRole(request: NextRequest): Promise<AuthResult> {
   const waiterCookie = request.cookies.get(WAITER_COOKIE)
   const barCookie = request.cookies.get(BAR_COOKIE)
   const staffSessionCookie = request.cookies.get(STAFF_SESSION_COOKIE)
+  const adminSessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)
 
-  // Check password-based cookies first (legacy admin auth)
-  if (adminCookie?.value) {
+  // ── New admin identity sessions (Mission E8) — highest precedence ──
+  // Cookie value = admin_sessions.id (UUID). Validated against the DB so
+  // force-logout, deactivation and expiry take effect immediately.
+  if (adminSessionCookie?.value && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } })
+      const { data, error } = await supabase
+        .from('admin_sessions')
+        .select('id, admin_id, signed_out_at, expires_at, last_active_at')
+        .eq('id', adminSessionCookie.value)
+        .is('signed_out_at', null)
+        .maybeSingle()
+
+      if (!error && data) {
+        const now = new Date()
+        const expiresAt = new Date(data.expires_at)
+        const lastActive = new Date(data.last_active_at)
+
+        if (now > expiresAt || (now.getTime() - lastActive.getTime()) > INACTIVITY_TIMEOUT_MS) {
+          const response = NextResponse.next()
+          response.cookies.delete(ADMIN_SESSION_COOKIE)
+          return null
+        }
+
+        // Touch last_active_at (write happens server-side via service role)
+        await supabase
+          .from('admin_sessions')
+          .update({ last_active_at: now.toISOString() })
+          .eq('id', data.id)
+
+        const { data: account } = await supabase
+          .from('admin_accounts')
+          .select('username, display_name, role, is_active')
+          .eq('id', data.admin_id)
+          .maybeSingle()
+
+        if (account && account.is_active) {
+          return {
+            role: 'admin',
+            adminId: data.admin_id,
+            adminName: account.display_name,
+            adminRole: account.role,
+            adminSession: data.id,
+          }
+        }
+      }
+    } catch {
+      // Session validation failed — continue
+    }
+  }
+
+  // Legacy password-based cookies (staff roles must keep working — the
+  // legacy fallback flag gates ONLY the shared admin password cookie)
+  if (LEGACY_ADMIN_FALLBACK && adminCookie?.value) {
     const expected = await hashSHA256(`admin:${ADMIN_PASSWORD}`)
     if (timingSafeCompare(adminCookie.value, expected)) return { role: 'admin' }
   }
@@ -113,7 +177,7 @@ function roleScope(role: string): string {
 
 const PROTECTED_API_PREFIXES = ['/api/admin/', '/api/cms/', '/api/waiters/', '/api/gallery/', '/api/upload/', '/api/supabase/', '/api/staff/', '/api/inventory/', '/api/background-jobs/']
 
-const PUBLIC_API_EXCEPTIONS = ['/api/cms/public', '/api/waiters/active', '/api/menu/public', '/api/track-order', '/api/receipt/verify', '/api/staff/pin-login', '/api/staff/list', '/api/staff/session']
+const PUBLIC_API_EXCEPTIONS = ['/api/cms/public', '/api/waiters/active', '/api/menu/public', '/api/track-order', '/api/receipt/verify', '/api/staff/pin-login', '/api/staff/list', '/api/staff/session', '/api/admin/accounts/public']
 
 const PUBLIC_SUPABASE_POST_ROUTES = ['/api/supabase/orders', '/api/supabase/contact', '/api/supabase/bookings']
 
@@ -125,11 +189,17 @@ function isPublicApiException(pathname: string): boolean {
   return PUBLIC_API_EXCEPTIONS.some(p => pathname.startsWith(p))
 }
 
-function setAuthHeaders(headers: Headers, role: string): Headers {
+function setAuthHeaders(headers: Headers, role: string, admin?: { adminId?: string; adminName?: string; adminRole?: string; adminSession?: string }): Headers {
   const h = new Headers(headers)
   h.set('x-user-role', role)
   h.set('x-auth-valid', 'true')
   h.set('x-user-scope', roleScope(role))
+  if (admin?.adminId && admin.adminRole) {
+    h.set('x-admin-id', admin.adminId)
+    h.set('x-admin-name', admin.adminName || '')
+    h.set('x-admin-role', admin.adminRole)
+    h.set('x-admin-session', admin.adminSession || '')
+  }
   return h
 }
 
@@ -152,7 +222,7 @@ export async function middleware(request: NextRequest) {
       if (!auth) {
         return NextResponse.redirect(new URL('/staff/login', request.url))
       }
-      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
     }
 
     // Waiter page: has its own client-side PasswordGate — pass through.
@@ -160,7 +230,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/waiter')) {
       const auth = await verifyRole(request)
       if (auth && (auth.role === 'admin' || auth.role === 'waiter')) {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
       }
       return NextResponse.next()
     }
@@ -169,14 +239,14 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/inv')) {
       const auth = await verifyRole(request)
       if (!auth || auth.role !== 'admin') return redirectToLogin(request)
-      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
     }
 
     // Owner Dashboard — the owner's first page after logging in (admin only)
     if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
       const auth = await verifyRole(request)
       if (!auth || auth.role !== 'admin') return redirectToLogin(request)
-      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
     }
 
     // Admin pages
@@ -188,21 +258,21 @@ export async function middleware(request: NextRequest) {
 
     if (pathname === '/admin/kitchen') {
       if (auth.role === 'admin' || auth.role === 'kitchen') {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
       }
       return redirectToLogin(request)
     }
 
     if (pathname === '/admin/bar') {
       if (auth.role === 'admin' || auth.role === 'bar') {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
       }
       return redirectToLogin(request)
     }
 
     if (pathname === '/admin/messages') {
       if (['admin', 'kitchen', 'bar', 'waiter'].includes(auth.role)) {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
       }
       return redirectToLogin(request)
     }
@@ -210,7 +280,7 @@ export async function middleware(request: NextRequest) {
     // All other /admin/* routes: admin ONLY
     if (auth.role !== 'admin') return redirectToLogin(request)
 
-    return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, 'admin') } })
+    return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, 'admin', auth) } })
   }
 
   // ── API routes ──────────────────────────────────────────
@@ -228,7 +298,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
   }
 
-  return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role) } })
+  // Pass the full admin identity through so API routes can enforce RBAC
+  // (x-admin-role etc.). Staff identities have no admin fields — skipped.
+  return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
 }
 
 export const config = {
