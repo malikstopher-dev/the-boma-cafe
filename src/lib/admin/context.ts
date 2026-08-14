@@ -7,14 +7,12 @@ import type { AdminContext } from './types'
 export async function getAdminContext(request: Request): Promise<AdminContext | null> {
   const headers = request.headers
   const session = getRoleFromHeaders(headers)
-  if (!session) return null
-  if (session.role !== 'admin') return null
 
   const adminId = headers.get('x-admin-id')
   const adminName = headers.get('x-admin-name')
   const adminRole = headers.get('x-admin-role')
 
-  if (adminId && adminRole) {
+  if (session?.role === 'admin' && adminId && adminRole) {
     return {
       adminId,
       username: adminName || '',
@@ -25,7 +23,9 @@ export async function getAdminContext(request: Request): Promise<AdminContext | 
     }
   }
 
-  // Fallback: resolve from the cookie directly (routes not covered by middleware)
+  // Fallback: resolve from the cookie directly (routes not covered by middleware,
+  // or requests without identity headers). The boma_admin_session cookie only
+  // exists for individual admin sessions — never for staff roles.
   const cookieHeader = headers.get('cookie') || ''
   const match = cookieHeader.match(/(?:^|;\s*)boma_admin_session=([^;]+)/)
   if (!match) return null

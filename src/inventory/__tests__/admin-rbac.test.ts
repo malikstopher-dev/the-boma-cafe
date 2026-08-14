@@ -6,6 +6,12 @@ vi.mock('@/lib/supabase', () => ({
   getAdminClient: vi.fn(() => mockClient),
 }))
 
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => ({
+    get: vi.fn((name: string) => (name === 'boma_admin_session' ? { value: 'sess-1' } : undefined)),
+  })),
+}))
+
 import { createAdminSession, validateAdminSession, endAllSessionsForAdmin } from '@/lib/admin/session'
 import { logAdminAction, getAdminAuditLog } from '@/lib/admin/audit'
 import { hashPassword, verifyPassword } from '@/lib/admin/password'
@@ -281,6 +287,19 @@ describe('requireAdminPermission — identity enforcement', () => {
       'security.sessions',
     )
     expect(allowed).toBeNull()
+  })
+
+  it('assistant_manager cookie fallback is enforced even without middleware identity headers (bare /api/waiters path)', async () => {
+    // Two validateAdminSession passes (getRequestRole via next/headers cookies +
+    // getAdminContext cookie fallback) — each needs session/update/account impls.
+    cookieAccount('assistant_manager')
+    cookieAccount('assistant_manager')
+    const bareReq = new NextRequest('http://localhost/api/waiters', {
+      headers: { cookie: 'boma_admin_session=sess-1' },
+    })
+    const res = await requireAdminPermission(bareReq, 'waiter.write')
+    expect(res).not.toBeNull()
+    expect(res!.status).toBe(403)
   })
 
   it('legacy admin (no identity, no session cookie) keeps full access during transition', async () => {
