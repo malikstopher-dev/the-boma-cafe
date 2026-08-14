@@ -11,12 +11,12 @@ export const dynamic = 'force-dynamic'
 
 const VALID_ROLES: AdminRole[] = ['owner', 'full_manager', 'manager', 'assistant_manager']
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authError = await requireAdminPermission(request, 'accounts.write')
   if (authError) return authError
 
   const admin = await getAdminContext(request)
-  const { id } = params
+  const { id } = await params
   const body = await request.json()
 
   const { data: existing } = await getAdminClient()
@@ -101,12 +101,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   return NextResponse.json({ data })
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authError = await requireAdminPermission(request, 'accounts.delete')
   if (authError) return authError
 
   const admin = await getAdminContext(request)
-  const { id } = params
+  const { id } = await params
 
   const { data: existing } = await getAdminClient()
     .from('admin_accounts')
@@ -148,14 +148,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   return NextResponse.json({ success: true })
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // POST /api/admin/accounts/[id] with { action: 'force-logout' } ends all
   // sessions — owner-only emergency control (security.sessions).
   const authError = await requireAdminPermission(request, 'security.sessions')
   if (authError) return authError
 
   const admin = await getAdminContext(request)
-  const { id } = params
+  const { id } = await params
   const body = await request.json()
 
   if (body.action !== 'force-logout') {
