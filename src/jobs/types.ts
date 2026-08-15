@@ -2,6 +2,7 @@ export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'can
 
 export type JobType =
   | 'pdf_generation'
+  | 'order_deduction'
   | 'email_delivery'
   | 'invoice_generation'
   | 'receipt_generation'

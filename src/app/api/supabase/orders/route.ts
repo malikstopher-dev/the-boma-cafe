@@ -449,11 +449,30 @@ export async function PATCH(request: NextRequest) {
           break
       }
 
-      // ── Inventory: auto-deduct stock when order completes (non-blocking) ──
+      // ── Inventory: queue stock deduction when order completes (E1-4) ──
+      // The background worker (src/jobs/handlers/order-deduction.ts) performs
+      // the deduction asynchronously via the F2 deduct_order_items RPC
+      // (engine fallback), preserving F3 attribution. Idempotency key per
+      // order: dead_letter/failed slots are replaced by the enqueue RPC, so
+      // re-enqueues always produce a fresh pending job. The enqueue never
+      // fails the PATCH — deduction is best-effort and retryable.
       if (updateBody.status === 'completed') {
-        import('@/inventory/engine/order-items')
-          .then(({ autoDeductCompletedOrder }) => autoDeductCompletedOrder(updated.id))
-          .catch(() => {})
+        try {
+          const { error: enqueueError } = await getAdminClient().rpc(
+            'enqueue_background_job',
+            {
+              p_job_type: 'order_deduction',
+              p_payload: { order_id: updated.id },
+              p_idempotency_key: `order_deduction:${updated.id}`,
+              p_max_retries: 3,
+            },
+          )
+          if (enqueueError) {
+            console.error('[orders PATCH] failed to queue order deduction:', enqueueError.message)
+          }
+        } catch (err) {
+          console.error('[orders PATCH] failed to queue order deduction:', String(err))
+        }
       }
     }
 
