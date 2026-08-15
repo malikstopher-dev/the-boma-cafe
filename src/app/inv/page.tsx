@@ -183,7 +183,7 @@ export default function OwnerDashboardPage() {
   return (
     <div>
       <PageTitle
-        title={`${greet()}, Mr Mahindra`}
+        title={`${greet()}, Mr Mahendra`}
         subtitle="Inventory & Financial Overview � every figure is calculated from the live transaction ledger."
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

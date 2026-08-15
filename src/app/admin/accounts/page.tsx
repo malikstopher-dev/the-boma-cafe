@@ -146,10 +146,10 @@ export default function AdminAccountsPage() {
         >
           <h3 style={{ color: '#F0EBE3', margin: 0 }}>New management account</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <input placeholder="Display name (e.g. Chriselda)" value={form.display_name}
+            <input placeholder="Display name (e.g. Zelda)" value={form.display_name}
               onChange={(e) => setForm({ ...form, display_name: e.target.value })} required
               style={inputStyle} />
-            <input placeholder="Username (e.g. chriselda)" value={form.username}
+            <input placeholder="Username (e.g. zelda)" value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })} required
               style={inputStyle} />
           </div>
