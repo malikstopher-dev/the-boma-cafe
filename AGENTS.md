@@ -1278,3 +1278,37 @@ Owner Dashboard KPI Integrity Audit -> P0 fixes (MISSION LOCK, before P1 Supplie
 - Owner was posting live TEST purchases (ESSAIE/TEST/Vodka/Gin/Tonic x50, NULL cost) at 06:14 UTC during this session - NOT touched, their business rows.
 - Remaining NULL-cost rows (7) are products with NO cost history anywhere (e.g., TEST/ESSAIE) - engine leaves them NULL until first purchase; KPI treats them as 0.
 - P1 Supplier Workflow (receiving history: who/when/invoice/qty) NOT started - next per owner's mission order.
+
+---
+
+## Session: P0 Legacy Staff->Admin Bridge 404 (2026-08-15) - commit 1835050
+
+### Objective
+Fix the legacy bridge: /staff/login -> Admin -> shared password (Lovers0884) previously auto-logged into the old admin session; the user hit a 404 at /admin/operations/report. Mission: the shared password becomes a TEMPORARY GATE only - land on /admin/login (new individual login) instead.
+
+### Root cause (live-verified against prod)
+1. **The bridge never navigated to /admin/operations/report in code** - after legacy-password success the deployed staff login did client-side outer.replace('/staff/admin') -> /admin -> /admin/dashboard (legacy auto-login = the "permanent login" behavior the mission wanted to end). Proved by grepping all 13 deployed /staff/login JS chunks (zero references to the singular path) and by HTTP-following the chain with the real shared password (staff/admin 200, admin 200, admin/dashboard 200, operations/report 404).
+2. **The 404 URL's only in-app source** was a stale nav link in the owner portal: src/app/inv/layout.tsx:139 "Operations Reports" -> /admin/operations/report (singular; the real route is /admin/operations/reports). Clicking it (or a cached visit) after legacy login produced the 404 the owner reported.
+
+### Fix (2 files, 3 insertions, 3 deletions - no auth/RBAC/password changes)
+- src/app/staff/login/page.tsx:
+  - Submit success: admin target /staff/admin -> /admin/login (kitchen/bar/waiter targets unchanged).
+  - Auto-check effect: legacy session (data.user?.id === 'legacy') -> /admin/login; individual session -> /staff/admin fast path preserved.
+- src/app/inv/layout.tsx:139: stale /admin/operations/report -> /admin/operations/reports.
+
+### Verification (all live against prod after ercel --prod)
+- POST /api/admin/auth {password:'Lovers0884', role:'admin'} -> 200 + oma_admin_auth cookie (legacy gate intact)
+- Deployed login chunk (0j1oe7-rx32bf.js) contains the new ternary: "admin"===l?"/admin/login":... and .user?.id==="legacy"?"/admin/login":"/staff/admin"
+- GET /admin/login -> 200 (destination renders - no 404); /api/admin/accounts/public -> 200 (chriselda, gibbs, isaac, mahindra, khosi - individual flow untouched)
+- No deployed chunk references singular /admin/operations/report (inv chunk now contains only plural /admin/operations/reports)
+- Local: 168/168 vitest, edited files tsc-clean (temp UI tsconfig, deleted), next build green
+- Note: /admin/operations/report still 404s if typed directly (normal Next.js dead-route behavior; middleware 307s unauthenticated visitors to /admin/login?redirect=... - no app path leads there anymore)
+
+### Expected flow now
+/staff/login -> Admin -> shared legacy password -> /admin/login -> individual password (Chriselda/Mahindra/etc.) -> /dashboard.
+
+### Rollback
+git revert 1835050 + ercel --prod (docs-only commit 54f4bb2 unaffected). No DB/migration involved.
+
+### Next (mission order, NOT started)
+Resume P1 Supplier Workflow implementation in the approved order (P1a receiving identity -> P1b over-receive cap -> P1c shortage reasons -> P1d invoice automation -> P1e payment terms). Audit findings carried forward in the P1 gate report; no re-audit needed.
