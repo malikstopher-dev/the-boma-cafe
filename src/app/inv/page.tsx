@@ -175,7 +175,7 @@ export default function OwnerDashboardPage() {
       {
         label: 'Adjustments', value: formatMoney(k.adjustments),
         delta: pctDelta(k.adjustments, k.adjustmentsPrev), tone: 'neutral' as const,
-        sub: 'counts, transfers, corrections',
+        sub: 'corrections',
       },
     ]
   }, [data])

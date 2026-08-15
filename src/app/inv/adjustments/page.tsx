@@ -25,6 +25,7 @@ export default function AdjustmentsPage() {
   const [productId, setProductId] = useState('')
   const [locationId, setLocationId] = useState('')
   const [qty, setQty] = useState('')
+  const [reasonType, setReasonType] = useState('ADJUSTMENT')
   const [notes, setNotes] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -64,6 +65,7 @@ export default function AdjustmentsPage() {
         location_id: locationId,
         transaction_type: 'adjustment',
         quantity: Number(qty),
+        reason_type: reasonType,
         reason_notes: notes || undefined,
       }),
     })
@@ -89,7 +91,7 @@ export default function AdjustmentsPage() {
 
       <div style={{ ...cardStyle, marginBottom: 22 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8', marginBottom: 12 }}>Record an adjustment</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1.5fr auto', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1.3fr 1.5fr auto', gap: 10, alignItems: 'center' }}>
           <select value={productId} onChange={(e) => setProductId(e.target.value)} style={inputStyle}>
             <option value="">Select product…</option>
             {products.map((p) => <option key={p.id} value={p.id}>{p.name ?? p.sku ?? p.id.slice(0, 8)}</option>)}
@@ -98,7 +100,14 @@ export default function AdjustmentsPage() {
             {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
           <input placeholder="+10 or -4" value={qty} onChange={(e) => setQty(e.target.value)} style={inputStyle} />
-          <input placeholder="Reason…" value={notes} onChange={(e) => setNotes(e.target.value)} style={inputStyle} />
+          <select value={reasonType} onChange={(e) => setReasonType(e.target.value)} style={inputStyle}>
+            <option value="ADJUSTMENT">Adjustment</option>
+            <option value="BREAKAGE">Breakage</option>
+            <option value="RETURN">Return</option>
+            <option value="DAMAGED">Damaged</option>
+            <option value="FOUND_STOCK">Found Stock</option>
+          </select>
+          <input placeholder="Notes (free text)…" value={notes} onChange={(e) => setNotes(e.target.value)} style={inputStyle} />
           <button onClick={() => void submit()} disabled={!productId || !locationId || !qty} style={{
             background: '#C4A04E', color: '#101A26', border: 'none', borderRadius: 8,
             padding: '9px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',

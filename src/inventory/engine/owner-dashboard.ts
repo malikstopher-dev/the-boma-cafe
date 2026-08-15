@@ -183,7 +183,7 @@ export interface RawTxn {
 }
 
 const PURCHASE_TYPES = new Set(['purchase', 'return'])
-const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff', 'production', 'waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'stolen', 'gas_usage'])
+const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff', 'production', 'waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'stolen', 'gas_usage', 'breakage'])
 const WASTE_TYPES = new Set(['waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'breakage'])
 
 function typeGroup(t: string | null | undefined): StockGroup {

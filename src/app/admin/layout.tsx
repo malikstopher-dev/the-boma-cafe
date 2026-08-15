@@ -202,8 +202,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             right: 12,
             zIndex: 102,
             display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
             alignItems: 'center',
             gap: 8,
+            rowGap: 6,
+            maxWidth: 'min(92vw, 480px)',
             background: 'rgba(200,160,78,0.12)',
             border: '1px solid rgba(200,160,78,0.35)',
             borderRadius: 999,
@@ -221,6 +225,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setPwModalOpen(true)}
                 style={{
                   marginLeft: 8,
+                  flexShrink: 0,
                   padding: '2px 10px',
                   borderRadius: 999,
                   background: 'rgba(200,160,78,0.15)',
@@ -229,6 +234,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   fontSize: 11.5,
                   fontWeight: 600,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Change Password

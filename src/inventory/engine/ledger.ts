@@ -56,6 +56,29 @@ export async function getBalanceAtTime(
   return (data ?? []).reduce((sum, row) => sum + Number(row.quantity), 0)
 }
 
+/**
+ * Resolves a product's current cost: the most recent non-NULL
+ * unit_cost across its ledger history. Used to attach a real
+ * cost to movements written without one (adjustments, waste,
+ * gas usage, physical counts, order-item deductions...).
+ * Returns null only when the product has no cost history at all.
+ */
+async function resolveProductCost(productId: string): Promise<number | null> {
+  const supabase = getInventoryClient()
+  const { data, error } = await supabase
+    .from('inventory_transactions')
+    .select('unit_cost')
+    .eq('product_id', productId)
+    .not('unit_cost', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) return null
+  const cost = Number((data as { unit_cost: number | null } | null)?.unit_cost ?? 0)
+  return cost > 0 ? cost : null
+}
+
 export async function createTransaction(input: CreateTransactionInput): Promise<InventoryTransaction> {
   const supabase = getInventoryClient()
 
@@ -101,6 +124,11 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
   // location's configured cost centre. Never emit undefined/null.
   const costCentreId = await resolveCostCentreId(input.location_id, input.cost_centre_id)
 
+  // Every movement should carry a real unit cost (P0 cost
+  // integrity): explicit value wins, otherwise the product's
+  // latest known cost is attached automatically.
+  const unitCost = input.unit_cost ?? (await resolveProductCost(input.product_id))
+
   const { data, error } = await supabase
     .from('inventory_transactions')
     .insert({
@@ -108,7 +136,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       location_id: input.location_id,
       transaction_type: input.transaction_type,
       quantity: actualQuantity,
-      unit_cost: input.unit_cost ?? null,
+      unit_cost: unitCost,
       cost_centre_id: costCentreId,
       reason_type: input.reason_type ?? null,
       reason_notes: input.reason_notes ?? null,

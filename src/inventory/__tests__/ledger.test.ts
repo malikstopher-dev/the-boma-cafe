@@ -172,6 +172,79 @@ describe('ledger', () => {
       expect(tx.unit_cost).toBe(50)
     })
 
+    it('should attach the product latest cost when unit_cost is omitted', async () => {
+      mockClient.rpc.mockReturnValue({
+        single: vi.fn(() => res({ balance: 100 })),
+      })
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+                })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            insert: vi.fn(() => ({
+              select: vi.fn(() => ({
+                single: vi.fn(() => res({
+                  id: 'tx-2',
+                  product_id: 'prod-1',
+                  location_id: 'loc-1',
+                  transaction_type: 'adjustment',
+                  quantity: -3,
+                  unit_cost: 120,
+                  reference_type: null,
+                  reference_id: null,
+                  performed_by: null,
+                  notes: null,
+                  import_batch_id: null,
+                  created_at: '2026-08-15T00:00:00Z',
+                })),
+              })),
+            })),
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                not: vi.fn(() => ({
+                  order: vi.fn(() => ({
+                    limit: vi.fn(() => ({
+                      maybeSingle: vi.fn(() => res({ unit_cost: 120 })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      const tx = await createTransaction({
+        product_id: 'prod-1',
+        location_id: 'loc-1',
+        transaction_type: 'adjustment',
+        quantity: -3,
+      })
+      expect(tx.id).toBe('tx-2')
+      expect(tx.quantity).toBe(-3)
+      expect(tx.unit_cost).toBe(120)
+    })
+
     it('should throw MissingCostCentreError when the location has no cost centre', async () => {
       mockClient.from.mockImplementation((table: string) => {
         if (table === 'inventory_products') {
