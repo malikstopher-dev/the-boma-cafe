@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import StatusBadge from '@/components/pos/StatusBadge'
 import StationBadge from '@/components/pos/StationBadge'
 import PosButton from '@/components/pos/PosButton'
@@ -10,6 +10,13 @@ import { posTokens as t } from '@/components/pos/DesignSystem'
 import ErrorBoundary from '@/components/pos/ErrorBoundary'
 import PinLogin from '@/components/staff/PinLogin'
 import LockScreen from '@/components/staff/LockScreen'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import {
+  ORDER_LIVE_EVENTS,
+  applyOrderEventToMap,
+  buildOrderStatusMap,
+  subscribeToOrderEvents,
+} from '@/inventory/lib/order-status'
 
 interface MenuItem {
   id: string; categoryId: string; name: string; description: string; price: string; image?: string
@@ -68,6 +75,7 @@ export default function WaiterPage() {
   const [done, setDone] = useState(false)
   const [orderRefs, setOrderRefs] = useState<{ ref: string; station?: string; id?: string }[]>([])
   const [cancelledRefs, setCancelledRefs] = useState<any[]>([])
+  const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({})
   const [searchQuery, setSearchQuery] = useState('')
   const [lastOrder, setLastOrder] = useState<{ tableNumber: number; cart: CartItem[]; itemNotes: Record<string, string>; orderNotes: string } | null>(null)
   const [barCategories, setBarCategories] = useState<BarCategory[]>([])
@@ -165,23 +173,41 @@ export default function WaiterPage() {
     finally { setSubmitting(false) }
   }
 
+  // E1-2: live order status while the Done screen is showing.
+  // Realtime (signal table) is the PRIMARY mechanism; the fetch-based
+  // check rebuilds authoritative statuses, and a visibility-gated poll
+  // remains as the conservative fallback if realtime is unavailable.
+  const checkOrderStatuses = useCallback(async () => {
+    const firstId = orderRefs[0]?.id
+    if (!done || orderRefs.length === 0 || !firstId) return
+    try {
+      const res = await fetch(`/api/supabase/orders?sibling_of=${firstId}`)
+      if (!res.ok) return
+      const { orders: siblings } = await res.json()
+      const all = [...orderRefs.map((r) => ({ id: r.id })), ...(siblings || [])]
+      setCancelledRefs(all.filter((o: any) => o.status === 'cancelled' || o.status === 'rejected').map((o: any) => ({ ref: o.order_ref || o.id, reason: o.cancellation_reason || undefined, status: o.status })))
+      setLiveStatuses(buildOrderStatusMap(all, siblings || []))
+    } catch {}
+  }, [done, orderRefs])
+
   useEffect(() => {
     if (!done || orderRefs.length === 0) return
-    const firstId = orderRefs[0]?.id
-    if (!firstId) return
-    const check = async () => {
-      try {
-        const res = await fetch(`/api/supabase/orders?sibling_of=${firstId}`)
-        if (!res.ok) return
-        const { orders: siblings } = await res.json()
-        const all = [...orderRefs.map(r => ({ id: r.id })), ...(siblings || [])]
-        setCancelledRefs(all.filter((o: any) => o.status === 'cancelled' || o.status === 'rejected').map((o: any) => ({ ref: o.order_ref || o.id, reason: o.cancellation_reason || undefined, status: o.status })))
-      } catch {}
-    }
-    check()
-    const iv = setInterval(check, 30000)
-    return () => clearInterval(iv)
-  }, [done, orderRefs])
+    void checkOrderStatuses()
+    const sub = subscribeToOrderEvents({
+      channel: 'e1-waiter-done',
+      events: ORDER_LIVE_EVENTS,
+      onEvent: (eventName, entityId) =>
+        setLiveStatuses((prev) => applyOrderEventToMap(prev, eventName, entityId)),
+      onChange: () => {
+        void checkOrderStatuses()
+      },
+    })
+    return () => sub.unsubscribe()
+  }, [done, orderRefs, checkOrderStatuses])
+
+  useVisibleInterval(() => {
+    void checkOrderStatuses()
+  }, 300000)
 
   if (!authed) return (
     <PinLogin
@@ -253,7 +279,7 @@ export default function WaiterPage() {
                   <div style={{ fontSize: t.typography.fontSize.xs, color: t.colors.text.dim, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{si.label}</div>
                   <div style={{ fontSize: t.typography.fontSize.lg, fontWeight: t.typography.fontWeight.extrabold, fontFamily: t.typography.fontFamilyMono, color: si.color }}>{r.ref}</div>
                 </div>
-                <StatusBadge status="preparing" size="sm" />
+                <StatusBadge status={(liveStatuses[r.id] ?? 'preparing') as any} size="sm" />
               </div>
             </PosCard>
           )

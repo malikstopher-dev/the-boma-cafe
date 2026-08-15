@@ -1156,3 +1156,42 @@ Mission lock: replace polling with realtime for 4 admin surfaces only; do not to
 2. `git commit` + push, `vercel --prod`.
 3. Post-deploy verification checklist in docs/E1_REALTIME_CONTRACT.md (prove <1s update on two browsers, sidebar badge auto-update, one channel per page in devtools, poll fallback via airplane mode, kitchen/bar/chat regression).
 4. E1-2 (waiter PWA live status) / E1-3 (booking->waiter feed honoring E1-5) / E1-4 (deduction via worker) / E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat) are next ships - NOT started.
+
+---
+
+## Session: E1-2 - Waiter PWA Live Order Status (2026-08-15) - commits to follow
+
+### Objective
+Make the waiter PWA receive live order status (preparing/ready/served/cancelled) via the E1-1 realtime signal table, replacing the 30s cancellation poll as the primary mechanism with a conservative fallback kept. Mission boundaries honored: no /api/waiters CRUD, staff_profiles, staff_sessions, kitchen/bar auth, booking workflow, inventory deduction, worker, admin RBAC, E1-3/4/5 changes.
+
+### Contract change (user-approved via question tool)
+Migration 081 adds `WHEN 'cancelled' THEN 'order.cancelled'` to `emit_order_status_event()` (CREATE OR REPLACE + NOTIFY pgrst). Served stays mapped to `order.completed`. Backward-compatible (new event name only).
+
+### New module: `src/inventory/lib/order-status.ts` (E1-2 waiter consumer)
+- `ORDER_LIVE_EVENTS` = ['order.preparing','order.ready','order.completed','order.cancelled']
+- `eventToOrderStatus` - order.completed -> 'served' (contract emits completed for served/completed; refetch carries authoritative status)
+- `applyOrderEventToMap` (immutable id->status map, payload-level: any non-null entity id applied, unknown event names/null ids ignored)
+- `buildOrderStatusMap` (fetch-based fallback rebuild, default 'preparing')
+- `subscribeToOrderEvents` - same transport/filter convention as the E1-1 hook: single postgres_changes INSERT binding on `realtime_events` with **unquoted** `event_name=in.(...)` filter (quoted values silently match nothing - live-verified lesson), leading-edge debounce via createLeadingDebouncer, module-level `activeChannels` Set guards duplicates (second subscribe returns subscribed:false), injectable `getSupabase` for tests, unsubscribe removes channel + disposes debouncer.
+
+### Consumers changed
+- `src/app/waiter/page.tsx` (Done screen): liveStatuses state; subscription `e1-waiter-done` applies events immediately (badge flips without waiting for fetch), debounced onChange refetches sibling_of (rebuilds authoritative map + cancel cards). Old 30s poll removed; `useVisibleInterval(checkOrderStatuses, 300000)` kept as conservative fallback. Badge renders `liveStatuses[r.id] ?? 'preparing'`.
+- `src/app/staff/waiter/orders/page.tsx`: replaced dead `waiter-active-orders` postgres_changes channel on `orders` (anon + RLS = no delivery, E1-A finding) with `e1-waiter-active-orders` on the signal table -> silent loadOrders on any order status event. Removed createBrowserClient import. Mount load + manual Refresh remain fallback.
+
+### Migration 081 (written, NOT yet applied at AGENTS write time)
+`supabase/migrations/081_order_cancelled_event.sql` - CREATE OR REPLACE emit_order_status_event() + cancelled case + NOTIFY pgrst reload schema. Apply via `npx supabase db push --linked`.
+
+### Verification (2026-08-15)
+- 144/144 vitest (126 + 18 new order-status tests; 7 mission tests: preparing/ready/served/cancelled state updates, cleanup stops updates, no duplicate subscription, fallback when realtime unavailable - plus payload delivery, unquoted-filter contract, untracked-id semantics)
+- Inventory strict tsc clean; temp UI tsconfig over waiter pages + libs clean (must extend ROOT tsconfig so @/* paths resolve - paths are relative to the config file location; deleted after)
+- `next build` green (2.4min compile)
+- Test-side gotchas this session: fake supabase removeChannel MUST clear listener arrays (real supabase-js stops delivery post-removal) or cleanup tests fail; applyOrderEventToMap is payload-level (no tracking concept) - tests must not assert untracked-id ignoring.
+
+### Deploy sequence (pending at record time)
+1. `npx supabase db push --linked` (migration 081)
+2. commit + push, `vercel --prod --yes`
+3. ONE controlled prod verification: create one waiter-source test order, walk preparing->ready->served->cancelled via service-role PATCH, anon subscription observes each event + latency, leave row in cancelled (DELETE blocked - orders are record-keeping), clean test data otherwise.
+4. Rollback if broken: git revert + `npx supabase migration repair --status reverted 081` + redeploy (081 is additive; even unreverted it only adds an event name).
+
+### Next ships (NOT started, per mission lock)
+E1-3 (booking->waiter feed honoring E1-5), E1-4 (deduction via worker), E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat).

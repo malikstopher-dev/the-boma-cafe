@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
 import StatusBadge from '@/components/pos/StatusBadge'
 import StationBadge from '@/components/pos/StationBadge'
 import PosButton from '@/components/pos/PosButton'
 import Timer from '@/components/pos/Timer'
 import PrepTimeCountdown from '@/components/pos/PrepTimeCountdown'
+import { ORDER_LIVE_EVENTS, subscribeToOrderEvents } from '@/inventory/lib/order-status'
 
 interface Order {
   id: string; order_ref: string | null; customer_name: string; status: string; station: string | null
@@ -35,14 +35,17 @@ export default function WaiterOrdersPage() {
 
   useEffect(() => {
     loadOrders()
-    let supabase = createBrowserClient()
-    let channel: any = null
-    try {
-      channel = supabase.channel('waiter-active-orders')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => loadOrders())
-        .subscribe()
-    } catch { /* */ }
-    return () => { if (channel && supabase) supabase.removeChannel(channel) }
+    // E1-2: the old postgres_changes channel on `orders` was dead
+    // (anon key + RLS). Now subscribes to the E1-1 signal table —
+    // every kitchen/bar status event triggers a silent refetch.
+    const sub = subscribeToOrderEvents({
+      channel: 'e1-waiter-active-orders',
+      events: ORDER_LIVE_EVENTS,
+      onChange: () => {
+        void loadOrders()
+      },
+    })
+    return () => sub.unsubscribe()
   }, [loadOrders])
 
   const updateStatus = async (id: string, status: string) => {

@@ -48,6 +48,7 @@ surfaces; E1-1 routes everything through one anon-readable signal table instead.
 | `order.preparing` | `orders` UPDATE status → `preparing` | `trg_realtime_order_status` | owner dashboard |
 | `order.ready` | `orders` UPDATE status → `ready` | `trg_realtime_order_status` | owner dashboard |
 | `order.completed` | `orders` UPDATE status → `served`/`completed` | `trg_realtime_order_status` | owner dashboard |
+| `order.cancelled` | `orders` UPDATE status → `cancelled` | `trg_realtime_order_status` (added in migration 081, E1-2) | waiter PWA (E1-2) |
 | `booking.confirmed` | `bookings` UPDATE status → `confirmed` (manager action, not creation) | `trg_realtime_booking_confirmed` | future (E1-3) |
 | `po.received` | `inventory_purchase_orders` UPDATE → `partial`/`received` | `trg_realtime_po_received` | operations dashboard |
 | `stock.moved` | `inventory_transactions` INSERT (any ledger movement) | `trg_realtime_stock_moved` | operations dashboard |
@@ -104,11 +105,35 @@ principle when it exposes booking data to staff devices.
 6. Regression: kitchen/bar boards, waiter flows, chat unchanged (no code touched).
 7. Rollback if broken: drop migration 080 objects; pages keep working via polls.
 
+## Waiter consumer (E1-2)
+
+`src/inventory/lib/order-status.ts` — payload-carrying sibling of the admin hook
+(subscriptions on the same signal table / transport / unquoted filter). The waiter PWA
+needs the payload to apply status changes immediately:
+
+- `/waiter` Done screen (`e1-waiter-done`): every order status event applies the new
+  status to the tracked order refs instantly (badge flips without waiting for the
+  fetch), then a debounced refetch rebuilds the authoritative map + cancel cards.
+  The old 30s cancel-only poll is no longer primary; a visibility-gated 300s poll
+  remains as the conservative fallback when realtime is unavailable.
+- `/staff/waiter/orders` (`e1-waiter-active-orders`): replaced the dead
+  `postgres_changes` channel on `orders` (anon + RLS → no delivery) with the signal
+  table; every `order.preparing/ready/completed/cancelled` event triggers a silent
+  refetch. Manual Refresh + mount load remain as fallback.
+
+`event_to_status` mapping: `order.preparing → preparing`, `order.ready → ready`,
+`order.completed → served` (contract emits `order.completed` for both `served` and
+`completed`; the refetch carries the authoritative status), `order.cancelled → cancelled`.
+
 ## Files
 
 - `supabase/migrations/080_realtime_events.sql` — table, policies, grants, publication, emitters, triggers
+- `supabase/migrations/081_order_cancelled_event.sql` — `order.cancelled` emitter case (E1-2)
 - `src/inventory/lib/use-realtime-refresh.ts` — the hook
+- `src/inventory/lib/order-status.ts` — waiter live-status subscription + pure helpers (E1-2)
 - `src/inventory/lib/realtime-debounce.ts` — leading-edge debouncer (pure, tested)
 - `src/app/admin/operations/dashboard/page.tsx`, `src/app/admin/dashboard/page.tsx`,
   `src/components/admin/Sidebar.tsx`, `src/app/admin/operations/notifications/page.tsx` — consumers
+- `src/app/waiter/page.tsx`, `src/app/staff/waiter/orders/page.tsx` — waiter consumers (E1-2)
 - `src/inventory/__tests__/realtime-debounce.test.ts` — debounce behavior tests
+- `src/inventory/__tests__/order-status.test.ts` — E1-2 waiter live-status tests
