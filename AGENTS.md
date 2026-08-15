@@ -1674,3 +1674,46 @@ PowerShell 5.1 curl.exe quoting mangles \" escapes - the JSON body arrives corru
 ### Handover
 - O3 COMPLETE. Mission queue (run one by one with owner permission): O1 (owner landing), O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
 - Remaining legacy flows for owner handover (unchanged by O3): individual admin session login UI path; kitchen/bar/waiter real-device checks.
+
+---
+
+## Session: Legacy Shared-Password Admin Scrapped + Staff Role Login Restored (2026-08-16) - commit 968bbbc
+
+### Objective (owner directive)
+1. Remove the Admin option from /staff/login entirely - the ONLY admin login is /admin/login (individual accounts: Gibbs, Zelda, Isaac, Khosi, owner/Mahendra).
+2. Scrap the legacy shared ADMIN_PASSWORD (Lovers0884) completely.
+3. Fix kitchen/bar/waiter login - owner reported "wrong credentials entered" for all three roles.
+
+### Root cause
+The E8 rewrite (commit 89722de) replaced the POST /api/admin/auth handler and REMOVED the kitchen/bar/waiter shared-password validation (pre-E8 validated each role against KITCHEN_PASSWORD/WAITER_PASSWORD/BAR_PASSWORD and set the role cookie via expectedCookieValue). Since E8, the staff login page + StationDisplay boards (both POST {password, role} to /api/admin/auth) 401'd with "Invalid credentials" for every staff role - the route only handled admin (individual or legacy).
+
+### Changes (7 files, +71/-90)
+- src/app/api/admin/auth/route.ts POST - legacy ADMIN_PASSWORD block removed (Lovers0884 login dead). NEW staff role block: role kitchen/bar/waiter -> validate against env password (timingSafeCompare) -> clearAdminCookies + clear other staff role cookies -> set boma_{role}_auth = expectedCookieValue(role) (365d) -> { success, role, authenticated }. GET - 'legacy' admin user branch removed (individual sessions still resolve via validateAdminSession at the cookie fallback; kitchen/bar/waiter branches kept for boards).
+- src/middleware.ts - ADMIN_PASSWORD const, LEGACY_ADMIN_FALLBACK flag and the legacy admin cookie acceptance block removed; verifyRole guard now requires only KITCHEN/WAITER/BAR passwords (would have nulled EVERYTHING otherwise - critical).
+- src/lib/auth.ts - ADMIN_PASSWORD + console.error removed; expectedCookieValue now StaffRole-only ('kitchen'|'waiter'|'bar'); getSession legacy admin cookie check removed (admin identity = boma_admin_session only; precedence now admin session -> kitchen -> bar -> waiter).
+- src/app/staff/login/page.tsx - Admin role entry removed from ROLES; submit target ternary simplified (kitchen -> /staff/kitchen, bar -> /staff/bar, waiter -> /waiter); auto-check legacy ternary dropped (admin -> /staff/admin).
+- src/app/staff/page.tsx - legacy ternary simplified.
+- Regression scripts updated to assert the legacy admin cookie NEVER resolves: auth.test.ts (19 pass, 'legacy admin cookie -> null', 'all four -> kitchen'), auth-precedence.mjs (9 pass).
+- Kept (harmless, now-dead defensive checks): requireRole.ts adminRole !== 'legacy', admin/context.ts legacy flag, change-password adminId === 'legacy', admin/layout user.id !== 'legacy'.
+
+### Env changes (Vercel production)
+- ADMIN_LEGACY_FALLBACK=false added (belt-and-braces; code no longer reads the flag).
+- ADMIN_PASSWORD deleted from Vercel production env; also removed from local .env.local.
+
+### Live verification (prod, after vercel --prod)
+- A1 POST {password:'Lovers0884', role:'admin'} -> 401 Invalid credentials (legacy scrapped)
+- A2 wrong kitchen password -> 401; A3/A4/A5 correct kitchen/bar/waiter passwords -> 200 + role (login restored)
+- A6 {username:'gibbs', password:'wrong'} -> 401 Invalid password (individual admin path alive - not 500)
+- B1 kitchen cookie -> /staff/kitchen 200; B2 kitchen -> /admin 307 /admin/login; B3 bar -> /staff/bar 200; B4 waiter cookie -> /waiter 200
+- B5 anon /admin -> 307 /admin/login; B6 /admin/login -> 200; B7 /staff/login -> 200
+- O3 regression intact (admin area stays admin-only; /admin exact path protected)
+
+### Verification (local)
+242/242 vitest; temp UI tsconfig over 6 edited app files clean (deleted after); auth.test.ts 19/19 + auth-precedence.mjs 9/9; next build green; commit 968bbbc pushed (amend fixed an accidental 'O4' label - this is NOT the O4 mission); vercel --prod aliased (1 transient 'fetch failed' build error, retry succeeded).
+
+### Notes / handover
+- Staff shared passwords remain: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884 (env vars KITCHEN_PASSWORD/WAITER_PASSWORD/BAR_PASSWORD).
+- Waiter flow: staff/login waiter -> /waiter -> PIN login (staff_profiles; PIN-based by design). Waiter shared password gets past the first gate only; staff profiles are created by the manager (staff/list + pin-login APIs, E1-3 precedent).
+- StationDisplay boards (kitchen/bar) authenticate via the same restored POST (role+password) - their mount check (GET /api/admin/auth) resolves via the role cookie through getSession.
+- Individual admin login UI-path proof still needs one real admin password (owner-only, same as P1a/O3).
+- Mission queue unchanged: O1 (owner landing), O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
