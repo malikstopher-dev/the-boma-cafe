@@ -26,6 +26,7 @@ export default function PurchaseOrderDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [receiving, setReceiving] = useState(false)
   const [receiveForm, setReceiveForm] = useState<Record<string, { qty: string; cost: string }>>({})
+  const [receiveErrors, setReceiveErrors] = useState<Record<string, string>>({})
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [costCentres, setCostCentres] = useState<{ id: string; name: string }[]>([])
   const [costCentreId, setCostCentreId] = useState('')
@@ -109,6 +110,16 @@ export default function PurchaseOrderDetailPage() {
         return
       }
 
+      const over = items.find((i: any) => {
+        const item = po.inventory_purchase_order_items.find((x: any) => x.id === i.po_item_id)
+        return Number(i.quantity_received) > Number(item.quantity_ordered) - Number(item.quantity_received ?? 0)
+      })
+      if (over) {
+        alert('Cannot receive more than the outstanding quantity.')
+        setActionLoading(false)
+        return
+      }
+
       const res = await fetch(`/api/inventory/purchase-orders/${id}/receive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,6 +133,7 @@ export default function PurchaseOrderDetailPage() {
         load()
         setReceiving(false)
         setInvoiceNumber('')
+        setReceiveErrors({})
       } else {
         const err = await res.json()
         alert(err.error?.message || 'Receive failed')
@@ -260,7 +272,21 @@ export default function PurchaseOrderDetailPage() {
                 </div>
                 <div className="w-20">
                   <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Receiving</label>
-                  <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0" step="0.01" value={receiveForm[item.id]?.qty ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], qty: e.target.value } }))} />
+                  <input style={{background:'#2A261E',border:receiveErrors[item.id] ? '1px solid #E05D5D' : '1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0" max={outstanding} step="0.01" value={receiveForm[item.id]?.qty ?? ''} onChange={e => {
+                    const val = e.target.value
+                    setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], qty: val } }))
+                    const num = Number(val)
+                    if (val !== '' && num > outstanding) {
+                      setReceiveErrors(er => ({ ...er, [item.id]: 'Cannot receive more than the outstanding quantity.' }))
+                    } else {
+                      setReceiveErrors(er => {
+                        const next = { ...er }
+                        delete next[item.id]
+                        return next
+                      })
+                    }
+                  }} />
+                  {receiveErrors[item.id] && <div style={{fontSize:11,color:'#E05D5D',marginTop:4,fontFamily:'Inter, sans-serif'}}>{receiveErrors[item.id]}</div>}
                 </div>
                 <div className="w-24">
                   <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Unit Cost</label>

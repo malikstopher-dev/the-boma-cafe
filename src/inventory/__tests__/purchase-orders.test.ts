@@ -150,4 +150,36 @@ describe('receiveItems admin identity (P1a)', () => {
       receiveItems(poId, { items: [{ po_item_id: 'poi-2', product_id: 'prod-9', quantity_received: 5 }] }),
     ).rejects.toThrow('does not belong to PO')
   })
+
+  it('rejects a receive above the outstanding quantity (P1b)', async () => {
+    await expect(
+      receiveItems(poId, { items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 11 }] }),
+    ).rejects.toThrow('Cannot receive more than the outstanding quantity. Outstanding: 10, requested: 11')
+    expect(mockReceiptInserts.length).toBe(0)
+    expect(mockCreateTransaction).not.toHaveBeenCalled()
+  })
+
+  it('allows receiving exactly the outstanding quantity (P1b)', async () => {
+    await receiveItems(poId, {
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 10 }],
+      received_by_admin_id: 'adm-1',
+      received_by_admin_name: 'Mr Test Admin',
+    })
+    expect(mockReceiptInserts.length).toBe(2)
+    expect(mockCreateTransaction).toHaveBeenCalledTimes(1)
+    const txnInput = mockCreateTransaction.mock.calls[0]?.[0] as Record<string, unknown> | undefined
+    expect(txnInput?.quantity).toBe(10)
+  })
+
+  it('accumulates multiple lines for the same PO item against the cap (P1b)', async () => {
+    await expect(
+      receiveItems(poId, {
+        items: [
+          { po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 6 },
+          { po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 5 },
+        ],
+      }),
+    ).rejects.toThrow('Cannot receive more than the outstanding quantity. Outstanding: 4, requested: 5')
+    expect(mockReceiptInserts.length).toBe(0)
+  })
 })

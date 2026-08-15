@@ -227,6 +227,7 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
     .eq('po_id', poId)
 
   const poItemsByKey = new Map((poItemRows ?? []).map(r => [`${r.id}::${r.product_id}`, r]))
+  const receivedSoFar = new Map<string, number>()
 
   // Resolve the cost centre for every item BEFORE any write. If any
   // location lacks a configured cost centre this throws up-front, so
@@ -242,6 +243,12 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
     if (!poItem) {
       throw new Error(`Item (po_item_id=${item.po_item_id}, product_id=${item.product_id}) does not belong to PO ${poId}`)
     }
+
+    const outstanding = Number(poItem.quantity_ordered) - Number(poItem.quantity_received) - (receivedSoFar.get(key) ?? 0)
+    if (item.quantity_received > outstanding) {
+      throw new Error(`Cannot receive more than the outstanding quantity. Outstanding: ${outstanding}, requested: ${item.quantity_received}`)
+    }
+    receivedSoFar.set(key, (receivedSoFar.get(key) ?? 0) + item.quantity_received)
 
     return {
       item,
