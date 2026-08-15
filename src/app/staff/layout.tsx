@@ -26,6 +26,7 @@ const NAV_ITEMS: Record<string, { label: string; icon: string; href: string }[]>
   waiter: [
     { label: 'Order', icon: '🍽️', href: '/waiter' },
     { label: 'Orders', icon: '📋', href: '/staff/waiter/orders' },
+    { label: 'Bookings', icon: '📅', href: '/staff/waiter/bookings' },
     { label: 'Messages', icon: '💬', href: '/staff/messages' },
   ],
 }

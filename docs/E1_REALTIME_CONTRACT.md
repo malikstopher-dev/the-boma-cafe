@@ -49,7 +49,10 @@ surfaces; E1-1 routes everything through one anon-readable signal table instead.
 | `order.ready` | `orders` UPDATE status → `ready` | `trg_realtime_order_status` | owner dashboard |
 | `order.completed` | `orders` UPDATE status → `served`/`completed` | `trg_realtime_order_status` | owner dashboard |
 | `order.cancelled` | `orders` UPDATE status → `cancelled` | `trg_realtime_order_status` (added in migration 081, E1-2) | waiter PWA (E1-2) |
-| `booking.confirmed` | `bookings` UPDATE status → `confirmed` (manager action, not creation) | `trg_realtime_booking_confirmed` | future (E1-3) |
+| `booking.confirmed` | `bookings` UPDATE status → `confirmed` (manager action, not creation) | `trg_realtime_booking_status` (E1-3) | waiter feed (E1-3) |
+| `booking.in_progress` | `bookings` UPDATE status → `in_progress` | `trg_realtime_booking_status` (E1-3) | waiter feed (E1-3) |
+| `booking.completed` | `bookings` UPDATE status → `completed` | `trg_realtime_booking_status` (E1-3) | waiter feed (E1-3) |
+| `booking.cancelled` | `bookings` UPDATE status → `cancelled`/`refunded` | `trg_realtime_booking_status` (E1-3) | waiter feed (E1-3) |
 | `po.received` | `inventory_purchase_orders` UPDATE → `partial`/`received` | `trg_realtime_po_received` | operations dashboard |
 | `stock.moved` | `inventory_transactions` INSERT (any ledger movement) | `trg_realtime_stock_moved` | operations dashboard |
 | `stock.count.updated` | `inventory_stock_counts` INSERT/UPDATE (create/submit/approve/cancel) | `trg_realtime_stock_count` | operations + owner dashboard |
@@ -125,15 +128,45 @@ needs the payload to apply status changes immediately:
 `order.completed → served` (contract emits `order.completed` for both `served` and
 `completed`; the refetch carries the authoritative status), `order.cancelled → cancelled`.
 
+## Waiter booking feed (E1-3)
+
+**Visibility rule (locked):** a booking appears on the waiter feed only after a
+manager/admin confirms it (`deposit_paid → confirmed`). Pending/quoting bookings are
+never visible. Feed shows `confirmed` / `in_progress` / `completed`; a cancelled or
+refunded booking is removed from the feed.
+
+**Privacy (locked, enforced server-side):** the waiter payload is exactly
+`{ id, reference (#id[:8]), date, time, guests, location (venue area), status }`.
+Customer name, phone, email, quotation amount, pricing and internal notes are
+structurally impossible: `GET /api/staff/bookings` reads only the `waiter_booking_view`
+(migration 082) whose column set excludes them — a miswritten SELECT cannot leak.
+`src/inventory/lib/booking-status.ts` `sanitizeWaiterBooking()` is a tested second
+layer that drops any non-allowlisted field.
+
+**Realtime (egress-constrained):** the waiter page (`/staff/waiter/bookings`,
+channel `e1-waiter-bookings`) subscribes to the four booking lifecycle events on
+`realtime_events` (minimal payloads — event name + entity id only; no booking data
+ever leaves the DB in a realtime payload). Handling is fetch-minimal:
+- `booking.cancelled` → row removed locally (authoritative — the view won't return it), zero fetches.
+- `booking.in_progress` / `booking.completed` → status flipped on the known row (the event name IS the new status), zero fetches.
+- `booking.confirmed` → one single-row fetch (`?id=`) upserted into the feed.
+- No polling: mount fetch + visibility-return refetch + manual Refresh are the
+  conservative fallback if realtime disconnects. One channel per page, module-level
+  duplicate guard, unquoted `event_name=in.(...)` filter.
+
 ## Files
 
 - `supabase/migrations/080_realtime_events.sql` — table, policies, grants, publication, emitters, triggers
 - `supabase/migrations/081_order_cancelled_event.sql` — `order.cancelled` emitter case (E1-2)
+- `supabase/migrations/082_booking_lifecycle_events_waiter_view.sql` — booking lifecycle events + `waiter_booking_view` (E1-3)
 - `src/inventory/lib/use-realtime-refresh.ts` — the hook
 - `src/inventory/lib/order-status.ts` — waiter live-status subscription + pure helpers (E1-2)
+- `src/inventory/lib/booking-status.ts` — waiter booking-feed subscription + sanitizer + pure helpers (E1-3)
 - `src/inventory/lib/realtime-debounce.ts` — leading-edge debouncer (pure, tested)
 - `src/app/admin/operations/dashboard/page.tsx`, `src/app/admin/dashboard/page.tsx`,
   `src/components/admin/Sidebar.tsx`, `src/app/admin/operations/notifications/page.tsx` — consumers
 - `src/app/waiter/page.tsx`, `src/app/staff/waiter/orders/page.tsx` — waiter consumers (E1-2)
+- `src/app/api/staff/bookings/route.ts`, `src/app/staff/waiter/bookings/page.tsx` — waiter booking feed (E1-3)
 - `src/inventory/__tests__/realtime-debounce.test.ts` — debounce behavior tests
 - `src/inventory/__tests__/order-status.test.ts` — E1-2 waiter live-status tests
+- `src/inventory/__tests__/booking-status.test.ts` — E1-3 feed + API privacy tests

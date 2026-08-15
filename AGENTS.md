@@ -1195,3 +1195,48 @@ Migration 081 adds `WHEN 'cancelled' THEN 'order.cancelled'` to `emit_order_stat
 
 ### Next ships (NOT started, per mission lock)
 E1-3 (booking->waiter feed honoring E1-5), E1-4 (deduction via worker), E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat).
+
+---
+
+## Session: E1-3 - Confirmed Booking -> Waiter Feed (2026-08-15) - commits to follow
+
+### Objective
+Waiters only see bookings AFTER a manager/admin confirms them (operational feed, not customer-facing). Privacy locked: waiter payload = {id, reference (#id[:8]), date, time, guests, location (venue area), status} ONLY - customer name/phone/email, pricing, quotation and internal notes must never reach a waiter client, enforced server-side (never front-end hiding). Egress-constrained: no polling, one channel per page, minimal payloads, reuse E1-1 signal table.
+
+### Migration 082 (`supabase/migrations/082_booking_lifecycle_events_waiter_view.sql`)
+- `emit_booking_status_event()` - CREATE OR REPLACE mapper replacing the single-event `trg_realtime_booking_confirmed` (080) with `trg_realtime_booking_status`: confirmed->booking.confirmed, in_progress->booking.in_progress, completed->booking.completed, cancelled/refunded->booking.cancelled (prunes >24h).
+- `waiter_booking_view` - THE only read surface for waiters: SELECT id, booking_date, booking_time, guests, venue_areas.name AS venue_area, status FROM bookings WHERE status IN (confirmed,in_progress,completed). PII/pricing columns structurally absent - a miswritten API SELECT cannot leak. RLS on bookings still blocks anon/public on the view; service role reads it. COMMENT documents the contract. NOTIFY pgrst.
+
+### API: `src/app/api/staff/bookings/route.ts`
+- GET, `resolveStaffIdentity` (any staff role; PIN or role cookie) -> 401 when null.
+- Reads ONLY waiter_booking_view with allowlist 'id, booking_date, booking_time, guests, venue_area, status'; list ordered by booking_date then booking_time; optional ?id= single-row (404 when the view doesn't contain it).
+- Response: { bookings: [{ id, reference: id.slice(0,8).toUpperCase(), date, time: HH:MM, guests, location, status }] }.
+
+### Lib: `src/inventory/lib/booking-status.ts` (E1-3 waiter feed)
+- `BOOKING_LIVE_EVENTS` = booking.confirmed/in_progress/completed/cancelled; `eventToBookingStatus`; `bookingEventNeedsFetch` (confirmed only - the only event carrying a NEW row).
+- `sanitizeWaiterBooking` - defense-in-depth: keeps exactly the 7 operational fields, drops everything else even if an API response accidentally contained PII.
+- `applyBookingStatusToFeed` (immutable) - cancelled removes locally (zero fetch; the view won't return it), in_progress/completed flips the known row (event name IS the new status; zero fetch), confirmed leaves feed unchanged (caller fetches ?id=).
+- `upsertWaiterBooking`; `subscribeToBookingEvents` - same transport/filter convention (unquoted in-list), module-level Set duplicate guard, injectable getSupabase, unsubscribe removes channel. NO debouncer (low-frequency events; handled idempotently).
+
+### UI: `src/app/staff/waiter/bookings/page.tsx` + staff nav
+- Feed page: cards (#reference, status badge confirmed/in_progress/completed, date, time, guests, location), sorted date+time, empty state "appear once a manager confirms them", 401 -> "Sign in to view bookings".
+- NO polling: mount fetch + visibility-return refetch + Refresh button are the only fallbacks (realtime is primary). Channel `e1-waiter-bookings`.
+- `src/app/staff/layout.tsx` waiter nav += Bookings (?? /staff/waiter/bookings).
+
+### Booking status mapping note
+The schema has no arrived/seated states (CHECK: draft, quote_sent, awaiting_deposit, deposit_paid, confirmed, in_progress, completed, cancelled, refunded; transitions in `src/lib/booking/validation.ts`). The waiter feed maps: confirmed -> Confirmed, in_progress -> In Progress, completed -> Completed; cancelled/refunded removes the row. Adding arrived/seated would change the admin workflow - out of mission scope.
+
+### Tests: 167/167 vitest (144 + 23 new)
+booking-status.test.ts: event mapping, needsFetch, sanitizer drops PII even when present (name/phone/email/notes/12500 total/VIP all absent from serialized output), feed application (flip/remove/no-op), upsert, subscription delivery + unquoted filter contract + duplicate guard + cleanup + unreachable-client fallback, plus 6 API route privacy tests (401 unauthenticated; from('waiter_booking_view') only, never from('bookings'); allowlist column string; date/time ordering; 7-field mapping with zero PII keys in serialized body; ?id= single-row mapping incl. null location; 404 for rows absent from the view). Mocks: resolveStaffIdentity module mock + getAdminClient mock with thenable chain (select->order->order->await).
+
+### Verification (2026-08-15)
+- Inventory strict tsc clean; temp UI tsconfig (root-extending, incl. ambient.d.ts) over page+layout+route+lib clean, deleted after; next build green (2.8min; /staff/waiter/bookings in route list).
+
+### Deploy sequence (pending at record time)
+1. `npx supabase db push --linked` (082)
+2. commit + push, `vercel --prod --yes`
+3. Controlled prod verification: one booking deposit_paid -> confirmed -> in_progress -> completed -> cancelled walk via service-role PATCH (trigger path identical to manager action), anon subscription observes all 4 events + latency; probe waiter (staff_profiles + bcrypt PIN) PIN-login -> GET /api/staff/bookings with session cookie -> assert 7-field payload zero PII; cleanup probe rows; booking left cancelled (record-keeping).
+4. Rollback if broken: git revert + `npx supabase migration repair --status reverted 082` + redeploy (082 additive: trigger replaced + view; both inert without the new code).
+
+### Next ships (NOT started, per mission lock)
+E1-4 (deduction via worker), E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat).
