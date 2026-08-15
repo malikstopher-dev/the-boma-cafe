@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual } from 'node:crypto';
 import { getSession } from '@/lib/auth';
+import { expectedCookieValue } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { verifyPassword } from '@/lib/admin/password';
@@ -12,10 +13,6 @@ export const dynamic = 'force-dynamic'
 
 const ADMIN_COOKIE = 'boma_admin_auth';
 const ADMIN_SESSION_COOKIE = 'boma_admin_session';
-
-// Legacy shared-password admin login remains available during the E8
-// transition. Set ADMIN_LEGACY_FALLBACK=false to disable it (cutover).
-const LEGACY_ADMIN_FALLBACK = process.env.ADMIN_LEGACY_FALLBACK !== 'false';
 
 const ADMIN_EMAIL = 'info@thebomacafe.co.za';
 
@@ -48,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const cookieStore = await cookies();
     const body = await request.json();
-    const { username, password, action } = body;
+    const { username, password, action, role } = body;
 
     if (action === 'logout') {
       await endCurrentAdminSession(cookieStore);
@@ -145,28 +142,43 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Unknown username → fall through to legacy only if enabled
+// Unknown username → no individual account exists
     }
 
-    // ── Legacy shared-password login (transition only) ──
-    if (LEGACY_ADMIN_FALLBACK) {
-      const adminPassword = process.env.ADMIN_PASSWORD;
-      if (adminPassword && password && timingSafeCompare(password, adminPassword)) {
-        clearAdminCookies(cookieStore);
-        cookieStore.set(ADMIN_COOKIE, createHash('sha256').update(`admin:${adminPassword}`).digest('hex'), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          path: '/',
-          maxAge: 60 * 60 * 24 * 7,
-        });
+    // ── Staff role shared-password login (kitchen/bar/waiter only) ──
+    // Admin accounts log in ONLY via the individual username+password login
+    // above. The legacy shared ADMIN_PASSWORD login is scrapped.
+    if (role === 'kitchen' || role === 'bar' || role === 'waiter') {
+      const rolePassword = role === 'kitchen' ? process.env.KITCHEN_PASSWORD : role === 'bar' ? process.env.BAR_PASSWORD : process.env.WAITER_PASSWORD;
+      if (rolePassword && password && timingSafeCompare(password, rolePassword)) {
+        const roleCookieMap: Record<string, string> = {
+          kitchen: 'boma_kitchen_auth',
+          bar: 'boma_bar_auth',
+          waiter: 'boma_waiter_auth',
+        };
+        const cookieName = roleCookieMap[role];
+        if (cookieName) {
+          clearAdminCookies(cookieStore);
+          for (const other of ['boma_kitchen_auth', 'boma_bar_auth', 'boma_waiter_auth']) {
+            if (other !== cookieName) {
+              cookieStore.set(other, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+            }
+          }
+          cookieStore.set(cookieName, expectedCookieValue(role), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 365,
+          });
 
-        return NextResponse.json({
-          success: true,
-          role: 'admin',
-          authenticated: true,
-          user: { id: 'legacy', username: 'admin', display_name: 'Admin (legacy)', role: 'owner', email: ADMIN_EMAIL },
-        });
+          return NextResponse.json({
+            success: true,
+            role,
+            authenticated: true,
+            user: { id: 'staff', username: role, role },
+          });
+        }
       }
     }
 
@@ -230,14 +242,6 @@ export async function GET(request: NextRequest) {
     }
 
     const session = await getSession();
-    if (session?.role === 'admin') {
-      return NextResponse.json({
-        authenticated: true,
-        role: 'admin',
-        user: { id: 'legacy', username: 'admin', display_name: 'Admin (legacy)', role: 'owner', email: ADMIN_EMAIL },
-      });
-    }
-
     // Staff role identities (unchanged behavior — staff system independence)
     if (session?.role === 'kitchen') {
       return NextResponse.json({

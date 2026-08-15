@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 const ROLES = [
-  { key: 'admin', label: 'Admin', icon: '⚙️', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', desc: 'Manage orders, staff, and settings' },
   { key: 'kitchen', label: 'Kitchen', icon: '👨‍🍳', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', desc: 'View and process food orders' },
-  { key: 'bar', label: 'Bar', icon: '🍸', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', desc: 'View and process drink orders' },
+  { key: 'bar', label: 'Bar', icon: '🍸', color: '#8b5cf6', bg: 'rgba(139,92,244,0.1)', desc: 'View and process drink orders' },
   { key: 'waiter', label: 'Waiter', icon: '📋', color: '#10b981', bg: 'rgba(16,185,129,0.1)', desc: 'Take orders and manage tables' },
 ]
 
@@ -25,7 +24,7 @@ export default function StaffLogin() {
       .then(r => r.json())
       .then(data => {
         if (data.authenticated) {
-          if (data.role === 'admin') router.replace(data.user?.id === 'legacy' ? '/admin/login' : '/staff/admin')
+          if (data.role === 'admin') router.replace('/staff/admin')
           else if (data.role === 'kitchen') router.replace('/staff/kitchen')
           else if (data.role === 'bar') router.replace('/staff/bar')
           else if (data.role === 'waiter') router.replace('/waiter')
@@ -52,7 +51,7 @@ export default function StaffLogin() {
       })
       const data = await res.json()
       if (res.ok && (data.authenticated || data.success)) {
-        const target = selectedRole === 'admin' ? '/admin/login' : selectedRole === 'kitchen' ? '/staff/kitchen' : selectedRole === 'bar' ? '/staff/bar' : '/waiter'
+        const target = selectedRole === 'kitchen' ? '/staff/kitchen' : selectedRole === 'bar' ? '/staff/bar' : '/waiter'
         router.replace(target)
         router.refresh()
       } else {

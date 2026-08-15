@@ -2,20 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_COOKIE = 'boma_admin_auth'
 const KITCHEN_COOKIE = 'boma_kitchen_auth'
 const WAITER_COOKIE = 'boma_waiter_auth'
 const BAR_COOKIE = 'boma_bar_auth'
 const STAFF_SESSION_COOKIE = 'boma_staff_session'
 const ADMIN_SESSION_COOKIE = 'boma_admin_session'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD
 const WAITER_PASSWORD = process.env.WAITER_PASSWORD
 const BAR_PASSWORD = process.env.BAR_PASSWORD
-
-// Legacy shared-password admin cookie remains accepted during the E8
-// transition. Set ADMIN_LEGACY_FALLBACK=false to reject it (cutover).
-const LEGACY_ADMIN_FALLBACK = process.env.ADMIN_LEGACY_FALLBACK !== 'false'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -50,14 +44,13 @@ type AuthResult = {
 } | null
 
 async function verifyRole(request: NextRequest): Promise<AuthResult> {
-  if (!ADMIN_PASSWORD || !KITCHEN_PASSWORD || !WAITER_PASSWORD || !BAR_PASSWORD) return null
+  if (!KITCHEN_PASSWORD || !WAITER_PASSWORD || !BAR_PASSWORD) return null
 
-  const adminCookie = request.cookies.get(ADMIN_COOKIE)
+  const adminSessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)
   const kitchenCookie = request.cookies.get(KITCHEN_COOKIE)
   const waiterCookie = request.cookies.get(WAITER_COOKIE)
   const barCookie = request.cookies.get(BAR_COOKIE)
   const staffSessionCookie = request.cookies.get(STAFF_SESSION_COOKIE)
-  const adminSessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)
 
   // ── New admin identity sessions (Mission E8) — highest precedence ──
   // Cookie value = admin_sessions.id (UUID). Validated against the DB so
@@ -108,13 +101,6 @@ async function verifyRole(request: NextRequest): Promise<AuthResult> {
     } catch {
       // Session validation failed — continue
     }
-  }
-
-  // Legacy password-based cookies (staff roles must keep working — the
-  // legacy fallback flag gates ONLY the shared admin password cookie)
-  if (LEGACY_ADMIN_FALLBACK && adminCookie?.value) {
-    const expected = await hashSHA256(`admin:${ADMIN_PASSWORD}`)
-    if (timingSafeCompare(adminCookie.value, expected)) return { role: 'admin' }
   }
 
   if (kitchenCookie?.value) {

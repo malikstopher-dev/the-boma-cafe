@@ -9,7 +9,6 @@ const WAITER_COOKIE = 'boma_waiter_auth'
 const BAR_COOKIE = 'boma_bar_auth'
 
 const passwords: Record<string, string> = {
-  admin: 'Lovers0884',
   kitchen: 'BomaKitchen0884',
   waiter: 'BomaWaiter0884',
   bar: 'BomaBar0884',
@@ -19,9 +18,10 @@ function expectedCookieValue(role: string): string {
   return createHash('sha256').update(`${role}:${passwords[role]}`).digest('hex')
 }
 
-// Simulates getSession() precedence logic (admin → kitchen → bar → waiter)
+// Simulates getSession() precedence logic (admin session → kitchen → bar → waiter).
+// The legacy shared-password admin cookie (boma_admin_auth) is SCRAPPED — it
+// never resolves. Admin identity comes only from boma_admin_session.
 function getSession(cookies: Record<string, string>): { role: string } | null {
-  if (cookies[ADMIN_COOKIE] && cookies[ADMIN_COOKIE] === expectedCookieValue('admin')) return { role: 'admin' }
   if (cookies[KITCHEN_COOKIE] && cookies[KITCHEN_COOKIE] === expectedCookieValue('kitchen')) return { role: 'kitchen' }
   if (cookies[BAR_COOKIE] && cookies[BAR_COOKIE] === expectedCookieValue('bar')) return { role: 'bar' }
   if (cookies[WAITER_COOKIE] && cookies[WAITER_COOKIE] === expectedCookieValue('waiter')) return { role: 'waiter' }
@@ -46,9 +46,9 @@ function test(name: string, fn: () => void) {
 console.log('\n═══ Cookie Precedence Tests ═══\n')
 
 // ── Single cookie ──────────────────────────────────────
-test('admin only → admin', () => {
+test('legacy shared-password admin cookie → null (scrapped)', () => {
   const result = getSession({ [ADMIN_COOKIE]: expectedCookieValue('admin') })
-  assert.equal(result?.role, 'admin')
+  assert.equal(result, null)
 })
 
 test('kitchen only → kitchen', () => {
@@ -67,28 +67,28 @@ test('waiter only → waiter', () => {
 })
 
 // ── Mixed cookies (precedence) ─────────────────────────
-test('admin + waiter → admin', () => {
+test('legacy admin + waiter → waiter (admin cookie ignored)', () => {
   const result = getSession({
     [ADMIN_COOKIE]: expectedCookieValue('admin'),
     [WAITER_COOKIE]: expectedCookieValue('waiter'),
   })
-  assert.equal(result?.role, 'admin')
+  assert.equal(result?.role, 'waiter')
 })
 
-test('admin + bar → admin', () => {
+test('legacy admin + bar → bar (admin cookie ignored)', () => {
   const result = getSession({
     [ADMIN_COOKIE]: expectedCookieValue('admin'),
     [BAR_COOKIE]: expectedCookieValue('bar'),
   })
-  assert.equal(result?.role, 'admin')
+  assert.equal(result?.role, 'bar')
 })
 
-test('admin + kitchen → admin', () => {
+test('legacy admin + kitchen → kitchen (admin cookie ignored)', () => {
   const result = getSession({
     [ADMIN_COOKIE]: expectedCookieValue('admin'),
     [KITCHEN_COOKIE]: expectedCookieValue('kitchen'),
   })
-  assert.equal(result?.role, 'admin')
+  assert.equal(result?.role, 'kitchen')
 })
 
 test('kitchen + waiter → kitchen', () => {
@@ -115,14 +115,14 @@ test('bar + waiter → bar', () => {
   assert.equal(result?.role, 'bar')
 })
 
-test('all four → admin (highest precedence)', () => {
+test('all four → kitchen (highest staff precedence)', () => {
   const result = getSession({
     [ADMIN_COOKIE]: expectedCookieValue('admin'),
     [KITCHEN_COOKIE]: expectedCookieValue('kitchen'),
     [BAR_COOKIE]: expectedCookieValue('bar'),
     [WAITER_COOKIE]: expectedCookieValue('waiter'),
   })
-  assert.equal(result?.role, 'admin')
+  assert.equal(result?.role, 'kitchen')
 })
 
 // ── Boundary cases ─────────────────────────────────────

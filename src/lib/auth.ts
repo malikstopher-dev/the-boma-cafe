@@ -3,7 +3,6 @@ import { cookies } from 'next/headers'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { validateAdminSession } from '@/lib/admin/session'
 
-const ADMIN_COOKIE = 'boma_admin_auth'
 const KITCHEN_COOKIE = 'boma_kitchen_auth'
 const WAITER_COOKIE = 'boma_waiter_auth'
 const BAR_COOKIE = 'boma_bar_auth'
@@ -15,12 +14,11 @@ export interface Session {
   role: Role
 }
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+export type StaffRole = 'kitchen' | 'waiter' | 'bar'
+
 const KITCHEN_PASSWORD = process.env.KITCHEN_PASSWORD
 const WAITER_PASSWORD = process.env.WAITER_PASSWORD
 const BAR_PASSWORD = process.env.BAR_PASSWORD
-
-if (!ADMIN_PASSWORD) console.error('[auth] CRITICAL: ADMIN_PASSWORD env var is not set — admin login will fail and server may be vulnerable')
 
 function timingSafeCompare(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false
@@ -30,8 +28,8 @@ function timingSafeCompare(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB)
 }
 
-export function expectedCookieValue(role: Role): string {
-  const secret = role === 'admin' ? ADMIN_PASSWORD : role === 'kitchen' ? KITCHEN_PASSWORD : role === 'waiter' ? WAITER_PASSWORD : BAR_PASSWORD
+export function expectedCookieValue(role: StaffRole): string {
+  const secret = role === 'kitchen' ? KITCHEN_PASSWORD : role === 'waiter' ? WAITER_PASSWORD : BAR_PASSWORD
   return createHash('sha256').update(`${role}:${secret}`).digest('hex')
 }
 
@@ -49,18 +47,16 @@ export function getRoleFromHeaders(headers: Headers): Session | null {
 
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies()
-  const admin = cookieStore.get(ADMIN_COOKIE)
   const kitchen = cookieStore.get(KITCHEN_COOKIE)
   const waiter = cookieStore.get(WAITER_COOKIE)
   const bar = cookieStore.get(BAR_COOKIE)
   const adminSession = cookieStore.get(ADMIN_SESSION_COOKIE)
 
-  // Highest precedence: individual admin session → legacy admin → kitchen → bar → waiter
+  // Highest precedence: individual admin session → kitchen → bar → waiter
   if (adminSession?.value) {
     const info = await validateAdminSession(adminSession.value)
     if (info) return { role: 'admin' }
   }
-  if (admin?.value && timingSafeCompare(admin.value, expectedCookieValue('admin'))) return { role: 'admin' }
   if (kitchen?.value && timingSafeCompare(kitchen.value, expectedCookieValue('kitchen'))) return { role: 'kitchen' }
   if (bar?.value && timingSafeCompare(bar.value, expectedCookieValue('bar'))) return { role: 'bar' }
   if (waiter?.value && timingSafeCompare(waiter.value, expectedCookieValue('waiter'))) return { role: 'waiter' }
