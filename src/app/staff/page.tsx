@@ -10,7 +10,7 @@ export default function StaffHome() {
     fetch('/api/admin/auth')
       .then(r => r.json())
       .then(data => {
-        if (data.authenticated && data.role === 'admin') router.replace('/staff/admin')
+        if (data.authenticated && data.role === 'admin') router.replace(data.user?.id === 'legacy' ? '/admin/login' : '/staff/admin')
         else if (data.authenticated && data.role === 'kitchen') router.replace('/staff/kitchen')
         else if (data.authenticated && data.role === 'waiter') router.replace('/waiter')
         else router.replace('/staff/login')
