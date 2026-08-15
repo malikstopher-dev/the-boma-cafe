@@ -1435,3 +1435,51 @@ Migration 088 pushed; commit 93952cc pushed; vercel --prod aliased (first CLI at
 ### Handover
 - P1e (structured payment terms) NOT started - next per mission order.
 - Receipt admin identity (P1a) still requires one real admin password for UI-path proof (owner-only).
+
+---
+
+## Session: P1e - Structured Payment Terms + Due Dates + Read-Time Overdue (2026-08-15) - commit ddc62ea
+
+### Objective
+P1e (fifth and final ship of the Supplier Workflow plan): structured payment terms on suppliers, automatic due dates on auto-created invoices, and read-time overdue in Payables. P1a identity / P1b over-receive / P1c shortage reasons / P1d auto-invoice untouched. No scheduler - overdue computed at read time.
+
+### Migration 089 (applied to prod) - `089_supplier_payment_terms.sql`
+- Additive: `payment_term_type TEXT` (NULL | CASH | COD | ACCOUNT | WEEKLY | MONTHLY, CHECK) + `payment_term_days INT` (NULL | >= 0, CHECK) on inventory_suppliers. Existing suppliers stay valid (NULL = CASH semantics); invoices never rewritten.
+- Backfill from legacy free-text `payment_terms`: ILIKE rules (week/weekly, month/monthly, cash on delivery/cod, cash, account/credit); a number in account/credit strings sets payment_term_days (default 30). Live prod: Fourways Wood "Weekly" -> WEEKLY; other 11 stay NULL (confirmed live).
+- RPC replay (same 8-arg signature): PO lock query joins inventory_suppliers for term; invoice insert gains due_date computed in SQL: CASH/COD/NULL -> CURRENT_DATE; WEEKLY -> +7; MONTHLY -> (CURRENT_DATE + interval '1 month')::date (Postgres clamps month ends); ACCOUNT -> + COALESCE(payment_term_days, 30).
+- **Bug caught by E2E before ship:** LEFT JOIN + `FOR UPDATE` is illegal ("FOR UPDATE cannot be applied to the nullable side of an outer join") - first applied version broke the RPC in prod. Fixed to `FOR UPDATE OF po`, migration repaired (--status reverted 089) and re-pushed (all DDL guarded, safe to re-run).
+
+### Shared helper (`src/inventory/engine/payment-terms.ts`)
+- `PAYMENT_TERM_TYPES`/`PAYMENT_TERM_LABELS`/`ACCOUNT_DEFAULT_DAYS = 30`; `computeDueDate(invoiceDate, termType, days)` (monthly uses Postgres-compatible month-end clamping, e.g. Jan 31 -> Feb 28); `deriveDueDate` (read-time derivation for historical invoices with NULL due_date - never writes); `daysUntilDue` (signed; negative = overdue); `isOverdue`.
+
+### Engine + API
+- `purchase-orders.ts:receiveItems` - reads supplier term, computes due_date, inserts with the invoice (23505 swallow unchanged).
+- `payables.ts:getSupplierPayables` - roster select += payment_term_type/days; invoice select += due_date; per open invoice: effective due = stored due_date ?? derived from term; tracks earliest due across open invoices (nextDueDate/daysToDue on PayableRow); ANY open invoice past due + outstanding > 0 -> supplier status 'overdue' (in addition to the existing explicit-status check). All read-time.
+- Suppliers API: POST + PATCH accept payment_term_type/payment_term_days with validation ("Invalid payment_term_type: X. Must be one of CASH, COD, ACCOUNT, WEEKLY, MONTHLY"; "payment_term_days must be a non-negative number"); PATCH resets days to NULL when type != ACCOUNT. types.ts InventorySupplier extended.
+
+### UI (no redesign)
+- `/inv/payables`: new Terms column (label) + Due column (date + "due today" / "in Nd" / red bold "overdue Nd"); footer note updated.
+- `/inv/suppliers` edit modal: free-text Payment Terms replaced by structured select (Cash / Cash on Delivery / Weekly / Monthly / Account) + days input when Account (default 30).
+- `/admin/operations/suppliers/[id]`: same structured control in the contact dl (custom row below the generic field map).
+
+### Tests - 210/210 vitest (183 + 17 payment-terms + 8 payables + 2 purchase-orders due-date)
+- payment-terms.test.ts: CASH/COD/NULL today, WEEKLY +7, MONTHLY same-day-next-month + month-end clamps (Jan 31 -> Feb 28, leap Feb 29) + year boundary, ACCOUNT custom/default days, daysUntilDue/isOverdue signed math.
+- payables.test.ts: derived due from term (MONTHLY), stored due_date wins (ACCOUNT 30), NULL term -> invoice date, read-time overdue (daysToDue -10, status overdue), paid invoice not overdue, earliest-due selection.
+- purchase-orders.test.ts: +2 (MONTHLY due on invoice insert, ACCOUNT 30 due). Dispatcher gains `mockSupplierTerm` per-test override.
+
+### Live verification (prod, real engine via temp vitest probe against live DB - temp file deleted after)
+- TEST supplier MONTHLY -> PO ordered 20 @75 -> receive 12: invoice auto-created with invoice_date 2026-08-15, due_date **2026-09-15** (same day next month), R900 pending.
+- Supplier switched to ACCOUNT 30 -> receive remaining 8: due_date **2026-09-14** (+30), R600.
+- Overdue probe invoice (due yesterday, R500 pending) inserted -> REAL getSupplierPayables() against prod: { outstanding 2000, paymentTerms "Account", nextDueDate 2026-08-14, daysToDue -1, status "overdue" }.
+- Probe deleted -> engine re-run: { outstanding 1500, nextDueDate 2026-09-14, daysToDue 30, status "outstanding" } - proves read-time computation (no scheduler, nothing stored).
+- Tooling note: running TS engines live needs vitest (vite resolves TS imports); Node 24 --import loader hooks did NOT fire for extensionless relative imports (register() hook never called - abandoned after 3 attempts; vitest probe is the reliable path).
+
+### Cleanup (confirmed live)
+TEST balance restored to 50 (baseline), P1E supplier + PO + receipts + invoices + txns + probe deleted (0 P1E rows), 11 historical NULL-identity receipts unchanged.
+
+### Deploy
+Migration 089 pushed (after repair re-push); commit ddc62ea pushed; vercel --prod deployed + aliased.
+
+### Handover
+- Supplier Workflow P1a-P1e COMPLETE. Next per owner's mission order (none queued in this session).
+- UI-path proof of P1a receipt identity still needs one real admin password (owner-only).
