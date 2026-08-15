@@ -6,6 +6,9 @@ import type { CreateTransactionInput } from './types'
 
 export type PoStatus = 'draft' | 'approved' | 'ordered' | 'partial' | 'received' | 'cancelled'
 
+export const SHORTAGE_REASONS = ['SUPPLIER_SHORTAGE', 'BACKORDER', 'DAMAGED', 'RETURNED', 'OTHER'] as const
+export type ShortageReason = (typeof SHORTAGE_REASONS)[number]
+
 export interface CreatePoInput {
   supplier_id: string
   quotation_ref?: string | null
@@ -40,6 +43,13 @@ export interface ReceiveInput {
     product_id: string
     quantity_received: number
     unit_cost?: number | null
+    /**
+     * P1c: structured reason for a short delivery. Required when the
+     * received quantity is less than the outstanding quantity.
+     */
+    shortage_reason?: ShortageReason | null
+    /** Free-text detail, typically for shortage_reason = 'OTHER'. */
+    shortage_notes?: string | null
   }[]
 }
 
@@ -248,6 +258,12 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
     if (item.quantity_received > outstanding) {
       throw new Error(`Cannot receive more than the outstanding quantity. Outstanding: ${outstanding}, requested: ${item.quantity_received}`)
     }
+    if (item.shortage_reason != null && !SHORTAGE_REASONS.includes(item.shortage_reason as ShortageReason)) {
+      throw new Error(`Invalid shortage reason: ${item.shortage_reason}. Must be one of ${SHORTAGE_REASONS.join(', ')}`)
+    }
+    if (item.quantity_received < outstanding && item.shortage_reason == null) {
+      throw new Error('A shortage reason is required when receiving less than the outstanding quantity')
+    }
     receivedSoFar.set(key, (receivedSoFar.get(key) ?? 0) + item.quantity_received)
 
     return {
@@ -283,6 +299,8 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
         product_id: item.product_id,
         quantity_received: item.quantity_received,
         unit_cost: item.unit_cost ?? null,
+        shortage_reason: item.shortage_reason ?? null,
+        shortage_notes: item.shortage_notes ?? null,
       })
 
     if (riError) throw new Error(`Failed to record receipt item: ${riError.message}`)

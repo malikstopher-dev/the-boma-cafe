@@ -25,7 +25,7 @@ export default function PurchaseOrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [receiving, setReceiving] = useState(false)
-  const [receiveForm, setReceiveForm] = useState<Record<string, { qty: string; cost: string }>>({})
+  const [receiveForm, setReceiveForm] = useState<Record<string, { qty: string; cost: string; reason: string; notes: string }>>({})
   const [receiveErrors, setReceiveErrors] = useState<Record<string, string>>({})
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [costCentres, setCostCentres] = useState<{ id: string; name: string }[]>([])
@@ -51,12 +51,14 @@ export default function PurchaseOrderDetailPage() {
         if (json.error) setError(json.error.message)
         else {
           setPo(json.data)
-          const form: Record<string, { qty: string; cost: string }> = {}
+          const form: Record<string, { qty: string; cost: string; reason: string; notes: string }> = {}
           for (const item of json.data.inventory_purchase_order_items ?? []) {
             const outstanding = Number(item.quantity_ordered) - Number(item.quantity_received ?? 0)
             form[item.id] = {
               qty: outstanding > 0 ? outstanding.toString() : '0',
               cost: item.unit_cost?.toString() ?? '',
+              reason: '',
+              notes: '',
             }
           }
           setReceiveForm(form)
@@ -101,6 +103,8 @@ export default function PurchaseOrderDetailPage() {
             product_id: item.product_id,
             quantity_received: Number(v.qty),
             unit_cost: v.cost ? Number(v.cost) : null,
+            shortage_reason: v.reason || null,
+            shortage_notes: v.notes || null,
           }
         })
 
@@ -116,6 +120,16 @@ export default function PurchaseOrderDetailPage() {
       })
       if (over) {
         alert('Cannot receive more than the outstanding quantity.')
+        setActionLoading(false)
+        return
+      }
+
+      const short = items.find((i: any) => {
+        const item = po.inventory_purchase_order_items.find((x: any) => x.id === i.po_item_id)
+        return Number(i.quantity_received) < Number(item.quantity_ordered) - Number(item.quantity_received ?? 0) && !i.shortage_reason
+      })
+      if (short) {
+        alert('A shortage reason is required when receiving less than the outstanding quantity.')
         setActionLoading(false)
         return
       }
@@ -265,6 +279,7 @@ export default function PurchaseOrderDetailPage() {
           {items.filter((i: any) => Number(i.quantity_ordered) - Number(i.quantity_received ?? 0) > 0).map((item: any) => {
             const outstanding = Number(item.quantity_ordered) - Number(item.quantity_received ?? 0)
             return (
+              <>
               <div key={item.id} className="flex gap-3 items-end mb-2 p-2" style={{border:'1px solid #3A3428',borderRadius:6}}>
                 <div className="flex-1">
                   <div style={{fontSize:14,fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{item.inventory_products?.name || item.product_id}</div>
@@ -278,6 +293,8 @@ export default function PurchaseOrderDetailPage() {
                     const num = Number(val)
                     if (val !== '' && num > outstanding) {
                       setReceiveErrors(er => ({ ...er, [item.id]: 'Cannot receive more than the outstanding quantity.' }))
+                    } else if (val !== '' && num > 0 && num < outstanding && !receiveForm[item.id]?.reason) {
+                      setReceiveErrors(er => ({ ...er, [item.id]: 'A shortage reason is required when receiving less than the outstanding quantity.' }))
                     } else {
                       setReceiveErrors(er => {
                         const next = { ...er }
@@ -292,7 +309,42 @@ export default function PurchaseOrderDetailPage() {
                   <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Unit Cost</label>
                   <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} type="number" min="0" step="0.01" placeholder="R" value={receiveForm[item.id]?.cost ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], cost: e.target.value } }))} />
                 </div>
+                <div className="w-32">
+                  <label style={{fontSize:12,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Shortage Reason</label>
+                  <select
+                    style={{background:'#2A261E',border:receiveErrors[item.id] ? '1px solid #E05D5D' : '1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
+                    value={receiveForm[item.id]?.reason ?? ''}
+                    onChange={e => {
+                      const val = e.target.value
+                      setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], reason: val } }))
+                      const num = Number(receiveForm[item.id]?.qty ?? '')
+                      if (num > 0 && num < outstanding && !val) {
+                        setReceiveErrors(er => ({ ...er, [item.id]: 'A shortage reason is required when receiving less than the outstanding quantity.' }))
+                      } else {
+                        setReceiveErrors(er => {
+                          const next = { ...er }
+                          delete next[item.id]
+                          return next
+                        })
+                      }
+                    }}
+                  >
+                    <option value="">—</option>
+                    <option value="SUPPLIER_SHORTAGE">Supplier Shortage</option>
+                    <option value="BACKORDER">Backorder</option>
+                    <option value="DAMAGED">Damaged</option>
+                    <option value="RETURNED">Returned</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  {receiveErrors[item.id] && <div style={{fontSize:11,color:'#E05D5D',marginTop:4,fontFamily:'Inter, sans-serif'}}>{receiveErrors[item.id]}</div>}
+                </div>
               </div>
+              {receiveForm[item.id]?.reason === 'OTHER' && (
+                <div className="mb-2" style={{padding:'0 12px'}}>
+                  <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Shortage notes (required detail for Other)" value={receiveForm[item.id]?.notes ?? ''} onChange={e => setReceiveForm(f => ({ ...f, [item.id]: { ...f[item.id], notes: e.target.value } }))} />
+                </div>
+              )}
+              </>
             )
           })}
 
@@ -321,17 +373,32 @@ export default function PurchaseOrderDetailPage() {
                     <tr style={{borderBottom:'1px solid #3A3428',color:'#A09888'}}>
                       <th style={{textAlign:'left',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Product</th>
                       <th style={{textAlign:'right',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Qty</th>
+                      <th style={{textAlign:'right',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Remaining</th>
                       <th style={{textAlign:'right',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Cost</th>
+                      <th style={{textAlign:'right',padding:4,fontWeight:500,fontFamily:'Inter, sans-serif'}}>Shortage Reason</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(receipt.inventory_po_receipt_items ?? []).map((ri: any) => (
-                      <tr key={ri.id}>
-                        <td className="p-1">{ri.inventory_products?.name || ri.product_id}</td>
-                        <td className="p-1 text-right">{Number(ri.quantity_received).toFixed(2)}</td>
-                        <td className="p-1 text-right">{ri.unit_cost ? `R${Number(ri.unit_cost).toFixed(2)}` : '—'}</td>
-                      </tr>
-                    ))}
+                    {(receipt.inventory_po_receipt_items ?? []).map((ri: any) => {
+                      const poItem = items.find((i: any) => i.id === ri.po_item_id)
+                      const remaining = poItem ? Math.max(0, Number(poItem.quantity_ordered) - Number(poItem.quantity_received ?? 0)) : null
+                      return (
+                        <tr key={ri.id}>
+                          <td className="p-1">{ri.inventory_products?.name || ri.product_id}</td>
+                          <td className="p-1 text-right">{Number(ri.quantity_received).toFixed(2)}</td>
+                          <td className="p-1 text-right">{remaining === null ? '—' : remaining.toFixed(2)}</td>
+                          <td className="p-1 text-right">{ri.unit_cost ? `R${Number(ri.unit_cost).toFixed(2)}` : '—'}</td>
+                          <td className="p-1 text-right">
+                            {ri.shortage_reason ? (
+                              <>
+                                <span style={{color:'#FF9800',fontWeight:500,fontFamily:'Inter, sans-serif'}}>{ri.shortage_reason.replace('_', ' ')}</span>
+                                {ri.shortage_notes && <span style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}> — {ri.shortage_notes}</span>}
+                              </>
+                            ) : <span style={{color:'#6B6358',fontFamily:'Inter, sans-serif'}}>—</span>}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               )}

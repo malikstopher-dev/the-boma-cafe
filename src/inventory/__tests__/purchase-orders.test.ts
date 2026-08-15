@@ -114,7 +114,7 @@ describe('receiveItems admin identity (P1a)', () => {
 
   it('stores the server-resolved admin identity on the receipt', async () => {
     await receiveItems(poId, {
-      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 5 }],
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 5, shortage_reason: 'SUPPLIER_SHORTAGE' }],
       received_by_admin_id: 'adm-1',
       received_by_admin_name: 'Mr Test Admin',
     })
@@ -131,7 +131,7 @@ describe('receiveItems admin identity (P1a)', () => {
 
   it('leaves the identity null when not provided (backward compatible)', async () => {
     await receiveItems(poId, {
-      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 5 }],
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 5, shortage_reason: 'SUPPLIER_SHORTAGE' }],
     })
 
     const receiptInsert = mockReceiptInserts.find(i => i.table === receiptsTable)!
@@ -175,11 +175,55 @@ describe('receiveItems admin identity (P1a)', () => {
     await expect(
       receiveItems(poId, {
         items: [
-          { po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 6 },
+          { po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 6, shortage_reason: 'BACKORDER' },
           { po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 5 },
         ],
       }),
     ).rejects.toThrow('Cannot receive more than the outstanding quantity. Outstanding: 4, requested: 5')
+    expect(mockReceiptInserts.length).toBe(0)
+  })
+
+  it('stores the shortage reason on a short delivery (P1c)', async () => {
+    await receiveItems(poId, {
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 8, shortage_reason: 'SUPPLIER_SHORTAGE' }],
+      received_by_admin_id: 'adm-1',
+      received_by_admin_name: 'Mr Test Admin',
+    })
+    const riInsert = mockReceiptInserts.find(i => i.table === 'inventory_po_receipt_items')
+    expect(riInsert?.payload.shortage_reason).toBe('SUPPLIER_SHORTAGE')
+    expect(riInsert?.payload.shortage_notes).toBeNull()
+    expect(mockCreateTransaction).toHaveBeenCalledTimes(1)
+  })
+
+  it('stores OTHER notes alongside the reason (P1c)', async () => {
+    await receiveItems(poId, {
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 8, shortage_reason: 'OTHER', shortage_notes: 'box torn in transit' }],
+    })
+    const riInsert = mockReceiptInserts.find(i => i.table === 'inventory_po_receipt_items')
+    expect(riInsert?.payload.shortage_reason).toBe('OTHER')
+    expect(riInsert?.payload.shortage_notes).toBe('box torn in transit')
+  })
+
+  it('requires a shortage reason when receiving less than outstanding (P1c)', async () => {
+    await expect(
+      receiveItems(poId, { items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 8 }] }),
+    ).rejects.toThrow('A shortage reason is required when receiving less than the outstanding quantity')
+    expect(mockReceiptInserts.length).toBe(0)
+    expect(mockCreateTransaction).not.toHaveBeenCalled()
+  })
+
+  it('does not require a reason when receiving exactly the outstanding quantity (P1c)', async () => {
+    await receiveItems(poId, { items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 10 }] })
+    const riInsert = mockReceiptInserts.find(i => i.table === 'inventory_po_receipt_items')
+    expect(riInsert?.payload.shortage_reason).toBeNull()
+  })
+
+  it('rejects an invalid shortage reason value (P1c)', async () => {
+    await expect(
+      receiveItems(poId, {
+        items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 8, shortage_reason: 'BOGUS' as any }],
+      }),
+    ).rejects.toThrow('Invalid shortage reason: BOGUS. Must be one of SUPPLIER_SHORTAGE, BACKORDER, DAMAGED, RETURNED, OTHER')
     expect(mockReceiptInserts.length).toBe(0)
   })
 })
