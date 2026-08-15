@@ -1554,3 +1554,41 @@ Migration 091 pushed (supabase db push, applied local+remote); commit 9d44749 pu
 ### Handover
 - F3 COMPLETE. Next per owner's mission order (none queued this session).
 - Note: `inventory_product_balances` has NO id column - schema-cache selects must use product_id/location_id/balance only.
+
+---
+
+## Session: E1-4 - Order Deduction via Background Worker (2026-08-15) - commit e2c3b1e + docs commit
+
+### Objective
+Move completed-order inventory deduction onto the existing background worker. The orders PATCH completion hook now ENQUEUES an order_deduction job instead of running autoDeductCompletedOrder inline. Worker executes asynchronously reusing the F2 deduct_order_items RPC (engine fallback), preserving F3 attribution, idempotency (already_deducted authoritative), identical insufficient-stock behaviour, audit + balance-cache updates. P1/F2/F3 logic untouched.
+
+### Migration 092 (applied to prod) - 092_order_deduction_job.sql
+CREATE OR REPLACE enqueue_background_job (identical 6-arg signature, body byte-for-byte 060) with allow-list extended: ('pdf_generation', 'order_deduction'). Lessons honored: migration history immutable (060 NOT edited - replay in new migration, like 090/091); allow-list comment says a new job type is a deliberate edit to THIS function.
+
+### Code
+- src/jobs/handlers/order-deduction.ts (NEW) - OrderDeductionPayload {order_id, location_id?}; missing order_id -> throw (worker retry/dead-letter); location_id present -> syncOrderItems + deductOrderItems(order, loc); absent -> autoDeductCompletedOrder(order) (default active location); result {deducted, skipped} returned to job.result; failures propagate to worker retry machinery.
+- src/jobs/index.ts - registerHandler('order_deduction', orderDeductionHandler); handlers/index.ts re-export; types.ts JobType += 'order_deduction'.
+- src/app/api/supabase/orders/route.ts PATCH - on status='completed' transition (inside the event-log branch): await getAdminClient().rpc('enqueue_background_job', {p_job_type:'order_deduction', p_payload:{order_id}, p_idempotency_key:'order_deduction:'+orderId, p_max_retries:3}); enqueue errors logged, NEVER fail the PATCH. Replaced the old fire-and-forget import('@/inventory/engine/order-items') inline call.
+- Tests: src/inventory/__tests__/order-deduction-handler.test.ts (6 tests: autoDeduct path, location_id path, already-deducted success, missing order_id throws, engine failure propagates, registry wiring). vi.mock('../../inventory/engine/order-items') with vi.hoisted fns - resolves to same module id as the handler's own import.
+
+### Worker bundle
+- 96.73 KB (was 94 KB) - src/inventory/engine/order-items + ledger chain bundles cleanly (no next/ imports anywhere in the chain; db.ts reads env at CALL time so the VM .env.worker supplies URL+key).
+
+### Verification (2026-08-15)
+- 231/231 vitest (225 + 6 new); inventory strict tsc clean; worker build green; next build green; temp tsc (strict:false - repo convention) over route+handler clean; tsconfig.e14.json deleted.
+- Migration 092 applied local+remote (migration list 092/092/092).
+- Commit e2c3b1e pushed; vercel --prod aliased (2 transient "Not authorized"/fetch failures, retried - established pattern).
+- VM worker updated: git pull + npm ci + build:worker + pm2 restart boma-worker + pm2 save (online, pid 150681).
+
+### Live E2E (prod, REAL VM worker, cleaned up after - e14-e2e.cjs/e14-query.cjs/e14-cleanup.cjs in temp, deleted)
+- 4 products (E1-4 Tequila/Lime Juice/Beer/Cocktail) + recipe E1-4 Cocktail (tequila 0.05 wastage 10%, lime 0.02, yield 1) + output name match; raw purchase opening balances (reason_type NULL - PURCHASE not in CHECK, F3 lesson) at Main Bar 214044c5... (Bar CC 6232a5c4-c685-4de2-9a43-a69a4f90658f - NOTE: earlier sessions recorded a WRONG tail e304-49a8-95d9-3517d4c3c0c1; real CC is 6232a5c4-c685-4de2-9a43-a69a4f90658f).
+- Completed order E14-254060 (dine-in, items_json 2 lines) -> enqueue RPC -> outcome inserted -> **REAL worker picked it up in ~30s** (logs: processing job -> handler started -> handler completed 3.7s) -> job completed {deducted:2, skipped:0}.
+- Verified: 2 order_items synced (cocktail line recipe_id linked, beer line null), both deducted_at; 3 SALE rows teq -0.055 @450 / lime -0.02 @60 / beer -1 @40, all order_id+order_line_id, recipe rows recipe_id, direct row recipe_id NULL, Bar CC, reason SALE, reference_type pos_order; ledger balances 0.945/0.48/4.
+- Idempotency: re-enqueue same key -> already_completed, same job id.
+- Negative control: enqueue for nonexistent order -> REAL worker ran handler, threw "Order not found", job -> pending retry_count=1 scheduled +2min (2^1*60s backoff, logs captured) - worker retry machinery integrated with new handler.
+- Cleanup: zero E1-4 rows anywhere (products/txns/orders/jobs/recipes/order_items/audit/cache); TEST Dry Store cache 50 untouched; TEST Main Bar ledger 0 (as found).
+
+### Notes / handover
+- E2E did NOT call the API route (no admin password available) - the route's enqueue call is identical to the RPC invoked; route change covered by code + build. UI-path proof deferred to owner handover.
+- Cleanup lesson: REST selects must include id (or the in.() delete list gets empty entries -> 400 22P02).
+- E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat) NOT started - next per mission order.
