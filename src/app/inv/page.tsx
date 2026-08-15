@@ -229,7 +229,7 @@ export default function OwnerDashboardPage() {
             <span style={{ width: 1, height: 24, background: '#332B21' }} />
             <Link href="/admin/operations" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #3A322A', background: '#1C1710', color: '#B8B0A0', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>Go to Admin</Link>
             <Link href="/" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #3A322A', background: '#1C1710', color: '#B8B0A0', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>View Website</Link>
-            <button onClick={() => { window.location.href = '/api/admin/auth?action=logout' }} title="Sign out" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(232,84,84,0.4)', background: 'rgba(232,84,84,0.1)', color: '#F17777', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Logout</button>
+            <button onClick={() => { window.location.href = '/api/admin/auth?action=logout&redirect=/admin/login' }} title="Sign out" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(232,84,84,0.4)', background: 'rgba(232,84,84,0.1)', color: '#F17777', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Logout</button>
           </div>
         }
       />

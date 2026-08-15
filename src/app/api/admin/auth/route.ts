@@ -184,7 +184,12 @@ export async function GET(request: NextRequest) {
       const cookieStore = await cookies();
       await endCurrentAdminSession(cookieStore);
       clearAdminCookies(cookieStore);
-      return NextResponse.redirect(new URL('/staff/login', request.url));
+      // Admin-area callers pass redirect=/admin/login so they land on the
+      // admin login; staff-area callers (kitchen/bar/waiter/staff nav) keep
+      // the default /staff/login. Same-origin paths only (open-redirect guard).
+      const redirectTo = searchParams.get('redirect');
+      const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/staff/login';
+      return NextResponse.redirect(new URL(safeRedirect, request.url));
     }
 
     // Header identity set by middleware (admin session cookie)

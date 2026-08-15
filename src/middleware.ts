@@ -249,8 +249,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
     }
 
-    // Admin pages
-    if (!pathname.startsWith('/admin/')) return NextResponse.next()
+    // Admin pages — exact /admin is part of the admin area too (the matcher
+    // runs for it; previously it slipped past this check unauthenticated).
+    if (pathname !== '/admin' && !pathname.startsWith('/admin/')) return NextResponse.next()
     if (pathname === '/admin/login') return NextResponse.next()
 
     const auth = await verifyRole(request)

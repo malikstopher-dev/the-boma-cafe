@@ -77,7 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('boma_staff_user');
     sessionStorage.clear();
     // Full page redirect to logout endpoint to ensure HttpOnly cookies are cleared
-    window.location.href = '/api/admin/auth?action=logout';
+    // Admin-area logout lands on the admin login (never the staff login).
+    window.location.href = '/api/admin/auth?action=logout&redirect=/admin/login';
   };
 
   const can = (permission: AdminPermission): boolean => {
