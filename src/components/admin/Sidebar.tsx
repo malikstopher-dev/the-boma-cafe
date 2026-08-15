@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createBrowserClient } from '@/lib/supabase'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { useAuth } from '@/lib/auth-context'
 import type { AdminPermission } from '@/lib/admin/permissions'
 import styles from './Sidebar.module.css'
@@ -231,6 +232,14 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
   }, [fetchInventoryUnread])
 
   useVisibleInterval(fetchInventoryUnread, 300000)
+
+  // E1-1: new low/out-of-stock alert (any admin tab, any device) updates
+  // the badge within ~1s. 300s poll stays as the fallback.
+  useRealtimeRefresh({
+    channel: 'e1-sidebar-inventory',
+    events: ['stock.low'],
+    onRefresh: () => { void fetchInventoryUnread() },
+  })
 
   useEffect(() => {
     let authId: string | null = null

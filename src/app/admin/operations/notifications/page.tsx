@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
@@ -43,6 +44,15 @@ export default function NotificationsPage() {
   }, [fetchData])
 
   useVisibleInterval(() => { void fetchData() }, 300000)
+
+  // E1-1: a new low/out-of-stock alert (from any device's "Check Stock
+  // Now" or a movement crossing a threshold) refreshes the list within
+  // ~1s. 300s poll stays as the fallback.
+  useRealtimeRefresh({
+    channel: 'e1-notifications',
+    events: ['stock.low'],
+    onRefresh: () => { void fetchData() },
+  })
 
   async function handleGenerate() {
     setGenerating(true)

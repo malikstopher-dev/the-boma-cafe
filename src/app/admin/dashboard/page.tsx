@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import { StatCard } from '@/components/admin/design-system/Card'
@@ -8,6 +8,7 @@ import { OrderStatusBadge } from '@/components/admin/design-system/Badge'
 import Button from '@/components/admin/design-system/Button'
 import { SkeletonStatCard, SkeletonText, SkeletonTextSm } from '@/components/admin/design-system/Skeleton'
 import { useToast } from '@/components/admin/design-system/Toast'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { cmsService } from '@/lib/client-cms'
 import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
@@ -121,21 +122,11 @@ export default function AdminDashboard() {
   const [dailyStatus, setDailyStatus] = useState<DailyStatusRow[]>([])
   const { error: showError } = useToast()
 
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const [items, evts, promos, inqs] = await Promise.all([
-          cmsService.getMenuItems(), cmsService.getEvents(), cmsService.getPromotions(), cmsService.getInquiries()
-        ])
-        setMenuItems(items.length); setEvents(evts.length); setPromotions(promos.length); setInquiries(inqs.length)
-      } catch {
-        showError('Failed to load CMS stats')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadStats()
-
+  // E1-1: order stats + daily status re-run silently on live order and
+  // stock-count events (leading-edge debounce coalesces bursts). Initial
+  // loads still happen in the mount effect; the 300s+ cadence of the
+  // polls is untouched elsewhere (no polling regression).
+  const loadOrderStats = useCallback(async () => {
     fetch('/api/supabase/orders?waiter_stats=true')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setWaiterStats(data) })
@@ -165,7 +156,9 @@ export default function AdminDashboard() {
       })
       .catch(() => {})
       .finally(() => setOrdersLoading(false))
+  }, [])
 
+  const loadDailyStatus = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0]
     Promise.all([
       fetch('/api/inventory/stock-counts').then(r => r.json()).catch(() => []),
@@ -195,6 +188,30 @@ export default function AdminDashboard() {
       setDailyStatus([...byLoc.values()].sort((a, b) => a.locationName.localeCompare(b.locationName)))
     })
   }, [])
+
+  useRealtimeRefresh({
+    channel: 'e1-owner-dashboard',
+    events: ['order.created', 'order.preparing', 'order.ready', 'order.completed', 'stock.count.updated'],
+    onRefresh: () => { void loadOrderStats(); void loadDailyStatus() },
+  })
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const [items, evts, promos, inqs] = await Promise.all([
+          cmsService.getMenuItems(), cmsService.getEvents(), cmsService.getPromotions(), cmsService.getInquiries()
+        ])
+        setMenuItems(items.length); setEvents(evts.length); setPromotions(promos.length); setInquiries(inqs.length)
+      } catch {
+        showError('Failed to load CMS stats')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadStats()
+    void loadOrderStats()
+    void loadDailyStatus()
+  }, [loadOrderStats, loadDailyStatus])
 
   const greeting = () => {
     const h = new Date().getHours()

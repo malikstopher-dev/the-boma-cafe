@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
@@ -72,6 +73,16 @@ export default function InventoryDashboardPage() {
   }, [fetchData])
 
   useVisibleInterval(() => { void fetchData(true) }, 300000)
+
+  // E1-1: realtime refresh — every ledger movement, PO receive, stock
+  // count event and low-stock alert refetches the combined RPC within
+  // ~1s (leading-edge debounce coalesces bursts). 300s poll above stays
+  // as the fallback (no polling regression).
+  useRealtimeRefresh({
+    channel: 'e1-ops-dashboard',
+    events: ['stock.moved', 'po.received', 'stock.count.updated', 'stock.low'],
+    onRefresh: () => { void fetchData(true) },
+  })
 
   if (isLoading) {
     return (

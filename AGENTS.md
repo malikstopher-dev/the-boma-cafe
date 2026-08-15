@@ -849,39 +849,39 @@ Legacy NULL rows from before the fix still exist in `inventory_transactions` (no
 
 ---
 
-## Session: Daily Stock Input + Weekly View + Gas Tracker (2026-08-10) — commit `e91bdd9`
+## Session: Daily Stock Input + Weekly View + Gas Tracker (2026-08-10) ï¿½ commit `e91bdd9`
 
 ### Objective
-Phases A–D of the owner-approved admin plan: highlight + rename the inventory section on the admin dashboard, Google-Sheets-style Daily Stock Input spreadsheet, numbered Mon–Sun "Delivered vs Sold" weekly view, and an LPG Gas Tracker — all from the live ledger, no fake numbers.
+Phases Aï¿½D of the owner-approved admin plan: highlight + rename the inventory section on the admin dashboard, Google-Sheets-style Daily Stock Input spreadsheet, numbered Monï¿½Sun "Delivered vs Sold" weekly view, and an LPG Gas Tracker ï¿½ all from the live ledger, no fake numbers.
 
-### Migration 067 (applied to prod) — `supabase/migrations/067_daily_stock_profiles_and_gas.sql`
+### Migration 067 (applied to prod) ï¿½ `supabase/migrations/067_daily_stock_profiles_and_gas.sql`
 - `inventory_type` CHECK += `GAS`; `transaction_type` CHECK += `gas_usage`; `reason_type` CHECK += `GAS_USAGE`
 - New tables `inventory_count_profiles` + `inventory_count_profile_items` (section_label, count_uom_id, sort_order)
 - Seeded 5 LPG products `GAS-001..GAS-005` (1/2/9/19/48 kg)
 
 ### Engines (new)
-- `src/inventory/lib/weeks.ts` — `mondayOf`/`firstMondayOfYear`/`weekNumber`/`lastWeekOfYear`/`weekRange`/`weekLabel`/`currentWeekNumber`. Week 1 = week containing 1st Monday of year; weeks run Mon–Sun (owner-confirmed).
-- `src/inventory/engine/weekly.ts` — `getWeeklyMovement` (per-inventory-type delivered vs used, DELIVERED_TYPES=purchase/return/transfer_in, USED_TYPES incl. gas_usage) + `getYearlyWeekSummary` (whole year bucketed by weekNumber, includes current week).
-- `src/inventory/engine/daily-entry.ts` — `getOrCreateDailySession` (notes=`daily:{date}` on inventory_stock_counts), `getDailySheet` (profiles ? fallback "All Products" section; expected balance at end-of-day; buildItem converts count units?base via getProductConversion/toBaseUnit), `saveDailyCell` (saveCountItem), `submitDailySession`, `approveDailySession`.
-- `src/inventory/engine/gas.ts` — `getGasOverview` (sizes+onHand via inventory_product_balances, weekly/monthly buckets, recentEvents) + `recordGas` (delivery?purchase/DELIVERY '+', usage?gas_usage/GAS_USAGE negative, audit logged).
+- `src/inventory/lib/weeks.ts` ï¿½ `mondayOf`/`firstMondayOfYear`/`weekNumber`/`lastWeekOfYear`/`weekRange`/`weekLabel`/`currentWeekNumber`. Week 1 = week containing 1st Monday of year; weeks run Monï¿½Sun (owner-confirmed).
+- `src/inventory/engine/weekly.ts` ï¿½ `getWeeklyMovement` (per-inventory-type delivered vs used, DELIVERED_TYPES=purchase/return/transfer_in, USED_TYPES incl. gas_usage) + `getYearlyWeekSummary` (whole year bucketed by weekNumber, includes current week).
+- `src/inventory/engine/daily-entry.ts` ï¿½ `getOrCreateDailySession` (notes=`daily:{date}` on inventory_stock_counts), `getDailySheet` (profiles ? fallback "All Products" section; expected balance at end-of-day; buildItem converts count units?base via getProductConversion/toBaseUnit), `saveDailyCell` (saveCountItem), `submitDailySession`, `approveDailySession`.
+- `src/inventory/engine/gas.ts` ï¿½ `getGasOverview` (sizes+onHand via inventory_product_balances, weekly/monthly buckets, recentEvents) + `recordGas` (delivery?purchase/DELIVERY '+', usage?gas_usage/GAS_USAGE negative, audit logged).
 - `ledger.ts` DECREASE_TYPES += `gas_usage`; `api-utils` inventory type filter += `GAS`.
 
 ### API + UI
-- API: daily-stock (GET; `[sessionId]` POST cell/PATCH submit; `[sessionId]/approve` POST), count-profiles CRUD, weekly GET, gas GET + records POST — engines under `src/inventory/api/*`, proxies under `src/app/api/inventory/*` using the `@/inventory/api/...` alias pattern (relative depths failed the build).
-- UI: `/admin/operations/daily-stock` (spreadsheet grid: sticky header, Enter ? / blur autosave, submit/approve), `/admin/operations/weekly` (week chips, delivered-vs-used bars, per-type table, CSV export), `/admin/operations/gas` (size cards, week/month deltas, record form, recent events). Sidebar groups renamed "Operations & Stock · X" + 3 new items; admin dashboard got the gold hero banner (per-location daily status, Week chip, Operations & Stock quick action).
+- API: daily-stock (GET; `[sessionId]` POST cell/PATCH submit; `[sessionId]/approve` POST), count-profiles CRUD, weekly GET, gas GET + records POST ï¿½ engines under `src/inventory/api/*`, proxies under `src/app/api/inventory/*` using the `@/inventory/api/...` alias pattern (relative depths failed the build).
+- UI: `/admin/operations/daily-stock` (spreadsheet grid: sticky header, Enter ? / blur autosave, submit/approve), `/admin/operations/weekly` (week chips, delivered-vs-used bars, per-type table, CSV export), `/admin/operations/gas` (size cards, week/month deltas, record form, recent events). Sidebar groups renamed "Operations & Stock ï¿½ X" + 3 new items; admin dashboard got the gold hero banner (per-location daily status, Week chip, Operations & Stock quick action).
 
 ### CRITICAL production bug found & fixed (stock-counts.ts)
-`getStockCount()` ordered items by `created_at` — that column **does not exist** on `inventory_stock_count_items` (migration 046), so PostgREST errored, data came back null, and **every stock count / reconciliation / checklist approval in production silently posted ZERO adjustment transactions**. Fixed: order by `id`. Also made `approveStockCount`'s approver optional (`null`) since `staff_profiles` is empty in prod (FK `approved_by` is nullable).
+`getStockCount()` ordered items by `created_at` ï¿½ that column **does not exist** on `inventory_stock_count_items` (migration 046), so PostgREST errored, data came back null, and **every stock count / reconciliation / checklist approval in production silently posted ZERO adjustment transactions**. Fixed: order by `id`. Also made `approveStockCount`'s approver optional (`null`) since `staff_profiles` is empty in prod (FK `approved_by` is nullable).
 
 ### Verification (2026-08-10)
 - Migration applied to prod via `supabase db push`
-- Live smoke against prod (cleaned up after): daily sheet for Main Bar (fallback section, live expected balances Vodka 39.5/Gin 20), cell save 123 ? variance 83.5, submit + approve ? `physical_count` txn +83.5; gas delivery 3× + usage 1× ? onHand=2, week/month buckets correct; weekly engine week 32 Mon–Sun range, zeros when no real txns
+- Live smoke against prod (cleaned up after): daily sheet for Main Bar (fallback section, live expected balances Vodka 39.5/Gin 20), cell save 123 ? variance 83.5, submit + approve ? `physical_count` txn +83.5; gas delivery 3ï¿½ + usage 1ï¿½ ? onHand=2, week/month buckets correct; weekly engine week 32 Monï¿½Sun range, zeros when no real txns
 - 62/62 vitest passing; strict inventory tsc clean; `next build` green
 - Commit `e91bdd9` pushed to main (Vercel auto-deploy)
 
 ### Notes
-- `inventory_count_profiles` table exists but is empty — Daily Stock Input currently uses the "All Products" fallback; profiles can be configured later via the count-profiles API.
-- Legacy orphaned `inventory_stock_count_items` rows remain in prod (sessions deleted) — harmless, invisible to reports.
+- `inventory_count_profiles` table exists but is empty ï¿½ Daily Stock Input currently uses the "All Products" fallback; profiles can be configured later via the count-profiles API.
+- Legacy orphaned `inventory_stock_count_items` rows remain in prod (sessions deleted) ï¿½ harmless, invisible to reports.
 
 ---
 
@@ -901,8 +901,8 @@ Finish the Google-Sheets-style Stock Sheet at /inv/stock: live item search, true
 - Also removed a dead key === 'comments' branch and restored the missing gridAnchor ref declaration.
 
 ### Build-blocking fix (unrelated to the UI work)
-- src/app/api/inventory/sheets/[id]/cells/route.ts:100 used query.select('*', { count: 'exact', head: true }) on a DELETE chain — supabase-js v2 types only allow 1 arg there, failing 
-ext build's tsc step. Fixed: wait query.select('*') and count via deletedRows.length (PostgREST RETURNING). This file (and sheets/route.ts, migration 068) were untracked leftovers from the prior session — now committed.
+- src/app/api/inventory/sheets/[id]/cells/route.ts:100 used query.select('*', { count: 'exact', head: true }) on a DELETE chain ï¿½ supabase-js v2 types only allow 1 arg there, failing 
+ext build's tsc step. Fixed: wait query.select('*') and count via deletedRows.length (PostgREST RETURNING). This file (and sheets/route.ts, migration 068) were untracked leftovers from the prior session ï¿½ now committed.
 
 ### Verification
 - Page + sheets API typecheck clean (temp tsconfig with strict:true, deleted after)
@@ -1043,46 +1043,46 @@ visibility-gated polling).
   dashboard route falls back to the legacy engine path until then.
 ---
 
-## Session: Ships 1-5 — Import Rollback, Booking Guards, Stock-Count Idempotency, Atomic RPCs (2026-08-13)
+## Session: Ships 1-5 ï¿½ Import Rollback, Booking Guards, Stock-Count Idempotency, Atomic RPCs (2026-08-13)
 
 ### Objective
 Implement the first five ships of the P0/P1 remediation blueprint (from the PASS 1-3 audit). Code + local-only migrations, fully tested. **No production push, no prod data cleanup.** F2 (order->inventory) and F3 (attribution) remain deferred until Ships 1-5 are audited.
 
-### Ship 1 (F1) — Import rollback sign bug — `src/inventory/import/ImportRollbackService.ts` (rewritten)
+### Ship 1 (F1) ï¿½ Import rollback sign bug ï¿½ `src/inventory/import/ImportRollbackService.ts` (rewritten)
 - Claim-first optimistic lock: `UPDATE status='rolled_back' WHERE id=? AND status='applied'` BEFORE creating reversals; 0 rows -> "already rolled back" (concurrent double-click rejected before posting anything).
 - Exact sign negation: reversal = `-Number(tx.quantity)` (a -4 adjustment reverses to +4; Math.abs previously reversed by ADDING stock).
 - Reversals never carry `import_batch_id`; original-movement query excludes prior reversals via `.not('notes','like','Rollback of import batch %')` -> retries never double-post.
 - `unit_cost` passed through; on mid-loop failure best-effort restore to 'applied' + rethrow.
 
-### Ship 2 (F6) — Booking consumption race
+### Ship 2 (F6) ï¿½ Booking consumption race
 - `src/app/api/booking/status/route.ts`: status PATCH now guarded with `.eq('status', previousStatus)` + `.select('id')` -> 409 "changed by another request" on 0 rows. Only the winning PATCH runs lifecycle hooks (reservation consumption fires once).
 - `src/inventory/engine/reservations.ts:consumeReservation`: final update guarded with `.in('status',['active','partially_consumed'])` + `.select().maybeSingle()`; 0 rows -> re-fetch: consumed -> idempotent return of current row; else throw (cancel race).
 
-### Ship 3 (F7) — Stock-count approval idempotency
+### Ship 3 (F7) ï¿½ Stock-count approval idempotency
 - Migration `073_stock_count_item_transaction_link.sql`: `inventory_stock_count_items.transaction_id` UUID FK (ON DELETE SET NULL) + index; status CHECK re-created to include `'approving'`.
 - `approveStockCount` (stock-counts.ts): status check allows submitted/approving; claim `.eq('status','submitted')` -> 'approving' BEFORE any txns (0 rows: approved -> return, approving -> re-enter); items with `transaction_id` skipped (retry-safety, production-runs precedent); stamp after each createTransaction; final guarded `.eq('status','approving')` update; on error restore 'submitted' + rethrow. `StockCountStatus` type + `InventoryStockCountItem.transaction_id` added (types.ts).
 
-### Ship 4 (F5) — Atomic receiving
-- Migration `074_receive_purchase_order_rpc.sql`: `receive_purchase_order(p_po_id,p_invoice_number,p_notes,p_received_by,p_cost_centre_id,p_items jsonb)` — single transaction: PO locked FOR UPDATE (ordered/partial only), item ownership validated (po_item_id :: product_id :: po_id), cost-centre resolution with engine-identical messages, ledger-parity checks, one 'purchase' txn per line + audit + balance-cache upsert, status partial/received. SECURITY DEFINER + search_path, service-role only, NOTIFY pgrst.
+### Ship 4 (F5) ï¿½ Atomic receiving
+- Migration `074_receive_purchase_order_rpc.sql`: `receive_purchase_order(p_po_id,p_invoice_number,p_notes,p_received_by,p_cost_centre_id,p_items jsonb)` ï¿½ single transaction: PO locked FOR UPDATE (ordered/partial only), item ownership validated (po_item_id :: product_id :: po_id), cost-centre resolution with engine-identical messages, ledger-parity checks, one 'purchase' txn per line + audit + balance-cache upsert, status partial/received. SECURITY DEFINER + search_path, service-role only, NOTIFY pgrst.
 - `receive/route.ts`: RPC-first; on error falls back to engine `receiveItems` (typed-error mapping preserved).
 
-### Ship 5 (F4) — Atomic + idempotent import apply
-- Migration `075_apply_import_batch_rpc.sql`: `apply_import_batch(p_import_id,p_decisions,p_performed_by,p_import_type,p_filename)` — batch row locked; 'applied' -> idempotent no-op returning existing txn ids; 'rolled_back' -> rejected; missing row only insertable with meta (direct mode); per-decision create_product (metadata incl. sku/barcode/inventory_type/reorder + base UOM link) + ledger txn with ledger-normalized signs, decrease-type balance checks, cost-centre resolution, audit + balance upserts; status 'applied' set only at end (whole batch rolls back on any RAISE).
+### Ship 5 (F4) ï¿½ Atomic + idempotent import apply
+- Migration `075_apply_import_batch_rpc.sql`: `apply_import_batch(p_import_id,p_decisions,p_performed_by,p_import_type,p_filename)` ï¿½ batch row locked; 'applied' -> idempotent no-op returning existing txn ids; 'rolled_back' -> rejected; missing row only insertable with meta (direct mode); per-decision create_product (metadata incl. sku/barcode/inventory_type/reorder + base UOM link) + ledger txn with ledger-normalized signs, decrease-type balance checks, cost-centre resolution, audit + balance upserts; status 'applied' set only at end (whole batch rolls back on any RAISE).
 - `imports/[id]/apply/route.ts`: RPC-first (maps jsonb -> ImportApplyResult) with engine fallback; `performed_by` passthrough.
-- `ImportExecutor.ts`: dropped `Math.abs` on quantity (sign-preserving — negative adjustments no longer flip to positive); create_product now writes sku/barcode/inventory_type/reorder_threshold/reorder_quantity + `inventory_product_uoms` base link (is_base true, is_display false, factor 1).
+- `ImportExecutor.ts`: dropped `Math.abs` on quantity (sign-preserving ï¿½ negative adjustments no longer flip to positive); create_product now writes sku/barcode/inventory_type/reorder_threshold/reorder_quantity + `inventory_product_uoms` base link (is_base true, is_display false, factor 1).
 - `ImportTypes.ts`: ImportDecision + `newProductSku/newProductBarcode/newProductInventoryType/newProductParLevel/newProductReorderPoint`.
 
 ### Tests (new/updated)
 - `__tests__/rollback.test.ts` (9): sign negation (+10->-10, -4->+4), notes-signature exclusion, not-found/not-applied/24h-expiry, claim race, mid-loop restore, claim error.
 - `__tests__/stock-counts.test.ts` (7): signed variances, transaction_id skip, concurrent-approved idempotent return, re-enter 'approving', mid-loop restore, status rejection, claim error.
-- `reservations.test.ts`: consume mocks updated to `.in()`+`.maybeSingle()` chains; 2 new race tests (idempotent consumed return, cancel-race error); batch test rewritten honestly (now asserts count 2 + 2 txns — previously swallowed mock errors and asserted 0).
-- **Mock pitfalls documented:** `.eq('id', 'res-1')` first arg is the COLUMN name — key mock lookups on the second (value) arg; `mockRejectedValueOnce` fires on the FIRST call (FIFO before base impl) — queue successful `mockImplementationOnce`s first; `from()` receives only the table (patch tracking needs a dedicated spy).
+- `reservations.test.ts`: consume mocks updated to `.in()`+`.maybeSingle()` chains; 2 new race tests (idempotent consumed return, cancel-race error); batch test rewritten honestly (now asserts count 2 + 2 txns ï¿½ previously swallowed mock errors and asserted 0).
+- **Mock pitfalls documented:** `.eq('id', 'res-1')` first arg is the COLUMN name ï¿½ key mock lookups on the second (value) arg; `mockRejectedValueOnce` fires on the FIRST call (FIFO before base impl) ï¿½ queue successful `mockImplementationOnce`s first; `from()` receives only the table (patch tracking needs a dedicated spy).
 
 ### Verification (2026-08-13)
-- `npx vitest run src/inventory/` — **80/80 passing** (8 files; was 62 before this session)
-- `npx tsc --noEmit -p src/inventory/tsconfig.json` — clean (strict + noUncheckedIndexedAccess)
+- `npx vitest run src/inventory/` ï¿½ **80/80 passing** (8 files; was 62 before this session)
+- `npx tsc --noEmit -p src/inventory/tsconfig.json` ï¿½ clean (strict + noUncheckedIndexedAccess)
 - 3 edited app routes typechecked clean via temp `tsconfig.ui.json` (extends root, strict:false, includes ambient.d.ts); restored tracked file after
-- No production failures found in the full suite run — all intermediate failures were test-mock bugs, fixed in tests only (production implementation unchanged to satisfy tests)
+- No production failures found in the full suite run ï¿½ all intermediate failures were test-mock bugs, fixed in tests only (production implementation unchanged to satisfy tests)
 - `git status` clean of unintended changes; **nothing committed, nothing pushed**
 
 ### Deploy notes (future, NOT done)
@@ -1123,3 +1123,36 @@ Fixes (commit 6e58cfc): prefixes now match bare paths (`'/api/waiters'` etc.), a
 - Real booking status change check
 - After 1-2 stable days: set ADMIN_LEGACY_FALLBACK=false in Vercel env
 - Deferred (user directive, after stability): owner Security page (last login, active sessions, device list, force logout - force logout ALREADY exists owner-only, active-sessions data ALREADY tracked in admin_sessions) - "consider" items only
+
+---
+
+## Session: E1-A Architecture Audit + E1-1 Realtime Foundation (2026-08-15) - baseline a8d5fe7
+
+### E1-A ï¿½ read-only audit (accepted by user, no code changed)
+- Traced every operational event path; found 7 realtime subscriptions (all postgres_changes, zero broadcast): StationDisplay (orders, station filter), ChatWindow/MessageNotifications (staff_messages), Sidebar `sidebar-unread` + staff-nav-unread, waiter-active-orders (`*` on orders, full 500-row reload per event), admin-orders-realtime.
+- **Major finding: browser realtime is effectively DEAD for orders/staff_messages/staff_notifications/bookings** ï¿½ all admin/staff browsers connect with the ANON key (auth is cookie/PIN, no Supabase Auth session), and RLS blocks anon SELECT on those tables (policies require auth.jwt() role or app.staff_user_id). The kitchen/bar boards, chat, admin orders and waiter board only work via their fallback polls (15-30s). inventory_* tables have NO RLS, so anon realtime works there.
+- Latency matrix delivered: Waiter->Kitchen/Bar already <1s (via polls ~30s in practice); Inventory->Dashboard 0-300s; owner dashboard mount-only (no polling at all); Kitchen->Waiter PWA 30s cancel-only poll.
+
+### E1-1 ï¿½ Realtime Foundation (implemented, NOT deployed, NOT committed)
+Mission lock: replace polling with realtime for 4 admin surfaces only; do not touch kitchen/bar/waiter/booking/deduction/worker.
+
+### Architecture decision (frozen)
+**Signal table + SECURITY DEFINER triggers** instead of subscribing to source tables:
+- `public.realtime_events` (migration 080): id bigint identity, event_name, table_name, entity_id, created_at. Payload minimal by construction (no PII/prices/notes - E1-5 principle). anon/public/authenticated: SELECT only (REVOKE ALL rest) -> events cannot be forged; public anon INSERT flows (orders/bookings) unaffected because triggers run SECURITY DEFINER.
+- Triggers: orders INSERT -> order.created; orders UPDATE status -> order.preparing/ready/completed (served also completes); bookings UPDATE -> booking.confirmed (only confirmed); inventory_purchase_orders UPDATE -> partial/received = po.received; inventory_transactions INSERT -> stock.moved; inventory_stock_counts INSERT/UPDATE -> stock.count.updated; staff_notifications INSERT (inventory_low_stock/inventory_out_of_stock) -> stock.low. Emitter prunes rows >24h per emit. Publication add is idempotent (guarded DO block).
+- Event contract documented in `docs/E1_REALTIME_CONTRACT.md` (logical event names locked: order.created/preparing/ready/completed, booking.confirmed, po.received, stock.moved, stock.count.updated, stock.low). E1-5 product rule recorded there for E1-3 (waiter sees bookings only after manager confirmation; only operational fields in payloads; never front-end hiding).
+
+### Hook + consumers
+- `src/inventory/lib/use-realtime-refresh.ts` - one channel per page (e1-ops-dashboard, e1-owner-dashboard, e1-sidebar-inventory, e1-notifications), single postgres_changes binding on realtime_events filtered event_name=in.(unquoted values), leading-edge debounce (first event of a burst fires immediately -> <1s; 2s coalescing window + trailing catch-up), cleanup removes channel + cancels timers, module-level Set guards duplicate channel registration. **IMPORTANT: WALRUS filter values must be UNQUOTED - `in.("stock.low")` silently matches NOTHING (verified live 2026-08-15, 438ms delivery with bare `in.(stock.low,stock.moved,po.received,stock.count.updated)`).**
+- `src/inventory/lib/realtime-debounce.ts` - pure leading-edge debouncer (tested).
+- Consumers: operations/dashboard (events stock.moved/po.received/stock.count.updated/stock.low -> silent fetchData(true)); admin/dashboard owner (order.*/stock.count.updated -> loadOrderStats+loadDailyStatus extracted into useCallbacks, silent); Sidebar (stock.low -> fetchInventoryUnread); notifications page (stock.low -> fetchData). Existing 300s visibility-gated polls untouched (fallback, no polling regression).
+
+### Verification (2026-08-15)
+- 125/125 vitest (121 + 4 new realtime-debounce tests; +1 PO-burst test in the deployment session); inventory strict tsc clean; temp UI tsconfig over 4 edited pages + hook clean (ambient.d.ts must be in the temp include - base include is overridden); `next build` green (2.7min).
+- **DEPLOYED (2026-08-15):** migration 080 applied to prod; quoted-filter bug found live and fixed (see hook note above); live E2E: anon SELECT 200, anon INSERT 401 (forgery blocked), stock.low delivered in 438ms with entity_id match, negative control silent, test rows cleaned up. Diagnostic migration 081 pushed then reverted (repair) + file deleted.
+
+### Deploy notes (future - owner/user approval required)
+1. `supabase db push` (migration 080) - routes/pages degrade gracefully via polls until then (hook subscribes to a table that won't exist -> realtime events never arrive -> polls keep working; PGRST errors are silent in the hook).
+2. `git commit` + push, `vercel --prod`.
+3. Post-deploy verification checklist in docs/E1_REALTIME_CONTRACT.md (prove <1s update on two browsers, sidebar badge auto-update, one channel per page in devtools, poll fallback via airplane mode, kitchen/bar/chat regression).
+4. E1-2 (waiter PWA live status) / E1-3 (booking->waiter feed honoring E1-5) / E1-4 (deduction via worker) / E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat) are next ships - NOT started.
