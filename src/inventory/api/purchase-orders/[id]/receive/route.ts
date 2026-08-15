@@ -36,6 +36,10 @@ export async function POST(
     // the fallback surfaces the same errors, and the RPC rolls back its own
     // partial work on any failure.
     const admin = await getAdminContext(request)
+    // Identity is ALWAYS server-resolved from the admin session — a
+    // client-supplied received_by_admin_id is never trusted.
+    const receivedByAdminId = admin?.adminId ?? null
+    const receivedByAdminName = admin?.displayName ?? null
     const supabase = getInventoryClient()
     const rpcRes = await supabase.rpc('receive_purchase_order', {
       p_po_id: id,
@@ -44,6 +48,8 @@ export async function POST(
       p_received_by: body.received_by ?? null,
       p_cost_centre_id: body.cost_centre_id ?? null,
       p_items: body.items,
+      p_received_by_admin_id: receivedByAdminId,
+      p_received_by_admin_name: receivedByAdminName,
     }) as unknown as { data: { receipt_id: string } | null; error: { message: string } | null }
 
     if (!rpcRes.error && rpcRes.data) {
@@ -54,7 +60,7 @@ export async function POST(
       return NextResponse.json({ data })
     }
 
-    const data = await receiveItems(id, body)
+    const data = await receiveItems(id, { ...body, received_by_admin_id: receivedByAdminId, received_by_admin_name: receivedByAdminName })
     if (admin) {
       await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.po_receive', targetType: 'inventory_purchase_orders', targetId: id, after: { invoice_number: body.invoice_number ?? null, items_received: body.items.length }, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
     }

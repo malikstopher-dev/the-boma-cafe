@@ -25,6 +25,12 @@ export interface ReceiveInput {
   notes?: string | null
   received_by?: string | null
   /**
+   * Real admin identity (E8 admin_accounts), resolved server-side from the
+   * admin context. Never trusted from the client.
+   */
+  received_by_admin_id?: string | null
+  received_by_admin_name?: string | null
+  /**
    * Optional override. When absent, the cost centre is resolved from
    * each receiving item's location (inventory_locations.cost_centre_id).
    */
@@ -251,6 +257,8 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
       invoice_number: input.invoice_number ?? null,
       notes: input.notes ?? null,
       received_by: input.received_by ?? null,
+      received_by_admin_id: input.received_by_admin_id ?? null,
+      received_by_admin_name: input.received_by_admin_name ?? null,
     })
     .select()
     .single()

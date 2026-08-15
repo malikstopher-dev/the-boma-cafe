@@ -286,6 +286,7 @@ export default function PurchaseOrderDetailPage() {
             <div key={receipt.id} style={{borderBottom:'1px solid #3A3428',padding:12}}>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:14,marginBottom:4}}>
                 <span style={{fontWeight:500,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{new Date(receipt.received_at).toLocaleString()}</span>
+                {receipt.received_by_admin_name && <span style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}>Received by: {receipt.received_by_admin_name}</span>}
                 {receipt.invoice_number && <span style={{color:'#A09888',fontFamily:'Inter, sans-serif'}}>Invoice: {receipt.invoice_number}</span>}
               </div>
               {(receipt.inventory_po_receipt_items ?? []).length > 0 && (
