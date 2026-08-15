@@ -222,7 +222,7 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
 
   const { data: po } = await supabase
     .from('inventory_purchase_orders')
-    .select('id, status')
+    .select('id, status, supplier_id')
     .eq('id', poId)
     .single()
 
@@ -329,6 +329,31 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
 
   const allItems = await checkAllItemsReceived(poId)
   const newStatus = allItems ? 'received' : 'partial'
+
+  // P1d: auto-create the supplier invoice so Payables immediately reflects
+  // what is owed. Amount uses RECEIVED quantities only (received x cost,
+  // never ordered). One receipt -> one invoice (unique index on
+  // inventory_supplier_invoices.receipt_id); a 23505 here means the invoice
+  // already exists for this receipt - never create a duplicate.
+  const invoiceTotal = resolvedItems.reduce(
+    (sum, { item, poItem }) => sum + Number(item.quantity_received) * Number(item.unit_cost ?? poItem.unit_cost ?? 0),
+    0,
+  )
+  const { error: invoiceError } = await supabase
+    .from('inventory_supplier_invoices')
+    .insert({
+      supplier_id: po.supplier_id,
+      receipt_id: receiptId,
+      invoice_number: input.invoice_number ?? null,
+      invoice_date: new Date().toISOString().slice(0, 10),
+      total_amount: invoiceTotal,
+      status: 'pending',
+      notes: 'Auto-created from PO receipt',
+      created_by: input.received_by ?? null,
+    })
+  if (invoiceError && invoiceError.code !== '23505') {
+    throw new Error(`Failed to create supplier invoice: ${invoiceError.message}`)
+  }
 
   const updateData: Record<string, unknown> = { status: newStatus, updated_at: new Date().toISOString() }
   if (newStatus === 'received') updateData.received_at = new Date().toISOString()
