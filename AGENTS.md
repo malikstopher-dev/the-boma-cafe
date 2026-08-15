@@ -1375,3 +1375,30 @@ TEST PO ordered 10 -> RPC receive 6 PASS (partial) -> attempt 5 FAIL with exact 
 
 ### Handover
 - P1c (shortage reasons), P1d (invoice automation), P1e (payment terms) NOT started - next per mission order.
+
+---
+
+## Session: P1c - Shortage / Backorder Reasons (2026-08-15) - commit b56a707
+
+### Objective
+P1c (third ship of the Supplier Workflow plan): admins record WHY a received quantity is less than the ordered quantity (structured reason, not free-text only). P1a identity + P1b over-receive untouched. P1d (invoices), P1e (payment terms) NOT started.
+
+### Migration 087 (applied to prod) - `087_receipt_shortage_reasons.sql`
+- ADD COLUMN `shortage_reason TEXT` + `shortage_notes TEXT` on inventory_po_receipt_items; CHECK (shortage_reason NULL or SUPPLIER_SHORTAGE/BACKORDER/DAMAGED/RETURNED/OTHER), guard against re-add. Historical rows untouched (stay NULL).
+- CREATE OR REPLACE `receive_purchase_order` (same 8-arg signature): reads shortage_reason/shortage_notes per line, validates allowlist ("Invalid shortage reason: %. Must be one of ..."), requires reason when `qty < outstanding` ("A shortage reason is required when receiving less than the outstanding quantity"), persists both on the receipt item. Ledger/balance/audit/partial-receive/P1b guard unchanged.
+
+### Engine (`purchase-orders.ts`)
+- `SHORTAGE_REASONS` const + `ShortageReason` type; `ReceiveInput.items` gains `shortage_reason`/`shortage_notes`; validation in the pre-write loop (invalid value -> throw; qty < outstanding without reason -> throw); receipt-item insert persists both.
+
+### UI (`purchase-orders/[id]/page.tsx`)
+- Receive form per line: Reason dropdown (5 values, human labels) + inline required-reason error (red border, same pattern as P1b); reason required when qty < outstanding (client + server); `OTHER` reveals a notes input; submit guard alerts. Receiving History table: new Remaining + Shortage Reason columns (reason badge + notes). No redesign.
+- Build fix during session: OTHER-notes block was added as a second root JSX element next to the flex row (adjacent JSX elements are illegal) - wrapped the row + block in a fragment.
+
+### Tests
+- purchase-orders.test.ts: 12 tests (7 previous updated for the new rule - partial receives in P1a/P1b tests now pass a reason; +5 new: reason stored, OTHER notes stored, missing-reason rejected, exact-qty needs no reason, invalid value rejected with allowlist message). 180/180 vitest total. Inventory strict tsc clean; temp UI tsc clean (fragment fix).
+
+### Verification (2026-08-15, live, cleaned up after)
+TEST PO ordered 20 -> receive 15 with SUPPLIER_SHORTAGE PASS (receipt item stores reason, outstanding 5, PO partial) -> receive 2 WITHOUT reason REJECTED (exact message; no receipt rows) -> receive 2 with reason BOGUS REJECTED (allowlist message) -> receive remaining 5 no-reason PASS (received, received_at set, reason NULL on the full line) -> ledger 2 txns totalling exactly 20 @75 -> balance cache 50->70. Cleanup: TEST balance restored to 50; 11 historical NULL-identity receipts + 0 shortage-reason rows unchanged.
+
+### Handover
+- P1d (invoice automation at receive) and P1e (structured payment terms) NOT started - next per mission order.
