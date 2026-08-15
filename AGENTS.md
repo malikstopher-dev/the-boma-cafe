@@ -1312,3 +1312,16 @@ git revert 1835050 + ercel --prod (docs-only commit 54f4bb2 unaffected). No DB/
 
 ### Next (mission order, NOT started)
 Resume P1 Supplier Workflow implementation in the approved order (P1a receiving identity -> P1b over-receive cap -> P1c shortage reasons -> P1d invoice automation -> P1e payment terms). Audit findings carried forward in the P1 gate report; no re-audit needed.
+
+---
+
+## Session: Admin Display Names Correction (2026-08-15) - commit 20883ae
+
+### Objective
+Owner asked for corrected admin display names: "Mr Mahendra" (not mahindra/MR MAHINDRA) and "Ms Zelda" (not Chriselda). Usernames (login identifiers) intentionally unchanged.
+
+### Done
+1. **DB (live, service role):** dmin_accounts.display_name updated: mahindra -> "Mr Mahendra", chriselda -> "Ms Zelda". Verified live via GET /api/admin/accounts/public: gibbs=Mr Gibbs, isaac=Mr Isaac, mahindra=Mr Mahendra, khosi=Ms Khosi, chriselda=Ms Zelda. This drives the /admin/login dropdown, admin banner, and audit log adminName.
+2. **Code (commit 20883ae, 2 files):** src/app/inv/page.tsx:186 greeting "Mr Mahindra" -> "Mr Mahendra"; src/app/admin/accounts/page.tsx form placeholders "e.g. Chriselda"/"e.g. chriselda" -> "e.g. Zelda"/"e.g. zelda".
+3. **Verify:** temp UI tsc clean; 168/168 vitest; commit pushed; ercel --prod (cloud build green, aliased).
+4. **Note:** client-rendered page chunks (inv, admin/accounts) are registered at runtime by Turbopack and are NOT statically greppable in the served HTML (14 chunk refs scanned, page modules absent) - inconclusive by inspection, but the same commit's cloud build succeeded and the DB-driven surfaces are live-verified.
