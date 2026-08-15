@@ -1636,3 +1636,41 @@ chat-events.test.ts: delivery, unquoted-filter contract (fake now applies the WA
 - Legacy role-cookie identity (boma_admin_auth, shared password) resolves staff routes as the virtual ADMIN member (isAdmin bypasses membership checks) - used for the route E2E.
 - Kitchen/bar deduction, worker, booking, E1-1/E1-2/E1-3 consumers untouched.
 - Mission E1-5 COMPLETE. Nothing queued next.
+
+---
+
+## Session: O3 - Admin vs Staff Login Routing (2026-08-16) - commit 6e46a7c
+
+### Objective
+Fix the auth routing conflict where visiting /admin sometimes redirected to /staff/login. Success criteria: /admin always follows admin authentication; /admin/login never redirects to /staff/login; /staff/login stays staff-only; Owner/Admin sessions enter the admin area correctly; RBAC intact; no redirect loops; staff login keeps working.
+
+### Root cause (code-traced, then live-verified)
+1. **Logout dumped EVERYONE on the staff login** - GET /api/admin/auth?action=logout hard-redirected to /staff/login for all callers. Admin-side logouts (admin sidebar via auth-context, owner portal /inv page) landed admins on the STAFF portal login - the reported "admin area -> staff login" symptom (admin logs out, next admin visit starts from the staff portal context).
+2. **middleware /admin exact-path gap** - the matcher runs for /admin (next.config /admin/:path*), but the handler's admin block used !pathname.startsWith('/admin/') so the exact path /admin slipped past unauthenticated with no auth check and no auth headers - /admin relied on a client-side redirect chain (AdminIndex -> /admin/dashboard) instead of server auth.
+
+### Fix (4 files, +12/-5, additive; no behavior change for staff callers)
+1. **src/app/api/admin/auth/route.ts** - GET logout now accepts same-origin ?redirect= (startsWith('/') and not startsWith('//') guard; anything else falls back to /staff/login). Default unchanged -> staff-area callers (StationDisplay, waiter PWA, staff nav) keep landing on /staff/login byte-for-byte.
+2. **src/lib/auth-context.tsx** - admin sidebar logout now passes redirect=/admin/login (admin logout -> admin login).
+3. **src/app/inv/page.tsx** - owner portal logout passes redirect=/admin/login.
+4. **src/middleware.ts** - admin block: 'if (pathname !== ''/admin'' && !pathname.startsWith(''/admin/''))' - exact /admin now goes through verifyRole like every other admin route (admin-only; staff/none -> /admin/login?redirect=/admin).
+
+### Verification (live against prod after vercel --prod, all via curl)
+- A: Anonymous /admin -> 307 /admin/login?redirect=/admin (was unauthenticated pass-through)
+- B: Anonymous /admin/login -> 200 (never staff login)
+- C: logout no param -> 307 /staff/login (staff callers unchanged)
+- D: logout&redirect=/admin/login -> 307 /admin/login (admin logout fixed)
+- E: logout&redirect=https://evil.com and //evil.com -> 307 /staff/login (open-redirect guard)
+- H: kitchen cookie -> /admin 307 /admin/login; -> /staff/kitchen 200 (staff routes intact); -> /admin/dashboard 307 /admin/login
+- F: legacy login (Lovers0884) -> 200; cookie -> /admin 200, /admin/dashboard 200, /inv 200; logout clears BOTH cookies (boma_admin_auth + boma_admin_session) + 307 /admin/login; post-logout /admin/dashboard -> 307 /admin/login (no session reuse)
+- No redirect loops: /admin/login always 200; /admin for authenticated admin -> 200 (verifyRole -> headers -> AdminIndex -> /admin/dashboard).
+- Individual admin session path (boma_admin_session) is untouched code (verifyRole DB validation unchanged) - UI-path proof needs one real admin password (owner-only, same as P1a).
+
+### Tooling lesson (burned 20 min)
+PowerShell 5.1 curl.exe quoting mangles \" escapes - the JSON body arrives corrupt ("Expected property name or '}' in JSON at position 1" in Vercel logs) -> POST /api/admin/auth returned 500 "Login failed". NOT a code bug (E1-5's Node-fetch E2E worked). Fix: write body to a temp file and use -d @file (or Node fetch). Vercel logs (vercel logs --limit N) confirmed the exact SyntaxError.
+
+### Verification (local)
+242/242 vitest (unchanged); temp UI tsconfig over the 4 edited files clean (deleted after); next build green; commit 6e46a7c pushed; vercel --prod aliased (build 1m + deploy 3m).
+
+### Handover
+- O3 COMPLETE. Mission queue (run one by one with owner permission): O1 (owner landing), O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+- Remaining legacy flows for owner handover (unchanged by O3): individual admin session login UI path; kitchen/bar/waiter real-device checks.
