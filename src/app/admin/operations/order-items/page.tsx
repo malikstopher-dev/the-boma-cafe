@@ -23,6 +23,8 @@ type OrderLine = {
   product_id: string | null
   pour_size_ml: number | null
   transaction_id: string | null
+  deducted_at: string | null
+  recipe_id: string | null
   inventory_products?: { id: string; name: string; sku: string | null } | null
 }
 
@@ -99,7 +101,7 @@ export default function OrderItemsPage() {
 
   const matched = detail?.items.filter(i => i.product_id) ?? []
   const unmatched = detail?.items.filter(i => !i.product_id) ?? []
-  const deducted = matched.filter(i => i.transaction_id)
+  const deducted = matched.filter(i => i.transaction_id || i.deducted_at)
 
   return (
     <AdminPage
@@ -184,10 +186,10 @@ export default function OrderItemsPage() {
                       )}
                       {item.product_id && (
                         <span style={{fontSize:12,color:'#A09888'}}>
-                          base {item.base_quantity ?? '—'}{item.pour_size_ml ? ` (${item.pour_size_ml}ml pour)` : ''}
+                          base {item.base_quantity ?? '—'}{item.pour_size_ml ? ` (${item.pour_size_ml}ml pour)` : ''}{item.recipe_id ? ' · recipe' : ''}
                         </span>
                       )}
-                      {item.transaction_id ? (
+                      {item.transaction_id || item.deducted_at ? (
                         <span style={{fontSize:12,color:'#4CAF50'}}>✓ deducted</span>
                       ) : item.product_id ? (
                         <span style={{fontSize:12,color:'#C8A04E'}}>pending</span>

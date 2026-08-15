@@ -576,6 +576,7 @@ export interface OrderItem {
   product_id: string | null
   pour_size_ml: number | null
   base_quantity: number | null
+  recipe_id: string | null
   transaction_id: string | null
   matched_at: string | null
   deducted_at: string | null
