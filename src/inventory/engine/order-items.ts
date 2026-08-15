@@ -269,7 +269,7 @@ async function deductOrderItemsEngine(orderId: string, locationId: string): Prom
   for (const line of pending) {
     if (line.recipe_id) {
       try {
-        const lineDeducted = await deductRecipeLine(line, locationId)
+        const lineDeducted = await deductRecipeLine(line, locationId, orderId)
         if (lineDeducted) deducted++
       } catch (error) {
         failures.push(`${line.item_name}: ${error instanceof Error ? error.message : 'unknown error'}`)
@@ -291,6 +291,9 @@ async function deductOrderItemsEngine(orderId: string, locationId: string): Prom
         reason_type: 'SALE',
         reference_type: 'pos_order',
         reference_id: orderId,
+        order_id: orderId,
+        order_line_id: line.id,
+        recipe_id: null,
         notes: `Auto-deducted order item: ${line.item_name} (x${line.quantity})`,
       })
 
@@ -318,7 +321,7 @@ async function deductOrderItemsEngine(orderId: string, locationId: string): Prom
   return { deducted, skipped }
 }
 
-async function deductRecipeLine(line: PendingLine, locationId: string): Promise<boolean> {
+async function deductRecipeLine(line: PendingLine, locationId: string, orderId: string): Promise<boolean> {
   const supabase = getInventoryClient()
 
   const { data: recipe } = await supabase
@@ -378,6 +381,9 @@ async function deductRecipeLine(line: PendingLine, locationId: string): Promise<
       reason_type: 'SALE',
       reference_type: 'pos_order',
       reference_id: line.id,
+      order_id: orderId,
+      order_line_id: line.id,
+      recipe_id: line.recipe_id,
       notes: `Auto-deducted recipe ingredient: ${productNames.get(ing.product_id) ?? ing.product_id} for ${line.item_name} (x${line.quantity})`,
     })
   }

@@ -33,6 +33,9 @@ export async function getTimeline(query: TimelineQuery): Promise<MovementEvent[]
       reference_id,
       notes,
       cost_centre_id,
+      order_id,
+      order_line_id,
+      recipe_id,
       cost_centres!inner(name)
     `)
     .order('created_at', { ascending: false })

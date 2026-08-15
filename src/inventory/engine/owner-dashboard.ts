@@ -578,7 +578,7 @@ async function buildActivity(): Promise<OwnerActivityItem[]> {
 
   const { data: recentTxns } = await supabase
     .from('inventory_transactions')
-    .select('transaction_type, quantity, unit_cost, created_at, inventory_products(name)')
+    .select('transaction_type, quantity, unit_cost, created_at, order_id, order_line_id, recipe_id, inventory_products(name)')
     .order('created_at', { ascending: false })
     .limit(8)
 

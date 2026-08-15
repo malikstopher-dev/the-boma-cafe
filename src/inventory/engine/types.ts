@@ -128,6 +128,12 @@ export interface InventoryTransaction {
   /** SALE posted by consumeReservation for this reservation (migration
    *  077). At most one per reservation (unique index). */
   reservation_id: string | null
+  /** F3 attribution: the order / order line / recipe an order-deduction
+   *  SALE row was posted for (migration 091). recipe_id is NULL on direct
+   *  product lines; all three are NULL on non-order movements. */
+  order_id: string | null
+  order_line_id: string | null
+  recipe_id: string | null
   created_at: string
 }
 
@@ -425,6 +431,12 @@ export interface CreateTransactionInput {
   /** Reservation this SALE was posted for (consumeReservation, migration
    *  077). Nullable; only consumption txns carry it. */
   reservation_id?: string | null
+  /** F3 attribution (migration 091): set by order-deduction callers so the
+   *  ledger row permanently identifies its order, order line and (for
+   *  recipe lines) recipe. Nullable; non-order movements omit them. */
+  order_id?: string | null
+  order_line_id?: string | null
+  recipe_id?: string | null
 }
 
 export interface WasteSummaryRow {

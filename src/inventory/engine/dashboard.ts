@@ -184,7 +184,7 @@ export async function getRecentActivity(locationId: string, limit = 10, inventor
 
   let txnQuery = supabase
     .from('inventory_transactions')
-    .select('id, product_id, transaction_type, quantity, created_at, inventory_products!inner(inventory_type)')
+    .select('id, product_id, transaction_type, quantity, created_at, order_id, order_line_id, recipe_id, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
 
   if (inventoryType) {

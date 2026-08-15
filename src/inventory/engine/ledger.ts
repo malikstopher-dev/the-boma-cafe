@@ -148,6 +148,9 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       notes: input.notes ?? null,
       import_batch_id: input.import_batch_id ?? null,
       reservation_id: input.reservation_id ?? null,
+      order_id: input.order_id ?? null,
+      order_line_id: input.order_line_id ?? null,
+      recipe_id: input.recipe_id ?? null,
     })
     .select()
     .single()
@@ -165,6 +168,9 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     reason_type: input.reason_type ?? null,
     reference_type: input.reference_type,
     reference_id: input.reference_id,
+    order_id: input.order_id ?? null,
+    order_line_id: input.order_line_id ?? null,
+    recipe_id: input.recipe_id ?? null,
   }, input.performed_by ?? null)
 
   try {

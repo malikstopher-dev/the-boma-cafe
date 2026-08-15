@@ -205,11 +205,28 @@ describe('deductOrderItems engine fallback (recipe + direct lines)', () => {
       reason_type: 'SALE',
       reference_type: 'pos_order',
       reference_id: 'oi-1',
+      order_id: 'order-1',
+      order_line_id: 'oi-1',
+      recipe_id: 'rec-1',
     })
     expect(calls[0]?.notes).toContain('Tequila')
-    expect(calls[1]).toMatchObject({ product_id: 'ing-b', quantity: 0.6, reference_id: 'oi-1' })
+    expect(calls[1]).toMatchObject({
+      product_id: 'ing-b',
+      quantity: 0.6,
+      reference_id: 'oi-1',
+      order_id: 'order-1',
+      order_line_id: 'oi-1',
+      recipe_id: 'rec-1',
+    })
     // Direct line keeps the existing behaviour: order-id reference
-    expect(calls[2]).toMatchObject({ product_id: 'prod-2', quantity: 0.33, reference_id: 'order-1' })
+    expect(calls[2]).toMatchObject({
+      product_id: 'prod-2',
+      quantity: 0.33,
+      reference_id: 'order-1',
+      order_id: 'order-1',
+      order_line_id: 'oi-2',
+      recipe_id: null,
+    })
 
     const updates = mockUpdates.filter(u => u.table === 'order_items')
     expect(updates).toHaveLength(2)

@@ -387,5 +387,198 @@ describe('ledger', () => {
         }),
       ).rejects.toThrow(InsufficientStockError)
     })
+
+    it('should persist F3 order attribution on the ledger row and audit entry', async () => {
+      let insertPayload: Record<string, unknown> | null = null
+      let auditChanges: Record<string, unknown> | null = null
+      mockClient.rpc.mockReturnValue({
+        single: vi.fn(() => res({ balance: 100 })),
+      })
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+                })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                not: vi.fn(() => ({
+                  order: vi.fn(() => ({
+                    limit: vi.fn(() => ({
+                      maybeSingle: vi.fn(() => res(null)),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+            insert: vi.fn((p: Record<string, unknown>) => {
+              insertPayload = p
+              return {
+                select: vi.fn(() => ({
+                  single: vi.fn(() => res({
+                    id: 'tx-att',
+                    product_id: 'prod-1',
+                    location_id: 'loc-1',
+                    transaction_type: 'sale',
+                    quantity: -1,
+                    unit_cost: null,
+                    reference_type: 'pos_order',
+                    reference_id: 'oi-9',
+                    performed_by: null,
+                    notes: null,
+                    import_batch_id: null,
+                    created_at: '2026-08-15T00:00:00Z',
+                  })),
+                })),
+              }
+            }),
+          }
+        }
+        if (table === 'inventory_audit_log') {
+          return {
+            insert: vi.fn((p: Record<string, unknown>) => {
+              auditChanges = (p.changes ?? null) as Record<string, unknown> | null
+              return { select: vi.fn(() => ({ single: vi.fn(() => res({ id: 'aud-1' })) })) }
+            }),
+          }
+        }
+        if (table === 'inventory_product_balances') {
+          return {
+            upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      const tx = await createTransaction({
+        product_id: 'prod-1',
+        location_id: 'loc-1',
+        transaction_type: 'sale',
+        quantity: 1,
+        reference_type: 'pos_order',
+        reference_id: 'oi-9',
+        order_id: 'order-9',
+        order_line_id: 'oi-9',
+        recipe_id: 'rec-9',
+      })
+      expect(tx.id).toBe('tx-att')
+      expect(insertPayload).toMatchObject({
+        order_id: 'order-9',
+        order_line_id: 'oi-9',
+        recipe_id: 'rec-9',
+      })
+      expect(auditChanges).toMatchObject({
+        order_id: 'order-9',
+        order_line_id: 'oi-9',
+        recipe_id: 'rec-9',
+      })
+    })
+
+    it('should leave order attribution null when not provided', async () => {
+      let insertPayload: Record<string, unknown> | null = null
+      mockClient.rpc.mockReturnValue({
+        single: vi.fn(() => res({ balance: 100 })),
+      })
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+                })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                not: vi.fn(() => ({
+                  order: vi.fn(() => ({
+                    limit: vi.fn(() => ({
+                      maybeSingle: vi.fn(() => res(null)),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+            insert: vi.fn((p: Record<string, unknown>) => {
+              insertPayload = p
+              return {
+                select: vi.fn(() => ({
+                  single: vi.fn(() => res({
+                    id: 'tx-plain',
+                    product_id: 'prod-1',
+                    location_id: 'loc-1',
+                    transaction_type: 'purchase',
+                    quantity: 10,
+                    unit_cost: null,
+                    reference_type: null,
+                    reference_id: null,
+                    performed_by: null,
+                    notes: null,
+                    import_batch_id: null,
+                    created_at: '2026-08-15T00:00:00Z',
+                  })),
+                })),
+              }
+            }),
+          }
+        }
+        if (table === 'inventory_audit_log') {
+          return {
+            insert: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn(() => res({ id: 'aud-1' })) })) })),
+          }
+        }
+        if (table === 'inventory_product_balances') {
+          return {
+            upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      await createTransaction({
+        product_id: 'prod-1',
+        location_id: 'loc-1',
+        transaction_type: 'purchase',
+        quantity: 10,
+      })
+      expect(insertPayload).toMatchObject({
+        order_id: null,
+        order_line_id: null,
+        recipe_id: null,
+      })
+    })
   })
 })
