@@ -1592,3 +1592,47 @@ CREATE OR REPLACE enqueue_background_job (identical 6-arg signature, body byte-f
 - E2E did NOT call the API route (no admin password available) - the route's enqueue call is identical to the RPC invoked; route change covered by code + build. UI-path proof deferred to owner handover.
 - Cleanup lesson: REST selects must include id (or the in.() delete list gets empty entries -> 400 22P02).
 - E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat) NOT started - next per mission order.
+
+---
+
+## Session: E1-5 - Fix Dead Anon Realtime on Orders/Chat + Cleanup (2026-08-15) - commit 8e22940
+
+### Objective
+Close the E1-A finding: six browser realtime subscriptions watched tables the anon key cannot read (RLS requires auth.jwt() or app.staff_user_id), so postgres_changes delivered NOTHING. Kitchen/bar boards, admin orders, chat toasts, chat window and both unread badges only ever worked through their fallback polls. Fix: funnel all of them through the anon-readable realtime_events signal table (migration 080) with additive triggers; keep polling as fallback; delete the dead subscriptions.
+
+### Migration 093 (applied to prod) - 093_chat_notification_events.sql
+- trg_realtime_chat_message: AFTER INSERT ON staff_messages -> emit_realtime_event('chat.message', 'staff_messages') (generic 080 emitter).
+- trg_realtime_notification_new: AFTER INSERT ON staff_notifications -> emit_realtime_event('notification.new', 'staff_notifications') (ALL types; 080's stock.low trigger stays -> low-stock inserts emit both events, different consumers, both debounced - documented in the migration).
+- NOTIFY pgrst. Additive; no source-table changes.
+
+### Lib + API
+- src/inventory/lib/chat-events.ts (NEW): CHAT_LIVE_EVENTS=['chat.message']; subscribeToChatEvents({channel, onMessageId, onChange?, debounceMs?, enabled?, getSupabase?}) - same transport/filter convention as order-status.ts (unquoted in-list), module-level Set duplicate guard, cleanup disposes debouncer + removes channel.
+- src/inventory/lib/order-status.ts: +ORDER_BOARD_EVENTS export (order.created/preparing/ready/completed/cancelled) for board surfaces (existing exports untouched).
+- src/app/api/staff/messages/route.ts GET: optional ?message_id= single-fetch (membership-checked, 404 unknown, bypasses the conversation_id requirement; message text: "conversation_id or message_id required"). Additive - conversation_id path byte-for-byte unchanged.
+
+### The six dead subscriptions converted (all payload-applying or full-refetch)
+| Site | Old channel (dead) | New | Behavior preserved |
+|------|-------------------|-----|--------------------|
+| StationDisplay | \\-orders\ on orders INSERT+UPDATE | useRealtimeRefresh e1-station-\, ORDER_BOARD_EVENTS, onRefresh=loadOrders; poll 15s down / 30s up via subscribed | Ding (new pending) + ready chime already live inside loadOrders (prevIdsRef/readyTimesRef); station filter via apiUrl |
+| admin/orders | admin-orders-realtime on orders \*\ (payload apply) | useRealtimeRefresh e1-admin-orders, ORDER_BOARD_EVENTS -> loadOrders | Count beep (prevCountRef) + today-only inside loadOrders; poll 15s/30s |
+| MessageNotifications | incoming-\ on staff_messages INSERT (payload toast) | subscribeToChatEvents e1-incoming-\, onMessageId -> fetch /api/staff/messages?message_id= -> handleNew | Toast/sound/dedupe via seenIdsRef unchanged; voice/text render unchanged |
+| ChatWindow | chat-\ on staff_messages INSERT (payload append) | useRealtimeRefresh e1-chat-\ ['chat.message'] -> loadMessages (hoisted useCallback, idempotent merge) | Optimistic send dedupe intact; poll 15s/30s |
+| Sidebar | sidebar-unread on staff_messages INSERT | useRealtimeRefresh e1-sidebar-messages ['chat.message'] -> fetchUnread (hoisted useCallback) | Badge recomputed server-side; own-message refetch harmless |
+| staff/layout | staff-nav-unread on staff_messages INSERT | useRealtimeRefresh e1-staff-nav-unread ['chat.message'], enabled=authed -> fetchUnread (hoisted) | Same |
+
+All six removed their createBrowserClient imports (no remaining uses).
+
+### Tests - 242/242 vitest (231 + 11 new chat-events)
+chat-events.test.ts: delivery, unquoted-filter contract (fake now applies the WALRUS filter - parse lazily because .on() runs after fakeSupabase() returns), non-chat events dropped, entity id passthrough, leading-edge debounce burst (must vi.setSystemTime(5000) first - Date.now() is mocked and lastFire=0 otherwise never clears the window), duplicate guard, re-subscribe after unsubscribe, stop-after-cleanup (removeChannel clears listeners), realtime-unavailable fallback, disabled no-op, event list contract.
+
+### Verification (2026-08-15)
+- 242/242 vitest; inventory strict tsc clean; temp UI tsconfig (root-extending ../../tsconfig.json - extends paths are relative to the CONFIG FILE dir, src/inventory/../ is src/, must be ../../; exclude override + ambient.d.ts) clean over all 6 converted files + route + libs, deleted after; next build green (2.3min compile).
+- Migration 093 pushed (093 local == remote); commit 8e22940 pushed; vercel --prod aliased (cloud build 1m + deploy 3m).
+- Live E2E (prod, e15-e2e.mjs in repo root - temp, deleted): 14/14 - both new triggers fire, order.created intact, anon delivery of all three events with entity_id match (first delivery 1341ms incl. subscription cold-start), payload has no message content, anon forgery blocked (42501), legacy admin login (shared password) -> GET ?message_id= 200 with exact message, unknown id 404, no params 400, conversation_id path unaffected, cleanup complete (probe conversation/message/notification/order + realtime_events rows all deleted; orders need items_json on raw inserts - F3 lesson).
+
+### Notes / handover
+- Orders NOT NULLs for raw service-role inserts: customer_name, phone, order_type, requested_time, total, order_ref, items_json.
+- notification.new has no browser consumer today (staff notifications have no UI surface; the messages POST creates new_message rows, and the unread badges are conversation-driven via chat.message). The event is available + tested for future surfaces; E1-5 principle: consumers refetch, never payload-render.
+- Legacy role-cookie identity (boma_admin_auth, shared password) resolves staff routes as the virtual ADMIN member (isAdmin bypasses membership checks) - used for the route E2E.
+- Kitchen/bar deduction, worker, booking, E1-1/E1-2/E1-3 consumers untouched.
+- Mission E1-5 COMPLETE. Nothing queued next.
