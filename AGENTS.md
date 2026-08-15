@@ -1517,3 +1517,40 @@ Migration 089 pushed (after repair re-push); commit ddc62ea pushed; vercel --pro
 ### Handover
 - Supplier Workflow P1a-P1e COMPLETE. Next per owner's mission order (none queued in this session).
 - UI-path proof of P1a receipt identity still needs one real admin password (owner-only).
+
+---
+
+## Session: F3 - Order Attribution on Inventory Transactions (2026-08-15) - commit 9d44749
+
+### Objective
+F3 (post-P1 mission order): every SALE ledger transaction created by an order deduction must permanently and directly identify its source order end-to-end - recipe rows: Order ID + Order Line ID + Recipe ID + Ingredient Product ID; direct rows: Order ID + Order Line ID + Product ID. Preserve F2 deduction behaviour, idempotency, insufficient-stock rule and rollback exactly. No UI redesign; no API signature changes.
+
+### Migration 091 (applied to prod) - `091_order_attribution_columns.sql`
+- ADD COLUMN `order_id UUID REFERENCES orders(id)`, `order_line_id UUID REFERENCES order_items(id)`, `recipe_id UUID REFERENCES inventory_recipes(id)` on inventory_transactions + 2 indexes (guarded IF NOT EXISTS).
+- Conservative backfill: ingredient rows (reference_type pos_order, reference_id = order_items.id) get order_id/order_line_id/recipe_id via order_items join; direct rows (reference_id = orders.id) get order_id only (line ambiguous for history); both WHERE order_id IS NULL.
+- CREATE OR REPLACE `deduct_order_items` (SAME 2-arg signature as 090 - CREATE OR REPLACE with identical args replaces the body cleanly; no overload residue, unlike the 084/085 lesson): ingredient inserts gain order_id=p_order_id, order_line_id=v_line.id, recipe_id=v_line.recipe_id; direct inserts order_id=p_order_id, order_line_id=v_line.id, recipe_id=NULL; audit `changes` jsonb gains all three on both paths. Deduction logic, validation wording, balance checks, idempotency and rollback are byte-for-byte unchanged.
+- **IMPORTANT LESSON:** migration 090 is APPLIED history - do NOT edit it in place (mission: existing migration history immutable). The RPC was replayed in 091 instead; git diff of 090 stayed zero.
+
+### Code
+- `types.ts` - InventoryTransaction + CreateTransactionInput gain optional order_id/order_line_id/recipe_id.
+- `ledger.ts:createTransaction` - passes all three into the insert payload AND the audit `changes` jsonb (null when absent - non-order movements unaffected).
+- `order-items.ts` - engine fallback: direct branch passes order_id=orderId, order_line_id=line.id, recipe_id=null; deductRecipeLine gains orderId param + passes recipe_id=line.recipe_id.
+- Attribution exposed where inventory history already exists: timeline.ts getTimeline select, dashboard.ts getRecentActivity select, owner-dashboard.ts activity selects += order_id/order_line_id/recipe_id. Transactions API already select('*') - auto-included. No UI changes.
+
+### Tests
+- recipe-deduction.test.ts: RPC-first + fallback assertions extended (ingredient calls carry order_id/order_line_id/recipe_id; direct calls order_id/order_line_id/recipe_id null).
+- ledger.test.ts: +2 tests (attribution persisted on insert + audit; null when not provided). Mock pitfall this session: resolveProductCost chain is select->eq->not->order->limit->maybeSingle (SINGLE .order()); TS narrowed a closure-captured payload var to never under strict CFA - capture p.changes directly instead of the whole payload object.
+- 225/225 vitest; strict inventory tsc clean; next build green.
+
+### Live E2E (prod, cleaned up after)
+- Recipe Margarita (tequila 0.05 +10% wastage, lime 0.02, yield 1) + direct beer line, real purchase opening balances -> RPC-first {deducted:2, skipped:0} -> 3 SALE rows: teq -0.055 @450, lime -0.02 @60, beer -1 @40 (Bar cost centre 6232a5c4) - ALL THREE carry order_id/order_line_id; recipe rows carry recipe_id, direct row recipe_id NULL; reference_type/reference_id unchanged (ingredient -> line id, direct -> order id). Audit rows: all 3 carry order_id + order_line_id + recipe_id in changes. Idempotent re-run {already_deducted:true}, rows stay 3. Insufficient-stock (x1000) raised exact wording, ZERO rows (atomic rollback). Engine fallback path: same full attribution on all rows.
+- Backfill: prod had ZERO historical pos_order txns (all M4/F2 rows were cleaned in earlier sessions) - backfill was a trivially-safe no-op; migration applied cleanly (091 local == remote).
+- **Probe tooling lessons (vitest live probes):** (1) setup.ts STUBS env (localhost:54321 + test-key) - live probes must read .env.local directly and set process.env BEFORE calling getInventoryClient (call-time read); getAdminClient reads module-level constants - unusable in probes, create a client via createClient() instead. (2) PowerShell Invoke-WebRequest gets 401 "secret API key in browser" (browser UA) - use Node fetch for REST calls. (3) orders table NOT NULLs: customer_name, phone, order_type, requested_time, total, order_ref must be supplied on raw inserts. (4) recipe lines need product_id SET (bar-item/link match) for both RPC and engine to enter the line loop - pure product_id-null recipe lines are counted as unmatched (F2 design). (5) balance-cache rows FK-block product deletes - delete cache rows first. (6) TEST baseline lives in the CACHE at DRY STORE (50), not the ledger (ledger 0 at Main Bar) - restore = delete probe rows + remove the Main Bar cache artifact row.
+- Cleanup confirmed: zero tagged txns/products/recipes/orders; TEST Main Bar ledger 0 (as found); Dry Store cache 50 untouched.
+
+### Deploy
+Migration 091 pushed (supabase db push, applied local+remote); commit 9d44749 pushed; vercel --prod aliased (build 1m + deploy 2m).
+
+### Handover
+- F3 COMPLETE. Next per owner's mission order (none queued this session).
+- Note: `inventory_product_balances` has NO id column - schema-cache selects must use product_id/location_id/balance only.
