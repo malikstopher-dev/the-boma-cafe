@@ -25,7 +25,7 @@ export default function StaffLogin() {
       .then(r => r.json())
       .then(data => {
         if (data.authenticated) {
-          if (data.role === 'admin') router.replace('/staff/admin')
+          if (data.role === 'admin') router.replace(data.user?.id === 'legacy' ? '/admin/login' : '/staff/admin')
           else if (data.role === 'kitchen') router.replace('/staff/kitchen')
           else if (data.role === 'bar') router.replace('/staff/bar')
           else if (data.role === 'waiter') router.replace('/waiter')
@@ -52,7 +52,7 @@ export default function StaffLogin() {
       })
       const data = await res.json()
       if (res.ok && (data.authenticated || data.success)) {
-        const target = selectedRole === 'admin' ? '/staff/admin' : selectedRole === 'kitchen' ? '/staff/kitchen' : selectedRole === 'bar' ? '/staff/bar' : '/waiter'
+        const target = selectedRole === 'admin' ? '/admin/login' : selectedRole === 'kitchen' ? '/staff/kitchen' : selectedRole === 'bar' ? '/staff/bar' : '/waiter'
         router.replace(target)
         router.refresh()
       } else {

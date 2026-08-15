@@ -136,7 +136,7 @@ export default function InventoryPortalLayout({ children }: { children: ReactNod
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Link href="/admin/operations/checklist" style={linkStyle(false)}>Morning Checklist</Link>
             <Link href="/admin/operations/purchase-orders" style={linkStyle(false)}>Purchase Orders</Link>
-            <Link href="/admin/operations/report" style={linkStyle(false)}>Operations Reports</Link>
+            <Link href="/admin/operations/reports" style={linkStyle(false)}>Operations Reports</Link>
           </nav>
         </aside>
 
