@@ -1352,3 +1352,26 @@ P1a (first ship of the approved Supplier Workflow plan, per mission order): ever
 ### Notes / handover
 - Route-level server-resolution proof (admin login -> receive via UI) needs ONE real admin password (owner-only) - deferred to owner handover. RPC path is identical to what the route calls.
 - P1b (over-receive cap), P1c (shortage reasons), P1d (invoice automation), P1e (payment terms) NOT started - next per mission order.
+
+---
+
+## Session: P1b - Over-Receive Protection (2026-08-15) - commit c5bd939
+
+### Objective
+P1b (second ship of the Supplier Workflow plan): a PO must never receive more stock than is still outstanding. P1a identity logic untouched. P1c-P1e NOT started.
+
+### Validation added (both receive paths, message identical)
+`outstanding = quantity_ordered - quantity_received` (engine also subtracts same-request accumulation per po_item key); reject when `requested > outstanding`: "Cannot receive more than the outstanding quantity. Outstanding: %, requested: %". Zero/negative and all other messages unchanged.
+
+### Files
+- `src/inventory/engine/purchase-orders.ts` - `receivedSoFar` Map in the pre-write resolution loop (multiple lines for the same po_item accumulate against the cap; still validates BEFORE any DB write).
+- `supabase/migrations/086_over_receive_cap.sql` - CREATE OR REPLACE `receive_purchase_order` (same 8-arg signature as 084/085) adding `poi.quantity_ordered` to the per-line read + the same guard. Single transaction: the RAISE rolls back the receipt header inserted before the loop (verified live - receipts count stayed 1 after a rejection).
+- `src/app/admin/operations/purchase-orders/[id]/page.tsx` - receive input: `max={outstanding}` + onChange validator (red border + inline "Cannot receive more than the outstanding quantity."), submit guard with the same alert, errors cleared on success. Outstanding remains the prefilled default. No redesign.
+- `src/inventory/__tests__/purchase-orders.test.ts` +3 tests (175 total): reject 11 on 10 ordered (nothing written - no receipt insert, no createTransaction), allow exact 10, two-line accumulation rejects 6+5 (outstanding 4, requested 5).
+
+### Verification (2026-08-15, live, cleaned up after)
+TEST PO ordered 10 -> RPC receive 6 PASS (partial) -> attempt 5 FAIL with exact message (qty stayed 6, receipts stayed 1 - transactional rollback) -> receive 4 PASS (received, received_at set) -> ledger 2 txns totalling exactly 10 @75 with Bar cost centre -> balance cache 50->60 -> receipts both stored P1a admin identity (Mr Mahendra) -> cleanup restored TEST balance to 50, 11 historical NULL-identity receipts intact.
+- 175/175 vitest; inventory strict tsc clean; temp UI tsconfig clean (exclude override required, see P1a note); migration 086 applied to prod; commit c5bd939 pushed; vercel --prod aliased.
+
+### Handover
+- P1c (shortage reasons), P1d (invoice automation), P1e (payment terms) NOT started - next per mission order.
