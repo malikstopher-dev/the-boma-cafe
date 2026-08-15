@@ -61,11 +61,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabase = getInventoryClient()
     const body = await request.json()
 
-    const { name, contact_person, phone, email, vat_number, payment_terms, lead_time_days } = body
+    const { name, contact_person, phone, email, vat_number, payment_terms, payment_term_type, payment_term_days, lead_time_days } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
         { error: { code: 'VALIDATION_ERROR', message: 'Supplier name is required' } },
+        { status: 400 },
+      )
+    }
+
+    const termType = payment_term_type ?? null
+    if (termType !== null && !['CASH', 'COD', 'ACCOUNT', 'WEEKLY', 'MONTHLY'].includes(termType)) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: `Invalid payment_term_type: ${termType}. Must be one of CASH, COD, ACCOUNT, WEEKLY, MONTHLY` } },
+        { status: 400 },
+      )
+    }
+    const termDays = termType === 'ACCOUNT' && payment_term_days != null ? Number(payment_term_days) : null
+    if (termDays !== null && (!Number.isFinite(termDays) || termDays < 0)) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'payment_term_days must be a non-negative number' } },
         { status: 400 },
       )
     }
@@ -79,6 +94,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         email: email ?? null,
         vat_number: vat_number ?? null,
         payment_terms: payment_terms ?? null,
+        payment_term_type: termType,
+        payment_term_days: termDays,
         lead_time_days: lead_time_days ? Number(lead_time_days) : null,
       })
       .select()

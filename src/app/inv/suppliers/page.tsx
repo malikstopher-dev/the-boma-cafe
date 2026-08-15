@@ -11,7 +11,17 @@ interface Supplier {
   phone?: string | null
   email?: string | null
   is_active: boolean
+  payment_term_type?: string | null
+  payment_term_days?: number | null
 }
+
+const TERM_OPTIONS = [
+  { value: 'CASH', label: 'Cash — due on receipt' },
+  { value: 'COD', label: 'Cash on Delivery' },
+  { value: 'WEEKLY', label: 'Weekly — due in 7 days' },
+  { value: 'MONTHLY', label: 'Monthly — due same day next month' },
+  { value: 'ACCOUNT', label: 'Account — custom days' },
+]
 
 const inputStyle: React.CSSProperties = {
   background: '#1B2536', color: '#E8E6F0', border: '1px solid #2A3648', borderRadius: 8,
@@ -118,7 +128,8 @@ export default function SuppliersPage() {
       phone: s.phone ?? '',
       email: s.email ?? '',
       vat_number: '',
-      payment_terms: '',
+      payment_term_type: s.payment_term_type ?? 'CASH',
+      payment_term_days: s.payment_term_days != null ? String(s.payment_term_days) : '30',
       lead_time_days: '',
       notes: '',
     })
@@ -134,7 +145,8 @@ export default function SuppliersPage() {
         phone: editForm.phone || null,
         email: editForm.email || null,
         vat_number: editForm.vat_number || null,
-        payment_terms: editForm.payment_terms || null,
+        payment_term_type: editForm.payment_term_type || null,
+        payment_term_days: editForm.payment_term_type === 'ACCOUNT' && editForm.payment_term_days ? Number(editForm.payment_term_days) : null,
         notes: editForm.notes || null,
       }
       if (editForm.lead_time_days) body.lead_time_days = Number(editForm.lead_time_days)
@@ -313,7 +325,6 @@ export default function SuppliersPage() {
                 ['phone', 'Phone'],
                 ['email', 'Email'],
                 ['vat_number', 'VAT Number'],
-                ['payment_terms', 'Payment Terms'],
                 ['lead_time_days', 'Lead Time (days)'],
                 ['notes', 'Notes'],
               ].map(([key, label]) => (
@@ -326,6 +337,27 @@ export default function SuppliersPage() {
                   />
                 </div>
               ))}
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={fieldLabel}>Payment Terms</label>
+                <select
+                  style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
+                  value={editForm.payment_term_type ?? 'CASH'}
+                  onChange={e => setEditForm(f => ({ ...f, payment_term_type: e.target.value }))}
+                >
+                  {TERM_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              {editForm.payment_term_type === 'ACCOUNT' && (
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={fieldLabel}>Days until due (Account)</label>
+                  <input
+                    style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
+                    type="number" min={0}
+                    value={editForm.payment_term_days ?? '30'}
+                    onChange={e => setEditForm(f => ({ ...f, payment_term_days: e.target.value }))}
+                  />
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button style={goldBtn} onClick={handleSaveEdit} disabled={savingEdit || !editForm.name?.trim()}>

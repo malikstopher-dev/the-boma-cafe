@@ -2,6 +2,7 @@ import { getInventoryClient } from '../lib/db'
 import { createTransaction } from './ledger'
 import { resolveCostCentreId } from '../lib/cost-centre'
 import { writeAuditLog } from '../lib/audit'
+import { computeDueDate } from './payment-terms'
 import type { CreateTransactionInput } from './types'
 
 export type PoStatus = 'draft' | 'approved' | 'ordered' | 'partial' | 'received' | 'cancelled'
@@ -339,13 +340,27 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
     (sum, { item, poItem }) => sum + Number(item.quantity_received) * Number(item.unit_cost ?? poItem.unit_cost ?? 0),
     0,
   )
+
+  // P1e: due date from the supplier's structured payment term
+  // (CASH/COD/NULL -> due today; WEEKLY +7; MONTHLY same day next month;
+  // ACCOUNT + custom days, default 30).
+  const { data: termRow } = await supabase
+    .from('inventory_suppliers')
+    .select('payment_term_type, payment_term_days')
+    .eq('id', po.supplier_id)
+    .maybeSingle()
+  const term = (termRow ?? {}) as { payment_term_type: string | null; payment_term_days: number | null }
+  const invoiceDate = new Date().toISOString().slice(0, 10)
+  const dueDate = computeDueDate(invoiceDate, term.payment_term_type, term.payment_term_days)
+
   const { error: invoiceError } = await supabase
     .from('inventory_supplier_invoices')
     .insert({
       supplier_id: po.supplier_id,
       receipt_id: receiptId,
       invoice_number: input.invoice_number ?? null,
-      invoice_date: new Date().toISOString().slice(0, 10),
+      invoice_date: invoiceDate,
+      due_date: dueDate,
       total_amount: invoiceTotal,
       status: 'pending',
       notes: 'Auto-created from PO receipt',

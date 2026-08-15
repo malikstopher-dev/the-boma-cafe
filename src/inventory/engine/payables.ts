@@ -5,6 +5,7 @@
 import { getInventoryClient } from '../lib/db'
 import { writeAuditLog } from '../lib/audit'
 import { getOwnerRange } from './owner-dashboard'
+import { deriveDueDate, daysUntilDue, PAYMENT_TERM_LABELS } from './payment-terms'
 
 export interface PayableRow {
   supplierId: string
@@ -17,6 +18,9 @@ export interface PayableRow {
   lastInvoiceAmount: number
   lastPaymentDate: string | null
   lastPaymentAmount: number
+  paymentTerms: string | null
+  nextDueDate: string | null
+  daysToDue: number | null
   status: 'paid' | 'partial' | 'outstanding' | 'overdue'
 }
 
@@ -32,6 +36,7 @@ interface InvoiceRow {
   id: string
   supplier_id: string
   invoice_date: string | null
+  due_date: string | null
   total_amount: number
   status: string
 }
@@ -59,17 +64,17 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
   try {
     const { data: suppliers } = await supabase
       .from('inventory_suppliers')
-      .select('id, name')
+      .select('id, name, payment_term_type, payment_term_days')
       .eq('is_active', true)
       .order('name')
-    const roster = (suppliers ?? []) as unknown as Array<{ id: string; name: string }>
+    const roster = (suppliers ?? []) as unknown as Array<{ id: string; name: string; payment_term_type: string | null; payment_term_days: number | null }>
 
     const week = getOwnerRange('this_week')
     const month = getOwnerRange('this_month')
 
     const { data: invoices } = await supabase
       .from('inventory_supplier_invoices')
-      .select('id, supplier_id, invoice_date, total_amount, status')
+      .select('id, supplier_id, invoice_date, due_date, total_amount, status')
     const { data: payments } = await supabase
       .from('inventory_supplier_payments')
       .select('invoice_id, amount, paid_at')
@@ -100,6 +105,7 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
     let totalOutstanding = 0
     let weekTotal = 0
     let monthTotal = 0
+    const today = new Date().toISOString().slice(0, 10)
 
     for (const sup of roster) {
       const invs = bySupplier.get(sup.id) ?? []
@@ -111,6 +117,11 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
       let lastInvoice: InvoiceRow | null = null
       let lastPayDate: string | null = null
       let lastPayAmount = 0
+      // P1e: read-time overdue — computed from each open invoice's due date
+      // (stored when auto-created, derived from the supplier's term for
+      // historical invoices). No scheduler, no background job.
+      let anyOverdue = false
+      let nextDue: { date: string; days: number } | null = null
 
       for (const inv of invs) {
         const d = inv.invoice_date ?? ''
@@ -124,7 +135,15 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
           openCount += 1
           invoicePaidTotal += paid
           const open = Number(inv.total_amount) - paid
-          if (open > 0.004) outstanding += open
+          if (open > 0.004) {
+            outstanding += open
+            const due = inv.due_date ?? deriveDueDate(inv.invoice_date, sup.payment_term_type, sup.payment_term_days)
+            const days = daysUntilDue(due, today)
+            if (days !== null && days < 0) anyOverdue = true
+            if (due && (!nextDue || due < nextDue.date)) {
+              nextDue = { date: due, days: days ?? 0 }
+            }
+          }
         }
         if (paid > 0 && (!lastPayDate || (paidByInvoice.get(inv.id)?.lastDate ?? '') > lastPayDate)) {
           const info = paidByInvoice.get(inv.id)
@@ -136,7 +155,7 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
       }
 
       let status: PayableRow['status']
-      if (invs.some(i => (i.status || '').toLowerCase() === 'overdue')) status = 'overdue'
+      if (invs.some(i => (i.status || '').toLowerCase() === 'overdue') || anyOverdue) status = 'overdue'
       else if (outstanding > 0.004) status = invoicePaidTotal > 0 ? 'partial' : 'outstanding'
       else status = 'paid'
 
@@ -154,6 +173,9 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
         lastInvoiceAmount: lastInvoice ? round2(Number(lastInvoice.total_amount) || 0) : 0,
         lastPaymentDate: lastPayDate,
         lastPaymentAmount: round2(lastPayAmount),
+        paymentTerms: sup.payment_term_type ? PAYMENT_TERM_LABELS[sup.payment_term_type] ?? sup.payment_term_type : null,
+        nextDueDate: nextDue?.date ?? null,
+        daysToDue: nextDue?.days ?? null,
         status,
       })
     }

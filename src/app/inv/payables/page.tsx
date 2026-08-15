@@ -17,6 +17,9 @@ type PayableRow = {
   lastInvoiceAmount: number
   lastPaymentDate: string | null
   lastPaymentAmount: number
+  paymentTerms: string | null
+  nextDueDate: string | null
+  daysToDue: number | null
   status: 'paid' | 'partial' | 'outstanding' | 'overdue'
 }
 
@@ -101,6 +104,30 @@ export default function PayablesPage() {
     { key: 'week', header: 'This Week', align: 'right', sortable: true, render: r => <Money v={r.week} />, csv: r => r.week },
     { key: 'month', header: 'This Month', align: 'right', sortable: true, render: r => <Money v={r.month} />, csv: r => r.month },
     { key: 'outstanding', header: 'Outstanding', align: 'right', sortable: true, render: r => <Tenure v={r.outstanding} />, csv: r => r.outstanding },
+    {
+      key: 'terms', header: 'Terms', sortable: true,
+      render: r => r.paymentTerms ? (
+        <span style={{ color: C.textSoft, fontSize: 12.5, fontWeight: 600 }}>{r.paymentTerms}</span>
+      ) : '—',
+      csv: r => r.paymentTerms ?? '',
+    },
+    {
+      key: 'nextDue', header: 'Due', align: 'right', sortable: true,
+      render: r => r.nextDueDate ? (
+        <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+          <span style={{ color: r.daysToDue !== null && r.daysToDue < 0 ? C.dangerText : C.textSoft }}>{formatDate(r.nextDueDate)}</span>
+          {' '}
+          {r.daysToDue !== null && r.daysToDue < 0 ? (
+            <b style={{ color: C.dangerText }}>overdue {Math.abs(r.daysToDue)}d</b>
+          ) : r.daysToDue === 0 ? (
+            <b style={{ color: C.warningText }}>due today</b>
+          ) : (
+            <span style={{ color: C.textMuted, fontSize: 12 }}>in {r.daysToDue}d</span>
+          )}
+        </span>
+      ) : '—',
+      csv: r => r.nextDueDate ?? '',
+    },
     {
       key: 'lastInvoice', header: 'Last Invoice', align: 'right', sortable: true,
       render: r => r.lastInvoiceDate ? <span style={{ color: C.textSoft, fontVariantNumeric: 'tabular-nums' }}>{formatDate(r.lastInvoiceDate)} · <b>{formatMoney(r.lastInvoiceAmount)}</b></span> : '—',
@@ -190,7 +217,7 @@ export default function PayablesPage() {
               minWidth={1080}
             />
             <p style={{ margin: '12px 0 0', fontSize: 12, color: C.textMuted }}>
-              Outstanding = open invoices less recorded payments. Overdue marks invoices past their status flag.
+              Outstanding = open invoices less recorded payments. Overdue marks invoices past their due date (computed from the supplier's payment terms at load time).
             </p>
           </>
         )}

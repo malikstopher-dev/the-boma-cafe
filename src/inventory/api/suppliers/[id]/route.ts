@@ -54,13 +54,36 @@ export async function PATCH(
     const supabase = getInventoryClient()
     const body = await request.json()
 
-    const allowedFields = ['name', 'contact_person', 'phone', 'email', 'vat_number', 'payment_terms', 'lead_time_days', 'notes']
+    const allowedFields = ['name', 'contact_person', 'phone', 'email', 'vat_number', 'payment_terms', 'payment_term_type', 'payment_term_days', 'lead_time_days', 'notes']
 
     const updates: Record<string, unknown> = {}
     for (const field of allowedFields) {
       if (field in body) {
         updates[field] = body[field]
       }
+    }
+
+    if ('payment_term_type' in body && updates.payment_term_type !== null) {
+      const t = updates.payment_term_type as string
+      if (!['CASH', 'COD', 'ACCOUNT', 'WEEKLY', 'MONTHLY'].includes(t)) {
+        return NextResponse.json(
+          { error: { code: 'VALIDATION_ERROR', message: `Invalid payment_term_type: ${t}. Must be one of CASH, COD, ACCOUNT, WEEKLY, MONTHLY` } },
+          { status: 400 },
+        )
+      }
+    }
+    if ('payment_term_days' in body && updates.payment_term_days != null) {
+      const d = Number(updates.payment_term_days)
+      if (!Number.isFinite(d) || d < 0) {
+        return NextResponse.json(
+          { error: { code: 'VALIDATION_ERROR', message: 'payment_term_days must be a non-negative number' } },
+          { status: 400 },
+        )
+      }
+      updates.payment_term_days = d
+    }
+    if (updates.payment_term_type !== 'ACCOUNT') {
+      updates.payment_term_days = null
     }
 
     if (Object.keys(updates).length === 0) {

@@ -68,6 +68,8 @@ export interface InventorySupplier {
   email: string | null
   vat_number: string | null
   payment_terms: string | null
+  payment_term_type: string | null
+  payment_term_days: number | null
   lead_time_days: number | null
   is_active: boolean
   deleted_at: string | null

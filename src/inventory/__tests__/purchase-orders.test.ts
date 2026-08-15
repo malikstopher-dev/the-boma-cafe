@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { receiveItems } from '../engine/purchase-orders'
+import { computeDueDate } from '../engine/payment-terms'
 
 const mockClient = {
   from: vi.fn(),
@@ -51,6 +52,7 @@ function chain(result: Promise<unknown>) {
 const poId = 'po-1'
 const receiptsTable = 'inventory_po_receipts'
 let mockInsertErrors: Record<string, { code: string }> = {}
+let mockSupplierTerm: { payment_term_type: string | null; payment_term_days: number | null }
 
 function poRow(status: string) {
   return { id: poId, status, supplier_id: 'sup-1' }
@@ -240,6 +242,7 @@ describe('receiveItems auto supplier invoice (P1d)', () => {
     mockCreateTransaction.mockResolvedValue({ id: 'txn-1' })
     mockReceiptInserts.length = 0
     mockInsertErrors = {}
+    mockSupplierTerm = { payment_term_type: 'CASH', payment_term_days: null }
     mockClient.from.mockImplementation((table: string) => {
       const chainObj: Record<string, unknown> = {}
       let insertPayload: unknown = null
@@ -256,6 +259,7 @@ describe('receiveItems auto supplier invoice (P1d)', () => {
         inventory_purchase_orders: poRow('ordered'),
         inventory_purchase_order_items: [poItemRow()],
         [receiptsTable]: { id: 'rec-1' },
+        inventory_suppliers: mockSupplierTerm,
       }
 
       const getResult = () => {
@@ -335,5 +339,28 @@ describe('receiveItems auto supplier invoice (P1d)', () => {
     expect(invoiceInserts().length).toBe(0) // the failed insert is not retried as a new invoice
     const riInsert = mockReceiptInserts.find(i => i.table === 'inventory_po_receipt_items')
     expect(riInsert?.payload.quantity_received).toBe(10)
+  })
+
+  it('computes the due date from the supplier term (MONTHLY -> same day next month)', async () => {
+    mockSupplierTerm = { payment_term_type: 'MONTHLY', payment_term_days: null }
+    await receiveItems(poId, {
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 10 }],
+      invoice_number: 'INV-M',
+    })
+    const inv = invoiceInserts()[0]!
+    const expected = computeDueDate(new Date().toISOString().slice(0, 10), 'MONTHLY', null)
+    expect(inv.due_date).toBe(expected)
+    expect(inv.invoice_date).toBe(new Date().toISOString().slice(0, 10))
+  })
+
+  it('computes the due date for ACCOUNT with custom days', async () => {
+    mockSupplierTerm = { payment_term_type: 'ACCOUNT', payment_term_days: 30 }
+    await receiveItems(poId, {
+      items: [{ po_item_id: 'poi-1', product_id: 'prod-1', quantity_received: 10 }],
+      invoice_number: 'INV-A30',
+    })
+    const inv = invoiceInserts()[0]!
+    const expected = computeDueDate(new Date().toISOString().slice(0, 10), 'ACCOUNT', 30)
+    expect(inv.due_date).toBe(expected)
   })
 })

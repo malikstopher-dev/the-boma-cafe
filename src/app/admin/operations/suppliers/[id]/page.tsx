@@ -18,12 +18,22 @@ interface SupplierDetail {
   email: string | null
   vat_number: string | null
   payment_terms: string | null
+  payment_term_type: string | null
+  payment_term_days: number | null
   lead_time_days: number | null
   notes: string | null
   is_active: boolean
   deleted_at: string | null
   products?: { id: string; name: string; sku: string | null; is_active: boolean }[]
 }
+
+const TERM_OPTIONS = [
+  { value: 'CASH', label: 'Cash — due on receipt' },
+  { value: 'COD', label: 'Cash on Delivery' },
+  { value: 'WEEKLY', label: 'Weekly — due in 7 days' },
+  { value: 'MONTHLY', label: 'Monthly — due same day next month' },
+  { value: 'ACCOUNT', label: 'Account — custom days' },
+]
 
 export default function SupplierDetailPage() {
   const params = useParams()
@@ -53,7 +63,8 @@ export default function SupplierDetailPage() {
             phone: json.data.phone || '',
             email: json.data.email || '',
             vat_number: json.data.vat_number || '',
-            payment_terms: json.data.payment_terms || '',
+            payment_term_type: json.data.payment_term_type || 'CASH',
+            payment_term_days: json.data.payment_term_days != null ? String(json.data.payment_term_days) : '30',
             notes: json.data.notes || '',
           })
         }
@@ -143,7 +154,6 @@ export default function SupplierDetailPage() {
               ['Phone', form.phone, 'phone'],
               ['Email', form.email, 'email'],
               ['VAT Number', form.vat_number, 'vat_number'],
-              ['Payment Terms', form.payment_terms, 'payment_terms'],
               ['Lead Time (days)', supplier.lead_time_days?.toString() || '—', null],
               ['Notes', form.notes, 'notes'],
             ].map(([label, value, key]) => (
@@ -158,6 +168,23 @@ export default function SupplierDetailPage() {
                 </dd>
               </div>
             ))}
+            <div className="flex justify-between">
+              <dt style={{color:'#A09888'}}>Payment Terms</dt>
+              <dd className="font-medium text-right">
+                {editing ? (
+                  <>
+                    <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:4,padding:'4px 8px',fontSize:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={form.payment_term_type || 'CASH'} onChange={e => setForm(f => ({ ...f, payment_term_type: e.target.value }))}>
+                      {TERM_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    {form.payment_term_type === 'ACCOUNT' && (
+                      <input type="number" min={0} style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:4,padding:'4px 8px',fontSize:12,width:80,textAlign:'right',color:'#F0EBE3',fontFamily:'Inter, sans-serif',marginLeft:6}} value={form.payment_term_days || '30'} onChange={e => setForm(f => ({ ...f, payment_term_days: e.target.value }))} />
+                    )}
+                  </>
+                ) : (
+                  TERM_OPTIONS.find(o => o.value === (form.payment_term_type || 'CASH'))?.label || '—'
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
 
