@@ -20,11 +20,28 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const conversationId = searchParams.get('conversation_id')
+  const messageId = searchParams.get('message_id')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200)
   const before = searchParams.get('before')
 
+  if (messageId) {
+    const { data: msg, error: msgError } = await getAdminClient()
+      .from('staff_messages')
+      .select('*')
+      .eq('id', messageId)
+      .maybeSingle()
+    if (msgError) return NextResponse.json({ error: msgError.message }, { status: 500 })
+    if (!msg) return NextResponse.json({ error: 'Message not found' }, { status: 404 })
+
+    const member = await isConversationMember(msg.conversation_id, identity.aliases)
+    if (!member && !identity.isAdmin) {
+      return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
+    }
+    return NextResponse.json(msg)
+  }
+
   if (!conversationId) {
-    return NextResponse.json({ error: 'conversation_id required' }, { status: 400 })
+    return NextResponse.json({ error: 'conversation_id or message_id required' }, { status: 400 })
   }
 
   const member = await isConversationMember(conversationId, identity.aliases)

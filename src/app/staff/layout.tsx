@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { createBrowserClient } from '@/lib/supabase'
 import { useIncomingMessageNotifications, MessageToastContainer, type IncomingToast } from '@/components/chat/MessageNotifications'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 
 const FcmRegistration = dynamic(() => import('@/components/staff/FcmRegistration'), { ssr: false })
 
@@ -66,36 +66,37 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
     })()
   }, [pathname])
 
-  // Fetch unread message count
+  // Fetch unread message count (shared by mount + realtime refresh)
+  const fetchUnread = useCallback(async () => {
+    try {
+      const sessionRes = await fetch('/api/staff/session')
+      if (!sessionRes.ok) return
+      const session = await sessionRes.json()
+      if (!session.authenticated) return
+
+      const res = await fetch(`/api/staff/conversations?user_id=${session.staff.id}`)
+      if (res.ok) {
+        const conversations = await res.json()
+        const total = conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0)
+        setUnreadCount(total)
+      }
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => {
     if (!authed) return
-    const fetchUnread = async () => {
-      try {
-        const sessionRes = await fetch('/api/staff/session')
-        if (!sessionRes.ok) return
-        const session = await sessionRes.json()
-        if (!session.authenticated) return
+    void fetchUnread()
+  }, [authed, fetchUnread])
 
-        const res = await fetch(`/api/staff/conversations?user_id=${session.staff.id}`)
-        if (res.ok) {
-          const conversations = await res.json()
-          const total = conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0)
-          setUnreadCount(total)
-        }
-      } catch { /* ignore */ }
-    }
-    fetchUnread()
-
-    const supabase = createBrowserClient()
-    const channel = supabase
-      .channel('staff-nav-unread')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_messages' }, () => {
-        fetchUnread()
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [authed])
+  // E1-5: staff_messages is RLS-blocked for the anon browser key, so the
+  // old postgres_changes channel on that table never fired. Consume the
+  // anon-readable realtime_events signal table (migration 093) instead.
+  useRealtimeRefresh({
+    channel: 'e1-staff-nav-unread',
+    events: ['chat.message'],
+    enabled: authed,
+    onRefresh: () => { void fetchUnread() },
+  })
 
   // Get current user text id for incoming message filter
   useEffect(() => {

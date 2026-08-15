@@ -5,7 +5,8 @@ import { SupabaseOrder, TableInfo, parseOrderItems, getOrderTableNumber, Payment
 import BackButton from '@/components/admin/BackButton'
 import { STATUS_LABELS, STATUS_COLORS, requiresPaymentConfirmation } from '@/lib/order-state-machine'
 import { posService } from '@/lib/pos-service'
-import { createBrowserClient } from '@/lib/supabase'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
+import { ORDER_BOARD_EVENTS } from '@/inventory/lib/order-status'
 
 const POLL_INTERVAL = 15000
 const FALLBACK_POLL_INTERVAL = 30000
@@ -689,35 +690,17 @@ export default function OrdersPOS() {
 
   useEffect(() => { loadOrders() }, [loadOrders])
 
-  // ── Supabase Realtime subscription ─────────────────────────
-  const [realtimeConnected, setRealtimeConnected] = useState(false)
-
-  useEffect(() => {
-    if (authExpired) return
-
-    const supabase = createBrowserClient()
-    const channel = supabase
-      .channel('admin-orders-realtime')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          if (payload.eventType === 'INSERT' && payload.new) {
-            setOrders((prev) => [{ ...payload.new as any }, ...prev])
-          } else if (payload.eventType === 'UPDATE' && payload.new) {
-            setOrders((prev) =>
-              prev.map((o) => (o.id === payload.new.id ? { ...o, ...payload.new as any } : o))
-            )
-          } else if (payload.eventType === 'DELETE' && payload.old) {
-            setOrders((prev) => prev.filter((o) => o.id !== payload.old.id))
-          }
-        }
-      )
-      .subscribe((status) => {
-        setRealtimeConnected(status === 'SUBSCRIBED')
-      })
-
-    return () => { supabase.removeChannel(channel) }
-  }, [authExpired])
+  // ── Realtime (E1-5) ──────────────────────────────────────────
+  // The old postgres_changes channel on `orders` never fired: anon is
+  // RLS-blocked on that table. Subscribe to the anon-readable
+  // realtime_events signal table (migration 080) and refetch instead —
+  // loadOrders keeps the count beep and today-only filtering.
+  const { subscribed: realtimeConnected } = useRealtimeRefresh({
+    channel: 'e1-admin-orders',
+    events: [...ORDER_BOARD_EVENTS],
+    enabled: !authExpired,
+    onRefresh: () => { void loadOrders() },
+  })
 
   // ── Fallback polling (longer interval when Realtime is active) ──
   useEffect(() => {

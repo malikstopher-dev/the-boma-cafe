@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { createBrowserClient } from '@/lib/supabase'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { useAuth } from '@/lib/auth-context'
@@ -241,50 +240,35 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
     onRefresh: () => { void fetchInventoryUnread() },
   })
 
-  useEffect(() => {
-    let authId: string | null = null
-    let cancelled = false
-    const fetchUnread = async () => {
-      try {
-        const sessionRes = await fetch('/api/staff/session')
-        if (!sessionRes.ok) return
-        const session = await sessionRes.json()
-        if (!session.authenticated) return
-        authId = session.staff.id
+  // E1-5: staff_messages is RLS-blocked for the anon browser key, so the
+  // old postgres_changes channel on that table never fired. Consume the
+  // anon-readable realtime_events signal table (migration 093) and
+  // refetch the unread total — recomputed server-side, idempotent.
+  const fetchUnread = useCallback(async () => {
+    try {
+      const sessionRes = await fetch('/api/staff/session')
+      if (!sessionRes.ok) return
+      const session = await sessionRes.json()
+      if (!session.authenticated) return
 
-        const res = await fetch(`/api/staff/conversations?user_id=${session.staff.id}`)
-        if (res.ok) {
-          const conversations = await res.json()
-          const total = conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0)
-          if (!cancelled) setUnreadCount(total)
-        }
-      } catch { /* ignore */ }
-    }
-
-    const setup = async () => {
-      await fetchUnread()
-
-      const supabase = createBrowserClient()
-      const channel = supabase
-        .channel('sidebar-unread')
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'staff_messages',
-          ...(authId ? { filter: `sender_id=neq.${authId}` } : {}),
-        }, () => {
-          fetchUnread()
-        })
-        .subscribe()
-
-      return () => { supabase.removeChannel(channel) }
-    }
-
-    let cleanup: (() => void) | undefined
-    void setup().then(fn => { cleanup = fn })
-
-    return () => { cancelled = true; cleanup?.() }
+      const res = await fetch(`/api/staff/conversations?user_id=${session.staff.id}`)
+      if (res.ok) {
+        const conversations = await res.json()
+        const total = conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0)
+        setUnreadCount(total)
+      }
+    } catch { /* ignore */ }
   }, [])
+
+  useEffect(() => {
+    void fetchUnread()
+  }, [fetchUnread])
+
+  useRealtimeRefresh({
+    channel: 'e1-sidebar-messages',
+    events: ['chat.message'],
+    onRefresh: () => { void fetchUnread() },
+  })
 
   return (
     <>

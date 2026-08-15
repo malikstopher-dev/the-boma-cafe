@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { subscribeToChatEvents } from '@/inventory/lib/chat-events'
 
 export function playMessageTone() {
   try {
@@ -107,7 +107,6 @@ export function useIncomingMessageNotifications(options: {
 
   useEffect(() => {
     if (!currentUserId) return
-    const supabase = createBrowserClient()
 
     const handleNew = (msg: any) => {
       if (!msg || msg.sender_id === currentUserId) return
@@ -126,15 +125,25 @@ export function useIncomingMessageNotifications(options: {
       })
     }
 
-    const channel = supabase
-      .channel(`incoming-${currentUserId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_messages' }, (payload) => {
-        handleNew(payload.new)
-      })
-      .subscribe()
+    // E1-5: staff_messages is RLS-blocked for the anon browser key, so the
+    // old postgres_changes channel on that table never fired. Consume the
+    // anon-readable realtime_events signal table (migration 093) and fetch
+    // the message by id — payloads never carry message content (E1-5).
+    const sub = subscribeToChatEvents({
+      channel: `e1-incoming-${currentUserId}`,
+      onMessageId: (messageId) => {
+        if (!messageId) return
+        fetch(`/api/staff/messages?message_id=${encodeURIComponent(messageId)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((msg: any) => {
+            if (msg) handleNew(msg)
+          })
+          .catch(() => {})
+      },
+    })
 
-    return () => { supabase.removeChannel(channel) }
-  }, [currentUserId, soundEnabled, onNewMessage])
+    return () => { sub.unsubscribe() }
+  }, [currentUserId, soundEnabled, onNewMessage, resolveSenderName])
 }
 
 interface MessageToastContainerProps {

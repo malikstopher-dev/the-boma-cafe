@@ -22,6 +22,15 @@ export const ORDER_LIVE_EVENTS = [
   'order.cancelled',
 ] as const
 
+/** All order events board surfaces refetch on (E1-5): creates + status changes. */
+export const ORDER_BOARD_EVENTS = [
+  'order.created',
+  'order.preparing',
+  'order.ready',
+  'order.completed',
+  'order.cancelled',
+] as const
+
 /** Contract mapping: realtime event -> order status shown to the waiter. */
 export function eventToOrderStatus(eventName: string): string | null {
   switch (eventName) {

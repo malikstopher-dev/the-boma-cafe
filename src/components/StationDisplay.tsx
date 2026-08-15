@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
 import StatusBadge from '@/components/pos/StatusBadge'
 import StationBadge from '@/components/pos/StationBadge'
 import OrderTypeBadge from '@/components/pos/OrderTypeBadge'
@@ -11,6 +10,8 @@ import CancelModal from '@/components/pos/CancelModal'
 import PrepTimeSelector from '@/components/pos/PrepTimeSelector'
 import PrepTimeCountdown from '@/components/pos/PrepTimeCountdown'
 import { posTokens as t } from '@/components/pos/DesignSystem'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
+import { ORDER_BOARD_EVENTS } from '@/inventory/lib/order-status'
 
 export interface StationDisplayProps {
   station: 'kitchen' | 'bar'
@@ -197,52 +198,25 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
     return () => { clearTimeout(timeout); controller.abort() }
   }, [])
 
+  // E1-5: orders is RLS-blocked for the anon browser key, so the old
+  // postgres_changes subscription on `orders` never fired. Subscribe to
+  // the anon-readable realtime_events signal table instead and refetch
+  // (loadOrders keeps the ding + ready chime + 24h stale filtering).
+  // The poll stays as the fallback (15s when realtime is down, 30s up).
+  const { subscribed: realtimeActive } = useRealtimeRefresh({
+    channel: `e1-station-${station}`,
+    events: [...ORDER_BOARD_EVENTS],
+    enabled: authed && !authExpired,
+    onRefresh: () => { void loadOrders() },
+  })
+
   useEffect(() => {
     if (!authed || authExpired) return
     loadOrders()
 
-    let supabase: ReturnType<typeof createBrowserClient> | null = null
-    let channel: ReturnType<ReturnType<typeof createBrowserClient>['channel']> | null = null
-    let realtimeDown = false
-
-    try {
-      supabase = createBrowserClient()
-      channel = supabase
-        .channel(`${station}-orders`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `station=eq.${station}` }, (payload) => {
-          const newOrder = payload.new as Order
-          if (newOrder && newOrder.status === 'pending') {
-            setOrders(prev => [...prev, newOrder])
-            if (soundOn) playDing()
-          }
-        })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `station=eq.${station}` }, (payload) => {
-          const updated = payload.new as Order
-          if (updated) {
-            setOrders(prev => prev.map(o => o.id === updated.id ? updated : o))
-            if (updated.status === 'ready' && soundOn) playReadyChime()
-          }
-        })
-        .subscribe((status) => {
-          realtimeDown = status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'
-        })
-    } catch (err) {
-      console.warn('[StationDisplay] realtime setup failed:', err, '— falling back to polling')
-      realtimeDown = true
-    }
-
-    let fallbackInterval: ReturnType<typeof setInterval> | null = null
-    const startPolling = () => {
-      const interval = setInterval(loadOrders, realtimeDown ? 15000 : 30000)
-      fallbackInterval = interval
-    }
-    startPolling()
-
-    return () => {
-      if (channel && supabase) supabase.removeChannel(channel).catch(() => {})
-      if (fallbackInterval) clearInterval(fallbackInterval)
-    }
-  }, [authed, authExpired, loadOrders, soundOn, station])
+    const fallbackInterval = setInterval(loadOrders, realtimeActive ? 30000 : 15000)
+    return () => clearInterval(fallbackInterval)
+  }, [authed, authExpired, loadOrders, realtimeActive])
 
   const displayOrders = useMemo(() => {
     const safeOrders = Array.isArray(orders) ? orders : []

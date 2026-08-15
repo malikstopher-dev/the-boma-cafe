@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
 
@@ -73,23 +73,25 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
     return `${names[0]}, ${names[1]} +${names.length - 2} others`
   }, [memberIds, staffProfiles])
 
-  // Load messages
-  useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        const res = await fetch(`/api/staff/messages?conversation_id=${conversationId}&limit=100`)
-        if (res.ok) {
-          const data = await res.json()
-          setMessages(data)
-        }
-      } catch (err) {
-        console.error('Failed to load messages:', err)
-      } finally {
-        setLoading(false)
+  // Load messages (idempotent merge — shared by mount, realtime and poll)
+  const loadMessages = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/staff/messages?conversation_id=${conversationId}&limit=100`)
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id))
+          const newMsgs = data.filter((m: ChatMessage) => !existingIds.has(m.id))
+          if (newMsgs.length === 0) return prev
+          return [...prev, ...newMsgs]
+        })
       }
-    }
-    loadMessages()
+    } catch { /* ignore */ }
   }, [conversationId])
+
+  useEffect(() => {
+    void loadMessages().finally(() => setLoading(false))
+  }, [loadMessages])
 
   // Mark messages as read on mount
   useEffect(() => {
@@ -101,51 +103,21 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
     }).catch(() => {})
   }, [conversationId, currentUserId])
 
-  // Realtime subscription with polling fallback
+  // Realtime (E1-5) + polling fallback.
+  // staff_messages is RLS-blocked for the anon browser key, so the old
+  // postgres_changes channel on that table never fired. Consume the
+  // anon-readable realtime_events signal table (migration 093) and
+  // refetch — the merge is idempotent, so own optimistic sends are safe.
+  const { subscribed: realtimeActive } = useRealtimeRefresh({
+    channel: `e1-chat-${conversationId}`,
+    events: ['chat.message'],
+    onRefresh: () => { void loadMessages() },
+  })
+
   useEffect(() => {
-    const supabase = createBrowserClient()
-    let realtimeDown = false
-
-    const loadMessages = async () => {
-      try {
-        const res = await fetch(`/api/staff/messages?conversation_id=${conversationId}&limit=100`)
-        if (res.ok) {
-          const data = await res.json()
-          setMessages(prev => {
-            const existingIds = new Set(prev.map(m => m.id))
-            const newMsgs = data.filter((m: ChatMessage) => !existingIds.has(m.id))
-            if (newMsgs.length === 0) return prev
-            return [...prev, ...newMsgs]
-          })
-        }
-      } catch { /* ignore */ }
-    }
-
-    const channel = supabase
-      .channel(`chat-${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'staff_messages',
-        filter: `conversation_id=eq.${conversationId}`,
-      }, (payload) => {
-        const newMsg = payload.new as ChatMessage
-        setMessages(prev => {
-          if (prev.some(m => m.id === newMsg.id)) return prev
-          return [...prev, newMsg]
-        })
-      })
-      .subscribe((status) => {
-        realtimeDown = status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'
-      })
-
-    const pollInterval = setInterval(loadMessages, realtimeDown ? 15000 : 30000)
-
-    return () => {
-      if (channel) supabase.removeChannel(channel)
-      clearInterval(pollInterval)
-    }
-  }, [conversationId])
+    const pollInterval = setInterval(() => { void loadMessages() }, realtimeActive ? 30000 : 15000)
+    return () => clearInterval(pollInterval)
+  }, [loadMessages, realtimeActive])
 
   // Auto-scroll to bottom
   useEffect(() => {
