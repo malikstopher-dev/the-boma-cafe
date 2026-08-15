@@ -1325,3 +1325,30 @@ Owner asked for corrected admin display names: "Mr Mahendra" (not mahindra/MR MA
 2. **Code (commit 20883ae, 2 files):** src/app/inv/page.tsx:186 greeting "Mr Mahindra" -> "Mr Mahendra"; src/app/admin/accounts/page.tsx form placeholders "e.g. Chriselda"/"e.g. chriselda" -> "e.g. Zelda"/"e.g. zelda".
 3. **Verify:** temp UI tsc clean; 168/168 vitest; commit pushed; ercel --prod (cloud build green, aliased).
 4. **Note:** client-rendered page chunks (inv, admin/accounts) are registered at runtime by Turbopack and are NOT statically greppable in the served HTML (14 chunk refs scanned, page modules absent) - inconclusive by inspection, but the same commit's cloud build succeeded and the DB-driven surfaces are live-verified.
+
+---
+
+## Session: P1a - PO Receipt Admin Identity (2026-08-15) - commit 383a664 + 085 follow-up
+
+### Objective
+P1a (first ship of the approved Supplier Workflow plan, per mission order): every PO receipt must permanently record WHO received the stock using the real E8 admin identity (admin_accounts), server-resolved - never client-supplied. P1b-P1e NOT started (audit findings preserved).
+
+### Migrations (both applied to prod)
+- **084_receipt_admin_identity.sql** - ADD COLUMN `received_by_admin_id UUID REFERENCES admin_accounts(id)` + `received_by_admin_name TEXT` + index on inventory_po_receipts; CREATE OR REPLACE `receive_purchase_order` with NEW trailing params `p_received_by_admin_id UUID DEFAULT NULL`, `p_received_by_admin_name TEXT DEFAULT NULL` (8-arg signature; ledger behaviour/validation messages/dead staff_profiles `received_by` column all unchanged); REVOKE/GRANT re-issued; NOTIFY pgrst. Historical receipts untouched by design (11 prod receipts stay NULL; "who" for them remains in admin_audit_log).
+- **085_drop_legacy_receive_rpc_overload.sql** - discovered after apply: CREATE OR REPLACE with a NEW signature does NOT replace the old one - both overloads survived and PostgREST answered every call with PGRST203 (ambiguous). Dropped the dead 6-arg `receive_purchase_order(UUID, TEXT, TEXT, UUID, UUID, JSONB)` (only caller passes all 8 args; new function defaults them anyway).
+
+### Code
+- `src/inventory/engine/purchase-orders.ts` - `ReceiveInput` + receipt insert carry `received_by_admin_id`/`received_by_admin_name` (null when absent - backward compatible).
+- `src/inventory/api/purchase-orders/[id]/receive/route.ts` - identity ALWAYS server-resolved via `getAdminContext(request)` (`admin?.adminId ?? null`, `admin?.displayName ?? null`); client-supplied identity never trusted; passed into RPC named args AND the engine fallback.
+- `src/app/admin/operations/purchase-orders/[id]/page.tsx` - receipt rows show "Received by" (admin name).
+- `src/inventory/__tests__/purchase-orders.test.ts` (NEW, 4 tests) - identity stored on receipt insert, null when absent, unchanged validation messages (zero-qty + item-not-on-PO). Mock pitfall: table-dispatch `mockImplementation` beats fragile `mockImplementationOnce` queues (once-queues shifted under multi-call flows); `.insert({...}).select().single()` resets naive mode flags - capture insert payload in a separate var; reset capture arrays in beforeEach.
+
+### Verification (2026-08-15)
+- **172/172 vitest** (168 + 4 new); inventory strict tsc clean; temp UI tsconfig over PO detail page clean (root tsconfig inherits `exclude: ["src/inventory"]` - must be overridden with `"exclude": []` in the temp config or the ambient.d.ts gets excluded).
+- Migrations applied to prod (084 then 085; 084 alone left BOTH RPC overloads - PGRST203 proven live, fixed by 085).
+- Live E2E (service-role, cleaned up after): TEST PO ordered -> RPC receive 4x@75 with mahindra admin id + "Mr Mahendra" -> receipt row stores `received_by_admin_id=139a795d-...` + `received_by_admin_name=Mr Mahendra` (received_by NULL), ledger txn quantity 4 @75 with Bar cost centre, PO partial, 11 historical NULL receipts intact; cleanup restored TEST balance 50. Second run identical (assertion calibration fixed: test receipt is excluded from the NULL count - it HAS identity).
+- Deployed: commit 383a664 pushed, vercel --prod aliased (cloud build 1m compile + deploy 3m).
+
+### Notes / handover
+- Route-level server-resolution proof (admin login -> receive via UI) needs ONE real admin password (owner-only) - deferred to owner handover. RPC path is identical to what the route calls.
+- P1b (over-receive cap), P1c (shortage reasons), P1d (invoice automation), P1e (payment terms) NOT started - next per mission order.
