@@ -1402,3 +1402,36 @@ TEST PO ordered 20 -> receive 15 with SUPPLIER_SHORTAGE PASS (receipt item store
 
 ### Handover
 - P1d (invoice automation at receive) and P1e (structured payment terms) NOT started - next per mission order.
+
+---
+
+## Session: P1d - Automatic Supplier Invoice Creation (2026-08-15) - commit 93952cc
+
+### Objective
+P1d (fourth ship of the Supplier Workflow plan): receiving a PO automatically creates the supplier invoice so Payables immediately reflects what is owed - no second manual capture. P1a identity / P1b over-receive / P1c shortage reasons untouched. P1e (payment terms) NOT started.
+
+### Root cause (verified)
+Receiving stored the invoice number on the receipt but never created an `inventory_supplier_invoices` row. Payables engine/API/UI already exist and read ALL invoices (no status filter) - a `pending` row appears instantly. Only the creation link was missing.
+
+### Migration 088 (applied to prod) - `088_auto_invoice_on_receive.sql`
+- Part 1 (additive DDL): UNIQUE partial index `idx_supplier_invoices_receipt_unique` on `inventory_supplier_invoices(receipt_id) WHERE receipt_id IS NOT NULL` (the column itself already existed from migration 064). One receipt -> one invoice; retries/duplicates rejected (23505). Historical invoices (receipt_id NULL) untouched.
+- Part 2: CREATE OR REPLACE `receive_purchase_order` (same 8-arg signature) - PO lock query now also reads `supplier_id`; after the items loop, accumulates `v_invoice_total = SUM(qty x COALESCE(receipt unit_cost, PO item cost, 0))` (RECEIVED quantities only, never ordered), inserts the invoice (supplier_id, receipt_id, invoice_number, invoice_date=CURRENT_DATE, total_amount, status='pending', notes='Auto-created from PO receipt', created_by=p_received_by) inside the SAME transaction and returns `invoice_id` in the JSONB. Any failure rolls back the entire receive. Invoice numbers may repeat across suppliers - linked per receipt.
+
+### Engine (`purchase-orders.ts:receiveItems`)
+- PO select now includes `supplier_id`; after the items loop computes `invoiceTotal = SUM(received x (item.unit_cost ?? poItem.unit_cost ?? 0))` and inserts the invoice with the same shape; a 23505 (invoice already exists for this receipt) is swallowed - never creates a duplicate. Legacy fallback path mirrored (non-atomic by design like all engine steps).
+
+### Payables
+No changes - `/inv/payables` reads `inventory_supplier_invoices` (all statuses) minus payments; a new `pending` invoice is outstanding immediately. No redesign.
+
+### Tests
+purchase-orders.test.ts: 15 tests (12 previous + 3 new: invoice created from received qty only with receipt/supplier/status/date/notes asserted, partial receipts create one invoice per receipt with own amount (INV-A 400, INV-B 100), 23505 swallowed with receive completing). Dispatcher extended with `mockInsertErrors` table map (per-test insert failure injection). 183/183 vitest total. Inventory strict tsc clean (fixed: noUncheckedIndexedAccess on mockInsertErrors lookup).
+
+### Verification (2026-08-15, live, cleaned up after)
+TEST PO ordered 20 @ R75 -> receive 12 (SUPPLIER_SHORTAGE, P1D-TEST-001) PASS: receipt exists, invoice auto-created total_amount=900, status pending, linked receipt_id, payables outstanding = 900, PO partial -> duplicate insert for the same receipt REJECTED 23505 (exactly 1 invoice per receipt) -> receive remaining 8 (P1D-TEST-002) PASS: second invoice 600 on its OWN receipt, PO received, ledger 2 txns totalling 20, balance 50->70. Cleanup: TEST balance restored to 50, supplier invoices back to 0, 11 historical NULL-identity receipts unchanged.
+
+### Deploy
+Migration 088 pushed; commit 93952cc pushed; vercel --prod aliased (first CLI attempt errored "Not authorized" - transient; retry succeeded).
+
+### Handover
+- P1e (structured payment terms) NOT started - next per mission order.
+- Receipt admin identity (P1a) still requires one real admin password for UI-path proof (owner-only).
