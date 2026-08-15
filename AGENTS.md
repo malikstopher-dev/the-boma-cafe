@@ -1438,7 +1438,41 @@ Migration 088 pushed; commit 93952cc pushed; vercel --prod aliased (first CLI at
 
 ---
 
-## Session: P1e - Structured Payment Terms + Due Dates + Read-Time Overdue (2026-08-15) - commit ddc62ea
+## Session: F2 - Order -> Inventory Deduction on Completion (2026-08-15) - commit b0edca6
+
+### Objective
+F2 (first ship of the post-P1 mission order): when an order reaches Completed, deduct the stock automatically - per recipe ingredient for recipe lines, product-level for direct lines - via one SALE ledger row each, atomically and idempotently (retry never deducts twice), honoring the existing insufficient-stock rule.
+
+### Root cause (why this ship existed)
+M4 order-items already had `syncOrderItems`/`deductOrderItems`/`autoDeductCompletedOrder` + the PATCH hook in `src/app/api/supabase/orders/route.ts`, but: (1) deduction only ever ran via the non-atomic engine loop, (2) no recipe awareness (bar-item product-level only), (3) the UI deducted badge keyed off `transaction_id` only (recipe lines never get one), (4) **both legacy paths passed NEGATIVE quantities to createTransaction, which skips its stock check for decrease types (`input.quantity >= 0` guard at ledger.ts:100) - insufficient stock silently went negative**, and (5) no recipe resolution for order lines at all.
+
+### Design (mission-frozen)
+- Recipe matched at SYNC time: recipe OUTPUT name, then recipe name (active only); `order_items.recipe_id` FK column added.
+- **RPC-first atomic path**: `deduct_order_items(p_order_id, p_location_id)` (migration 090) - order FOR UPDATE + status='completed' (else `Only completed orders can be deducted (status: %)`), location active check, pending lines locked, idempotent early return (`already_deducted`), per-ingredient: retry-safety skip on existing (pos_order, line id, product_id) txn, ledger-sum balance check with exact InsufficientStockError wording, latest non-NULL unit cost (083 policy), location cost centre, audit row, balance-cache upsert; recipe lines marked `deducted_at`, direct lines `transaction_id`+`deducted_at`; any RAISE rolls back everything.
+- **Engine fallback** (retry-safe, non-atomic - 074/075 pattern): same status guard, recipe lines scale by line.quantity/yield with ingredient wastage, per-ingredient createTransaction (positive quantity - createTransaction negates + checks), ingredient skip via existing txns, line marked only after ALL its ingredients succeed, failures collected -> `Order deduction partially failed (N of M lines)...`.
+- Stock check semantics: BOTH paths validate against the LEDGER sum (getCurrentBalance's prod RPC `inventory_get_balance` does NOT exist in the current prod schema cache - engine already falls back to ledger sum; do not rely on the cache table for checks).
+
+### Bugs found live during E2E (fixed before ship)
+1. **Engine fallback ingredient query**: `inventory_recipe_ingredients ... inventory_products!inner(name)` -> PGRST "more than one relationship was found" - silently swallowed (`?? []`), marking the recipe line DEDUCTED with ZERO ledger rows. Fixed: no embed; fetch product names in a second `.in('id', ...)` query; THROW on query error (line never marked on failure).
+2. **Negative-quantity check bypass** (pre-existing M4 behavior): engine passed `-base_quantity`/`-needed` -> `input.quantity >= 0` guard skipped -> insufficient stock went negative silently. Fixed: pass positive; createTransaction negates + checks. (RPC already checked.)
+3. E2E test-data bug (not code): cache-only balances are NOT ledger balances - RPC/engine both legitimately refuse them (available 0). Opening balances must be real `purchase` ledger rows (`reason_type` NULL - 'PURCHASE' is NOT in the reason_type CHECK; real PO receipts pass NULL too, see purchase-orders.ts:311).
+
+### Files
+- `supabase/migrations/090_order_recipe_deduction.sql` (NEW, applied to prod): recipe_id column + index + `deduct_order_items` RPC (SECURITY DEFINER, service-role only, NOTIFY pgrst).
+- `src/inventory/engine/order-items.ts`: resolveRecipeForItem (output->name), sync writes recipe_id, RPC-first deductOrderItems, recipe-aware engine fallback (deductRecipeLine).
+- `src/inventory/engine/types.ts`: OrderItem.recipe_id.
+- `src/app/admin/operations/order-items/page.tsx`: deducted filter/badge honor `transaction_id || deducted_at`; ' - recipe' suffix.
+- `src/inventory/__tests__/recipe-deduction.test.ts` (NEW, 13 tests).
+
+### Verification (2026-08-15)
+- 223/223 vitest (210 + 13 new); inventory strict tsc clean; next build green (5.3min).
+- Live E2E (prod, cleaned up after): TEST recipe Margarita (tequila 0.05 +10% wastage, lime 0.02, yield 1) + direct Beer line; real purchase opening balances; completed order x2 -> RPC-first deduction {deducted:2, skipped:0} -> 3 SALE rows (-0.11 @450, -0.04 @60, -1 @40, Bar cost centre, ingredient rows reference the LINE id, beer references the ORDER id) -> balances 0.89/0.46/4 -> idempotent re-run {deducted:0} -> insufficient-stock order raised exact InsufficientStockError with ZERO rows (atomic rollback) -> engine fallback path propagated the same rule. TEST balance 50 restored, zero F2 rows left.
+- Deploy: commit b0edca6 pushed, vercel --prod aliased (build 1m + deploy 3m).
+
+### Notes / handover
+- The completion hook (`src/app/api/supabase/orders/route.ts` PATCH) calls autoDeductCompletedOrder fire-and-forget - now RPC-first automatically; no route change needed.
+- `inventory_get_balance` RPC missing from prod schema cache (pre-existing; engine falls back to ledger sum) - if it's ever recreated, keep it ledger-sum-equivalent.
+- Next per mission order: P2/other ships (none queued this session).
 
 ### Objective
 P1e (fifth and final ship of the Supplier Workflow plan): structured payment terms on suppliers, automatic due dates on auto-created invoices, and read-time overdue in Payables. P1a identity / P1b over-receive / P1c shortage reasons / P1d auto-invoice untouched. No scheduler - overdue computed at read time.
