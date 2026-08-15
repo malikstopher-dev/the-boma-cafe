@@ -1240,3 +1240,41 @@ booking-status.test.ts: event mapping, needsFetch, sanitizer drops PII even when
 
 ### Next ships (NOT started, per mission lock)
 E1-4 (deduction via worker), E1-5 (cleanup redundant paths + fix dead anon realtime on orders/chat).
+
+---
+
+## Session: P0 Ledger Cost Integrity + Dashboard Truth (2026-08-15) - commit `f7c543b`
+
+### Objective
+Owner Dashboard KPI Integrity Audit -> P0 fixes (MISSION LOCK, before P1 Supplier Workflow). Owner posted fish -3 (Kitchen) and mango juice +7 (Kitchen) adjustments: rows appeared in Recent Adjustments but Adjustments KPI = R0.00, Stock Used = R0.00, Reason blank while text showed under Notes.
+
+### Root causes (audit, DB-verified)
+1. **unit_cost NULL on non-purchase txns** - adjustments/waste/gas_usage/physical_count rows never carried cost (form/engine never set it; 20 of 30 rows this week NULL). Owner dashboard values every KPI as abs(qty) x unit_cost (NULL -> 0) => all costed KPIs silently zero. NOT a realtime/staleness issue (data present, math zeroes it).
+2. **Form field mapping** - /inv/adjustments input labeled "Reason..." posted to reason_notes; reason_type never sent (NULL). Display: Reason <- reason_type (blank), Notes <- reason_notes ("used").
+3. **USED_TYPES omitted 'breakage'** (in WASTE_TYPES, so Wastage could exceed Stock Used); Adjustments sub-label "counts, transfers, corrections" didn't match query (only type='adjustment').
+4. **Header overlap** - admin/layout.tsx fixed banner pill (top:12 right:12, borderRadius 999, flex row) with NO flexWrap/maxWidth; Change Password button collided with "Logged in as MR MAHINDRA - Owner" text on narrow widths.
+
+### Fixes (commit f7c543b, 7 files, 168/168 vitest)
+- **Migration 083** (applied to prod, one failed attempt first): (1) backfill unit_cost on NULL rows from product's latest non-NULL cost (DISTINCT ON product_id ORDER BY created_at DESC, id DESC); (2) backfill reason_type='ADJUSTMENT' on adjustment rows with NULL reason; (3) recreate reason_type CHECK with 18 original + GAS_USAGE (from 067 - FIRST attempt omitted it and failed 23514 on prod gas rows, rolled back cleanly) + DAMAGED + FOUND_STOCK.
+- **ledger.ts**: new resolveProductCost() - latest non-NULL unit_cost per product; createTransaction attaches it when input.unit_cost omitted => EVERY future movement carries cost (adjustments, waste, gas, physical_count, order-items, imports).
+- **owner-dashboard.ts**: USED_TYPES += 'breakage' (business rule: adjustment stays SEPARATE from Stock Used - corrections are not consumption).
+- **inv/page.tsx**: Adjustments sub-label -> 'corrections'.
+- **inv/adjustments/page.tsx**: Reason Type dropdown (Adjustment/Breakage/Return/Damaged/Found Stock -> ADJUSTMENT/BREAKAGE/RETURN/DAMAGED/FOUND_STOCK) + separate Notes free-text input; reason_type now posted.
+- **admin/layout.tsx**: banner pill flexWrap wrap + justifyContent flex-end + maxWidth min(92vw,480px) + rowGap 6; button flexShrink 0 + whiteSpace nowrap (wraps below identity text on narrow widths).
+- **ledger.test.ts**: +1 test (auto-attach cost when unit_cost omitted; 169 total in file set).
+
+### Live verification (prod, cleaned up after)
+- Baseline this-week KPIs with deployed logic on live data: purchased 75,050 / **used 31,533 / wastage 1,183 / adjustments 775** (was all R0.00 except purchases) - adjustments exactly 3x200 + 7x25 = 775.
+- fish/mango rows now unit_cost 200/25, reason_type ADJUSTMENT, reason_notes 'used'.
+- resolveProductCost(fish)=200; posting one adjustment (fish +1 @200) moved Adjustments KPI 775 -> 975 (exact); used unchanged (adjustment excluded from Stock Used - rule confirmed).
+- Test txn + audit row deleted; fish balance cache restored (inventory_get_balance RPC + upsert).
+- Note: raw service-role INSERT without cost does NOT auto-attach (engine does it in createTransaction) - proven live; engine path covered by vitest.
+
+### Deploy
+- Migration 083 pushed (2nd attempt after GAS_USAGE fix), commit f7c543b pushed, vercel --prod deployed + aliased.
+- Owner handover: visual check of header pill on desktop/narrow; posting an adjustment from the UI (Adjustments KPI should move by qty x product cost).
+
+### Notes
+- Owner was posting live TEST purchases (ESSAIE/TEST/Vodka/Gin/Tonic x50, NULL cost) at 06:14 UTC during this session - NOT touched, their business rows.
+- Remaining NULL-cost rows (7) are products with NO cost history anywhere (e.g., TEST/ESSAIE) - engine leaves them NULL until first purchase; KPI treats them as 0.
+- P1 Supplier Workflow (receiving history: who/when/invoice/qty) NOT started - next per owner's mission order.
