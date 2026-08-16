@@ -1936,3 +1936,28 @@ Probe accounts + login-audit rows deleted (verified zero); temp probe scripts de
 
 ### Mission queue (owner-updated: O1 stream continues, O2 superseded)
 O1 Phase 3B (bring the /inv left sidebar into /dashboard - same navigation, same styling, no routing changes), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+
+
+## Session: O1 Phase 3B - /inv Left Sidebar on the Owner Dashboard (2026-08-16) - commits 0eb4c56, 4e5e6ff
+
+### Objective (owner directive - O1 stream continuation, mission lock)
+/dashboard is the permanent canonical Owner Dashboard. Bring the /inv left sidebar onto /dashboard - SAME navigation (all 13 nav items + 3 Quick Links), SAME styling (brown rail + gold accents), NO routing changes (every href identical to /inv). No merge, no /inv sidebar removal, no middleware/auth/inventory changes.
+
+### Changes (1 file: src/app/dashboard/page.tsx, +142/-2)
+1. NAV_GROUPS + railLinkStyle/railGroupStyle copied VERBATIM from src/app/inv/layout.tsx; aside.dash-rail (222px, sticky top 0, maxHeight 100vh, overflowY auto) wrapped beside the existing blue dashboard content in a flex row.
+2. Active state: href === '/inv' also active when pathname === '/dashboard' (Owner Dashboard nav item highlights on the dashboard); all other items use the same startsWith rule.
+3. Mobile: dash-hamburger button (same ? styling) in the header title row + drawer overlay (280px, same as /inv) with all 6 nav groups; media breakpoints copied (rail hidden <=900px, hamburger hidden >=901px).
+4. BUG FOUND DURING VERIFICATION: hamburger showed on desktop - the inline style display:flex beats the stylesheet media query (same latent quirk exists in /inv). Fixed with .dash-hamburger { display: none !important; } in the min-width media query (commit 4e5e6ff).
+5. Everything else untouched: KPI cards, boards, alerts, activity, movement chart, silent refresh, week picker, header actions from Phase 3A.
+
+### Verification (headless Edge vs prod, probe owner account, at 1920/1366/768/390)
+- 36/36 PASS: rail visible + hamburger hidden at 1920/1366; rail hidden + hamburger visible at 768/390; drawer opens with all 6 groups; all 16 rail hrefs identical to /inv (zero route changes); /inv/stock renders after navigation; content starts exactly at rail edge (no overlap); header + controls + KPI boards intact at all widths.
+- Probe artifacts found & fixed (not app bugs): page.setCookie with domain '.vercel.app' silently not sent by headless Edge - MUST use url: BASE instead; KPI text check raced the data fetch - re-poll up to 4x; drawer detection needs computed width only (inner drawer is position:static).
+- 247/247 vitest; temp UI tsconfig clean (tsconfig.ui.json at repo ROOT must extend './tsconfig.json' - not ../../; deleted after); next build green.
+- Commits 0eb4c56 + 4e5e6ff pushed; vercel --prod aliased twice (established retry pattern).
+
+### Cleanup
+Probe accounts + audit rows verified zero (accounts like o1p3b% and admin_name like O1P3B% both checked); temp probe/debug scripts deleted; git clean.
+
+### Mission queue (per mission lock)
+Active ship: O4 (Forecast vs Reorder mismatch). Then O5, O6, E2, E1, E3, E4. O2 remains superseded. MASTER_MISSION_LOCK.md updated.

@@ -12,6 +12,7 @@
 - O1 Phase 1 (dashboard silent refresh + week picker) — COMPLETE
 - O1 Phase 2 (admin layout spacing) — COMPLETE
 - O1 Phase 3A (owner dashboard header: greeting, ledger subtitle, Go to Admin / View Website / Logout) — COMPLETE
+- O1 Phase 3B (the /inv left sidebar on /dashboard — same navigation + styling, no route changes) — COMPLETE
 - R1 + R1.1 (staff nav + logout regression) — COMPLETE
 - Migration 093 applied (local == remote, 000–093)
 - 247/247 Vitest passing; inventory strict TypeScript clean
@@ -33,17 +34,16 @@
 
 ## Active ship
 
-**O1 Phase 3B — bring the /inv left sidebar into /dashboard** (same navigation, same styling, no routing changes). NOT started.
+**O4 — Forecast vs Reorder mismatch.** NOT started.
 
 ## Deferred queue (in order)
 
-1. O4 — Forecast vs Reorder mismatch
-2. O5 — Food Products mismatch
-3. O6 — Products counters mismatch
-4. E2 — Faster ordering workflow
-5. E1 — Excel exports
-6. E3 — Kitchen portion inventory
-7. E4 — Event-only purchasing
+1. O5 — Food Products mismatch
+2. O6 — Products counters mismatch
+3. E2 — Faster ordering workflow
+4. E1 — Excel exports
+5. E3 — Kitchen portion inventory
+6. E4 — Event-only purchasing
 
 (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
 
