@@ -217,7 +217,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             alignItems: 'center',
             gap: 8,
             rowGap: 6,
-            maxWidth: 'min(92vw, 480px)',
+            maxWidth: 'min(calc(100vw - 64px), 480px)',
             background: 'rgba(200,160,78,0.12)',
             border: '1px solid rgba(200,160,78,0.35)',
             borderRadius: 999,
@@ -264,6 +264,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               onClick={e => e.stopPropagation()}
               style={{
                 width: 360, maxWidth: '92vw',
+                maxHeight: 'calc(100vh - 48px)', overflowY: 'auto',
                 background: '#242018', border: '1px solid #3A3428', borderRadius: 12,
                 padding: 24, color: '#F0EBE3',
               }}
@@ -359,7 +360,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main style={{
           flex: 1,
           marginLeft: 240,
-          padding: '24px 32px',
+          padding: '68px 32px',
           paddingBottom: 32,
           maxWidth: '100%',
           overflowX: 'hidden',
@@ -380,7 +381,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             .admin-main {
               margin-left: 0 !important;
               padding: 16px !important;
-              padding-top: 56px !important;
+              padding-top: 96px !important;
               padding-bottom: 80px !important;
             }
           }
