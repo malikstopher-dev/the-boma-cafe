@@ -779,7 +779,7 @@ export default function OwnerDashboardPage() {
           aside.dash-rail { display: none; }
         }
         @media (min-width: 901px) {
-          .dash-hamburger { display: none; }
+          .dash-hamburger { display: none !important; }
         }
       `}</style>
     </div>
