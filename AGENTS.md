@@ -1834,7 +1834,7 @@ Unresolved observation (future consolidation mission, NOT part of R1.1): "Owner 
 
 ---
 
-## Session: O1 - Owner Dashboard Consolidation Phase 1 - Dashboard Polish (2026-08-16) - commit to follow
+## Session: O1 - Owner Dashboard Consolidation Phase 1 - Dashboard Polish (2026-08-16) - commit 8f7fcfe
 
 ### Objective
 O1 first ship (phase-it approved): make /dashboard the canonical owner dashboard experience without touching /inv. Comparison table (the user safety gate) produced first: both dashboards call the SAME endpoint (GET /api/inventory/owner-dashboard -> getOwnerDashboard engine) so numbers are identical by construction; /inv landing is a strict subset of /dashboard except the week-number picker + Logout/Go-to-Admin header. /inv sub-page mapping found 6 INV-ONLY capabilities (Stock Sheet formula engine + XLSX, Payables + record payment, Adjustment form, staff roster, bulk supplier-product link modal, location value analytics) - /inv stays fully intact this ship; retirement decision deferred.
