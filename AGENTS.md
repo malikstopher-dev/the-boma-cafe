@@ -1911,3 +1911,28 @@ Probe accounts + probe login-audit rows all deleted (verified zero); temp probe 
 
 ### Mission queue (unchanged)
 O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+
+## Session: O1 Phase 3A - Complete the Owner Dashboard Header (2026-08-16) - commit 946260c
+
+### Objective (owner directive - continuation of the O1 stream, NOT a new mission)
+/dashboard is the permanent canonical Owner Dashboard (blue executive layout frozen). Copy ONLY the existing owner header from /inv onto /dashboard using the existing implementation - no redesign. Bring across: greeting (Good morning/afternoon/evening, Mr Mahendra), the exact subtitle "Inventory & Financial Overview - every figure is calculated from the live transaction ledger.", and the three actions Go to Admin (/admin/operations), View Website (/), Logout (/api/admin/auth?action=logout&redirect=/admin/login). /dashboard's existing Period controls, Refresh and Pick Week were REUSED as-is (Phase 1). No /inv sidebar; no widget moves; no middleware/auth/inventory changes; no merge.
+
+### Changes (1 file: src/app/dashboard/page.tsx, +17/-2)
+1. greet() helper copied from /inv (h < 12 morning, < 17 afternoon, else evening).
+2. Header title row: "OWNER DASHBOARD" text -> ${greet()}, Mr Mahendra (Boma Cafe gold pill kept).
+3. Subtitle -> exact /inv text ("every figure is calculated from the live transaction ledger.").
+4. Controls row end (after the existing auto-refresh note): separator + Go to Admin + View Website (Link, theme.panel/gold styling) + Logout (red tones, window.location.href logout with redirect=/admin/login - O3 pattern).
+5. Everything else untouched: KPI cards, boards, alerts, activity, movement chart, silent refresh, week picker, owner landing.
+
+### Verification (headless Edge vs prod after vercel --prod, at 1920/1366/768/390)
+- Header appears above content at all 4 widths; structural geometry: header band bottom y=191 (1920) / y=413 (390), KPI content starts exactly there - no overlap, block flow.
+- 42/42 meaningful checks: greeting present, subtitle exact, all three actions rendered, week picker (PICK WEEK + (now) + Show), Refresh + "auto-refreshes every 60s" text, KPI cards + boards intact, zero fixed admin overlays, Go to Admin href=/admin/operations, View Website href=/, Refresh click keeps header+picker, Logout click lands /admin/login.
+- Note: the probe's generic overlap check reported 4 artifacts (matched wrong container divs); direct band-vs-grid measurement proves clean.
+- 247/247 vitest; temp UI tsconfig over dashboard/page.tsx clean (deleted); next build green.
+- Commit 946260c pushed; vercel --prod aliased (1 transient "Not authorized" CLI error - established retry pattern, retry succeeded).
+
+### Cleanup
+Probe accounts + login-audit rows deleted (verified zero); temp probe scripts deleted; git clean.
+
+### Mission queue (owner-updated: O1 stream continues, O2 superseded)
+O1 Phase 3B (bring the /inv left sidebar into /dashboard - same navigation, same styling, no routing changes), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
