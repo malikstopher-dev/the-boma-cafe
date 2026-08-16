@@ -1789,3 +1789,36 @@ Cleanup: 3 probe orders + 3 order_events + 3 realtime_events deleted; role login
 - R1 COMPLETE. Mission queue unchanged: O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
 - Browser click-through proof of the Dashboard button destinations needs real device logins (kitchen/bar passwords are env-held; owner-only precedent). Bar staff should re-login with the Bar shared password - the board works with a fresh role cookie (proven step 4).
 - Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.
+
+---
+
+## Session: R1.1 - Staff Dashboard Button Still Redirecting to Admin Login (2026-08-16) - commit to follow
+
+### Objective
+Owner reported the R1 fix did NOT work: "Kitchen login. Press Dashboard. Browser goes to /admin/login?redirect=%2Fadmin%2Fdashboard." Directive: browser proof is authoritative - do NOT assume admin/layout.tsx is the source; grep the entire repo for "/admin/dashboard"; find the ACTUAL rendered Dashboard button; remove every staff path to /admin/dashboard; staff destinations = Kitchen->/staff/kitchen, Bar->/staff/bar, Waiter->/staff/waiter; verify no duplicate Dashboard buttons. Forbidden: O1, O2, Dispatch, Realtime, Middleware, Inventory, RBAC changes.
+
+### Root cause (code-proven, not assumed)
+The kitchen/bar board gate login NEVER updates auth-context: user visits /admin/kitchen -> admin layout mounts -> checkAuth() runs ONCE (no cookie yet -> role:null) -> FULL_WIDTH pages SKIP the loading gate (layout.tsx:125) and render immediately -> StationDisplay gate login (POST /api/admin/auth, StationDisplay.tsx:400) sets the boma_kitchen_auth cookie + LOCAL board state only (no reload, no auth-context update) -> role stays NULL for the entire board session -> clicking "��? Dashboard" (layout.tsx:173) computed dashboardTarget with role===null -> R1 ternary fell through to '/admin/dashboard' -> middleware 307 -> /admin/login?redirect=%2Fadmin%2Fdashboard (the EXACT observed URL). The R1 ternary was unreachable for board sessions by construction. R1's live matrix missed it because curl cannot click buttons and the chunk proof only showed the ternary compiled (correct code, never reachable with a non-null role on boards).
+Secondary staff paths to /admin/dashboard: the admin Sidebar + BottomNav + logo render for staff identities on /admin/messages (the one non-FULL_WIDTH admin page middleware allows kitchen/bar/waiter on): Sidebar.tsx:80 (Dashboard nav item), :279 (logo Link), :337 (BottomNav 'Home') - all href /admin/dashboard.
+
+### Fix (2 files; layout + shared nav components only)
+1. **src/app/admin/layout.tsx** - dashboardTarget is now PATHNAME-FIRST: pathname==='/admin/kitchen' -> /staff/kitchen, '/admin/bar' -> /staff/bar (the board's own path is authoritative and immune to the stale-role race), then the R1 role ternary (kitchen/bar/waiter -> /staff/*), then '/admin/dashboard' fallback for admin identities (unchanged).
+2. **src/components/admin/Sidebar.tsx** - role-aware dashboardHref (same ternary) applied to ALL THREE /admin/dashboard targets: Dashboard nav item (href override at render: item.href === '/admin/dashboard' ? dashboardHref : item.href), logo Link, BottomNav Home tab (BottomNav now calls useAuth itself). Sidebar already used useAuth (added role to the destructure).
+Left unchanged (correct per matrix, admin-only): staff/layout.tsx:13 admin-role nav (admins -> /admin/dashboard), PageHeader BackButton default, BackButton.tsx (admin-gated pages), AdminIndex admin/page.tsx:16 (O1 - forbidden), middleware (forbidden).
+
+### Verification (local)
+247/247 vitest (unchanged); temp UI tsconfig over the 2 edited files clean (gotcha: the root tsconfig's exclude:["src/inventory"] is INHERITED - the temp config MUST set "exclude": [] or ambient.d.ts gets excluded and every *.module.css import errors TS2307; deleted after); next build green; compiled chunks verified: layout chunk contains `"/admin/kitchen"===p?"/staff/kitchen":"/admin/bar"===p?"/staff/bar":"kitchen"===s?` (pathname first, then role), Sidebar chunk contains the dashboardHref ternary + `"/admin/dashboard"===e.href?k:e.href` override + BottomNav Home ternary.
+
+### Verification (live, prod after vercel --prod; curl + chunk proof, temp files cleaned)
+1. kitchen login 200 -> /admin/kitchen 200, /admin/messages 200 (staff reaches the sidebar page), /admin/login 200, /admin/dashboard 307 (middleware stays the hard admin gate - staff can no longer be NAVIGATED there by any UI element)
+2. bar login 200 -> /admin/bar 200, /admin/messages 200; waiter login 200 -> /waiter 200
+3. anon /admin 307 -> /admin/login (unchanged); anon /admin/login 200; kitchen /staff/kitchen 200 (button destination renders)
+4. Live deployed chunk 1hp5fhbnjgp2y.js (same hash as local build) fetched from the-boma-cafe.vercel.app contains all three compiled ternaries (pathname-first overlay target, Sidebar dashboardHref + nav override, BottomNav Home) - client-side click not curl-observable, chunk proof per R1/O1 precedent
+5. No duplicate Dashboard buttons remain for staff: staff layout kitchen/bar navs have none (R1 finding), boards have the single overlay button (now pathname-resolved), sidebar/bottomnav/logo now role-aware
+Cleanup: cookie files + login JSON temp files deleted; role logins are cookie-only (no DB rows); git clean (only the 2 intended files modified).
+
+### Notes / handover
+- Browser click-through proof needs real device logins (owner-only precedent). Kitchen/bar devices still holding a stale pre-R1 layout chunk will self-heal on next reload (new chunk hash); a hard refresh or PWA update clears it immediately.
+- R1's chunk proof (0k4yh7c1hggxt.js) showed correct code that was UNREACHABLE for boards - lesson: verify the data path (role source) as well as the compiled ternary.
+- Mission queue unchanged: O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+- Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.

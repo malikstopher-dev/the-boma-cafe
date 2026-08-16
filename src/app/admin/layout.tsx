@@ -17,8 +17,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { isAuthenticated, user, role, roleLabel, logout, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  // R1.1: board pages (kitchen/bar) authenticate through StationDisplay's own
+  // gate, which never updates auth-context (role stays null there) — resolve
+  // the staff destination from the pathname itself, which is authoritative.
   const dashboardTarget =
-    role === 'kitchen' ? '/staff/kitchen'
+    pathname === '/admin/kitchen' ? '/staff/kitchen'
+    : pathname === '/admin/bar' ? '/staff/bar'
+    : role === 'kitchen' ? '/staff/kitchen'
     : role === 'bar' ? '/staff/bar'
     : role === 'waiter' ? '/staff/waiter'
     : '/admin/dashboard';

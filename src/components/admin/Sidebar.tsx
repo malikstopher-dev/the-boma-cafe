@@ -210,7 +210,14 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
   const pathname = usePathname()
-  const { can } = useAuth()
+  const { can, role } = useAuth()
+  // R1.1: staff identities (kitchen/bar/waiter) reach this sidebar from
+  // /admin/messages — never send them to /admin/dashboard (admin-only).
+  const dashboardHref =
+    role === 'kitchen' ? '/staff/kitchen'
+    : role === 'bar' ? '/staff/bar'
+    : role === 'waiter' ? '/staff/waiter'
+    : '/admin/dashboard'
   const [unreadCount, setUnreadCount] = useState(0)
   const [inventoryUnread, setInventoryUnread] = useState(0)
 
@@ -276,7 +283,7 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
 
       <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ''}`}>
         <div className={styles.header}>
-          <Link href="/admin/dashboard" className={styles.logo} onClick={onClose}>
+          <Link href={dashboardHref} className={styles.logo} onClick={onClose}>
             <span className={styles.logoText}>The Boma Café</span>
           </Link>
           <span className={styles.logoSub}>Admin</span>
@@ -292,7 +299,7 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
                 {visibleItems.map(item => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href === '/admin/dashboard' ? dashboardHref : item.href}
                   className={`${styles.navItem} ${isActive(item.href) ? styles.navItemActive : ''}`}
                   onClick={onClose}
                 >
@@ -332,9 +339,17 @@ export default function Sidebar({ open, onClose, onLogout }: SidebarProps) {
 
 export function BottomNav({ onMoreClick }: { onMoreClick?: () => void }) {
   const pathname = usePathname()
+  const { role } = useAuth()
+  // R1.1: staff identities see this nav on /admin/messages — keep Home out of
+  // the admin-only /admin/dashboard for them.
+  const dashboardHref =
+    role === 'kitchen' ? '/staff/kitchen'
+    : role === 'bar' ? '/staff/bar'
+    : role === 'waiter' ? '/staff/waiter'
+    : '/admin/dashboard'
 
   const tabs = [
-    { label: 'Home', icon: <Home size={20} />, href: '/admin/dashboard' },
+    { label: 'Home', icon: <Home size={20} />, href: dashboardHref },
     { label: 'Orders', icon: <ClipboardList size={20} />, href: '/admin/orders' },
     { label: 'Menu', icon: <Utensils size={20} />, href: '/admin/menu' },
     { label: 'Content', icon: <FileEdit size={20} />, href: '/admin/events' },
