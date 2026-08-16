@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import type { CSSProperties, ReactNode } from 'react'
+import { weekRange, currentWeekNumber, lastWeekOfYear } from '@/inventory/lib/weeks'
 
 // ---------------------------------------------------------------------------
 // Data contract (mirrors src/inventory/engine/owner-dashboard.ts)
@@ -114,6 +115,15 @@ const dateInputStyle: CSSProperties = {
   borderRadius: 8, padding: '7px 10px', fontSize: 12.5, outline: 'none',
 }
 
+const selectStyle: CSSProperties = {
+  background: '#1A2434', border: `1px solid ${theme.border}`, color: '#F0EDE8',
+  borderRadius: 8, padding: '7px 8px', fontSize: 12.5, outline: 'none',
+}
+
+function fmtDay(isoDate: string): string {
+  return new Date(isoDate + 'T00:00:00Z').toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -126,6 +136,9 @@ export default function OwnerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAllSuppliers, setShowAllSuppliers] = useState(false)
+  const [weekYear, setWeekYear] = useState(() => new Date().getFullYear())
+  const [weekNo, setWeekNo] = useState(() => currentWeekNumber())
+  const [weekApplied, setWeekApplied] = useState<{ y: number; w: number; start: string; end: string } | null>(null)
   const [managementActivity, setManagementActivity] = useState<Array<{ id: string; admin_name: string | null; admin_role: string | null; action: string; target_type: string | null; created_at: string }>>([])
 
   // Management activity (Mission E8): who did what in the admin system
@@ -144,9 +157,11 @@ export default function OwnerDashboardPage() {
     return () => clearInterval(timer)
   }, [loadActivity])
 
-  const load = useCallback(async (p: string, from?: string, to?: string) => {
-    setIsLoading(true)
-    setError('')
+  const load = useCallback(async (p: string, from?: string, to?: string, opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setIsLoading(true)
+      setError('')
+    }
     try {
       const params = new URLSearchParams({ period: p })
       if (p === 'custom' && from && to) {
@@ -158,24 +173,34 @@ export default function OwnerDashboardPage() {
       if (!res.ok) throw new Error(json?.error?.message ?? 'Failed to load dashboard')
       setData(json.data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load dashboard')
+      if (!opts?.silent) setError(e instanceof Error ? e.message : 'Failed to load dashboard')
     } finally {
-      setIsLoading(false)
+      if (!opts?.silent) setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    load(period, customFrom, customTo)
+    void load(period, customFrom, customTo)
   }, [load, period, customFrom, customTo])
 
-  // Auto-refresh every 60s so admin-side changes show up without a page reload
+  // Auto-refresh every 60s — silent background revalidation (no flash, scroll preserved)
   useEffect(() => {
-    const timer = setInterval(() => { void load(period, customFrom, customTo) }, 60000)
+    const timer = setInterval(() => { void load(period, customFrom, customTo, { silent: true }) }, 60000)
     return () => clearInterval(timer)
   }, [load, period, customFrom, customTo])
 
   const pickPeriod = (p: string) => setPeriod(p)
-  const refresh = () => void load(period, customFrom, customTo)
+  const refresh = () => void load(period, customFrom, customTo, { silent: true })
+
+  const weekOptions = useMemo(() => Array.from({ length: lastWeekOfYear(weekYear) }, (_, i) => i + 1), [weekYear])
+
+  const applyWeek = () => {
+    const { start, end } = weekRange(weekYear, weekNo)
+    setCustomFrom(start)
+    setCustomTo(end)
+    setWeekApplied({ y: weekYear, w: weekNo, start, end })
+    setPeriod('custom')
+  }
 
   const kpiCards: Array<{ label: string; value: ReactNode; sub: ReactNode; subColor?: string; href?: string }> = data
     ? [
@@ -259,6 +284,27 @@ export default function OwnerDashboardPage() {
             <span style={{ fontSize: 12.5, color: theme.textDim, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>
               {data ? `${formatRange(data.range.start, data.range.end)}  |  ${data.range.label}` : '\u00A0'}
             </span>
+            <span style={{ width: 1, height: 24, background: theme.border }} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: theme.textDim }}>Pick week</span>
+            <select value={weekYear} onChange={e => { setWeekYear(Number(e.target.value)); setWeekNo(1) }} style={selectStyle}>
+              {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select value={weekNo} onChange={e => setWeekNo(Number(e.target.value))} style={selectStyle}>
+              {weekOptions.map(w => (
+                <option key={w} value={w}>Week {w}{w === currentWeekNumber() && weekYear === new Date().getFullYear() ? ' (now)' : ''}</option>
+              ))}
+            </select>
+            <button
+              onClick={applyWeek}
+              style={{
+                padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                border: `1px solid ${theme.border}`, background: theme.panel, color: theme.gold,
+              }}
+            >
+              Show
+            </button>
             <button
               onClick={refresh}
               style={{
@@ -273,6 +319,20 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
       </div>
+
+      {weekApplied && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, maxWidth: 1240, margin: '0 auto', padding: '12px 24px 0' }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: theme.gold, letterSpacing: '0.02em' }}>
+            Showing Week {weekApplied.w} of {weekApplied.y} · Mon {fmtDay(weekApplied.start)} – Sun {fmtDay(weekApplied.end)}
+          </span>
+          <button
+            onClick={() => { setWeekApplied(null); setPeriod('this_week') }}
+            style={{ marginLeft: 'auto', padding: '5px 10px', borderRadius: 7, border: `1px solid ${theme.border}`, background: 'transparent', color: theme.textDim, fontSize: 11.5, cursor: 'pointer' }}
+          >
+            ✕ Clear week
+          </button>
+        </div>
+      )}
 
       <div style={{ maxWidth: 1240, margin: '0 auto', padding: '22px 24px 60px' }}>
         {/* Status bars */}
@@ -460,7 +520,7 @@ export default function OwnerDashboardPage() {
                     {data.locations.map(loc => (
                       <tr key={loc.locationId}>
                         <td style={tdStyle}>
-                          <Link href={`/admin/operations/locations/${loc.locationId}/stock`} style={{ color: theme.ink, textDecoration: 'none' }}>
+                          <Link href={`/admin/operations/locations/${loc.locationId}`} style={{ color: theme.ink, textDecoration: 'none' }}>
                             {loc.name}
                           </Link>
                         </td>

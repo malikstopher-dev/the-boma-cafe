@@ -1831,3 +1831,23 @@ Real-browser (headless Edge, puppeteer-core from temp dir, deleted after) click-
 4. Bar logout -> lands /staff/login, stays 4s (no bounce back) PASS
 Automation lessons: cookie bleed across pages in one browser - use createBrowserContext() per flow (fresh device); page.type() flaked on the React controlled input ("No element found" despite document.querySelector finding it) - set value via native HTMLInputElement setter + input event, then wait for the submit button to enable; click buttons via evaluate + b.click() (React handles synthetic clicks).
 Unresolved observation (future consolidation mission, NOT part of R1.1): "Owner has two active dashboards (/dashboard and /inv). Preferred dashboard is /dashboard." Owner routing untouched; no dashboard merge.
+
+---
+
+## Session: O1 - Owner Dashboard Consolidation Phase 1 - Dashboard Polish (2026-08-16) - commit to follow
+
+### Objective
+O1 first ship (phase-it approved): make /dashboard the canonical owner dashboard experience without touching /inv. Comparison table (the user safety gate) produced first: both dashboards call the SAME endpoint (GET /api/inventory/owner-dashboard -> getOwnerDashboard engine) so numbers are identical by construction; /inv landing is a strict subset of /dashboard except the week-number picker + Logout/Go-to-Admin header. /inv sub-page mapping found 6 INV-ONLY capabilities (Stock Sheet formula engine + XLSX, Payables + record payment, Adjustment form, staff roster, bulk supplier-product link modal, location value analytics) - /inv stays fully intact this ship; retirement decision deferred.
+
+### Changes (1 file: src/app/dashboard/page.tsx, +71/-11)
+1. **O1-C silent 60s revalidation**: load() gained { silent } option. Initial load + period changes still show the LoadBar (user-initiated); the 60s timer AND the Refresh button now call silent mode - data updates without setIsLoading, so the body `{data && !isLoading && ...}` never unmounts -> no flash, scroll position and layout preserved automatically. Silent failures keep the old data (no error banner mid-session).
+2. **Week-number picker ported from /inv** (the only /inv landing feature /dashboard lacked): Pick week label + year select (prev/current/next) + week select (lastWeekOfYear options, "(now)" marker) + Show button -> sets customFrom/customTo via weekRange(weekYear, weekNo), period='custom', weekApplied banner "Showing Week N of Y · Mon d MMM - Sun d MMM" + "x Clear week" resetting to this_week. Uses @/inventory/lib/weeks (weekRange/currentWeekNumber/lastWeekOfYear).
+3. **404 link fix**: location rows linked to /admin/operations/locations/{id}/stock - that route does not exist (only locations/[id]/page.tsx) -> re-pointed to /admin/operations/locations/{id}.
+
+### Verification (local)
+- Temp UI tsconfig (root-extending, exclude:[] override + ambient.d.ts, deleted after) over dashboard/page.tsx clean; 247/247 vitest unchanged; next build green (/dashboard in routes).
+- No /inv files touched; git clean except the 1 file.
+
+### Deploy note
+- vercel --prod pending; post-deploy live checks: /dashboard 200 for admin cookie; deployed chunk contains the week-picker + silent-refresh compiled code; location rows link without /stock.
+- /inv retirement NOT done (deferred ship; requires re-pointing the 5 /dashboard links into /inv + porting the 6 INV-ONLY capabilities first).
