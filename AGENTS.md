@@ -1841,7 +1841,7 @@ O1 first ship (phase-it approved): make /dashboard the canonical owner dashboard
 
 ### Changes (1 file: src/app/dashboard/page.tsx, +71/-11)
 1. **O1-C silent 60s revalidation**: load() gained { silent } option. Initial load + period changes still show the LoadBar (user-initiated); the 60s timer AND the Refresh button now call silent mode - data updates without setIsLoading, so the body `{data && !isLoading && ...}` never unmounts -> no flash, scroll position and layout preserved automatically. Silent failures keep the old data (no error banner mid-session).
-2. **Week-number picker ported from /inv** (the only /inv landing feature /dashboard lacked): Pick week label + year select (prev/current/next) + week select (lastWeekOfYear options, "(now)" marker) + Show button -> sets customFrom/customTo via weekRange(weekYear, weekNo), period='custom', weekApplied banner "Showing Week N of Y · Mon d MMM - Sun d MMM" + "x Clear week" resetting to this_week. Uses @/inventory/lib/weeks (weekRange/currentWeekNumber/lastWeekOfYear).
+2. **Week-number picker ported from /inv** (the only /inv landing feature /dashboard lacked): Pick week label + year select (prev/current/next) + week select (lastWeekOfYear options, "(now)" marker) + Show button -> sets customFrom/customTo via weekRange(weekYear, weekNo), period='custom', weekApplied banner "Showing Week N of Y ï¿½ Mon d MMM - Sun d MMM" + "x Clear week" resetting to this_week. Uses @/inventory/lib/weeks (weekRange/currentWeekNumber/lastWeekOfYear).
 3. **404 link fix**: location rows linked to /admin/operations/locations/{id}/stock - that route does not exist (only locations/[id]/page.tsx) -> re-pointed to /admin/operations/locations/{id}.
 
 ### Verification (local)
@@ -1851,3 +1851,63 @@ O1 first ship (phase-it approved): make /dashboard the canonical owner dashboard
 ### Deploy note
 - vercel --prod pending; post-deploy live checks: /dashboard 200 for admin cookie; deployed chunk contains the week-picker + silent-refresh compiled code; location rows link without /stock.
 - /inv retirement NOT done (deferred ship; requires re-pointing the 5 /dashboard links into /inv + porting the 6 INV-ONLY capabilities first).
+
+## Session: O1-D - Owner Dashboard Data Integrity Investigation (2026-08-16) - investigation only, no code committed
+
+### Objective
+Owner reported /dashboard shows 00 everywhere while /inv previously showed real values. Investigation-first mission: find ONE verified root cause; produce evidence table (KPI | Ledger | API | /dashboard | /inv); propose smallest additive fix; DO NOT implement until approved. No merge/removal of /inv, no redirect changes, no dashboard redesign, no middleware changes, no completed-mission code changes; additive migrations only; leave prod clean.
+
+### Root cause (verified live against prod, 2026-08-16)
+**The production ledger inventory_transactions is EMPTY - 0 rows total (count=exact via service-role). Also 0: inventory_supplier_invoices, inventory_supplier_payments, inventory_daily_snapshots, inventory_recipes.** Products (19), locations (7), suppliers (12), POs (9), receipts (11 - incl. owner TEST receipts 2026-08-15T06:14:52Z), stock counts (19), product UOMs (8), balance cache (non-zero values) all INTACT. The wipe happened between 2026-08-15 ~06:15 UTC (last receipts/txns) and 2026-08-16 ~08:00 UTC (first probe). P0 session (f7c543b) had live-verified purchased 75,050 / used 31,533 / adjustments 775 on this data the day before. Actor unknown (raw SQL bypasses engine audit; not caused by any committed session - our sessions only deleted tagged probe rows).
+
+### Evidence (all periods this_week/this_month/last_7/custom-today; owner session via probe account + headless Edge render)
+| KPI | Ledger (direct REST) | API (deployed) | /dashboard (rendered) | /inv (rendered) |
+|-----|---------------------|----------------|----------------------|-----------------|
+| Purchased | 0 | 0 | R0 | R0,00 |
+| Used | 0 | 0 | R0 | R0,00 |
+| Current Stock Value | 0 (balances exist, no cost history) | 0 | R0 | R0,00 |
+| Outstanding | 0 (0 invoices) | 0 | R0 | R0,00 |
+| Payments | 0 | 0 | - | R0,00 |
+
+API==ledger==/dashboard==/inv for every KPI. The zeros are FAITHFUL - both dashboards are correct; the engine correctly reports an empty ledger. NOT a code bug, NOT auth/period/path divergence (middleware identical for both; single shared endpoint /api/inventory/owner-dashboard; route reads only searchParams; service-role singleton client; deployed app proven to use lyksqvqtiysjttwpgeyw via probe-account login round-trip).
+
+### Proposed minimal additive fix (NOT implemented - awaiting owner approval)
+1. Data restoration (owner-side, no code): restore inventory_transactions from Supabase backup/PITR or re-import from owner records - the only real fix for the zeros.
+2. Optional additive code guard: ledger-integrity warning flag in getOwnerDashboard payload + banner on both dashboards when ledger count==0 while products/balances>0 (non-blocking, no behavior change with data present).
+
+### UX observations (investigation only - NOT the KPI cause, different surface)
+Password Change panel overlap + "Logged in as..." banner overlap on /admin/layout.tsx are layout CSS issues on the admin layout; unrelated architecture to the owner-dashboard zeros (data loss). Recorded for a future cosmetic ship.
+
+### Prod state
+Left clean: zero probe accounts, zero probe audit rows (5 login-audit rows deleted incl. 2 from the O1 Phase-1 session). Temp probe scripts deleted. git status clean - no repo code changes. 247/247 vitest + inventory strict tsc unchanged.
+
+### Mission queue (unchanged)
+O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+
+## Session: O1 Phase 2 - Owner Dashboard Layout Polish (2026-08-16) - commit 4bd77ef
+
+### Objective
+Fix only the admin-layout UI polish behind the owner dashboard experience: Password Change panel + "Logged in as" banner overlapping page content. No /dashboard code changes (silent refresh + owner landing preserved), no /inv, no routing, no auth, no ledger.
+
+### Root cause (measured headlessly against prod at 4 widths before fixing)
+The floating identity pill (Logged in as ... Change Password) in src/app/admin/layout.tsx is position:fixed top:12 right:12 (zIndex 102) - it floated OVER page headers at every width: content started y=24 (desktop) / y=56 (mobile) while the pill spanned y=12-47 (desktop, 35px tall) and y=12-74.25 (390px, wraps to 2 lines). Measured overlap 420x35px (desktop), 359x62px (390px); at 390px the pill also collided with the hamburger (x=19-52 vs hamburger 12-52). /dashboard itself has NO fixed overlays (verified: zero fixed elements at 1920/1366; only the pre-existing public mobile bottom nav <=768px).
+
+### Fix (1 file, 4 insertions / 3 deletions - src/app/admin/layout.tsx, additive layout CSS only)
+1. main padding 24px -> 68px top (desktop) - page content always starts below the pill (pill bottom 47 < 68).
+2. Mobile media query padding-top 56px -> 96px (pill bottom 74.25 < 96).
+3. Pill maxWidth min(92vw,480px) -> min(calc(100vw - 64px), 480px) - pill never crosses the 40px hamburger + 12px margin on narrow screens (390px: pill starts x=52).
+4. Change Password modal card += maxHeight calc(100vh - 48px) + overflowY auto - fits any viewport height (was able to exceed short screens).
+Banner content/identity/role text unchanged ("Keep the information").
+
+### Verification (headless Edge vs prod after vercel --prod, at 1920/1366/768/390)
+- Pill vs page content: NO overlap at all 4 widths (contentTop 68/68/96/96 vs pill bottom 47/47/47/74.25).
+- Modal card: fits viewport at all 4 widths (1920: y299-601; 1366: y299-601; 768: y273-627; 390: y252-592, w359) - no clipping, internal scroll if ever needed.
+- /dashboard regression: zero admin fixed overlays; week picker + "auto-refreshes every 60s" text present (O1 Phase 1 silent refresh + week picker intact).
+- 247/247 vitest; temp UI tsconfig over layout.tsx clean (deleted after); next build green.
+- Commit 4bd77ef pushed; vercel --prod aliased (1 transient Google Fonts fetch failure on first build attempt - network, retry succeeded).
+
+### Cleanup
+Probe accounts + probe login-audit rows all deleted (verified zero); temp probe scripts deleted; git clean (AGENTS.md record committed).
+
+### Mission queue (unchanged)
+O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
