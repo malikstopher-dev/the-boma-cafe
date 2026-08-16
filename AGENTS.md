@@ -1717,3 +1717,32 @@ The E8 rewrite (commit 89722de) replaced the POST /api/admin/auth handler and RE
 - StationDisplay boards (kitchen/bar) authenticate via the same restored POST (role+password) - their mount check (GET /api/admin/auth) resolves via the role cookie through getSession.
 - Individual admin login UI-path proof still needs one real admin password (owner-only, same as P1a/O3).
 - Mission queue unchanged: O1 (owner landing), O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+
+---
+
+## Session: O1 - Owner Dashboard Landing (2026-08-16) - commit 8f612ae
+
+### Objective
+Make the Owner Dashboard the owner's default landing immediately after login AND whenever an owner enters /admin. Admins/managers/staff keep their existing landing behavior. Routing/landing ship only - no dashboard redesign, no O2/O3 rework.
+
+### Root cause
+- After login (src/app/admin/login/page.tsx:30): redirectTo = searchParams.redirect || '/dashboard' - the OWNER ALREADY lands on the Owner Dashboard after login (no change needed there).
+- Entering /admin (src/app/admin/page.tsx AdminIndex): router.replace('/admin/dashboard') unconditionally - EVERYONE incl. the owner was sent to the ADMIN dashboard. That was the gap.
+
+### Fix (1 file, +8/-2)
+src/app/admin/page.tsx - AdminIndex now reads useAuth() { user, isLoading }; waits for isLoading=false, then router.replace(user?.role === 'owner' ? '/dashboard' : '/admin/dashboard'). Owner -> Owner Dashboard whenever /admin renders; full_manager/manager/assistant_manager -> /admin/dashboard unchanged. No middleware change (verifyRole already lets every admin role through /dashboard; owner never bounced).
+
+### Verification (local)
+Temp UI tsconfig (extends ../../../tsconfig.json from src/app/admin - one level deeper than src/inventory, exclude must be omitted not overridden) clean, deleted after; 242/242 vitest; next build green.
+
+### Verification (live, prod after vercel --prod, probe accounts cleaned up)
+Created 2 temp admin_accounts (o1probeowner role=owner, o1probemanager role=manager, bcryptjs rounds 12 via temp o1-probe.cjs, deleted) - only way to exercise owner/manager identity without real passwords (E8 precedent):
+1. owner probe login 200 (user.role='owner'); 3. owner /admin 200; 4. owner /dashboard 200 (middleware does NOT bounce owners); 5. owner /admin/dashboard 200
+2. manager probe login 200; 6. manager /admin 200; 7. manager /admin/dashboard 200
+8. anon /admin 307 /admin/login?redirect=%2Fadmin; 9. anon /dashboard 307 (owner dashboard stays admin-only); 10. kitchen cookie /staff/kitchen 200 (staff unaffected); 11. kitchen /admin 307; 12. /admin/login 200.
+No redirect loops. Cleanup: probe accounts deleted (sessions CASCADE, audit SET NULL per migration 079), zero probe rows left, probe script deleted, git clean.
+
+### Notes / handover
+- The client-side router.replace() itself (owner /admin -> /dashboard) cannot be curl-observed - proven by deployed-build compile of the ternary + middleware allowing owner through /dashboard (step 4). Browser click-through proof needs one real owner login (owner-only, same precedent as P1a/O3).
+- Owner logout already routes to /admin/login (O3 fix); owner re-login lands /dashboard (default redirect, unchanged).
+- Mission queue unchanged: O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
