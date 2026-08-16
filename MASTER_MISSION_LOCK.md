@@ -66,3 +66,15 @@
 - Keep all KPI cards, boards, alerts, activity, charts exactly where they are on /dashboard.
 - Verify at desktop/laptop/tablet/mobile before every UI ship; headless Edge probes + probe admin accounts (deleted after, audit rows cleaned).
 - Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.
+
+## Completion review — FIVE GATES (owner process, applies from 2026-08-16 onward)
+
+The completion report is NECESSARY but NOT SUFFICIENT. Every ship is accepted only after a five-gate review:
+
+1. **Mission scope** — only the active ship changed; no stray edits.
+2. **Mission lock** — no frozen architecture/rule violated.
+3. **Evidence** — the commands/outputs actually support every claim (no inference presented as fact).
+4. **Repo state** — clean working tree, or documented exceptions (e.g., untracked owner files).
+5. **Deployment state** — always distinguish **pushed** (git), **deployed** (vercel --prod), and **verified live** (probe/headless against prod). Never collapse them into one claim.
+
+Reports must state these explicitly. Owner applies the gates before accepting a ship.
