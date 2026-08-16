@@ -1746,3 +1746,46 @@ No redirect loops. Cleanup: probe accounts deleted (sessions CASCADE, audit SET 
 - The client-side router.replace() itself (owner /admin -> /dashboard) cannot be curl-observed - proven by deployed-build compile of the ternary + middleware allowing owner through /dashboard (step 4). Browser click-through proof needs one real owner login (owner-only, same precedent as P1a/O3).
 - Owner logout already routes to /admin/login (O3 fix); owner re-login lands /dashboard (default redirect, unchanged).
 - Mission queue unchanged: O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+
+---
+
+## Session: R1 - Staff Navigation & Logout Regression Recovery (2026-08-16) - commit b58d613
+
+### Objective
+Kitchen/bar staff reported: "Dashboard" button opens /admin/login?redirect=%2Fadmin%2Fdashboard, logout "doesn't work", and bar stopped receiving drink orders (kitchen still gets food). User directive: find the root cause and report BEFORE fixing. User later corrected: "it did not work b4" (Dashboard button was never staff-functional). Last known-good baseline = 8e22940 (E1-5). Forbidden in this ship: order dispatch, realtime, station assignment, middleware rewrites, O1 rework.
+
+### Root cause (reported before fixing; all live-verified)
+1. **Dashboard button (symptoms 1-2): pre-existing dead end, exposed by the legacy scrap (968bbbc).** admin/layout.tsx FULL_WIDTH overlay "← Dashboard" -> /admin/dashboard, which middleware restricts to ADMIN. Kitchen/bar role cookies get 307 -> /admin/login?redirect=%2Fadmin%2Fdashboard (live-reproduced). It "worked" before only while kitchen/bar devices held the legacy Lovers0884 ADMIN cookie; the scrap (owner directive) left them with role cookies. NOT caused by O3/O1 (git-diffed: O3 = exact-/admin guard + logout redirect param; O1 = AdminIndex landing only).
+2. **Logout (symptoms 3-4): E8 regression.** Pre-E8 logout (git show 89722de~1) cleared ALL FOUR cookies (admin+kitchen+waiter+bar). E8 introduced clearAdminCookies() clearing only boma_admin_auth + boma_admin_session. Role cookies survived logout -> 307 /staff/login -> auto-check (staff/login/page.tsx:22-35) bounced the still-authenticated user straight back to the board. boma_staff_session (waiter PIN) also survived. Live: K4 logout with kitchen cookie -> 307 but cookie never cleared (code-proven).
+3. **Bar not receiving drinks / waiter Send "does nothing" (symptoms 5-6): NOT a dispatch bug.** Live proof pre-fix: drink-only POST (bar_item_id + station 'bar', waiter payload shape) -> 201 station='bar'; order.created realtime event emitted; bar GET returns it. orderService unchanged since 6b61995; waiter page unchanged since E1-2; E1-5 bar-board channel intact. Prod orders table: 5 rows, ALL station=kitchen, zero bar - no bar order had been created since the devices broke. The bar board was simply unreachable (operator stuck in the 1+2 auth mess); kitchen recovered via the restored kitchen password.
+
+### Fixes (5 files, +126/-7)
+1. **src/app/api/admin/auth/route.ts** - new clearAllAuthCookies() = clearAdminCookies + boma_kitchen_auth/boma_bar_auth/boma_waiter_auth/boma_staff_session (maxAge 0). Used ONLY in the two logout branches (POST action=logout + GET action=logout). clearAdminCookies kept for login paths (individual admin login + staff role login conflict-clearing) - login logic untouched.
+2. **src/lib/client-cms.ts** - verifyAuth type += role?: string (API already returned it).
+3. **src/lib/auth-context.tsx** - AuthContextType += role: string | null; state set from result.role in checkAuth AND login.
+4. **src/app/admin/layout.tsx** - dashboardTarget ternary per approved matrix: kitchen->/staff/kitchen, bar->/staff/bar, waiter->/staff/waiter, everything else (admin identities incl. owner - top-level role 'admin')->/admin/dashboard. Button label unchanged ("← Dashboard"); Messages button unchanged.
+5. **src/inventory/__tests__/auth-route-logout.test.ts (NEW, 5 tests)** - POST logout clears all 6; GET logout clears all 6 + 307 /staff/login; same-origin redirect honored; external + protocol-relative rejected; admin session ended when cookie present. Mock pitfalls: cookieStore.set(name, value, options) is THREE args - filter tuples as [,, opts] not [, opts] or the empty-string VALUE arg shadows the options (got []); store.get must be typed (name)=>...|undefined or mockReturnValueOnce fails inventory tsc.
+
+### Verification (local)
+247/247 vitest (242 + 5 new); inventory strict tsc clean; temp UI tsconfig (extends ../../tsconfig.json from src/inventory, exclude:[] override + ambient.d.ts, paths inherited - do NOT redefine) clean over the 4 edited app files; next build green (3.8min compile).
+
+### Verification (live, prod after vercel --prod; 2 transient "Not authorized" CLI errors - established retry pattern)
+Matrix (Node fetch + curl, temp scripts deleted):
+1. kitchen login 200 -> logout 307 /staff/login + Set-Cookie clears ALL 6 (boma_admin_auth, boma_admin_session, boma_kitchen_auth, boma_bar_auth, boma_waiter_auth, boma_staff_session) - exact names verified
+2. bar login 200 -> logout 307 + all 6 cleared; 3. waiter login 200 -> logout 307 + all 6 cleared
+4. kitchen /admin/kitchen 200; bar /admin/bar 200 (boards load with role cookies)
+5. Deployed admin layout chunk (0k4yh7c1hggxt.js) contains the exact compiled ternary: "kitchen"===s?"/staff/kitchen":"bar"===s?"/staff/bar":"waiter"===s?"/staff/waiter":"/admin/dashboard" (client-side router.push not curl-observable; chunk proof per O1 precedent)
+6. Drink-only order (bar_item_id, station bar) -> 201 station='bar' - appears on Bar
+7. Mixed order (menu_item_id food + bar_item_id drink) -> 201 with TWO split orders: station=kitchen + station=bar (food->Kitchen, drinks->Bar)
+8. No admin redirects: anon /admin 307 -> /admin/login?redirect=%2Fadmin; /admin/login 200 (curl direct; node-fetch redirect:manual showed a spurious 307 - client artifact, curl authoritative); kitchen /admin 307 (correct - no admin access)
+Cleanup: 3 probe orders + 3 order_events + 3 realtime_events deleted; role logins are cookie-only (no DB rows); temp scripts deleted; git clean.
+
+### Test-harness lessons (burned time)
+- Login response Set-Cookie order: clearing cookies (boma_admin_auth= etc.) come BEFORE the real role cookie - undici Headers.get('set-cookie') joins ALL with ', ' and splitting on ';' grabs the EMPTY first cookie; must find the chunk starting with boma_<role>_auth= that lacks Max-Age=0.
+- node-fetch redirect:manual on /admin/login returned 307 while curl returned 200 - curl is authoritative for middleware behavior; node fetch may see a different cache/edge response.
+- vitest console.log hidden by default reporter - use process.stdout.write + --disable-console-intercept.
+
+### Handover
+- R1 COMPLETE. Mission queue unchanged: O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
+- Browser click-through proof of the Dashboard button destinations needs real device logins (kitchen/bar passwords are env-held; owner-only precedent). Bar staff should re-login with the Bar shared password - the board works with a fresh role cookie (proven step 4).
+- Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.
