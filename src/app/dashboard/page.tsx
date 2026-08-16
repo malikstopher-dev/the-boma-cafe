@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { CSSProperties, ReactNode } from 'react'
 import { weekRange, currentWeekNumber, lastWeekOfYear } from '@/inventory/lib/weeks'
 
@@ -130,6 +131,66 @@ function fmtDay(isoDate: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Inventory navigation rail (same navigation + styling as /inv, no route changes)
+// ---------------------------------------------------------------------------
+
+const NAV_GROUPS: Array<{ label: string; items: Array<{ href: string; label: string }> }> = [
+  {
+    label: 'Overview',
+    items: [{ href: '/inv', label: 'Owner Dashboard' }],
+  },
+  {
+    label: 'Stock',
+    items: [
+      { href: '/inv/stock', label: 'Stock Sheets' },
+      { href: '/inv/locations', label: 'Stock by Location' },
+      { href: '/inv/stock-counts', label: 'Stock Counts' },
+      { href: '/inv/adjustments', label: 'Adjustments' },
+      { href: '/inv/waste', label: 'Waste' },
+    ],
+  },
+  {
+    label: 'Purchasing',
+    items: [
+      { href: '/inv/purchases', label: 'Receive Stock' },
+      { href: '/inv/payables', label: 'Supplier Payables' },
+    ],
+  },
+  {
+    label: 'Catalogue',
+    items: [
+      { href: '/inv/products', label: 'Products' },
+      { href: '/inv/suppliers', label: 'Suppliers' },
+    ],
+  },
+  {
+    label: 'Insight',
+    items: [
+      { href: '/inv/reports', label: 'Reports' },
+      { href: '/inv/activity', label: 'Activity / Audit' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [{ href: '/inv/users', label: 'Users & Roles' }],
+  },
+]
+
+const railLinkStyle = (active: boolean): CSSProperties => ({
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '8px 12px', borderRadius: 8, fontSize: 13.5,
+  textDecoration: 'none', fontWeight: active ? 700 : 500,
+  color: active ? '#F0EBE3' : '#9A9080',
+  background: active ? 'rgba(200,160,78,0.14)' : 'transparent',
+  transition: 'background 0.12s ease, color 0.12s ease',
+})
+
+const railGroupStyle: CSSProperties = {
+  fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase',
+  color: '#6B6049', margin: '16px 12px 6px',
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -145,6 +206,10 @@ export default function OwnerDashboardPage() {
   const [weekNo, setWeekNo] = useState(() => currentWeekNumber())
   const [weekApplied, setWeekApplied] = useState<{ y: number; w: number; start: string; end: string } | null>(null)
   const [managementActivity, setManagementActivity] = useState<Array<{ id: string; admin_name: string | null; admin_role: string | null; action: string; target_type: string | null; created_at: string }>>([])
+  const pathname = usePathname()
+  const [navOpen, setNavOpen] = useState(false)
+
+  const isActive = (href: string) => (href === '/inv' ? pathname === '/inv' || pathname === '/dashboard' : pathname.startsWith(href))
 
   // Management activity (Mission E8): who did what in the admin system
   const loadActivity = useCallback(async () => {
@@ -253,11 +318,50 @@ export default function OwnerDashboardPage() {
   const visibleSuppliers = showAllSuppliers ? (data?.suppliers ?? []) : owedSuppliers
 
   return (
-    <div style={{ minHeight: '100vh', background: theme.bg, color: theme.ink }}>
+    <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh', background: theme.bg, color: theme.ink }}>
+      {/* Desktop navigation rail (same navigation + styling as /inv) */}
+      <aside className="dash-rail" style={{
+        width: 222, flexShrink: 0, background: '#1C1710', borderRight: '1px solid #332B21',
+        padding: '14px 10px 24px', position: 'sticky', top: 0, alignSelf: 'flex-start',
+        maxHeight: '100vh', overflowY: 'auto',
+      }}>
+        {NAV_GROUPS.map(group => (
+          <div key={group.label}>
+            <p style={railGroupStyle}>{group.label}</p>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {group.items.map(item => (
+                <Link key={item.href} href={item.href} style={railLinkStyle(isActive(item.href))}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        ))}
+        <p style={railGroupStyle}>Quick Links</p>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Link href="/admin/operations/checklist" style={railLinkStyle(false)}>Morning Checklist</Link>
+          <Link href="/admin/operations/purchase-orders" style={railLinkStyle(false)}>Purchase Orders</Link>
+          <Link href="/admin/operations/reports" style={railLinkStyle(false)}>Operations Reports</Link>
+        </nav>
+      </aside>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
       {/* Top header */}
       <div style={{ background: '#101A26', borderBottom: '1px solid #1E2A3A' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', padding: '20px 24px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 }}>
+            <button
+              onClick={() => setNavOpen(!navOpen)}
+              aria-label="Open menu"
+              className="dash-hamburger"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 38, height: 38, borderRadius: 9, border: '1px solid #3A322A',
+                background: '#1C1710', color: '#F0EBE3', cursor: 'pointer', fontSize: 17, flexShrink: 0,
+              }}
+            >
+              ☰
+            </button>
             <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: '0.02em' }}>{greet()}, Mr Mahendra</span>
             <span style={{ fontSize: 12, color: theme.gold, fontWeight: 600, padding: '3px 10px', border: `1px solid ${theme.gold}55`, borderRadius: 999 }}>Boma Cafe</span>
           </div>
@@ -642,6 +746,42 @@ export default function OwnerDashboardPage() {
           </>
         )}
       </div>
+      </div>
+
+      {/* Mobile nav drawer (same as /inv) */}
+      {navOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 70, display: 'flex', justifyContent: 'flex-end' }}
+          onClick={() => setNavOpen(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: 280, height: '100%', background: '#1C1710', padding: '18px 14px', overflowY: 'auto' }}
+          >
+            {NAV_GROUPS.map(group => (
+              <div key={group.label}>
+                <p style={railGroupStyle}>{group.label}</p>
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {group.items.map(item => (
+                    <Link key={item.href} href={item.href} style={railLinkStyle(isActive(item.href))}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 900px) {
+          aside.dash-rail { display: none; }
+        }
+        @media (min-width: 901px) {
+          .dash-hamburger { display: none; }
+        }
+      `}</style>
     </div>
   )
 }
