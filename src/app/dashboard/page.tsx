@@ -81,6 +81,11 @@ const boardAccent: Record<StockGroup, { color: string; bg: string }> = {
 const fmtR0 = (n: number | null | undefined): string =>
   `R${Math.round(Number(n ?? 0)).toLocaleString('en-ZA')}`
 
+function greet(): string {
+  const h = new Date().getHours()
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
+}
+
 function formatRange(start: string, end: string): string {
   return `${new Date(start).toISOString().slice(0, 10)} to ${end.slice(0, 10)}`
 }
@@ -253,10 +258,10 @@ export default function OwnerDashboardPage() {
       <div style={{ background: '#101A26', borderBottom: '1px solid #1E2A3A' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', padding: '20px 24px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 }}>
-            <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: '0.02em' }}>OWNER DASHBOARD</span>
+            <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: '0.02em' }}>{greet()}, Mr Mahendra</span>
             <span style={{ fontSize: 12, color: theme.gold, fontWeight: 600, padding: '3px 10px', border: `1px solid ${theme.gold}55`, borderRadius: 999 }}>Boma Cafe</span>
           </div>
-          <p style={{ margin: 0, fontSize: 13.5, color: theme.textDim }}>Financial &amp; Inventory Overview — live from the ledger</p>
+          <p style={{ margin: 0, fontSize: 13.5, color: theme.textDim }}>Inventory &amp; Financial Overview — every figure is calculated from the live transaction ledger.</p>
 
           {/* Period selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
@@ -316,6 +321,16 @@ export default function OwnerDashboardPage() {
               ↻ Refresh
             </button>
             <span style={{ fontSize: 11, color: theme.textDim }}>auto-refreshes every 60s</span>
+            <span style={{ width: 1, height: 24, background: theme.border }} />
+            <Link href="/admin/operations" style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panel, color: theme.gold, fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>Go to Admin</Link>
+            <Link href="/" style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panel, color: theme.gold, fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>View Website</Link>
+            <button
+              onClick={() => { window.location.href = '/api/admin/auth?action=logout&redirect=/admin/login' }}
+              title="Sign out"
+              style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(232,84,84,0.4)', background: 'rgba(232,84,84,0.1)', color: '#F17777', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
