@@ -14,9 +14,14 @@ const ConnectionStatus = dynamic(() => import('@/components/ui/ConnectionStatus'
 const FULL_WIDTH_PAGES = ['/admin/orders', '/admin/kitchen', '/admin/bar'];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user, roleLabel, logout, isLoading } = useAuth();
+  const { isAuthenticated, user, role, roleLabel, logout, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const dashboardTarget =
+    role === 'kitchen' ? '/staff/kitchen'
+    : role === 'bar' ? '/staff/bar'
+    : role === 'waiter' ? '/staff/waiter'
+    : '/admin/dashboard';
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<IncomingToast[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>('');
@@ -165,7 +170,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }}>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => router.push('/admin/dashboard')}
+                onClick={() => router.push(dashboardTarget)}
                 style={{
                   padding: '6px 12px', borderRadius: 8,
                   background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)',

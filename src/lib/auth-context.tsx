@@ -15,6 +15,7 @@ interface AdminUser {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: AdminUser | null;
+  role: string | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -29,6 +30,7 @@ const ADMIN_ROLES = ['owner', 'full_manager', 'manager', 'assistant_manager'];
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.authenticated && result.user) {
         setUser(result.user);
         setIsAuthenticated(true);
+        setRole(result.role ?? null);
       }
     } catch {
       // Server is the sole authority
@@ -56,10 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const result = await cmsService.login(username, password) as { success?: boolean; user?: any; error?: string };
+      const result = await cmsService.login(username, password) as { success?: boolean; user?: any; error?: string; role?: string };
       if (result.success && result.user) {
         setUser(result.user);
         setIsAuthenticated(true);
+        setRole(result.role ?? null);
         return true;
       }
       if (result.error) {
@@ -94,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, isLoading, can, roleLabel }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, role, login, logout, isLoading, can, roleLabel }}>
       {children}
     </AuthContext.Provider>
   );

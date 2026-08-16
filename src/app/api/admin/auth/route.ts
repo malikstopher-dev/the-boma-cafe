@@ -29,6 +29,13 @@ function clearAdminCookies(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   cookieStore.set(ADMIN_SESSION_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
 }
 
+function clearAllAuthCookies(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  clearAdminCookies(cookieStore);
+  for (const name of ['boma_kitchen_auth', 'boma_bar_auth', 'boma_waiter_auth', 'boma_staff_session']) {
+    cookieStore.set(name, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' });
+  }
+}
+
 async function endCurrentAdminSession(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   const sessionCookie = cookieStore.get(ADMIN_SESSION_COOKIE);
   if (sessionCookie?.value) {
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'logout') {
       await endCurrentAdminSession(cookieStore);
-      clearAdminCookies(cookieStore);
+      clearAllAuthCookies(cookieStore);
       return NextResponse.json({ success: true });
     }
 
@@ -195,7 +202,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('action') === 'logout') {
       const cookieStore = await cookies();
       await endCurrentAdminSession(cookieStore);
-      clearAdminCookies(cookieStore);
+      clearAllAuthCookies(cookieStore);
       // Admin-area callers pass redirect=/admin/login so they land on the
       // admin login; staff-area callers (kitchen/bar/waiter/staff nav) keep
       // the default /staff/login. Same-origin paths only (open-redirect guard).
