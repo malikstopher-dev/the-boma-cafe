@@ -1822,3 +1822,12 @@ Cleanup: cookie files + login JSON temp files deleted; role logins are cookie-on
 - R1's chunk proof (0k4yh7c1hggxt.js) showed correct code that was UNREACHABLE for boards - lesson: verify the data path (role source) as well as the compiled ternary.
 - Mission queue unchanged: O2 (dashboard refresh), O4 (forecast/reorder mismatch), O5 (food products mismatch), O6 (products counters mismatch), E2 (faster ordering), E1 (Excel exports), E3 (kitchen portion inventory), E4 (event-only purchasing).
 - Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.
+
+### R1.1 Browser acceptance (2026-08-16) - CLOSED - commit 199d8b9
+Real-browser (headless Edge, puppeteer-core from temp dir, deleted after) click-through against prod:
+1. Kitchen login -> click "?? Dashboard" -> URL sequence /admin/kitchen -> /staff/kitchen (no /admin/login anywhere) PASS
+2. Bar login -> click "?? Dashboard" -> /admin/bar -> /staff/bar PASS
+3. Kitchen logout -> lands /staff/login, stays 4s (no bounce back) PASS
+4. Bar logout -> lands /staff/login, stays 4s (no bounce back) PASS
+Automation lessons: cookie bleed across pages in one browser - use createBrowserContext() per flow (fresh device); page.type() flaked on the React controlled input ("No element found" despite document.querySelector finding it) - set value via native HTMLInputElement setter + input event, then wait for the submit button to enable; click buttons via evaluate + b.click() (React handles synthetic clicks).
+Unresolved observation (future consolidation mission, NOT part of R1.1): "Owner has two active dashboards (/dashboard and /inv). Preferred dashboard is /dashboard." Owner routing untouched; no dashboard merge.
