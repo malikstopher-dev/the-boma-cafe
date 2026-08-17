@@ -61,6 +61,9 @@ export default function NewPurchaseOrderPage() {
               unit_cost: i.unit_cost !== null && i.unit_cost !== undefined ? Number(i.unit_cost) : null,
             }))
           setSupplierId(src.supplier_id)
+          setSuppliers(prev => prev.some(s => s.id === src.supplier_id)
+            ? prev
+            : [...prev, { id: src.supplier_id, name: src.inventory_suppliers?.name ?? 'Unknown supplier' }])
           if (srcItems.length > 0) setItems(srcItems)
           setRepeatInfo({
             supplierName: src.inventory_suppliers?.name ?? String(src.supplier_id).slice(0, 8),
