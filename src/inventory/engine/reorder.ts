@@ -1,5 +1,9 @@
 import { getInventoryClient } from '../lib/db'
-import type { ReorderSuggestion, ReorderRule } from './types'
+import type { ReorderSuggestion, ReorderRule, InventoryType } from './types'
+
+// Defaults for products without a reorder rule (must match forecasting.ts:
+// rule-less products evaluate with min_level 0 and lead_time_days 3).
+const FALLBACK_LEAD_TIME_DAYS = 3
 
 export async function getSuggestions(locationId: string, inventoryType?: string): Promise<ReorderSuggestion[]> {
   const supabase = getInventoryClient()
@@ -18,11 +22,11 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
 
   const { data: rules } = await rulesQuery
 
-  if (!rules || rules.length === 0) return []
+  const ruleList = (rules ?? []) as any[]
 
   const suggestions: ReorderSuggestion[] = []
 
-  for (const rule of rules as any[]) {
+  for (const rule of ruleList) {
     const productId = rule.product_id
 
     const { data: balanceData } = await supabase
@@ -95,6 +99,95 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
         estimatedDaysUntilStockout: estimatedDaysUntilStockout !== null ? Math.round(estimatedDaysUntilStockout * 10) / 10 : null,
       })
     }
+  }
+
+  // ── Rule-less fallback (O4) ─────────────────────────────────────────────
+  // Products WITHOUT a reorder rule never reach the rule loop, so the Reorder
+  // view could claim "healthy" while the Forecast view flags them (e.g. out of
+  // stock). Mirror the Forecast engine's state machine for rule-less products
+  // (min_level 0, lead_time_days 3) so both views surface the same attention set.
+  // Products WITH any rule (incl. auto_suggest=false) stay excluded — a
+  // deliberate disable is honoured.
+  const { data: anyRules } = await supabase
+    .from('inventory_reorder_rules')
+    .select('product_id')
+    .eq('location_id', locationId)
+  const ruledProductIds = new Set((anyRules ?? []).map((r: { product_id: string }) => r.product_id))
+
+  let productsQuery = supabase
+    .from('inventory_products')
+    .select('id, name, sku, inventory_type')
+    .eq('is_active', true)
+    .is('deleted_at', null)
+
+  if (inventoryType) {
+    productsQuery = productsQuery.eq('inventory_type', inventoryType)
+  }
+
+  const { data: products } = await productsQuery
+
+  const { data: balanceRows } = await supabase
+    .from('inventory_product_balances')
+    .select('product_id, balance')
+    .eq('location_id', locationId)
+
+  const balanceMap = new Map<string, number>()
+  for (const b of (balanceRows ?? []) as { product_id: string; balance: number }[]) {
+    balanceMap.set(b.product_id, Number(b.balance))
+  }
+
+  const { data: saleRows } = await supabase
+    .from('inventory_transactions')
+    .select('product_id, quantity')
+    .in('transaction_type', ['sale', 'sale_bottle'])
+    .eq('location_id', locationId)
+    .gte('created_at', since)
+
+  const usageMap = new Map<string, number>()
+  for (const t of (saleRows ?? []) as { product_id: string; quantity: number }[]) {
+    usageMap.set(t.product_id, (usageMap.get(t.product_id) ?? 0) + Math.abs(Number(t.quantity)))
+  }
+
+  for (const product of (products ?? []) as { id: string; name: string; sku: string | null; inventory_type: InventoryType }[]) {
+    if (ruledProductIds.has(product.id)) continue
+
+    const currentStock = balanceMap.get(product.id) ?? 0
+    const dailyUsage = (usageMap.get(product.id) ?? 0) / days
+
+    let needsAttention = false
+    let estimatedDaysUntilStockout: number | null = null
+
+    if (currentStock <= 0) {
+      needsAttention = true
+      estimatedDaysUntilStockout = 0
+    } else if (dailyUsage > 0 && currentStock / dailyUsage <= FALLBACK_LEAD_TIME_DAYS) {
+      needsAttention = true
+      estimatedDaysUntilStockout = currentStock / dailyUsage
+    }
+
+    if (!needsAttention) continue
+
+    const suggestedQuantity = currentStock <= 0
+      ? Math.max(1, Math.ceil(dailyUsage * FALLBACK_LEAD_TIME_DAYS))
+      : Math.max(1, Math.ceil(FALLBACK_LEAD_TIME_DAYS * dailyUsage - currentStock))
+
+    suggestions.push({
+      productId: product.id,
+      productName: product.name,
+      sku: product.sku,
+      inventoryType: product.inventory_type ?? 'GENERAL',
+      currentStock,
+      minLevel: 0,
+      maxLevel: null,
+      parLevel: null,
+      leadTimeDays: FALLBACK_LEAD_TIME_DAYS,
+      dailyUsage: Math.round(dailyUsage * 100) / 100,
+      suggestedQuantity,
+      urgency: 'critical',
+      preferredSupplierId: null,
+      preferredSupplierName: null,
+      estimatedDaysUntilStockout: estimatedDaysUntilStockout !== null ? Math.round(estimatedDaysUntilStockout * 10) / 10 : null,
+    })
   }
 
   const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 }
