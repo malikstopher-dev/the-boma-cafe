@@ -60,20 +60,39 @@ export async function getDashboardSummary(locationId: string, inventoryType?: In
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
 
-  let lowStockQuery = supabase
+  let activeProductsQuery = supabase
     .from('inventory_products')
-    .select('id, name, reorder_threshold')
+    .select('id, reorder_threshold')
     .eq('is_active', true)
-    .not('reorder_threshold', 'is', null)
 
   if (inventoryType) {
     productsQuery = productsQuery.eq('inventory_type', inventoryType)
-    lowStockQuery = lowStockQuery.eq('inventory_type', inventoryType)
+    activeProductsQuery = activeProductsQuery.eq('inventory_type', inventoryType)
   }
 
   const { count: totalProducts } = await productsQuery
 
-  const { data: lowStock } = await lowStockQuery
+  const { data: activeProducts } = await activeProductsQuery
+
+  const { data: balanceRows } = await supabase
+    .from('inventory_product_balances')
+    .select('product_id, balance')
+    .eq('location_id', locationId)
+
+  const balanceByProduct = new Map<string, number>()
+  for (const row of balanceRows ?? []) {
+    balanceByProduct.set(row.product_id, Number(row.balance))
+  }
+
+  let lowStockCount = 0
+  let outOfStockCount = 0
+  for (const p of activeProducts ?? []) {
+    const balance = balanceByProduct.get(p.id) ?? 0
+    if (balance <= 0) outOfStockCount += 1
+    else if (p.reorder_threshold !== null && p.reorder_threshold !== undefined && balance <= p.reorder_threshold) {
+      lowStockCount += 1
+    }
+  }
 
   let txnQuery = supabase
     .from('inventory_transactions')
@@ -103,8 +122,6 @@ export async function getDashboardSummary(locationId: string, inventoryType?: In
 
   const inventoryValue = await getInventoryValue(locationId)
 
-  const outOfStockCount = 0
-  const lowStockCount = lowStock?.length ?? 0
   const variance = 0
 
   return {
