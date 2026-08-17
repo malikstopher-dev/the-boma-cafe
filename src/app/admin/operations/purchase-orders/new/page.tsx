@@ -26,6 +26,8 @@ export default function NewPurchaseOrderPage() {
   const [expectedAt, setExpectedAt] = useState('')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<LineItem[]>([{ product_id: '', location_id: '', quantity_ordered: 1, unit_cost: null }])
+  const [repeatInfo, setRepeatInfo] = useState<{ supplierName: string; createdAt: string | null; itemCount: number } | null>(null)
+  const [repeatError, setRepeatError] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -36,7 +38,37 @@ export default function NewPurchaseOrderPage() {
       setSuppliers((supJson.data || []).map((s: any) => ({ id: s.id, name: s.name })))
       setProducts((prodJson.data || []).map((p: any) => ({ id: p.id, name: p.name, sku: p.sku })))
       setLocations((locJson.data || []).map((l: any) => ({ id: l.id, name: l.name })))
-      if (locJson.data?.length > 0) setItems([{ product_id: '', location_id: locJson.data[0].id, quantity_ordered: 1, unit_cost: null }])
+      const firstLoc = locJson.data?.[0]?.id ?? ''
+      if (firstLoc) setItems([{ product_id: '', location_id: firstLoc, quantity_ordered: 1, unit_cost: null }])
+
+      const from = new URLSearchParams(window.location.search).get('from')
+      if (!from) return
+
+      fetch(`/api/inventory/purchase-orders/${from}`)
+        .then(r => r.json())
+        .then(json => {
+          const src = json.data
+          if (!src || !src.supplier_id || !Array.isArray(src.inventory_purchase_order_items)) {
+            setRepeatError('Could not load the source purchase order — starting a blank order.')
+            return
+          }
+          const srcItems = src.inventory_purchase_order_items
+            .filter((i: any) => i.product_id)
+            .map((i: any) => ({
+              product_id: i.product_id,
+              location_id: i.location_id ?? firstLoc,
+              quantity_ordered: Number(i.quantity_ordered) || 1,
+              unit_cost: i.unit_cost !== null && i.unit_cost !== undefined ? Number(i.unit_cost) : null,
+            }))
+          setSupplierId(src.supplier_id)
+          if (srcItems.length > 0) setItems(srcItems)
+          setRepeatInfo({
+            supplierName: src.inventory_suppliers?.name ?? String(src.supplier_id).slice(0, 8),
+            createdAt: src.created_at ?? null,
+            itemCount: srcItems.length,
+          })
+        })
+        .catch(() => setRepeatError('Could not load the source purchase order — starting a blank order.'))
     }).catch(() => {
       // fetch failure — leave empty dropdowns
     }).finally(() => setIsLoading(false))
@@ -99,6 +131,17 @@ export default function NewPurchaseOrderPage() {
     <AdminPage title="New Purchase Order" description="Create a new order to send to a supplier" actions={<Link href="/admin/operations/purchase-orders"><Button variant="secondary" size="sm">Back</Button></Link>}>
 
       <div className="max-w-3xl">
+        {repeatInfo && (
+          <div style={{ background: 'rgba(200,160,78,0.12)', border: '1px solid rgba(200,160,78,0.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#E8C87A', fontFamily: 'Inter, sans-serif' }}>
+            Repeating the order from {repeatInfo.supplierName}
+            {repeatInfo.createdAt ? ` (${new Date(repeatInfo.createdAt).toLocaleDateString()})` : ''} — {repeatInfo.itemCount} item(s) prefilled. Adjust quantities, then create a new order.
+          </div>
+        )}
+        {repeatError && (
+          <div style={{ background: 'rgba(232,84,84,0.12)', border: '1px solid rgba(232,84,84,0.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#E85454', fontFamily: 'Inter, sans-serif' }}>
+            {repeatError}
+          </div>
+        )}
         <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,marginBottom:16}}>
           <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Order Details</h3>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>

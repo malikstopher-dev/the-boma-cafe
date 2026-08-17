@@ -173,6 +173,7 @@ export default function PurchaseOrderDetailPage() {
   const pageActions = (
     <>
       <Badge variant={STATUS_VARIANTS[po.status] || 'default'}>{po.status.replace('_', ' ')}</Badge>
+      <Button onClick={() => router.push(`/admin/operations/purchase-orders/new?from=${po.id}`)} variant="secondary" size="sm">Repeat</Button>
       {isDraft && (
         <>
           <Button onClick={() => handleAction('approve')} disabled={actionLoading} size="sm">Approve</Button>
