@@ -15,8 +15,9 @@
 - O1 Phase 3B (the /inv left sidebar on /dashboard — same navigation + styling, no route changes) — COMPLETE
 - O4 (Forecast vs Reorder consistency — rule-less fallback in reorder suggestions) — COMPLETE (2026-08-16, commit 33804ac)
 - R1 + R1.1 (staff nav + logout regression) — COMPLETE
-- Migration 093 applied (local == remote, 000–093)
-- 253/253 Vitest passing; inventory strict TypeScript clean
+- O5 (Food Products mismatch — `inventory_get_balance` RPC created, cache-backed display reader) — COMPLETE (2026-08-16, commits 826668e + 38497b2)
+- Migration 094 applied (local == remote, 000–094)
+- 257/257 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 
@@ -24,6 +25,7 @@
 
 **Production ledger `inventory_transactions` is EMPTY (0 rows)** — wiped between 2026-08-15 ~06:15 UTC and 2026-08-16 ~08:00 UTC. Products/locations/suppliers/POs/receipts/stock-counts/balance-cache all intact. Zeros on both dashboards are FAITHFUL (API == ledger == /dashboard == /inv). Actor unknown.
 → Owner-side action required: restore `inventory_transactions` from Supabase backup/PITR or re-import. Optional additive guard (ledger-warning banner) proposed, NOT implemented — awaiting approval.
+→ O5 note: while the ledger is empty, the Food Products view shows the balance CACHE (engine-maintained `inventory_product_balances` — the pre-wipe truth: ESSAIE 50 @ Main Bar, CHICKEN 4 @ Kitchen, TEST 50 @ Dry Store) via the new `inventory_get_balance` RPC. Ledger-based KPI surfaces (alerts, valuation, deductions) stay at faithful zeros until the ledger is restored; the two sources re-converge automatically once it is.
 
 ## Frozen rules (do not break)
 
@@ -35,7 +37,7 @@
 
 ## Active ship
 
-**O5 — Food Products mismatch.** NOT started.
+**O6 — Products counters mismatch.** NOT started.
 
 ## Deferred queue (in order)
 
@@ -49,6 +51,7 @@
 ## Architecture decisions (locked)
 
 - Transaction ledger is the single truth; balance cache is read-only; never bypass ledger/audit/validation.
+- **Balance display convention (O5, migration 094):** `inventory_get_balance(p_product_id, p_location_id)` — SECURITY DEFINER, service-role only — reads the engine-maintained balance cache; `getCurrentBalance()` prefers it with a ledger-sum fallback. Display surfaces read the cache; **validation (createTransaction insufficient-stock) and cache refreshes stay ledger-sum based** (`ledgerSum()` — the F2/E1-4 rule). The cache is ledger-lockstep in the healthy steady state; only external ledger data loss (O1-D) separates them, and they re-converge when the ledger is restored.
 - Reservations: stock reserved on confirm, released on cancel, consumed (SALE) only on completion.
 - Background jobs: enqueue RPC `enqueue_background_job()`; worker polls `background_jobs`; idempotency keys; dead-letter + scheduler reclaim.
 - Realtime: signal table `realtime_events` + SECURITY DEFINER triggers; consumers refetch, never payload-render; WALRUS filters MUST be unquoted.

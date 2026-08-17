@@ -2002,3 +2002,37 @@ o4-probe.test.ts (live probe) + o4-verify.cjs + o4-residue.cjs all deleted; git 
 - Dormant (NOT fixed, out of scope - no rules exist to trigger it): rule-driven products use different urgency bands (Reorder medium = maxLevel*0.5 top-up vs Forecast ok) - a buying band vs a depletion-risk band; flagged for the future when rules get configured.
 - O1-D open issue stands: prod ledger empty; daily usage 0 means usage-based criticality is dormant until the ledger is restored.
 - Mission queue (per mission lock): O5 (Food Products mismatch), O6, E2, E1, E3, E4. MASTER_MISSION_LOCK.md updated.
+
+---
+
+## Session: O5 - Food Products Mismatch - inventory_get_balance RPC Created (2026-08-16) - commits 826668e + 38497b2
+
+### Objective
+Owner-activated: the Food Products view contradicted the rest of the Food surfaces. Find ONE verified root cause, fix only that, verify every affected Food view agrees.
+
+### Root cause (verified live against prod)
+The engine's designated primary balance reader - the \inventory_get_balance\ RPC (ledger.ts calls it FIRST) - was never created in any migration. Every \getCurrentBalance\ consumer (product list + product detail pages) silently fell back to raw ledger sums, while every other display surface (forecast, reorder, gas, notifications, owner-dashboard boards, stock value) reads the engine-maintained balance cache \inventory_product_balances\ directly. The sources agree in the healthy steady state (every createTransaction + movement RPC upserts the cache in lockstep), so the split stayed latent until the O1-D ledger wipe left the cache as the only surviving truth: the Food Products page showed ESSAIE 0 / out-of-stock while forecast showed ESSAIE 50 ok and the boards counted CHICKEN 4 / ESSAIE 100 / TEST 50.
+
+### Fix (migration 094 + 2 commits)
+1. **Migration 094** - \inventory_get_balance(p_product_id uuid, p_location_id uuid)\ returns numeric, SECURITY DEFINER, search_path pg_catalog/public, reads \inventory_product_balances\ (coalesce 0), REVOKE from public/anon/authenticated, GRANT service_role, NOTIFY pgrst. Applied to prod (\supabase db push\).
+2. **ledger.ts** - \ledgerSum()\ helper (the old fallback query): createTransaction decrease-validation (F2/E1-4 insufficient-stock rule) AND the post-write balance-cache refresh now use it - validation never trusts the cache, and the cache is never refreshed with a stale pre-write value. \getCurrentBalance\ keeps RPC-first + ledger fallback.
+3. **CRITICAL bug found by live E2E (commit 38497b2):** \getCurrentBalance\ read \data.balance\, but PostgREST returns scalar RPC results as a bare number (\data: 50\) - \50.balance\ = undefined -> 0. The \{ balance }\ shape was never exercised because the RPC never existed. Fixed: accept bare number / numeric string OR \{ balance }\ wrapper.
+4. **products route** comment updated (RPC now exists).
+
+### Verification (live, prod)
+- RPC direct: ESSAIE @ Main Bar 50, @ Dry Store 50, CHICKEN @ Kitchen 4, TEST @ Dry Store 50; anon 401 (service-role only)
+- Engine probe: getCurrentBalance(ESSAIE, main) = 50; createTransaction SALE of 1 still throws InsufficientStockError against the empty ledger (F2 rule intact - the cache never relaxes validation); raw RPC via the same client = 50
+- Deployed API (probe owner account o5probe): products?inventory_type=FOOD&location_id=main -> ESSAIE 50, CHICKEN 0, TEST 0; product detail ESSAIE 50; forecast FOOD ESSAIE ok 50 + CHICKEN/TEST out_of_stock; reorder FOOD CHICKEN/TEST critical -> **all agree** (AGREEMENT: page == forecast == reorder per product)
+- Counts unchanged and already consistent (FOOD page universe 3 == dashboard-summary universe 3 - no deleted_at divergence for FOOD)
+- Probe account + audit rows deleted, RESIDUE_ACCOUNTS []
+
+### Tests
+257/257 vitest (253 + 4 new: bare-scalar RPC response, validation-ignores-cache F2 regression, cache-refresh-uses-ledger-sum regression, + updated mocks with select branching on cols 'unit_cost' vs 'quantity'); strict inventory tsc clean; next build green (pre-deploy).
+
+### Deploy
+Migration 094 pushed; commits 826668e + 38497b2 pushed; vercel --prod aliased twice (first deploy verified the bug live, second shipped the scalar fix).
+
+### Notes / handover
+- Remaining divergence is DATA-STATE (O1-D), not code: ledger-based KPI surfaces (dashboard alerts, inventory value, deductions) stay at faithful zeros until the owner restores the ledger; display surfaces show the cache. The two re-converge automatically once the ledger is restored (cache is ledger-lockstep).
+- /inv/stock opening balances + stock sheet remain ledger-based by design (daily movement math) - zeros until the ledger is restored.
+- Mission queue: O6 (Products counters mismatch) is next per the lock; O2 remains superseded.
