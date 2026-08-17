@@ -2036,3 +2036,37 @@ Migration 094 pushed; commits 826668e + 38497b2 pushed; vercel --prod aliased tw
 - Remaining divergence is DATA-STATE (O1-D), not code: ledger-based KPI surfaces (dashboard alerts, inventory value, deductions) stay at faithful zeros until the owner restores the ledger; display surfaces show the cache. The two re-converge automatically once the ledger is restored (cache is ledger-lockstep).
 - /inv/stock opening balances + stock sheet remain ledger-based by design (daily movement math) - zeros until the ledger is restored.
 - Mission queue: O6 (Products counters mismatch) is next per the lock; O2 remains superseded.
+
+---
+
+## Session: O6 - Products Counters Mismatch - Dashboard Summary Counters Balance-Derived (2026-08-16) - commit 03b4c6d
+
+### Objective
+Owner-activated: every product counter should agree with the authoritative inventory engine and the related product views. One verified root cause, fix only that, verify every affected counter agrees (products pages, Food/Beverage, Dashboard product counters, API responses, shared engine functions).
+
+### Root cause (verified live against prod via temp vitest probe)
+The Products views compute "Below Par"/"Out of Stock" from live balances (balance <= 0 -> out of stock; 0 < balance <= reorder_threshold -> low), reading the balance cache (O5 inventory_get_balance). The dashboard summary counters did NOT: `getDashboardSummary` (src/inventory/engine/dashboard.ts) hardcoded `outOfStockCount = 0` and counted `lowStockCount` as "products with a reorder_threshold set" (no balance comparison); the combined_dashboard RPC (migration 072) replicated both bug-for-bug. Live at prod: dashboard summary said Out of Stock 0 while Food Products said Out of Stock - 2 (CHICKEN, TEST have no balance-cache row at Main Bar -> balance 0). lowStockCount agreed only by accident (0 == 0 - no thresholds set on any product); the semantics diverge the moment a threshold is set. totalProducts was NOT the issue: archive sets `is_active=false` AND `deleted_at` together (products/[id]/route.ts:188, restore/route.ts:15) so active-count == active+not-deleted always (probe: 19 == 19).
+
+### Fix (2 files + migration, additive only)
+1. **src/inventory/engine/dashboard.ts** - `getDashboardSummary` now reads `inventory_product_balances` at the location (single query, display convention) into a map, and computes both counters from active products (id + reorder_threshold query): out = balance <= 0 (missing cache row = 0), low = 0 < balance <= threshold. Same query count as before (4). totalProducts, today buckets, variance unchanged.
+2. **supabase/migrations/095_dashboard_summary_balance_counters.sql** - CREATE OR REPLACE combined_dashboard (3-arg signature, migration history immutable - 072 NOT edited, same pattern as 090/091): adds `cache_bal` CTE (inventory_product_balances at p_location); `lowStockCount` = prods p left join cache_bal where coalesce(balance,0) > 0 and reorder_threshold not null and balance <= threshold; `outOfStockCount` = prods p left join cache_bal where coalesce(balance,0) <= 0. Everything else byte-for-byte identical to 072 (alerts stay ledger-based, today buckets all-location, overdueCount capped). REVOKE/GRANT re-issued, NOTIFY pgrst. Applied to prod (supabase db push).
+3. **src/inventory/__tests__/dashboard.test.ts** (NEW, 5 tests) - out count incl. missing-row products, low count (0 < bal <= thr), threshold boundary (equal = low, above = not), empty cache = all out, sources passthrough (totalProducts/inventoryValue/todayTransactions). Mock pattern: `makeChain` thenable with .then + chained vi.fn() methods; from() table dispatch keyed on select string + head flag; `getInventoryValue` vi.mocked via ../engine/reconciliation module mock.
+
+### Verification (live, prod)
+- Probe BEFORE fix: ENGINE out=0 / RPC out=0 / PAGE out=2 (ALL + FOOD), BEVERAGE 0 == 0 - mismatch reproduced.
+- Probe AFTER engine fix (before 095): ENGINE out=2 == PAGE 2; RPC still 0 (072 live) - evidence for the migration.
+- Probe AFTER 095 applied: ENGINE ALL out=2 low=0 total=19 / FOOD out=2 total=3 / BEVERAGE out=0 total=8 == RPC identical == PAGE identical. All agree.
+- Deployed API (probe owner account o6probe, bcrypt 12, deleted after): DASH ALL total=19 low=0 out=2; FOOD total=3 out=2; BEVERAGE total=8 out=0; PAGE ALL all=19 belowPar=2 out=2; FOOD all=3 belowPar=2 out=2; BEVERAGE all=8 belowPar=0 out=0. Login 200 + boma_admin_session cookie (set-cookie chunk parse lesson from R1: find the chunk starting with boma_admin_session= lacking Max-Age=0). Cleanup: account + audit deleted, RESIDUE_ACCOUNTS 0 / RESIDUE_AUDIT 0. Temp o6-verify.cjs + o6-probe.test.ts deleted.
+
+### Verification (local)
+262/262 vitest (257 + 5 new dashboard tests; 24 files); inventory strict tsc clean; next build green (local + Vercel cloud build 43s). Migration 095 applied local == remote (000-095).
+
+### Deploy
+Commit 03b4c6d pushed; vercel --prod aliased (1 transient "fetch failed" cloud-build error - established retry pattern, retry succeeded).
+
+### Notes / handover
+- Out-of-stock counting rule now matches the Products views exactly: balance <= 0 counts regardless of threshold; a product with NO cache row at the location counts as out of stock (0). This is the O5 display convention applied to summary counters.
+- `totalProducts` remains active-count (proven invariant: archive always flips is_active with deleted_at).
+- Alerts section (engine + RPC) intentionally untouched - not a counter, and not live-observable divergent (no thresholds set).
+- O1-D open issue stands: prod ledger empty; the two sources re-converge on ledger restore.
+- Mission queue: E2 (Faster ordering workflow) is next per the lock; E1, E3, E4 after; O2 remains superseded.
