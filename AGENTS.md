@@ -1961,3 +1961,44 @@ Probe accounts + audit rows verified zero (accounts like o1p3b% and admin_name l
 
 ### Mission queue (per mission lock)
 Active ship: O4 (Forecast vs Reorder mismatch). Then O5, O6, E2, E1, E3, E4. O2 remains superseded. MASTER_MISSION_LOCK.md updated.
+
+## Session: O4 - Forecast vs Reorder Consistency (2026-08-16) - commit 33804ac
+
+### Objective (owner-activated mission)
+The Forecast page (Out-of-Stock / Critical / Warning) and the Reorder page (suggested orders) read the same ledger and reorder rules but produced contradictory recommendations. Find the verified root cause, fix only that, prove agreement.
+
+### Root cause (reproduced against prod via temp vitest probe - deleted after)
+- Prod has ZERO reorder rules (RULES 0 at Main Bar 214044c5...), 19 active products, 17 balance-cache rows, 0 SALE txns (O1-D ledger state - daily usage 0 everywhere).
+- Forecast engine (`getDepletionForecast`) evaluates ALL active products -> flagged CHICKEN + TEST as out_of_stock (balance 0).
+- Reorder engine (`getSuggestions`) iterates ONLY `inventory_reorder_rules` rows with `auto_suggest=true` -> returned [] ("stock levels are healthy").
+- Same ledger, same rules table - the divergence is purely the engines' inclusion universes: rule-less products never reach Reorder.
+
+### Fix (1 file: src/inventory/engine/reorder.ts, +96/-3 - additive only)
+- `FALLBACK_LEAD_TIME_DAYS = 3` const (must match forecasting.ts rule-less defaults: min_level 0, lead_time_days 3).
+- Removed the `if (!rules || rules.length === 0) return []` early-exit (fallback must run when rules are empty).
+- New additive block after the rule loop: queries ALL active products (inventory_type filter applied), all balances, all SALE txns over 30d; for products WITHOUT any reorder rule (exclusion set = rules incl. auto_suggest=false - a deliberate disable is honoured), mirrors the Forecast state machine: balance<=0 -> critical (estDays 0), else dailyUsage>0 && balance/dailyUsage<=3 -> critical; suggestedQuantity = max(1, ceil(dailyUsage*3)) when out of stock else max(1, ceil(3*dailyUsage-balance)); rows join the existing urgency sort.
+- Rule-driven path byte-for-byte unchanged (incl. the medium band maxLevel*0.5 and target top-up).
+
+### Tests - 253/253 vitest (247 + 6 new reorder.test.ts)
+- reorder.test.ts: rule-less out-of-stock included (critical, suggest>=1, estDays 0); rule-less healthy excluded; rule-less usage-critical (balance 2, daily 1 -> estDays 2, critical); rule-driven medium band unchanged (balance 40, min 5, max 100 -> medium, suggest 60); auto_suggest=false rule never added by fallback; inventory_type filter applies to the fallback universe.
+- Mock: table-dispatch keyed on select-string ('*, inventory_products!inner(...)' vs 'product_id') + eqs capture for balance/product-type lookups; strict-mode fixes via `!` non-null on suggestions[0] (noUncheckedIndexedAccess).
+
+### Verification
+- Inventory strict tsc clean; 253/253 vitest (probe file deleted after live proof); next build green (build tooling was slow this session - 15min timeout hit once, second attempt passed).
+- Live proof (temp vitest probe vs prod, BEFORE fix): forecast attention 2 (CHICKEN, TEST) vs reorder 0, "FORECAST ATTENTION MISSING FROM REORDER" = 2. AFTER fix (same probe): BOTH FLAG (agree) 2, both mismatch sections EMPTY, forecast attention total 2 == reorder suggestions total 2.
+- Commit 33804ac pushed; vercel --prod aliased (3 transient "Not authorized"/"fetch failed" CLI errors - established retry pattern).
+
+### Live verification (deployed app, probe admin account o4probe - deleted after)
+- POST /api/admin/auth (probe owner account, bcrypt 12) -> 200 + boma_admin_session cookie (set-cookie parse lesson from R1: clearing cookies come first - must find the chunk starting with boma_admin_session= lacking Max-Age=0).
+- GET /api/inventory/reorder/suggestions?location_id=main -> 200: CHICKEN critical stock 0 suggest 1, TEST critical stock 0 suggest 1.
+- GET /api/inventory/forecast/depletion?location_id=main -> 200: attention = CHICKEN out_of_stock, TEST out_of_stock.
+- MISMATCH_FORECAST_ONLY [] / MISMATCH_REORDER_ONLY [] -> AGREE true.
+- Probe account + login audit rows deleted (204), residue check via service-role: RESIDUE_ACCOUNTS [] / RESIDUE_AUDIT [].
+
+### Cleanup
+o4-probe.test.ts (live probe) + o4-verify.cjs + o4-residue.cjs all deleted; git clean except the 2 intended files + docs.
+
+### Notes / handover
+- Dormant (NOT fixed, out of scope - no rules exist to trigger it): rule-driven products use different urgency bands (Reorder medium = maxLevel*0.5 top-up vs Forecast ok) - a buying band vs a depletion-risk band; flagged for the future when rules get configured.
+- O1-D open issue stands: prod ledger empty; daily usage 0 means usage-based criticality is dormant until the ledger is restored.
+- Mission queue (per mission lock): O5 (Food Products mismatch), O6, E2, E1, E3, E4. MASTER_MISSION_LOCK.md updated.

@@ -13,9 +13,10 @@
 - O1 Phase 2 (admin layout spacing) — COMPLETE
 - O1 Phase 3A (owner dashboard header: greeting, ledger subtitle, Go to Admin / View Website / Logout) — COMPLETE
 - O1 Phase 3B (the /inv left sidebar on /dashboard — same navigation + styling, no route changes) — COMPLETE
+- O4 (Forecast vs Reorder consistency — rule-less fallback in reorder suggestions) — COMPLETE (2026-08-16, commit 33804ac)
 - R1 + R1.1 (staff nav + logout regression) — COMPLETE
 - Migration 093 applied (local == remote, 000–093)
-- 247/247 Vitest passing; inventory strict TypeScript clean
+- 253/253 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 
@@ -34,17 +35,15 @@
 
 ## Active ship
 
-**O4 — Forecast vs Reorder mismatch.** NOT started.
+**O5 — Food Products mismatch.** NOT started.
 
 ## Deferred queue (in order)
 
-1. O5 — Food Products mismatch
-2. O6 — Products counters mismatch
-3. E2 — Faster ordering workflow
-4. E1 — Excel exports
-5. E3 — Kitchen portion inventory
-6. E4 — Event-only purchasing
-
+1. O6 — Products counters mismatch
+2. E2 — Faster ordering workflow
+3. E1 — Excel exports
+4. E3 — Kitchen portion inventory
+5. E4 — Event-only purchasing
 (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
 
 ## Architecture decisions (locked)
