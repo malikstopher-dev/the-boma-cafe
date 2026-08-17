@@ -2070,3 +2070,35 @@ Commit 03b4c6d pushed; vercel --prod aliased (1 transient "fetch failed" cloud-b
 - Alerts section (engine + RPC) intentionally untouched - not a counter, and not live-observable divergent (no thresholds set).
 - O1-D open issue stands: prod ledger empty; the two sources re-converge on ledger restore.
 - Mission queue: E2 (Faster ordering workflow) is next per the lock; E1, E3, E4 after; O2 remains superseded.
+
+---
+
+## Session: E2 - Faster Ordering - Repeat PO (2026-08-16) - commits 6390955 + 75a8c91
+
+### Objective
+Owner-activated: reduce friction in creating/sending purchase orders while preserving the existing PO lifecycle. Find the biggest verified friction point, fix only that, verify measurably faster without changing business rules.
+
+### Root cause (verified against prod via temp evidence probe)
+9 POs - 7 of 9 are National Beverage Co (weekly repeat-supplier pattern is the dominant workflow); statuses {ordered:1, received:6, draft:2}; 24 PO items; 0 reorder rules (Create-PO-from-suggestions dormant). The create flow had ZERO prefill/duplicate capability: no `from` param handling on the New PO page, no Repeat/Duplicate action anywhere - every weekly reorder required manually re-typing supplier + every line item.
+
+### Fix (2 files, additive only, no API/migration changes)
+1. **PO detail page** (`purchase-orders/[id]/page.tsx`) - "Repeat" button in pageActions (secondary, sm, any status) -> router.push('/admin/operations/purchase-orders/new?from=' + po.id).
+2. **New PO page** (`purchase-orders/new/page.tsx`) - reads `window.location.search` 'from' param (avoids useSearchParams Suspense constraint); fetches GET /api/inventory/purchase-orders/[id]; prefills supplier + items (product/location/qty/unit cost, location falls back to first active location, qty/cost numeric-normalized); amber banner "Repeating the order from X (date) - N item(s) prefilled. Adjust quantities, then create a new order."; invalid/missing source -> red error banner + blank form, never blocks. Deliberately does NOT copy quotation_ref/expected_at/notes (a repeat is a fresh order). Supplier + items remain fully editable.
+3. **Bug found by live E2E (commit 75a8c91):** the source PO's supplier (dec3d28b) was NOT in the active suppliers list (11 returned; prod has a SEVENTH "National Beverage Co" row that POs reference but is archived -> controlled select fell back to "Select...", supplier stayed unselected, Create button disabled). Fixed: functional setSuppliers() appends { id: src.supplier_id, name: src.inventory_suppliers?.name ?? 'Unknown supplier' } when missing - Repeat works for archived suppliers too.
+
+### Verification (local)
+- Temp UI tsconfig (root-extending, exclude:[] override + ambient.d.ts) over both edited pages clean, deleted after.
+- 261/261 vitest (262 baseline minus deleted O6 probe test); inventory strict tsc clean; next build green.
+- Toolchain lesson: an npm i in a temp dir leaked into the repo package.json ("type": "commonjs" + puppeteer-core dep) and broke Turbopack with 631 errors; restored both files from git -> build green again. The workdir param is resolved BEFORE the command runs - creating the dir in the same command falls back to the default cwd.
+
+### Verification (live, headless Edge + probe owner account e2probe, all cleaned up)
+- Real prod PO 5b6c31e7 (National Beverage Co, 5 items) detail -> Repeat button renders -> click -> URL /new?from=5b6c31e7... -> banner PASS, supplier prefilled PASS (dec3d28b selected, name shown), 10 number inputs = 5 lines x (qty + unit cost) PASS, first qty 50 PASS, mobile 390px banner + line count + no horizontal overflow PASS. 9/9 checks ALL_PASS.
+- Probe account + audit rows deleted (RESIDUE_ACCOUNTS 0 / RESIDUE_AUDIT 0); e2-probe dir + e2-evidence.cjs temp files deleted; git clean.
+
+### Deploy
+Commits 6390955 (feature) + 75a8c91 (archived-supplier fix) pushed; vercel --prod deployed + aliased (2 transient "fetch failed" CLI errors - established retry pattern, retries succeeded).
+
+### Notes / handover
+- Data observation (NOT fixed - out of scope): prod suppliers table has SIX "National Beverage Co" rows + a 7th archived one that POs reference - import pollution like the categories dupes (069 precedent). A dedup migration could be a future ship if the owner wants clean supplier data.
+- No data written by verification (repeat flow is read-only + form state; nothing submitted).
+- Mission queue: E1 (Excel exports) next per the lock; E3, E4 after. MASTER_MISSION_LOCK.md updated.
