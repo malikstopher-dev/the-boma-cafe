@@ -55,10 +55,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const products = (data ?? []) as InventoryProduct[]
 
     if (locationId && products.length > 0) {
-      // Use the engine's getCurrentBalance: it falls back to summing the
-      // transaction ledger when the inventory_get_balance RPC is absent
-      // (the RPC is missing from migrations). A raw .rpc() call with
-      // .single() throws on a 404 and turns the whole list into a 500.
+      // Engine's getCurrentBalance: primary path is the inventory_get_balance
+      // RPC (migration 094) reading the engine-maintained balance cache - the
+      // same source every other display surface (forecast, reorder, gas,
+      // owner-dashboard boards) uses. Falls back to summing the transaction
+      // ledger when the RPC is unavailable (pre-094 environments). A raw
+      // .rpc() call with .single() throws on a 404 and turns the whole list
+      // into a 500 - never bypass the engine here.
       for (const product of products) {
         const balance = await getCurrentBalance(product.id, locationId)
         ;(product as unknown as Record<string, unknown>).current_balance = balance

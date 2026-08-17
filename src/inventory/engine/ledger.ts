@@ -14,6 +14,26 @@ function isDecreaseType(t: TransactionType): boolean {
   return DECREASE_TYPES.has(t)
 }
 
+/**
+ * Sums the transaction ledger for a product+location - the authoritative
+ * "available" quantity for stock validation and cache refreshes.
+ *
+ * Decrease validation must NEVER trust the balance cache: the cache is a
+ * display mirror and can survive ledger data loss (O1-D wipe), while the
+ * ledger is the single write-truth the F2/E1-4 insufficient-stock rule is
+ * built on (deduct only what the ledger actually has).
+ */
+async function ledgerSum(productId: string, locationId: string): Promise<number> {
+  const supabase = getInventoryClient()
+  const { data: rows } = await supabase
+    .from('inventory_transactions')
+    .select('quantity')
+    .eq('product_id', productId)
+    .eq('location_id', locationId)
+  if (!rows) return 0
+  return rows.reduce((sum, row) => sum + Number(row.quantity), 0)
+}
+
 export async function getCurrentBalance(productId: string, locationId: string): Promise<number> {
   const supabase = getInventoryClient()
   const { data, error } = await supabase
@@ -24,13 +44,9 @@ export async function getCurrentBalance(productId: string, locationId: string): 
     .single()
 
   if (error) {
-    const { data: fallback } = await supabase
-      .from('inventory_transactions')
-      .select('quantity')
-      .eq('product_id', productId)
-      .eq('location_id', locationId)
-    if (!fallback) return 0
-    return fallback.reduce((sum, row) => sum + Number(row.quantity), 0)
+    // Migration 094 creates the RPC (reads the engine-maintained balance
+    // cache). This ledger-sum fallback keeps pre-094 environments working.
+    return ledgerSum(productId, locationId)
   }
 
   return Number((data as { balance?: number } | null)?.balance ?? 0)
@@ -98,7 +114,9 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
   if (!location) throw new LocationNotFoundError(input.location_id)
 
   if (isDecreaseType(input.transaction_type) && input.quantity >= 0) {
-    const currentBalance = await getCurrentBalance(input.product_id, input.location_id)
+    // Ledger-sum validation (F2 rule): the balance cache is a display mirror,
+    // never the source of truth for the insufficient-stock check.
+    const currentBalance = await ledgerSum(input.product_id, input.location_id)
     const requested = Math.abs(input.quantity)
     if (currentBalance < requested) {
       throw new InsufficientStockError(
@@ -174,7 +192,10 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
   }, input.performed_by ?? null)
 
   try {
-    const newBal = await getCurrentBalance(input.product_id, input.location_id)
+    // Cache refresh must use the LEDGER sum: reading the cache here would
+    // write back the stale pre-write value (the cache does not include the
+    // row just inserted) and corrupt the mirror permanently.
+    const newBal = await ledgerSum(input.product_id, input.location_id)
     await supabase
       .from('inventory_product_balances')
       .upsert({

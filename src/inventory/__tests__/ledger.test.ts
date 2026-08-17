@@ -137,6 +137,11 @@ describe('ledger', () => {
         }
         if (table === 'inventory_transactions') {
           return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => res([{ quantity: 10 }])),
+              })),
+            })),
             insert: vi.fn(() => ({
               select: vi.fn(() => ({
                 single: vi.fn(() => res({
@@ -200,6 +205,26 @@ describe('ledger', () => {
         }
         if (table === 'inventory_transactions') {
           return {
+            select: vi.fn((cols: string) => {
+              if (cols === 'unit_cost') {
+                return {
+                  eq: vi.fn(() => ({
+                    not: vi.fn(() => ({
+                      order: vi.fn(() => ({
+                        limit: vi.fn(() => ({
+                          maybeSingle: vi.fn(() => res({ unit_cost: 120 })),
+                        })),
+                      })),
+                    })),
+                  })),
+                }
+              }
+              return {
+                eq: vi.fn(() => ({
+                  eq: vi.fn(() => res([{ quantity: 3 }])),
+                })),
+              }
+            }),
             insert: vi.fn(() => ({
               select: vi.fn(() => ({
                 single: vi.fn(() => res({
@@ -215,17 +240,6 @@ describe('ledger', () => {
                   notes: null,
                   import_batch_id: null,
                   created_at: '2026-08-15T00:00:00Z',
-                })),
-              })),
-            })),
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                not: vi.fn(() => ({
-                  order: vi.fn(() => ({
-                    limit: vi.fn(() => ({
-                      maybeSingle: vi.fn(() => res({ unit_cost: 120 })),
-                    })),
-                  })),
                 })),
               })),
             })),
@@ -388,6 +402,149 @@ describe('ledger', () => {
       ).rejects.toThrow(InsufficientStockError)
     })
 
+    it('should validate decreases against the LEDGER sum, not the balance cache (F2 rule)', async () => {
+      // The cache (RPC) says 100, the ledger says 5: the F2/E1-4 rule is
+      // "deduct only what the ledger actually has" - a sale of 10 MUST be
+      // rejected even though the cache-backed RPC reports a high balance.
+      mockClient.rpc.mockReturnValue({
+        single: vi.fn(() => res({ balance: 100 })),
+      })
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+                })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => res([{ quantity: 5 }])),
+              })),
+            })),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      await expect(
+        createTransaction({
+          product_id: 'prod-1',
+          location_id: 'loc-1',
+          transaction_type: 'sale',
+          quantity: 10,
+        }),
+      ).rejects.toThrow(InsufficientStockError)
+    })
+
+    it('should refresh the balance cache with the ledger sum, never the stale pre-write cache value', async () => {
+      let upsertPayload: Record<string, unknown> | null = null
+      // The cache-backed RPC reports 7 (pre-write value); the ledger has
+      // 5 existing rows + the 1 just inserted = 6. The cache must be
+      // refreshed with 6, not the stale 7.
+      mockClient.rpc.mockReturnValue({
+        single: vi.fn(() => res({ balance: 7 })),
+      })
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+                })),
+                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            select: vi.fn((cols: string) => {
+              if (cols === 'unit_cost') {
+                return {
+                  eq: vi.fn(() => ({
+                    not: vi.fn(() => ({
+                      order: vi.fn(() => ({
+                        limit: vi.fn(() => ({
+                          maybeSingle: vi.fn(() => res(null)),
+                        })),
+                      })),
+                    })),
+                  })),
+                }
+              }
+              return {
+                eq: vi.fn(() => ({
+                  eq: vi.fn(() => res([{ quantity: 5 }, { quantity: 1 }])),
+                })),
+              }
+            }),
+            insert: vi.fn(() => ({
+              select: vi.fn(() => ({
+                single: vi.fn(() => res({
+                  id: 'tx-refresh',
+                  product_id: 'prod-1',
+                  location_id: 'loc-1',
+                  transaction_type: 'sale',
+                  quantity: -1,
+                  unit_cost: null,
+                  reference_type: null,
+                  reference_id: null,
+                  performed_by: null,
+                  notes: null,
+                  import_batch_id: null,
+                  created_at: '2026-08-15T00:00:00Z',
+                })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_product_balances') {
+          return {
+            upsert: vi.fn((p: Record<string, unknown>) => {
+              upsertPayload = p
+              return Promise.resolve({ data: null, error: null })
+            }),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      await createTransaction({
+        product_id: 'prod-1',
+        location_id: 'loc-1',
+        transaction_type: 'sale',
+        quantity: 1,
+      })
+      expect(upsertPayload).toMatchObject({ balance: 6 })
+    })
+
     it('should persist F3 order attribution on the ledger row and audit entry', async () => {
       let insertPayload: Record<string, unknown> | null = null
       let auditChanges: Record<string, unknown> | null = null
@@ -418,17 +575,26 @@ describe('ledger', () => {
         }
         if (table === 'inventory_transactions') {
           return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                not: vi.fn(() => ({
-                  order: vi.fn(() => ({
-                    limit: vi.fn(() => ({
-                      maybeSingle: vi.fn(() => res(null)),
+            select: vi.fn((cols: string) => {
+              if (cols === 'unit_cost') {
+                return {
+                  eq: vi.fn(() => ({
+                    not: vi.fn(() => ({
+                      order: vi.fn(() => ({
+                        limit: vi.fn(() => ({
+                          maybeSingle: vi.fn(() => res(null)),
+                        })),
+                      })),
                     })),
                   })),
+                }
+              }
+              return {
+                eq: vi.fn(() => ({
+                  eq: vi.fn(() => res([{ quantity: 1 }])),
                 })),
-              })),
-            })),
+              }
+            }),
             insert: vi.fn((p: Record<string, unknown>) => {
               insertPayload = p
               return {
@@ -521,17 +687,26 @@ describe('ledger', () => {
         }
         if (table === 'inventory_transactions') {
           return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                not: vi.fn(() => ({
-                  order: vi.fn(() => ({
-                    limit: vi.fn(() => ({
-                      maybeSingle: vi.fn(() => res(null)),
+            select: vi.fn((cols: string) => {
+              if (cols === 'unit_cost') {
+                return {
+                  eq: vi.fn(() => ({
+                    not: vi.fn(() => ({
+                      order: vi.fn(() => ({
+                        limit: vi.fn(() => ({
+                          maybeSingle: vi.fn(() => res(null)),
+                        })),
+                      })),
                     })),
                   })),
+                }
+              }
+              return {
+                eq: vi.fn(() => ({
+                  eq: vi.fn(() => res([])),
                 })),
-              })),
-            })),
+              }
+            }),
             insert: vi.fn((p: Record<string, unknown>) => {
               insertPayload = p
               return {
