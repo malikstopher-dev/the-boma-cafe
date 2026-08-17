@@ -51,6 +51,15 @@ describe('ledger', () => {
       expect(balance).toBe(13)
     })
 
+    it('should return the bare scalar balance PostgREST returns for scalar RPCs', async () => {
+      mockClient.rpc.mockReturnValue({
+        single: vi.fn(() => res(13)),
+      })
+
+      const balance = await getBalance('prod-1', 'loc-1')
+      expect(balance).toBe(13)
+    })
+
     it('should return 0 from fallback when RPC fails and no transactions', async () => {
       mockClient.rpc.mockReturnValue({
         single: vi.fn(() => err('RPC not found')),

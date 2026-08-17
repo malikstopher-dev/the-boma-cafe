@@ -49,7 +49,11 @@ export async function getCurrentBalance(productId: string, locationId: string): 
     return ledgerSum(productId, locationId)
   }
 
-  return Number((data as { balance?: number } | null)?.balance ?? 0)
+  // PostgREST returns scalar RPC results as a bare number (or numeric
+  // string); some configurations wrap them as { balance }. Handle both.
+  const bal = data as number | string | { balance?: number | string } | null
+  if (typeof bal === 'number' || typeof bal === 'string') return Number(bal)
+  return Number((bal as { balance?: number | string } | null)?.balance ?? 0)
 }
 
 export async function getBalanceAtTime(
