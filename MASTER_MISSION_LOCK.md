@@ -37,6 +37,7 @@
 - Do not rewrite migrations. Do not edit applied migration history — replay via CREATE OR REPLACE in a new migration.
 - Break nothing: ledger parity, audit logs, RBAC, validation wording, API signatures.
 - Additive changes only. Leave production clean. End every session with Stop.
+- **STANDING RULE (2026-08-16, owner directive):** Autonomous multi-ship runs must re-read MASTER_MISSION_LOCK.md before activating each subsequent ship. Never rely on the queue remembered from the previous ship. Max four ships per autonomous run; stop after the fourth ship even if more work is queued, and wait for owner permission.
 
 ## Active ship
 
