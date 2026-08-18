@@ -1,0 +1,1 @@
+export { POST } from '@/inventory/api/product-import/apply/route'

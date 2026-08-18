@@ -1,0 +1,1 @@
+export { GET } from '@/inventory/api/product-import/last/route'

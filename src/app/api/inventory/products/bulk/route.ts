@@ -1,0 +1,1 @@
+export { POST } from '@/inventory/api/products/bulk/route'

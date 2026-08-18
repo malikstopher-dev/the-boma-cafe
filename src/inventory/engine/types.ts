@@ -618,3 +618,16 @@ export interface ApiResponse<T> {
     total?: number
   }
 }
+
+export interface ProductImportRecord {
+  id: string
+  filename: string
+  sheet_name: string | null
+  inventory_type: string
+  status: 'applied' | 'rolled_back'
+  created_by_admin_id: string | null
+  created_ids: string[]
+  updated_ids: string[]
+  updated_snapshots: { product_id: string; before: Record<string, unknown> }[]
+  created_at: string
+}

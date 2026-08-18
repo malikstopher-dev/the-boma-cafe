@@ -9,6 +9,7 @@ import FilterBar from '@/components/admin/design-system/FilterBar'
 import Button from '@/components/admin/design-system/Button'
 import Badge from '@/components/admin/design-system/Badge'
 import EmptyState from '@/components/admin/design-system/EmptyState'
+import ProductImportDialog from '@/inventory/components/product-import'
 import styles from '@/components/admin/design-system/DesignSystem.module.css'
 
 type Product = {
@@ -46,6 +47,17 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [statusFilter, setStatusFilter] = useState<'all' | 'out' | 'low'>('all')
+  const [importOpen, setImportOpen] = useState(false)
+  const [importIds, setImportIds] = useState<string[] | null>(null)
+  const [selection, setSelection] = useState<Set<string>>(new Set())
+  const [bulkCategories, setBulkCategories] = useState<{ id: string; name: string }[]>([])
+  const [bulkSuppliers, setBulkSuppliers] = useState<{ id: string; name: string }[]>([])
+  const [bulkCategory, setBulkCategory] = useState('')
+  const [bulkSupplier, setBulkSupplier] = useState('')
+  const [bulkThreshold, setBulkThreshold] = useState('')
+  const [bulkCost, setBulkCost] = useState('')
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '',
     sku: '',
@@ -60,6 +72,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       if (search) params.set('search', search)
       if (showArchived) params.set('show_archived', 'true')
       if (forcedType) params.set('inventory_type', forcedType)
+      if (importIds && importIds.length > 0) params.set('ids', importIds.join(','))
       params.set('location_id', 'main')
       params.set('page_size', '100')
 
@@ -71,7 +84,7 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
     } finally {
       setIsLoading(false)
     }
-  }, [search, showArchived, forcedType])
+  }, [search, showArchived, forcedType, importIds])
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
@@ -104,7 +117,97 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
     }
   }
 
+  async function loadBulkOptions() {
+    if (bulkCategories.length > 0 && bulkSuppliers.length > 0) return
+    try {
+      const [catRes, supRes] = await Promise.all([
+        fetch('/api/inventory/categories'),
+        fetch('/api/inventory/suppliers?page_size=100'),
+      ])
+      const catJson = await catRes.json()
+      const supJson = await supRes.json()
+      const flatten = (nodes: Array<{ id: string; name: string; children?: unknown[] }>, out: { id: string; name: string }[]) => {
+        for (const n of nodes) {
+          out.push({ id: n.id, name: n.name })
+          if (Array.isArray(n.children)) flatten(n.children as Array<{ id: string; name: string; children?: unknown[] }>, out)
+        }
+        return out
+      }
+      setBulkCategories(flatten(catJson.data ?? [], []))
+      setBulkSuppliers((supJson.data ?? []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })))
+    } catch {
+      // ignore
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelection(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function runBulk(patch: Record<string, unknown>, deleteRows?: boolean) {
+    if (selection.size === 0) return
+    setBulkBusy(true)
+    setBulkMsg(null)
+    try {
+      const res = await fetch('/api/inventory/products/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [...selection], patch, delete: deleteRows === true }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setBulkMsg('Failed: ' + (json.error?.message || 'unknown error'))
+        return
+      }
+      const d = json.data as { updated: string[]; archived: string[]; deleted: string[]; errors: { id: string; message: string }[] }
+      setBulkMsg(`Done — ${d.updated.length} updated, ${d.archived.length} archived, ${d.deleted.length} deleted${d.errors.length ? `, ${d.errors.length} failed` : ''}.`)
+      setSelection(new Set())
+      setBulkCategory('')
+      setBulkSupplier('')
+      setBulkThreshold('')
+      setBulkCost('')
+      fetchProducts()
+    } catch {
+      setBulkMsg('Failed to apply bulk edit')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  function buildBulkPatch(): Record<string, unknown> | null {
+    const patch: Record<string, unknown> = {}
+    if (bulkCategory) patch.category_id = bulkCategory
+    if (bulkSupplier) patch.preferred_supplier_id = bulkSupplier
+    if (bulkThreshold !== '') {
+      const n = Number(bulkThreshold)
+      if (Number.isFinite(n)) patch.reorder_threshold = n
+    }
+    if (bulkCost !== '') {
+      const n = Number(bulkCost)
+      if (Number.isFinite(n)) patch.unit_cost = n
+    }
+    return Object.keys(patch).length > 0 ? patch : null
+  }
+
   const columns: Column<Product>[] = [
+    {
+      key: 'select',
+      header: ' ',
+      cell: product => (
+        <input
+          type="checkbox"
+          checked={selection.has(product.id)}
+          onChange={() => toggleSelect(product.id)}
+          onClick={e => e.stopPropagation()}
+          style={{ accentColor: '#D4A843', cursor: 'pointer' }}
+        />
+      ),
+    },
     {
       key: 'name',
       header: 'Name',
@@ -220,10 +323,26 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
           <Button onClick={() => setShowCreateForm(v => !v)} size="sm">
             {showCreateForm ? 'Cancel' : 'Add Product'}
           </Button>
+          <Button onClick={() => setImportOpen(true)} size="sm">Import Products</Button>
           <Button onClick={fetchProducts} variant="secondary" size="sm">Refresh</Button>
         </FilterBar>
       }
     >
+      {importIds && importIds.length > 0 && (
+        <div className={styles.card} style={{ marginBottom: 16, padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{ fontSize: 13, color: '#A09888' }}>
+            Viewing <b style={{ color: '#F0EBE3' }}>{products.length}</b> imported product{products.length === 1 ? '' : 's'} from the last import.
+          </span>
+          <Button size="sm" variant="secondary" onClick={() => setImportIds(null)}>Clear filter</Button>
+        </div>
+      )}
+
+      <ProductImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        forcedType={forcedType}
+        onImported={ids => { setImportIds(ids.length > 0 ? ids : null) }}
+      />
       {showCreateForm && (
         <div className={styles.card} style={{ marginBottom: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
@@ -307,6 +426,79 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
           Out of Stock — {outOfStock.length}
         </button>
       </div>
+
+      {selection.size > 0 && (
+        <div className={styles.card} style={{ marginBottom: 16, padding: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: '#F0EBE3' }}>
+              <b>{selection.size}</b> selected
+              <Button size="sm" variant="secondary" onClick={() => { setSelection(new Set()); setBulkMsg(null) }} style={{ marginLeft: 10 }}>
+                Clear
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => { setSelection(new Set(visibleProducts.filter(p => p.is_active).map(p => p.id))); setBulkMsg(null) }} style={{ marginLeft: 8 }}>
+                Select all {visibleProducts.filter(p => p.is_active).length}
+              </Button>
+            </span>
+            <Button size="sm" variant="secondary" onClick={loadBulkOptions}>Load options</Button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10 }}>
+            <select
+              className={styles.input + ' ' + styles.select}
+              value={bulkCategory}
+              onChange={e => setBulkCategory(e.target.value)}
+            >
+              <option value="">Category…</option>
+              {bulkCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select
+              className={styles.input + ' ' + styles.select}
+              value={bulkSupplier}
+              onChange={e => setBulkSupplier(e.target.value)}
+            >
+              <option value="">Supplier…</option>
+              {bulkSuppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <input
+              className={styles.input}
+              placeholder="Reorder threshold"
+              value={bulkThreshold}
+              onChange={e => setBulkThreshold(e.target.value)}
+            />
+            <input
+              className={styles.input}
+              placeholder="Unit cost (R)"
+              value={bulkCost}
+              onChange={e => setBulkCost(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button size="sm" disabled={bulkBusy || !buildBulkPatch()} onClick={() => { const p = buildBulkPatch(); if (p) runBulk(p) }}>
+              Apply Changes
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              disabled={bulkBusy}
+              onClick={() => {
+                if (confirm(`Archive ${selection.size} selected product(s)?`)) runBulk({ is_active: false })
+              }}
+            >
+              Archive
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              disabled={bulkBusy}
+              onClick={() => {
+                if (confirm(`Delete ${selection.size} selected product(s)? Products with stock history will be archived instead.`)) runBulk({ is_active: false }, true)
+              }}
+            >
+              Delete
+            </Button>
+            {bulkMsg && <span style={{ fontSize: 12.5, color: bulkMsg.startsWith('Failed') ? '#E85454' : '#4CAF50' }}>{bulkMsg}</span>}
+          </div>
+        </div>
+      )}
 
       <DataTable<Product>
         columns={columns}

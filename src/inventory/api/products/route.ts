@@ -15,11 +15,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const showArchived = searchParams.get('show_archived') === 'true'
     const cursor = searchParams.get('cursor')
     const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 500)
+    const idsParam = searchParams.get('ids')
     const inventoryType = getInventoryTypeFilter(searchParams)
 
     let query = supabase
       .from('inventory_products')
       .select('*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol))', { count: 'exact' })
+
+    if (idsParam) {
+      const ids = idsParam.split(',').map(s => s.trim()).filter(Boolean)
+      if (ids.length > 0) query = query.in('id', ids)
+    }
 
     if (!showArchived) {
       query = query.eq('is_active', true).is('deleted_at', null)
@@ -93,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const supabase = getInventoryClient()
     const body = await request.json()
 
-    const { name, sku, barcode, category_id, inventory_type, preferred_supplier_id, supplier_code, reorder_threshold, reorder_quantity, has_expiry, shelf_life_days, uoms } = body
+    const { name, sku, barcode, category_id, inventory_type, preferred_supplier_id, supplier_code, unit_cost, reorder_threshold, reorder_quantity, has_expiry, shelf_life_days, uoms } = body
 
     if (!name) {
       return NextResponse.json(
@@ -112,6 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         inventory_type: inventory_type ?? 'GENERAL',
         preferred_supplier_id: preferred_supplier_id ?? null,
         supplier_code: supplier_code ?? null,
+        unit_cost: unit_cost ?? null,
         reorder_threshold: reorder_threshold ?? null,
         reorder_quantity: reorder_quantity ?? null,
         has_expiry: has_expiry ?? false,
