@@ -178,7 +178,7 @@ export async function PATCH(
           )
         }
 
-        await supabase
+        const { error: auditErr } = await supabase
           .from('inventory_audit_log')
           .insert({
             table_name: 'inventory_product_uoms',
@@ -186,6 +186,12 @@ export async function PATCH(
             action: 'display_uom_updated',
             changes: { display_uom_id: displayUomId, display_factor: displayFactor ?? 1 },
           })
+        if (auditErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: auditErr.message } },
+            { status: 500 },
+          )
+        }
       } else {
         const { error: deleteErr } = await supabase
           .from('inventory_product_uoms')
@@ -199,7 +205,7 @@ export async function PATCH(
           )
         }
 
-        await supabase
+        const { error: clearAuditErr } = await supabase
           .from('inventory_audit_log')
           .insert({
             table_name: 'inventory_product_uoms',
@@ -207,6 +213,12 @@ export async function PATCH(
             action: 'display_uom_updated',
             changes: { display_uom_id: null },
           })
+        if (clearAuditErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: clearAuditErr.message } },
+            { status: 500 },
+          )
+        }
       }
     }
 
