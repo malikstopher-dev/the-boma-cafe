@@ -2191,3 +2191,42 @@ Migration 096 pushed before first deploy; 097 pushed after probe failure; commit
 - Prod still has zero count profiles - daily sheet uses the 'All Products' fallback section (now Portion-aware).
 - O1-D open issue stands (ledger empty - probe expectedUnits 0 was correct, not a bug).
 - Mission lock updated: E3 COMPLETE; E4 active (re-read lock before starting). Ship 3 (E4) starts per lock re-read; max 4 ships per run.
+
+## Session: E4 - Event-Attributed Purchase Orders (2026-08-18) - commit 381056f
+
+### Objective
+Ship 3 of the autonomous run (E1 -> E2 -> E3 -> E4): event-only purchasing. Owner confirmed scope via question tool: POs link to a confirmed booking/event; receiving costs to the event's cost centre (Events/Private Functions) instead of the location default. Ship 4 limit reached after this ship - run COMPLETE, Stop and await owner.
+
+### Migration 098 (applied to prod) - 098_event_attributed_purchase_orders.sql
+- ADD COLUMN booking_id UUID NULL REFERENCES bookings(id) + cost_centre_id UUID NULL REFERENCES cost_centres(id) on inventory_purchase_orders + partial indexes (guarded IF NOT EXISTS).
+- CREATE OR REPLACE receive_purchase_order (same 8-arg signature as 084/085/086/087/088/089 - history immutable, replay pattern): PO lock query reads po cost_centre_id; cost-centre precedence v_cc = explicit p_cost_centre_id ?? po.cost_centre_id ?? location. P1a-P1e logic (identity, over-receive cap, shortage reasons, auto-invoice, payment terms) byte-for-byte unchanged.
+
+### Engine (src/inventory/engine/purchase-orders.ts)
+- CreatePoInput += booking_id/cost_centre_id; createPurchaseOrder inserts both + audit changes; updatePurchaseOrder allowlist += booking_id, cost_centre_id (PATCH can clear with null).
+- receiveItems: PO select += booking_id, cost_centre_id; effectiveCostCentreId = input.cost_centre_id ?? po.cost_centre_id (engine fallback mirrors RPC precedence).
+- getPurchaseOrder + listPurchaseOrders selects embed bookings(id, name, booking_date, booking_type:booking_types(name)); listPurchaseOrders += booking_id filter.
+
+### API (src/inventory/api/purchase-orders/route.ts)
+- POST validates optional booking_id (400 'Booking not found: X') + cost_centre_id (400 'Cost centre not found: X', active only). GET passes booking_id param.
+
+### UI
+- New PO page: Event/Function select (from /api/supabase/bookings, filtered to confirmed/in_progress/completed) + Event Cost Centre select; Repeat PO prefills booking_id + cost_centre_id.
+- PO detail: Event + Cost Centre cards; receive-form costCentreId prefilled from po.cost_centre_id.
+- PO list: Event column (booking name . date).
+
+### Tests - 284/284 vitest (277 + 7 new po-event.test.ts)
+Stores fields, nulls when absent, update allowlist, list filter, receive precedence (PO centre wins over location; explicit beats PO), location fallback unchanged. Dispatch-mock pattern from purchase-orders.test.ts.
+
+### Live probe (prod, e4-probe.cjs in temp - deleted; 32/32 PASS)
+Probe admin e4probe (bcrypt 12) -> login 200 + boma_admin_session cookie -> Events CC 7ee288c1 live -> booking 'E4 Probe Wedding' 2099-02-14 confirmed + Corporate Event type -> supplier CASH -> product E4PROBE via API -> PO via API with booking_id + Events CC (201, both stored) -> list ?booking_id= filter PASS -> list embed 'E4 Probe Wedding' PASS -> detail embed booking type PASS -> unknown booking/cost centre 400s PASS -> approve/order/receive (NO explicit cost centre) -> ledger txn qty 10 @75 with cost_centre_id = Events (NOT Main Bar's Bar CC) PASS -> auto-invoice 750 pending + supplier match PASS -> PO received PASS -> PATCH booking_id null clears link PASS -> full reverse-order cleanup + 5 residue checks 0 PASS.
+- Probe bugs found & fixed (probe-side, not app bugs): (1) cookie parse - must use headers.getSetCookie() (undici), never body-text regex; (2) cleanup-first must also delete stale probe bookings/suppliers from crashed runs (run 1 crashed pre-cleanup and leaked a supplier+booking that run 2's residue caught - cleaned via diag); (3) receive payload needs unit_cost: 75 - the RPC stores costs only when passed (P1a/P1b contract, no cost fallback in SQL); (4) fetch to Vercel needs retry wrapper (UND_ERR_CONNECT_TIMEOUT transient); (5) cleanup block must be outside the lifecycle if guard so crashes mid-flow still clean up.
+- Diagnostic scripts (diag.cjs/diag2.cjs, temp, deleted) proved: standalone deletes of the leaked rows returned 200 - the residue failures were run-1 leftovers, not a cleanup code bug.
+
+### Deploy
+Migration 098 pushed (supabase db push, local == remote 000-098; benign 016a filename warning); commit 381056f pushed; vercel --prod aliased. next build green (first attempt hit 15-min timeout - known slow-build pattern; 30-min retry passed).
+
+### Notes / handover
+- Cost-centre precedence locked: explicit receive-time cost_centre_id -> PO cost_centre_id -> location default (engine + RPC identical).
+- getInventoryClient is an untyped SupabaseClient - new columns needed no type regeneration.
+- Autonomous run E1->E4 COMPLETE (max 4 ships reached). Queue empty. Awaiting owner direction.
+- O1-D open issue stands (prod ledger empty; probe seeded rows were cleaned).

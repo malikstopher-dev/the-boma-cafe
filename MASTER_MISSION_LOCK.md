@@ -20,8 +20,9 @@
 - E2 (Faster ordering — Repeat PO: prefill New PO form from any existing PO, supplier + line items) — COMPLETE (2026-08-16, commits 6390955 + 75a8c91)
 - E1 (Excel exports — reports hub .XLSX export via `src/inventory/lib/export-xlsx.ts`; sheet-name sanitizer; tab-switch crash fix) — COMPLETE (2026-08-18, commits e225fb6, 4237026, 5d705c1)
 - E3 (Kitchen portion inventory — Portion UOM seed, per-product display-UOM config on products API + detail UI, products list Balance in portions, daily stock input counts in portions; ledger untouched) — COMPLETE (2026-08-18, commits 13d6faa + ccc397a; migrations 096 + 097)
-- Migrations 096–097 applied (local == remote, 000–097)
-- 277/277 Vitest passing; inventory strict TypeScript clean
+- E4 (Event-attributed POs — POs link to a confirmed booking/event; receiving costs to the event's cost centre; precedence: explicit receive-time cost_centre_id → PO cost_centre_id → location default; migration 098 + engine + API + UI) — COMPLETE (2026-08-18, commit 381056f; migration 098)
+- Migrations 096–098 applied (local == remote, 000–098)
+- 284/284 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 
@@ -43,11 +44,11 @@
 
 ## Active ship
 
-**E4 — Event-only purchasing.** Next after E3 (COMPLETE).
+E1 → E2 → E3 → E4 autonomous run COMPLETE (4 ships, max per run reached). **Queue empty — no active ship.** Await owner direction before starting anything new.
 
 ## Deferred queue (in order)
 
-(empty — E4 is the active ship)
+(empty — run complete, awaiting owner)
 (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
 
 ## Architecture decisions (locked)
@@ -67,7 +68,8 @@
 ## Current owner decisions
 
 - `/dashboard` is the permanent canonical Owner Dashboard; `/inv` stays intact until a future retirement ship (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
-- O1 stream COMPLETE (Phases 1–3B); O4, O5, O6, E2, E1, E3 COMPLETE — active ship: E4 (above).
+- O1 stream COMPLETE (Phases 1–3B); O4, O5, O6, E2, E1, E3, E4 COMPLETE — autonomous run ended, queue empty (above).
+- Event purchasing (E4): POs optionally link to a confirmed booking; the event's cost centre governs receiving unless overridden at receive time; booking picker shows confirmed/in_progress/completed only.
 - Keep all KPI cards, boards, alerts, activity, charts exactly where they are on /dashboard.
 - Verify at desktop/laptop/tablet/mobile before every UI ship; headless Edge probes + probe admin accounts (deleted after, audit rows cleaned).
 - Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.
