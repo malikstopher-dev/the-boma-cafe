@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import AdminPage from '@/components/admin/design-system/AdminPage'
 import Button from '@/components/admin/design-system/Button'
 import { SkeletonCard } from '@/components/admin/design-system/Skeleton'
+import { exportRowsToXlsx, type ExportColumn } from '@/inventory/lib/export-xlsx'
 
 type ReportTab = {
   id: string
@@ -86,6 +87,74 @@ export default function ReportsPage() {
 
   function formatCurrency(v: number) {
     return `R${v.toFixed(2)}`
+  }
+
+  const [exporting, setExporting] = useState(false)
+
+  function reportColumns(): ExportColumn<any>[] | null {
+    switch (activeTab) {
+      case 'daily':
+        return [
+          { header: 'Product', value: r => r.productName, width: 28 },
+          { header: 'Opening', value: r => r.openingBalance, width: 10 },
+          { header: 'Purchases', value: r => r.purchases, width: 10 },
+          { header: 'Sales', value: r => r.sales, width: 10 },
+          { header: 'Adjustments', value: r => r.adjustments, width: 12 },
+          { header: 'Closing', value: r => r.closingBalance, width: 10 },
+        ]
+      case 'variance':
+        return [
+          { header: 'Product', value: r => r.productName, width: 28 },
+          { header: 'Expected', value: r => r.expectedQuantity, width: 10 },
+          { header: 'Physical', value: r => r.physicalQuantity, width: 10 },
+          { header: 'Variance', value: r => r.variance, width: 10 },
+          { header: '%', value: r => Math.round(r.variancePct * 10) / 10, width: 8 },
+        ]
+      case 'waste':
+        return [
+          { header: 'Date', value: r => String(r.date).slice(0, 10), width: 12 },
+          { header: 'Type', value: r => r.transactionType.replace('_', ' '), width: 14 },
+          { header: 'Product', value: r => r.productName, width: 28 },
+          { header: 'Qty', value: r => r.quantity, width: 10 },
+          { header: 'Notes', value: r => r.notes ?? '', width: 32 },
+        ]
+      case 'fast-movers':
+      case 'slow-movers':
+        return [
+          { header: 'Product', value: r => r.productName, width: 28 },
+          { header: 'Total Sold', value: r => r.totalQuantity, width: 12 },
+          { header: 'Transactions', value: r => r.transactionCount, width: 14 },
+        ]
+      case 'valuation':
+        return [
+          { header: 'Product', value: r => r.productName, width: 28 },
+          { header: 'Balance', value: r => r.balance, width: 10 },
+          { header: 'Unit Cost', value: r => r.unitCost ?? '', width: 12 },
+          { header: 'Total Value', value: r => r.totalValue, width: 12 },
+        ]
+      default:
+        return null
+    }
+  }
+
+  async function exportReport() {
+    if (!data || data.length === 0 || exporting) return
+    setExporting(true)
+    try {
+      const columns = reportColumns()
+      if (!columns) return
+      const count = await exportRowsToXlsx({
+        filename: `boma-report-${activeTab}-${new Date().toISOString().slice(0, 10)}.xlsx`,
+        sheetName: activeTab === 'fast-movers' ? 'Fast Movers' : activeTab === 'slow-movers' ? 'Slow Movers' : REPORT_TABS.find(t => t.id === activeTab)?.label ?? activeTab,
+        columns,
+        rows: data,
+      })
+      if (typeof window !== 'undefined') {
+        window.alert(`Exported ${count} rows to .XLSX`)
+      }
+    } finally {
+      setExporting(false)
+    }
   }
 
   function renderTable() {
@@ -251,15 +320,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <AdminPage title="Reports" description="Inventory reports and analytics" actions={<Button variant="secondary" size="sm" onClick={() => {
-        if (!data) return
-        const csv = [Object.keys(data[0] || {})].concat(data.map((r: any) => Object.values(r).join(','))).join('\n')
-        const blob = new Blob([csv], { type: 'text/csv' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url; a.download = `${activeTab}-report.csv`; a.click()
-        URL.revokeObjectURL(url)
-      }} disabled={!data}>Export CSV</Button>}>
+    <AdminPage title="Reports" description="Inventory reports and analytics" actions={<Button variant="secondary" size="sm" onClick={() => void exportReport()} disabled={!data || data.length === 0 || exporting}>{exporting ? 'Exporting…' : 'Export .XLSX'}</Button>}>
 
       <div style={{display:'flex',gap:0,borderBottom:'1px solid #3A3428',marginBottom:24,overflowX:'auto',fontFamily:'Inter, sans-serif'}}>
         {REPORT_TABS.map(t => (
