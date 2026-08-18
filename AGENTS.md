@@ -2102,3 +2102,40 @@ Commits 6390955 (feature) + 75a8c91 (archived-supplier fix) pushed; vercel --pro
 - Data observation (NOT fixed - out of scope): prod suppliers table has SIX "National Beverage Co" rows + a 7th archived one that POs reference - import pollution like the categories dupes (069 precedent). A dedup migration could be a future ship if the owner wants clean supplier data.
 - No data written by verification (repeat flow is read-only + form state; nothing submitted).
 - Mission queue: E1 (Excel exports) next per the lock; E3, E4 after. MASTER_MISSION_LOCK.md updated.
+
+---
+
+## Session: E1 - Excel Exports on the Reports Hub (2026-08-18) - commits e225fb6, 4237026, 5d705c1 (ship 1 of the autonomous multi-ship run: E1 ? E3 ? E4 ? next)
+
+### Objective
+Make every report on /admin/operations/reports exportable as a proper Excel .XLSX. Root cause: the previous "Export CSV" was broken — Object.values(r).join(',') with zero escaping (commas/quotes corrupt rows), raw machine headers, ISO dates. /inv/stock already had working XLSX (SheetJS precedent); the reports hub was the friction point.
+
+### Changes
+1. **src/inventory/lib/export-xlsx.ts (NEW)** - generic client-side helper: ExportColumn<T> = { header, value(row), width? }; exportRowsToXlsx({ filename, sheetName, columns, rows }); dynamic import('xlsx'); aoa_to_sheet + !cols widths; numbers preserved as numbers; null/undefined ? ''; environment branch (browser ? XLSX.writeFile; node ? XLSX.write buffer + fs.writeFileSync — vitest ESM breaks xlsx writeFile/readFile); **sanitizeSheetName() strips Excel-forbidden chars : \ / ? * [ ]** (the daily tab label 'What did we use?' contains a '?' — live failure caught by the probe: "Sheet name cannot contain : \\ / ? * [ ]").
+2. **src/app/admin/operations/reports/page.tsx** - per-tab eportColumns() (daily: Product/Opening/Purchases/Sales/Adjustments/Closing; variance: +Variance/% ; waste: Date/Type/Product/Qty/Notes with date slice(0,10) + type replace('_',' '); fast/slow movers: Product/Total Sold/Transactions; valuation: Product/Balance/Unit Cost/Total Value); Export .XLSX button in AdminPage actions (disabled when no data/exporting, 'Exporting…' state, filename boma-report-{tab}-{date}.xlsx, alert with row count).
+3. **Tab-switch crash fix (real production bug found by the probe)** - switching tabs with data loaded crashed the page (stale daily rows rendered through the fast-movers table branch ? 	otalQuantity.toFixed TypeError ? Next error boundary "Something went wrong"). Fix: tab onClick resets data/error (runReport already does). Pre-existing since Phase 1E; the owner never switched tabs after loading.
+4. **src/inventory/__tests__/export-xlsx.test.ts (NEW, 7 tests)** - real xlsx round-trip: headers/values, number types preserved, null ? empty cell, 10,000-row large export with comma+quote notes intact, empty sheet headers only, 31-char sheet-name truncation, forbidden-char stripping.
+
+### Probe tooling (e1-flow.cjs, temp, deleted)
+- CDP Browser.setDownloadBehavior did NOT capture SheetJS downloads in headless Edge (empty dir). Deterministic alternative: monkeypatch URL.createObjectURL in-page, click Export, read the captured Blob via lob.arrayBuffer(), write to disk. Worked 4/4.
+- puppeteer evaluate arg bug: page.evaluate(fn, [label]) passes the ARRAY as the single arg — callbacks must destructure or pass the scalar directly (clickTab silently no-oped on tabs for 3 runs).
+- Page hydration race: networkidle2 fires before React mounts — wait for a known button text before tab clicks.
+- The reports page renders NO limit input (limit defaults to 10 in useEffect); only Days is an input — probe API URLs must mirror page defaults (days=30&limit=10).
+- waste tab: bare-date from/to params exclude today's rows (lte('created_at', to) coerces date ? midnight) — probe omits from/to so page + route defaults (30d ISO window) agree. Pre-existing page/engine date semantics, out of scope.
+
+### Verification (live, prod, probe account e1probe + 5 tagged ledger txns, all cleaned up)
+Seeded ESSAIE +50@50, -3@50, -1.5@50; TEST +20@75, -2@75 with notes 'E1-xlsx-probe, "waste" note' at Main Bar 214044c5 (Bar CC 6232a5c4). Headless Edge owner login ? reports hub:
+- daily: 22 rows, headers exact, sheet row ESSAIE == API (0/50/4.5/0/45.5) PASS
+- fast-movers (30d, limit 10): 1 row, headers exact, ESSAIE 4.5 / 2 txns PASS
+- waste (default 30d): headers exact, TEST row qty 2 + comma/quote notes preserved byte-for-byte in the sheet PASS
+- valuation: 22 rows, headers exact, ESSAIE balance*cost PASS
+- ALL_PASS exit 0; cleanup: txns/acct/audit deleted, RESIDUE_TXNS 0 / RESIDUE_ACCOUNTS 0 / RESIDUE_AUDIT 0.
+- 268/268 vitest (was 261); inventory strict tsc clean; next build green on Vercel (3 cloud builds, aliased).
+
+### Deploy
+Commits e225fb6 (helper + page + tests), 4237026 (sheet-name sanitize), 5d705c1 (tab-switch crash fix) pushed; vercel --prod aliased 3x (transient 'Not authorized' / 'fetch failed' CLI errors — established retry pattern). Standalone standing-rule commit 042e417 pushed with the ship.
+
+### Notes / handover
+- O1-D open issue stands (prod ledger empty — probe rows seeded + cleaned; daily/fast-movers show the seeded rows only during the probe).
+- The daily report now reflects 22 active products at Main Bar (was 19 earlier — owner activity); ESSAIE closing 45.5, beef adjustments -40 etc. are owner data, untouched.
+- Mission lock updated: E1 COMPLETE; E3 active; queue = E4 next. Ship 2 (E3) starts per lock re-read.

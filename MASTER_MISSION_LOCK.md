@@ -18,8 +18,9 @@
 - O5 (Food Products mismatch — `inventory_get_balance` RPC created, cache-backed display reader) — COMPLETE (2026-08-16, commits 826668e + 38497b2)
 - O6 (Products counters mismatch — dashboard summary out/low counters now balance-derived, RPC 095) — COMPLETE (2026-08-16, commit 03b4c6d)
 - E2 (Faster ordering — Repeat PO: prefill New PO form from any existing PO, supplier + line items) — COMPLETE (2026-08-16, commits 6390955 + 75a8c91)
+- E1 (Excel exports — reports hub .XLSX export via `src/inventory/lib/export-xlsx.ts`; sheet-name sanitizer; tab-switch crash fix) — COMPLETE (2026-08-18, commits e225fb6, 4237026, 5d705c1)
 - Migration 095 applied (local == remote, 000–095)
-- 261/261 Vitest passing; inventory strict TypeScript clean
+- 268/268 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 
@@ -41,13 +42,11 @@
 
 ## Active ship
 
-**E1 — Excel exports.** NOT started.
+**E3 — Kitchen portion inventory.** Next after E1 (COMPLETE).
 
 ## Deferred queue (in order)
 
-1. E1 — Excel exports
-2. E3 — Kitchen portion inventory
-3. E4 — Event-only purchasing
+1. E4 — Event-only purchasing
 (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
 
 ## Architecture decisions (locked)
