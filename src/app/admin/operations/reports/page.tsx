@@ -326,7 +326,7 @@ export default function ReportsPage() {
         {REPORT_TABS.map(t => (
           <button
             key={t.id}
-            onClick={() => setActiveTab(t.id)}
+            onClick={() => { setActiveTab(t.id); setData(null); setError(null) }}
             style={{
               padding:'10px 16px',fontSize:14,fontWeight:500,
               borderBottom:`2px solid ${activeTab === t.id ? '#C8A04E' : 'transparent'}`,
