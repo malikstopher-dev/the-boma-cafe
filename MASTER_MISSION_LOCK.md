@@ -19,8 +19,9 @@
 - O6 (Products counters mismatch — dashboard summary out/low counters now balance-derived, RPC 095) — COMPLETE (2026-08-16, commit 03b4c6d)
 - E2 (Faster ordering — Repeat PO: prefill New PO form from any existing PO, supplier + line items) — COMPLETE (2026-08-16, commits 6390955 + 75a8c91)
 - E1 (Excel exports — reports hub .XLSX export via `src/inventory/lib/export-xlsx.ts`; sheet-name sanitizer; tab-switch crash fix) — COMPLETE (2026-08-18, commits e225fb6, 4237026, 5d705c1)
-- Migration 095 applied (local == remote, 000–095)
-- 268/268 Vitest passing; inventory strict TypeScript clean
+- E3 (Kitchen portion inventory — Portion UOM seed, per-product display-UOM config on products API + detail UI, products list Balance in portions, daily stock input counts in portions; ledger untouched) — COMPLETE (2026-08-18, commits 13d6faa + ccc397a; migrations 096 + 097)
+- Migrations 096–097 applied (local == remote, 000–097)
+- 277/277 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 
@@ -42,11 +43,11 @@
 
 ## Active ship
 
-**E3 — Kitchen portion inventory.** Next after E1 (COMPLETE).
+**E4 — Event-only purchasing.** Next after E3 (COMPLETE).
 
 ## Deferred queue (in order)
 
-1. E4 — Event-only purchasing
+(empty — E4 is the active ship)
 (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
 
 ## Architecture decisions (locked)
@@ -66,7 +67,7 @@
 ## Current owner decisions
 
 - `/dashboard` is the permanent canonical Owner Dashboard; `/inv` stays intact until a future retirement ship (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
-- O1 stream COMPLETE (Phases 1–3B); O4, O5, O6, E2 COMPLETE — queue above (E1 next).
+- O1 stream COMPLETE (Phases 1–3B); O4, O5, O6, E2, E1, E3 COMPLETE — active ship: E4 (above).
 - Keep all KPI cards, boards, alerts, activity, charts exactly where they are on /dashboard.
 - Verify at desktop/laptop/tablet/mobile before every UI ship; headless Edge probes + probe admin accounts (deleted after, audit rows cleaned).
 - Staff shared passwords unchanged: BomaKitchen0884 / BomaBar0884 / BomaWaiter0884.

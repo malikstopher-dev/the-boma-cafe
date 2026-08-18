@@ -2139,3 +2139,55 @@ Commits e225fb6 (helper + page + tests), 4237026 (sheet-name sanitize), 5d705c1 
 - O1-D open issue stands (prod ledger empty — probe rows seeded + cleaned; daily/fast-movers show the seeded rows only during the probe).
 - The daily report now reflects 22 active products at Main Bar (was 19 earlier — owner activity); ESSAIE closing 45.5, beef adjustments -40 etc. are owner data, untouched.
 - Mission lock updated: E1 COMPLETE; E3 active; queue = E4 next. Ship 2 (E3) starts per lock re-read.
+
+---
+
+## Session: E3 - Kitchen Portion Inventory - Full Portion Wiring (2026-08-18) - commits 13d6faa + ccc397a (ships 2/4 of the autonomous run)
+
+### Objective
+Ship 2 of the owner-approved autonomous run (E1 ? E3 ? E4 ? next): kitchen inventory counted in Portions instead of base units - per-product display-UOM configuration (Portion seeded), portion display on the products list + detail, and the daily stock input sheet counting in portions. Ledger untouched by design (display/count lens only - the ledger always stores base units).
+
+### Migration 096 (applied to prod) - 096_portion_uom.sql
+Idempotent seed of the Portion UOM (name 'Portion', symbol 'por', category 'discrete', same pattern as migration 070). Verified live: id 69dec6e2-84ba-41de-bb4f-f42efa86bfc3.
+
+### Products API (display-UOM config)
+- **PATCH /api/inventory/products/[id]** - new body fields: display_uom_id (UUID | null) + display_factor (positive number, base units per 1 display unit). Set path: validates factor > 0 (400 'Display factor must be a positive number'), UOM exists (400 'Display UOM not found: ...'), display != base UOM (400 'Display UOM cannot be the same as the base UOM' - one_base_uom CHECK forbids is_base AND is_display on the same row, so a separate row is used), deletes prior is_display rows, inserts is_base:false + is_display:true + conversion_factor, audit row action 'display_uom_updated' with changes {display_uom_id, display_factor}. Clear path (display_uom_id: null): deletes is_display rows + audits with changes {display_uom_id: null}.
+- **Latent dead-branch fix** - the swap-only return path (no other updates) previously checked ''uom_id' in body || 'display_uom_id' in body' AFTER delete body.uom_id/delete body.display_uom_id - the in-body check was ALWAYS false, so swap-only PATCHes returned 400 'No valid fields to update'. Fixed with a uomSwapRequested boolean set before the deletes.
+- **GET embeds** - list: *, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol)); detail: *, inventory_product_uoms(*, inventory_uoms(name, symbol)). Types.ts: InventoryProductUom.inventory_uoms?, InventoryProduct.inventory_product_uoms?.
+- **Audit error surfacing** - the audit inserts were fire-and-forget (errors swallowed). Real bug found by the live probe: inventory_audit_log.action CHECK (migration 039) only allows created/updated/archived/restored/hard_deleted, so 'display_uom_updated' inserts were silently rejected. Fixed: audit insert errors now return 500, and migration 097 extends the CHECK to include 'display_uom_updated'.
+
+### Migration 097 (applied to prod) - 097_audit_display_uom_action.sql
+Guarded ALTER: DROP + re-ADD the inventory_audit_log action CHECK with 'display_uom_updated' added. (No other constraints touched; 039 history immutable.)
+
+### UI
+- **Products list** (src/inventory/components/products-view.tsx) - Balance column renders balance/factor + display UOM name when configured ('45.5 Portion' style), raw base number otherwise. Status badges (Below Par/Out of Stock) stay on raw base balance - thresholds are base-unit truth.
+- **Product detail** (src/app/admin/operations/products/[id]/page.tsx) - UOM Configuration table now shows UOM names + symbols instead of raw UUIDs; new 'Display Unit (portions)' editor card: UOM select (from /api/inventory/uoms), factor input (base units per 1 Portion, e.g. 0.2 kg), Save/Clear with inline success/error message; Stock Summary shows '22.5 Portion (4.50 base)'.
+
+### Daily stock input (src/inventory/engine/daily-entry.ts)
+- buildItem fallback (countUomId null - the 'All Products' fallback section that prod uses): resolves the product's is_display row (uom_id + conversion_factor + inventory_uoms(name)) and counts in the display UOM - expectedUnits = baseExpected/factor, countedUnits = baseCounted/factor. No display UOM ? base units (unchanged).
+- saveDailyCell: when no inventory_count_profile_items link, falls back to the product's display UOM conversion_factor so counted portions convert to base correctly (baseQty = counted x factor). Profile link still wins (existing behaviour).
+
+### Tests - 277/277 vitest (268 + 9 new portion-uom.test.ts)
+- PATCH: set (200 + audit + delete/insert calls), reject factor <= 0, reject unknown UOM, reject display == base, clear (200).
+- daily-entry: fallback counts in display UOM (factor 0.2, expectedUnits 25 for baseExpected 5, countUomName 'Portion'), fallback stays base when no display UOM (factor 1, countUomName null), saveDailyCell converts 10 portions x 0.2 = 2 base via saveCountItem, profile-link UOM wins over display UOM.
+- Mock lessons (burned time): (1) the query-builder mock MUST be thenable - queries ending in .eq()/.order()/.in() (no terminal .maybeSingle()) resolve to the builder object itself, so data destructures as undefined and sheets come back empty; add a 	hen method to the chain. (2) unconsumed mockReturnValueOnce entries leak across tests - vi.clearAllMocks() does NOT clear the once-queue; add mockClient.from.mockReset() in beforeEach. (3) noUncheckedIndexedAccess: non-null assert sheet.sections[0]!.items[0]! in tests.
+
+### Live probe (prod, e3-probe.cjs in temp - deleted; 22/22 PASS)
+Probe owner account (bcrypt 12) + probe product E3PROBE (base KG 7c3a3f80, display Portion x0.2) via deployed API:
+- PATCH display_uom_id 200; list embed {is_display, conversion_factor 0.2, inventory_uoms.name 'Portion'} PASS; detail embed same PASS
+- daily-stock (probe date 2099-01-15, fresh session) fallback section counts in Portion: countUomId=PORTION, countUomName='Portion', factor 0.2, expectedUnits 0 (no ledger rows) PASS
+- saveDailyCell POST {counted: 10} -> inventory_stock_count_items physical_quantity = 2 (10 x 0.2 base) PASS - the ledger conversion is correct end-to-end
+- zero inventory_transactions rows for the probe product PASS (counting never touches the ledger)
+- audit display_uom_updated row with {display_factor 0.2, display_uom_id} PASS (after 097 + audit-error surfacing; first probe run FAILED here - silent CHECK violation, fixed)
+- Cleanup: count items, session, audit rows, uom links, product, admin account + audit rows all deleted; residue checks 0/0/0/0.
+- NOTE: today's real daily session (daily:2026-08-18) exists and is APPROVED - owner data, untouched; probe used a far-future date to avoid collision.
+
+### Deploy
+Migration 096 pushed before first deploy; 097 pushed after probe failure; commits 13d6faa (feature) + ccc397a (097 + audit surfacing) pushed; vercel --prod aliased 2x (first deploy shipped the feature, second the audit fix).
+
+### Notes / handover
+- Display-UOM config is a display/count lens: the ledger always stores base units; toDisplayUnit divides by conversion_factor (base per 1 display unit). Thresholds and insufficient-stock validation stay base-unit.
+- Portion UOM seeded; the count-profiles system (inventory_count_profile_items) can later override per-product count units - the display-UOM fallback only applies when no profile link exists.
+- Prod still has zero count profiles - daily sheet uses the 'All Products' fallback section (now Portion-aware).
+- O1-D open issue stands (ledger empty - probe expectedUnits 0 was correct, not a bug).
+- Mission lock updated: E3 COMPLETE; E4 active (re-read lock before starting). Ship 3 (E4) starts per lock re-read; max 4 ships per run.
