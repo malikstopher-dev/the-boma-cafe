@@ -4,6 +4,10 @@ export type ExportColumn<T> = {
   width?: number
 }
 
+function sanitizeSheetName(name: string): string {
+  return name.replace(/[\\[\]\\:*?/]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 31)
+}
+
 export async function exportRowsToXlsx<T>(opts: {
   filename: string
   sheetName: string
@@ -21,7 +25,7 @@ export async function exportRowsToXlsx<T>(opts: {
   const ws = XLSX.utils.aoa_to_sheet([header, ...body])
   ws['!cols'] = opts.columns.map(c => ({ wch: c.width ?? 18 }))
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, opts.sheetName.slice(0, 31))
+  XLSX.utils.book_append_sheet(wb, ws, sanitizeSheetName(opts.sheetName))
   if (typeof window !== 'undefined') {
     XLSX.writeFile(wb, opts.filename)
   } else {

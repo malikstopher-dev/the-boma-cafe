@@ -143,4 +143,18 @@ describe('exportRowsToXlsx', () => {
     expect(sheetName.length).toBeLessThanOrEqual(31)
     expect(sheetName).toBe(longName.slice(0, 31))
   })
+
+  it('strips Excel-forbidden characters from sheet names', async () => {
+    const file = path.join(tmpDir, 'forbidden.xlsx')
+    await exportRowsToXlsx({
+      filename: file,
+      sheetName: 'What did we use? [daily] *top* /2026',
+      columns: [{ header: 'X', value: () => 1 }],
+      rows: [{ v: 1 }],
+    })
+    const wb = XLSX.read(fs.readFileSync(file), { type: 'buffer' })
+    const sheetName = wb.SheetNames[0] ?? ''
+    expect(sheetName).not.toMatch(/[\\[\]\\:*?/]/)
+    expect(sheetName).toBe('What did we use daily top 2026')
+  })
 })
