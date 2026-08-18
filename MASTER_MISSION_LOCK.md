@@ -44,7 +44,7 @@
 
 ## Active ship
 
-E1 → E2 → E3 → E4 autonomous run COMPLETE (4 ships, max per run reached). **Queue empty — no active ship.** Await owner direction before starting anything new.
+E1 → E3 → E4 autonomous run COMPLETE (3 ships; max 4 per run — one slot unused). **Queue empty — no active ship.** Await owner direction before starting anything new.
 
 ## Deferred queue (in order)
 
