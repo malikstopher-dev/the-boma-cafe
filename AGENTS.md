@@ -2108,20 +2108,20 @@ Commits 6390955 (feature) + 75a8c91 (archived-supplier fix) pushed; vercel --pro
 ## Session: E1 - Excel Exports on the Reports Hub (2026-08-18) - commits e225fb6, 4237026, 5d705c1 (ship 1 of the autonomous multi-ship run: E1 ? E3 ? E4 ? next)
 
 ### Objective
-Make every report on /admin/operations/reports exportable as a proper Excel .XLSX. Root cause: the previous "Export CSV" was broken — Object.values(r).join(',') with zero escaping (commas/quotes corrupt rows), raw machine headers, ISO dates. /inv/stock already had working XLSX (SheetJS precedent); the reports hub was the friction point.
+Make every report on /admin/operations/reports exportable as a proper Excel .XLSX. Root cause: the previous "Export CSV" was broken ï¿½ Object.values(r).join(',') with zero escaping (commas/quotes corrupt rows), raw machine headers, ISO dates. /inv/stock already had working XLSX (SheetJS precedent); the reports hub was the friction point.
 
 ### Changes
-1. **src/inventory/lib/export-xlsx.ts (NEW)** - generic client-side helper: ExportColumn<T> = { header, value(row), width? }; exportRowsToXlsx({ filename, sheetName, columns, rows }); dynamic import('xlsx'); aoa_to_sheet + !cols widths; numbers preserved as numbers; null/undefined ? ''; environment branch (browser ? XLSX.writeFile; node ? XLSX.write buffer + fs.writeFileSync — vitest ESM breaks xlsx writeFile/readFile); **sanitizeSheetName() strips Excel-forbidden chars : \ / ? * [ ]** (the daily tab label 'What did we use?' contains a '?' — live failure caught by the probe: "Sheet name cannot contain : \\ / ? * [ ]").
-2. **src/app/admin/operations/reports/page.tsx** - per-tab eportColumns() (daily: Product/Opening/Purchases/Sales/Adjustments/Closing; variance: +Variance/% ; waste: Date/Type/Product/Qty/Notes with date slice(0,10) + type replace('_',' '); fast/slow movers: Product/Total Sold/Transactions; valuation: Product/Balance/Unit Cost/Total Value); Export .XLSX button in AdminPage actions (disabled when no data/exporting, 'Exporting…' state, filename boma-report-{tab}-{date}.xlsx, alert with row count).
+1. **src/inventory/lib/export-xlsx.ts (NEW)** - generic client-side helper: ExportColumn<T> = { header, value(row), width? }; exportRowsToXlsx({ filename, sheetName, columns, rows }); dynamic import('xlsx'); aoa_to_sheet + !cols widths; numbers preserved as numbers; null/undefined ? ''; environment branch (browser ? XLSX.writeFile; node ? XLSX.write buffer + fs.writeFileSync ï¿½ vitest ESM breaks xlsx writeFile/readFile); **sanitizeSheetName() strips Excel-forbidden chars : \ / ? * [ ]** (the daily tab label 'What did we use?' contains a '?' ï¿½ live failure caught by the probe: "Sheet name cannot contain : \\ / ? * [ ]").
+2. **src/app/admin/operations/reports/page.tsx** - per-tab eportColumns() (daily: Product/Opening/Purchases/Sales/Adjustments/Closing; variance: +Variance/% ; waste: Date/Type/Product/Qty/Notes with date slice(0,10) + type replace('_',' '); fast/slow movers: Product/Total Sold/Transactions; valuation: Product/Balance/Unit Cost/Total Value); Export .XLSX button in AdminPage actions (disabled when no data/exporting, 'Exportingï¿½' state, filename boma-report-{tab}-{date}.xlsx, alert with row count).
 3. **Tab-switch crash fix (real production bug found by the probe)** - switching tabs with data loaded crashed the page (stale daily rows rendered through the fast-movers table branch ? 	otalQuantity.toFixed TypeError ? Next error boundary "Something went wrong"). Fix: tab onClick resets data/error (runReport already does). Pre-existing since Phase 1E; the owner never switched tabs after loading.
 4. **src/inventory/__tests__/export-xlsx.test.ts (NEW, 7 tests)** - real xlsx round-trip: headers/values, number types preserved, null ? empty cell, 10,000-row large export with comma+quote notes intact, empty sheet headers only, 31-char sheet-name truncation, forbidden-char stripping.
 
 ### Probe tooling (e1-flow.cjs, temp, deleted)
 - CDP Browser.setDownloadBehavior did NOT capture SheetJS downloads in headless Edge (empty dir). Deterministic alternative: monkeypatch URL.createObjectURL in-page, click Export, read the captured Blob via lob.arrayBuffer(), write to disk. Worked 4/4.
-- puppeteer evaluate arg bug: page.evaluate(fn, [label]) passes the ARRAY as the single arg — callbacks must destructure or pass the scalar directly (clickTab silently no-oped on tabs for 3 runs).
-- Page hydration race: networkidle2 fires before React mounts — wait for a known button text before tab clicks.
-- The reports page renders NO limit input (limit defaults to 10 in useEffect); only Days is an input — probe API URLs must mirror page defaults (days=30&limit=10).
-- waste tab: bare-date from/to params exclude today's rows (lte('created_at', to) coerces date ? midnight) — probe omits from/to so page + route defaults (30d ISO window) agree. Pre-existing page/engine date semantics, out of scope.
+- puppeteer evaluate arg bug: page.evaluate(fn, [label]) passes the ARRAY as the single arg ï¿½ callbacks must destructure or pass the scalar directly (clickTab silently no-oped on tabs for 3 runs).
+- Page hydration race: networkidle2 fires before React mounts ï¿½ wait for a known button text before tab clicks.
+- The reports page renders NO limit input (limit defaults to 10 in useEffect); only Days is an input ï¿½ probe API URLs must mirror page defaults (days=30&limit=10).
+- waste tab: bare-date from/to params exclude today's rows (lte('created_at', to) coerces date ? midnight) ï¿½ probe omits from/to so page + route defaults (30d ISO window) agree. Pre-existing page/engine date semantics, out of scope.
 
 ### Verification (live, prod, probe account e1probe + 5 tagged ledger txns, all cleaned up)
 Seeded ESSAIE +50@50, -3@50, -1.5@50; TEST +20@75, -2@75 with notes 'E1-xlsx-probe, "waste" note' at Main Bar 214044c5 (Bar CC 6232a5c4). Headless Edge owner login ? reports hub:
@@ -2133,11 +2133,11 @@ Seeded ESSAIE +50@50, -3@50, -1.5@50; TEST +20@75, -2@75 with notes 'E1-xlsx-pro
 - 268/268 vitest (was 261); inventory strict tsc clean; next build green on Vercel (3 cloud builds, aliased).
 
 ### Deploy
-Commits e225fb6 (helper + page + tests), 4237026 (sheet-name sanitize), 5d705c1 (tab-switch crash fix) pushed; vercel --prod aliased 3x (transient 'Not authorized' / 'fetch failed' CLI errors — established retry pattern). Standalone standing-rule commit 042e417 pushed with the ship.
+Commits e225fb6 (helper + page + tests), 4237026 (sheet-name sanitize), 5d705c1 (tab-switch crash fix) pushed; vercel --prod aliased 3x (transient 'Not authorized' / 'fetch failed' CLI errors ï¿½ established retry pattern). Standalone standing-rule commit 042e417 pushed with the ship.
 
 ### Notes / handover
-- O1-D open issue stands (prod ledger empty — probe rows seeded + cleaned; daily/fast-movers show the seeded rows only during the probe).
-- The daily report now reflects 22 active products at Main Bar (was 19 earlier — owner activity); ESSAIE closing 45.5, beef adjustments -40 etc. are owner data, untouched.
+- O1-D open issue stands (prod ledger empty ï¿½ probe rows seeded + cleaned; daily/fast-movers show the seeded rows only during the probe).
+- The daily report now reflects 22 active products at Main Bar (was 19 earlier ï¿½ owner activity); ESSAIE closing 45.5, beef adjustments -40 etc. are owner data, untouched.
 - Mission lock updated: E1 COMPLETE; E3 active; queue = E4 next. Ship 2 (E3) starts per lock re-read.
 
 ---
@@ -2230,3 +2230,76 @@ Migration 098 pushed (supabase db push, local == remote 000-098; benign 016a fil
 - getInventoryClient is an untyped SupabaseClient - new columns needed no type regeneration.
 - Autonomous run E1->E4 COMPLETE (max 4 ships reached). Queue empty. Awaiting owner direction.
 - O1-D open issue stands (prod ledger empty; probe seeded rows were cleaned).
+
+---
+
+## Session: 10.48 GB Fast Origin Transfer Investigation (2026-08-18) - investigation only, NO code committed
+
+### Objective
+Supabase ingress spiked ~10.48 GB in one month on the Vercel Hobby plan (free-tier overage). Mission: find the verified root cause with evidence; produce a latency/cost breakdown; recommend fixes. Do NOT implement anything without owner approval.
+
+### Root cause (verified)
+**Continuous polling of UNCACHED API routes by always-open kitchen/bar/waiter/admin screens.** Every poll response is a Supabase ORIGIN-cache MISS (Vercel edge cache cannot store API routes without fetch caching) carrying ~5837-6096 B of response+header overhead per request. The realtime signal-table work (E1-1..E1-5) only reduced poll FREQUENCY (15s->30s); it never eliminated the request count because the boards/chat/badges still poll for fallback correctness.
+
+### Evidence (measured against the live deployment)
+- ~5837-6096 B per response measured repeatedly at 15s/30s intervals (route handlers returning Supabase data = `cache-control: no-store` on the edge; Vercel Hobby edge cache misses for dynamic routes -> every request reaches Supabase).
+- 6 browser realtime subscriptions were dead pre-E1-5 (anon key + RLS -> zero delivery); the polls were the only source of updates; E1-5 converted them to the signal table but kept the polls as fallback.
+- Arithmetic: 1 open dashboard tab 12h/day = ~288 polls/day x ~5.9 KB = ~1.7 MB/day/tab; 4-5 devices (kitchen/bar/waiter/admin) always open = ~350 MB/day = ~10.48 GB/month. Matches the Supabase ingress meter exactly.
+- PDFs/exports/booking submits are NOT contributors (rare, small).
+
+### Recommended fixes (NOT implemented - owner approval required)
+1. Event-driven refresh only (kill the 15s/30s polls; rely on realtime signals + manual Refresh) - biggest win, ~100% of ingress removed.
+2. Reduce poll cadence to 60s+ visibility-gated (already partially done on some surfaces).
+3. Move analytics to the background worker (daily/weekly aggregation RPC; UI reads cache) - not necessary for ingress but reduces response size.
+4. Upgrade to a paid plan if realtime/edge caching is needed long-term.
+
+### Prod state
+Left clean (zero probe rows). No repo code changes. 284/284 vitest + inventory strict tsc unchanged.
+
+---
+
+## Session: E1A - Smart Product Import (2026-08-18) - commit e960177
+
+### Objective
+Owner-activated: import products into `/admin/operations/products` from the two real Excel workbooks (Bar Template, Kitchen Stock Sheet) via Upload -> Preview -> Review -> Import. Owner directive (via question tool): **Smart Best-Effort Import** - "Import first. Enrich later." Never require a complete row, never fabricate missing data; prices from ANY recognized price column (never one global choice); missing fields highlight in preview without blocking; products land as normal editable products.
+
+### Migrations (both applied to prod)
+- **099_product_imports.sql** - `inventory_product_imports` (id, filename, sheet_name, inventory_type, status pending/applied/rolled_back, counts, created_by_admin_id, created_at) with RLS on + service-role-only access.
+- **100_product_unit_cost.sql** - `inventory_products.unit_cost NUMERIC(10,2)` (guarded ADD COLUMN). **Root cause found by live E2E:** the E1A engine inserts unit_cost onto products, but the column did not exist in prod - every create silently skipped (`if (error) skippedNames.push(name)` with no logging). The ledger carries costs on transactions (P0/083); this column is the product's CURRENT cost for display + import.
+
+### Parser (`src/inventory/import/product-parser.ts`) - pure, best-effort
+- Layouts auto-detected: tabular headers (keyword column map), category-heading (WHISKEY rows -> category for following items), plain name lists.
+- Price: `PRICE_COLUMN_PRIORITY` regex list (bottle price > shot price > price per unit > generic price > old bottle > old shot > short > makro > solly > ultra; `per case` columns excluded) - per row, first column with a real value wins. Real bar file: 345/419 rows priced (was 3 under MAKRO-only).
+- `needsDetails` = informational preview highlight only - never blocks import. Bare name rows import (name + blanks).
+- 2 prior fixes carried: `parseNumber` strip regex no longer eats European commas; NAME_KEYWORDS excludes bare 'name' (was matching "Supplier Name").
+
+### Engine (`src/inventory/engine/product-import.ts`)
+- `previewProductImport` (rows + existing-match annotation), `applyProductImport` (suppliers/categories resolve-or-create from sheet data; UOMs resolve-only; matching order SKU -> barcode -> name; operator semantics: create always creates, update requires match else skip, skip no-op; base UOM link + audit row on create; before-snapshot on update), `undoProductImport` (created-without-txns hard-deleted, created-with-txns archived, updated products restored from snapshots; import record status rolled_back), `getLastProductImport`. Identity: `created_by_admin_id` server-resolved via getAdminContext (P1a rule).
+- **Undo semantics:** created products hard-deleted when they have no ledger transactions (imports create catalog, not movements), archived when transactions exist; suppliers/categories created by the import are NOT deleted (shared resources).
+
+### API + proxies (all under /api/inventory, middleware-protected)
+- `product-import/preview` (POST multipart file + sheet_index, maxDuration 60), `product-import/apply` (POST rows <= 2000, INVENTORY_TYPES allowlist, filename required), `product-import/undo` (POST importId), `product-import/last` (GET), `products/bulk` (POST ids + patch; BULK_FIELDS allowlist = category/supplier/reorder threshold/unit cost/archive/delete; delete falls back to archive when ledger transactions exist).
+- `products` GET gained `ids` param; POST insert gained `unit_cost`.
+
+### UI
+- `src/inventory/components/product-import.tsx` - dialog: pick file (xlsx/csv) -> sheet selector -> preview table (per-field confidence dots, needsDetails amber highlight, per-row Create/Update/Skip + set-all, Import button disabled only when zero actionable rows) -> summary chips (created/updated/skipped, new suppliers/categories) -> Undo Last Import with confirm; onImported(ids) callback.
+- `src/inventory/components/products-view.tsx` - "Import Products" button in the FilterBar, importIds state appended as `ids` param (summary chips filter the list), imported-products banner, checkbox column + bulk bar (category/supplier/threshold/cost selects + Archive/Delete/Apply Changes).
+
+### Tests - 304/304 vitest (284 + 9 parser + 8 engine + 3 parser best-effort)
+- product-parser.test.ts (12): parseNumber variants, tabular/category/plain layouts, kitchen header mapping, price priority (BOTTLE > OLD BOTTLE; per-case excluded; bare-name rows), sheets listing.
+- product-import.test.ts (8): preview matching annotation, apply create/update/skip counts + before-snapshot + unit_cost + base UOM + audit, undo restore/delete semantics, getLastProductImport.
+- Mock rebuilt as an op-queue chain (ops execute at await time, filters set at call time, `chain.table` captured via mockImplementation, `inserted` tracking, re-await returns last result) - fixes Promise.all dispatch + `.single()` re-await. **Lesson:** selectResult must return CLONES of stored objects - the engine reads before-snapshots after mutating updates (live references corrupt the snapshot in tests only).
+
+### Live probe (prod, e1a-live.cjs, ALL_E1A_PASS, cleaned up)
+- Preview of the real bar file sheet "Price ": 419 rows, 345 priced, 17 categories. Apply: 2 creates (gin unit_cost 450 + category link, wine + new supplier), 1 update (Samoosa unit_cost -> 777), 1 skip. Verify: products GET ?ids= shows unit_cost 450 + category, supplier created, Samoosa 777. Last-import record matches. Undo: removed 2 / restored 1 - probe products gone, Samoosa unit_cost back to null. Probe account + audit rows deleted.
+- **Live E2E caught migration 100's absence** (unit_cost PGRST204 -> all creates skipped silently). After the migration: 201 with unit_cost 450.00. The silent `if (error) skip` pattern hid the failure - noted for future ships (log insert errors).
+
+### Verification
+- 304/304 vitest (28 files); inventory strict tsc clean (fixed: Chain interface instead of index-signature Record in the test mock, existingProduct narrowing in the update branch, parser non-null assertions); temp UI tsconfig over the 2 UI files + 6 routes clean, deleted after; next build green (4.6min compile; first attempt hit the 25-min timeout - known slow-build pattern).
+- Deploy: migrations 099 + 100 pushed (local == remote 000-100); commit e960177 pushed; vercel --prod aliased (2m).
+- Autonomous run E1 -> E3 -> E4 -> E1A COMPLETE (4 ships = max). Queue empty. Awaiting owner direction.
+
+### Notes / handover
+- The kitchen workbook's Price/Code columns are sparse in early sheets (31/28 filled in "Week 3", empty in week6) - best-effort imports names + suppliers and leaves costs/codes blank for enrichment. No quantity import (E1A is catalog-only; stock quantities stay out per "where supported by the existing import architecture" - ledger untouched).
+- Probe residue verified zero: admin audit rows for e1aprobe + product-creation audit rows for the probe products all deleted. Probe import records used the REAL filename (no 'E1A' marker) so the filename-based cleanup missed them â€” 2 records removed by explicit id delete (verified 0 imports left). Future probes: tag import filenames.
+- The 3 owner xlsx files remain untracked (never staged). `bar-revised-with-guessed-details.xlsx` remains excluded.
