@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
 import { createPurchaseOrder, listPurchaseOrders } from '@/inventory/engine/purchase-orders'
+import { getInventoryClient } from '@/inventory/lib/db'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<unknown[]>>> {
   try {
@@ -10,6 +11,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       status: searchParams.get('status') ?? undefined,
       overdue: searchParams.get('overdue') === 'true' || undefined,
       inventory_type: searchParams.get('inventory_type') ?? undefined,
+      booking_id: searchParams.get('booking_id') ?? undefined,
       limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
     }
 
@@ -45,6 +47,39 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       if (!item.product_id || !item.location_id || !item.quantity_ordered) {
         return NextResponse.json(
           { error: { code: 'VALIDATION_ERROR', message: 'Each item requires product_id, location_id, and quantity_ordered' } },
+          { status: 400 },
+        )
+      }
+    }
+
+    // E4: validate the optional event link + event cost centre up-front so
+    // callers get a clean 400 instead of a cryptic FK error.
+    const supabase = getInventoryClient()
+
+    if (body.booking_id) {
+      const { data: booking, error: bookingErr } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('id', body.booking_id)
+        .maybeSingle()
+      if (bookingErr || !booking) {
+        return NextResponse.json(
+          { error: { code: 'VALIDATION_ERROR', message: `Booking not found: ${body.booking_id}` } },
+          { status: 400 },
+        )
+      }
+    }
+
+    if (body.cost_centre_id) {
+      const { data: costCentre, error: ccErr } = await supabase
+        .from('cost_centres')
+        .select('id')
+        .eq('id', body.cost_centre_id)
+        .eq('is_active', true)
+        .maybeSingle()
+      if (ccErr || !costCentre) {
+        return NextResponse.json(
+          { error: { code: 'VALIDATION_ERROR', message: `Cost centre not found: ${body.cost_centre_id}` } },
           { status: 400 },
         )
       }

@@ -51,6 +51,7 @@ export default function PurchaseOrderDetailPage() {
         if (json.error) setError(json.error.message)
         else {
           setPo(json.data)
+          if (json.data.cost_centre_id) setCostCentreId(json.data.cost_centre_id)
           const form: Record<string, { qty: string; cost: string; reason: string; notes: string }> = {}
           for (const item of json.data.inventory_purchase_order_items ?? []) {
             const outstanding = Number(item.quantity_ordered) - Number(item.quantity_received ?? 0)
@@ -214,6 +215,22 @@ export default function PurchaseOrderDetailPage() {
         <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
           <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Quotation</div>
           <div style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>{po.quotation_ref || '—'}</div>
+        </div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
+          <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Event / Function</div>
+          <div style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>
+            {po.bookings ? (
+              <>{po.bookings.name} <span style={{color:'#A09888',fontWeight:400}}>({po.bookings.booking_date} {po.bookings.booking_type?.name ? `· ${po.bookings.booking_type.name}` : ''})</span></>
+            ) : (
+              '—'
+            )}
+          </div>
+        </div>
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:12}}>
+          <div style={{fontSize:12,color:'#A09888',fontFamily:'Inter, sans-serif'}}>Cost Centre</div>
+          <div style={{fontWeight:600,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>
+            {po.cost_centre_id ? (costCentres.find(cc => cc.id === po.cost_centre_id)?.name || po.cost_centre_id.slice(0, 8)) : 'Location default'}
+          </div>
         </div>
       </div>
 

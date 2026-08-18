@@ -14,17 +14,28 @@ type LineItem = {
   unit_cost: number | null
 }
 
+type EventBooking = {
+  id: string
+  name: string
+  booking_date: string
+  booking_type: { name: string } | null
+}
+
 export default function NewPurchaseOrderPage() {
   const router = useRouter()
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([])
   const [products, setProducts] = useState<{ id: string; name: string; sku: string | null }[]>([])
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
+  const [eventBookings, setEventBookings] = useState<EventBooking[]>([])
+  const [costCentres, setCostCentres] = useState<{ id: string; name: string }[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [supplierId, setSupplierId] = useState('')
   const [quotationRef, setQuotationRef] = useState('')
   const [expectedAt, setExpectedAt] = useState('')
   const [notes, setNotes] = useState('')
+  const [bookingId, setBookingId] = useState('')
+  const [costCentreId, setCostCentreId] = useState('')
   const [items, setItems] = useState<LineItem[]>([{ product_id: '', location_id: '', quantity_ordered: 1, unit_cost: null }])
   const [repeatInfo, setRepeatInfo] = useState<{ supplierName: string; createdAt: string | null; itemCount: number } | null>(null)
   const [repeatError, setRepeatError] = useState<string | null>(null)
@@ -34,10 +45,21 @@ export default function NewPurchaseOrderPage() {
       fetch('/api/inventory/suppliers?page_size=100').then(r => r.json()),
       fetch('/api/inventory/products?page_size=100').then(r => r.json()),
       fetch('/api/inventory/locations?page_size=50').then(r => r.json()),
-    ]).then(([supJson, prodJson, locJson]) => {
+      fetch('/api/inventory/cost-centres').then(r => r.json()),
+      fetch('/api/supabase/bookings').then(r => r.json()),
+    ]).then(([supJson, prodJson, locJson, ccJson, bookJson]) => {
       setSuppliers((supJson.data || []).map((s: any) => ({ id: s.id, name: s.name })))
       setProducts((prodJson.data || []).map((p: any) => ({ id: p.id, name: p.name, sku: p.sku })))
       setLocations((locJson.data || []).map((l: any) => ({ id: l.id, name: l.name })))
+      setCostCentres((ccJson.data || []).map((c: any) => ({ id: c.id, name: c.name })))
+      setEventBookings((bookJson || [])
+        .filter((b: any) => ['confirmed', 'in_progress', 'completed'].includes(b.status))
+        .map((b: any) => ({
+          id: b.id,
+          name: b.name,
+          booking_date: b.booking_date,
+          booking_type: b.booking_type ?? null,
+        })))
       const firstLoc = locJson.data?.[0]?.id ?? ''
       if (firstLoc) setItems([{ product_id: '', location_id: firstLoc, quantity_ordered: 1, unit_cost: null }])
 
@@ -64,6 +86,8 @@ export default function NewPurchaseOrderPage() {
           setSuppliers(prev => prev.some(s => s.id === src.supplier_id)
             ? prev
             : [...prev, { id: src.supplier_id, name: src.inventory_suppliers?.name ?? 'Unknown supplier' }])
+          if (src.booking_id) setBookingId(src.booking_id)
+          if (src.cost_centre_id) setCostCentreId(src.cost_centre_id)
           if (srcItems.length > 0) setItems(srcItems)
           setRepeatInfo({
             supplierName: src.inventory_suppliers?.name ?? String(src.supplier_id).slice(0, 8),
@@ -107,6 +131,8 @@ export default function NewPurchaseOrderPage() {
           quotation_ref: quotationRef || null,
           expected_at: expectedAt || null,
           notes: notes || null,
+          booking_id: bookingId || null,
+          cost_centre_id: costCentreId || null,
           items: items.map(i => ({
             product_id: i.product_id,
             location_id: i.location_id,
@@ -166,6 +192,29 @@ export default function NewPurchaseOrderPage() {
             <div>
               <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Notes</label>
               <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Internal notes" value={notes} onChange={e => setNotes(e.target.value)} />
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Event / Function</label>
+              <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={bookingId} onChange={e => setBookingId(e.target.value)}>
+                <option value="">None — regular restock</option>
+                {eventBookings.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} — {b.booking_date} {b.booking_type?.name ? `(${b.booking_type.name})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:500,color:'#A09888',display:'block',marginBottom:4,fontFamily:'Inter, sans-serif'}}>Event Cost Centre</label>
+              <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,width:'100%',color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={costCentreId} onChange={e => setCostCentreId(e.target.value)}>
+                <option value="">Auto — use receiving location</option>
+                {costCentres.map(cc => (
+                  <option key={cc.id} value={cc.id}>{cc.name}</option>
+                ))}
+              </select>
+              <p style={{fontSize:11,color:'#6B6358',marginTop:4,fontFamily:'Inter, sans-serif'}}>
+                When linked to an event, receiving is charged to this centre instead of the location default.
+              </p>
             </div>
           </div>
         </div>

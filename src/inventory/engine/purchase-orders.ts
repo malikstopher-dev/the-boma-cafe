@@ -16,6 +16,17 @@ export interface CreatePoInput {
   expected_at?: string | null
   notes?: string | null
   created_by?: string | null
+  /**
+   * E4: the confirmed event/function booking this PO purchases for.
+   * NULL = plain replenishment. Stored as-is (validated by the route).
+   */
+  booking_id?: string | null
+  /**
+   * E4: the event cost centre this PO's receiving is charged to
+   * (Events / Private Functions / VIP Room). NULL = the location default
+   * applies at receive time. Validated by the route.
+   */
+  cost_centre_id?: string | null
   items: {
     product_id: string
     location_id: string
@@ -69,6 +80,8 @@ export async function createPurchaseOrder(input: CreatePoInput) {
       expected_at: input.expected_at ?? null,
       notes: input.notes ?? null,
       created_by: input.created_by ?? null,
+      booking_id: input.booking_id ?? null,
+      cost_centre_id: input.cost_centre_id ?? null,
     })
     .select()
     .single()
@@ -100,7 +113,11 @@ export async function createPurchaseOrder(input: CreatePoInput) {
     .eq('id', poId)
     .single()
 
-  await writeAuditLog('inventory_purchase_orders', poId, 'created', { supplier_id: input.supplier_id }, input.created_by ?? null)
+  await writeAuditLog('inventory_purchase_orders', poId, 'created', {
+    supplier_id: input.supplier_id,
+    booking_id: input.booking_id ?? null,
+    cost_centre_id: input.cost_centre_id ?? null,
+  }, input.created_by ?? null)
 
   return fullPo
 }
@@ -110,7 +127,7 @@ export async function getPurchaseOrder(id: string) {
 
   const { data: po } = await supabase
     .from('inventory_purchase_orders')
-    .select('*, inventory_suppliers(name), inventory_purchase_order_items(*, inventory_products(id, name, sku))')
+    .select('*, inventory_suppliers(name), inventory_purchase_order_items(*, inventory_products(id, name, sku)), bookings(id, name, booking_date, booking_type:booking_types(name))')
     .eq('id', id)
     .maybeSingle()
 
@@ -130,18 +147,20 @@ export async function listPurchaseOrders(filters?: {
   status?: string
   overdue?: boolean
   inventory_type?: string
+  booking_id?: string
   limit?: number
 }) {
   const supabase = getInventoryClient()
 
   let query = supabase
     .from('inventory_purchase_orders')
-    .select('*, inventory_suppliers(name), inventory_purchase_order_items(count)')
+    .select('*, inventory_suppliers(name), inventory_purchase_order_items(count), bookings(id, name, booking_date, booking_type:booking_types(name))')
     .order('created_at', { ascending: false })
     .limit(filters?.limit ?? 50)
 
   if (filters?.supplier_id) query = query.eq('supplier_id', filters.supplier_id)
   if (filters?.status) query = query.eq('status', filters.status)
+  if (filters?.booking_id) query = query.eq('booking_id', filters.booking_id)
   if (filters?.overdue) {
     query = query.in('status', ['ordered', 'partial'])
     query = query.lt('expected_at', new Date().toISOString().slice(0, 10))
@@ -169,7 +188,7 @@ export async function listPurchaseOrders(filters?: {
 export async function updatePurchaseOrder(id: string, updates: Record<string, unknown>) {
   const supabase = getInventoryClient()
 
-  const allowed = ['quotation_ref', 'expected_at', 'notes', 'supplier_id']
+  const allowed = ['quotation_ref', 'expected_at', 'notes', 'supplier_id', 'booking_id', 'cost_centre_id']
   const clean: Record<string, unknown> = {}
   for (const key of allowed) {
     if (key in updates) clean[key] = updates[key]
@@ -223,7 +242,7 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
 
   const { data: po } = await supabase
     .from('inventory_purchase_orders')
-    .select('id, status, supplier_id')
+    .select('id, status, supplier_id, booking_id, cost_centre_id')
     .eq('id', poId)
     .single()
 
@@ -239,6 +258,12 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
 
   const poItemsByKey = new Map((poItemRows ?? []).map(r => [`${r.id}::${r.product_id}`, r]))
   const receivedSoFar = new Map<string, number>()
+
+  // E4: cost centre precedence - explicit receive-time override wins, then
+  // the PO's own cost centre (event-attributed ordering), then the location.
+  // resolveCostCentreId validates any explicit value against active centres.
+  const poCostCentreId = po.cost_centre_id ?? null
+  const effectiveCostCentreId = input.cost_centre_id ?? poCostCentreId
 
   // Resolve the cost centre for every item BEFORE any write. If any
   // location lacks a configured cost centre this throws up-front, so
@@ -270,7 +295,7 @@ export async function receiveItems(poId: string, input: ReceiveInput) {
     return {
       item,
       poItem,
-      cost_centre_id: await resolveCostCentreId(poItem.location_id, input.cost_centre_id),
+      cost_centre_id: await resolveCostCentreId(poItem.location_id, effectiveCostCentreId),
     }
   }))
 

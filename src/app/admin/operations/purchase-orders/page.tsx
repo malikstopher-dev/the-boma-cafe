@@ -26,6 +26,7 @@ type PurchaseOrder = {
   status: string
   expected_at: string | null
   created_at: string
+  bookings?: { id: string; name: string; booking_date: string; booking_type?: { name: string } | null } | null
   inventory_purchase_order_items?: { count: number }[]
 }
 
@@ -94,6 +95,20 @@ export default function PurchaseOrdersPage() {
             <span className="ml-2 text-red-500 text-xs font-semibold">OVERDUE</span>
           )}
         </span>
+      ),
+    },
+    {
+      key: 'booking_id',
+      header: 'Event',
+      cell: po => (
+        po.bookings ? (
+          <span style={{color:'#E8C87A',fontSize:13,fontFamily:'Inter, sans-serif'}}>
+            {po.bookings.name}
+            {po.bookings.booking_date ? <span style={{color:'#A09888'}}> · {po.bookings.booking_date}</span> : null}
+          </span>
+        ) : (
+          <span style={{color:'#6B6358',fontFamily:'Inter, sans-serif'}}>—</span>
+        )
       ),
     },
     {
