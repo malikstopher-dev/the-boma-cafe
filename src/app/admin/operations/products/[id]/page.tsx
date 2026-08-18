@@ -35,8 +35,11 @@ interface ProductDetail {
     is_base: boolean
     is_display: boolean
     conversion_factor: number
+    inventory_uoms?: { name: string | null; symbol: string | null } | null
   }>
 }
+
+type UomOption = { id: string; name: string; symbol: string | null }
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -45,6 +48,21 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [uomOptions, setUomOptions] = useState<UomOption[]>([])
+  const [displayUomId, setDisplayUomId] = useState('')
+  const [displayFactor, setDisplayFactor] = useState('')
+  const [displaySaving, setDisplaySaving] = useState(false)
+  const [displayMessage, setDisplayMessage] = useState('')
+
+  useEffect(() => {
+    fetch('/api/inventory/uoms')
+      .then(r => r.json())
+      .then(json => {
+        const list = Array.isArray(json) ? json : (json.data ?? [])
+        if (Array.isArray(list)) setUomOptions(list)
+      })
+      .catch(() => {})
+  }, [])
 
   function load() {
     const id = params?.id as string
@@ -61,6 +79,34 @@ export default function ProductDetailPage() {
   }
 
   useEffect(load, [params?.id])
+
+  const currentDisplay = product?.inventory_product_uoms?.find(u => u.is_display)
+
+  async function handleSaveDisplayUom() {
+    const id = params?.id as string
+    const uomId = displayUomId
+    const factor = Number(displayFactor)
+    setDisplaySaving(true)
+    setDisplayMessage('')
+    try {
+      const res = await fetch(`/api/inventory/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_uom_id: uomId || null,
+          ...(uomId && displayFactor.trim() !== '' && Number.isFinite(factor) ? { display_factor: factor } : {}),
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error?.message ?? 'Save failed')
+      setDisplayMessage(uomId ? 'Display unit saved' : 'Display unit cleared')
+      load()
+    } catch (err) {
+      setDisplayMessage(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setDisplaySaving(false)
+    }
+  }
 
   async function handleArchive(reason: string) {
     const id = params?.id as string
@@ -145,7 +191,10 @@ export default function ProductDetailPage() {
                 <tbody>
                   {product.inventory_product_uoms.map(uom => (
                     <tr key={uom.id} style={{ borderBottom: '1px solid #3A3428' }}>
-                      <td style={{ padding: '12px 16px', color: '#F0EBE3' }}>{uom.uom_id}</td>
+                      <td style={{ padding: '12px 16px', color: '#F0EBE3' }}>
+                        {uom.inventory_uoms?.name ?? uom.uom_id}
+                        {uom.inventory_uoms?.symbol ? ` (${uom.inventory_uoms.symbol})` : ''}
+                      </td>
                       <td style={{ padding: '12px 16px' }}>
                         {uom.is_base && <Badge variant="info">Base</Badge>}
                         {uom.is_display && <Badge variant="success">Display</Badge>}
@@ -159,7 +208,45 @@ export default function ProductDetailPage() {
           )}
 
           <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
-            <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Activity Timeline</h3>
+            <h3 className="mb-3" style={{ fontSize: 16, fontWeight: 600, color: '#F0EBE3', fontFamily: "'Inter', sans-serif" }}>Display Unit (portions)</h3>
+            <p className="mb-3" style={{ fontSize: 12.5, color: '#A09888', fontFamily: "'Inter', sans-serif" }}>
+              Balances are shown and counted in this unit (e.g. 1 Portion = {currentDisplay?.conversion_factor ?? 1} {product.inventory_product_uoms?.find(u => u.is_base)?.inventory_uoms?.name ?? 'base unit'}). The ledger stays in base units.
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <select
+                value={displayUomId || currentDisplay?.uom_id || ''}
+                onChange={e => setDisplayUomId(e.target.value)}
+                style={{ background: '#241D14', color: '#F0EBE3', border: '1px solid #3A3428', borderRadius: 8, padding: '8px 12px', fontSize: 13, maxWidth: 220 }}
+              >
+                <option value="">— None —</option>
+                {uomOptions.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="0.000001"
+                step="any"
+                placeholder="Base units per 1"
+                value={displayFactor}
+                onChange={e => setDisplayFactor(e.target.value)}
+                style={{ background: '#241D14', color: '#F0EBE3', border: '1px solid #3A3428', borderRadius: 8, padding: '8px 12px', fontSize: 13, width: 160 }}
+              />
+              <Button variant="primary" size="sm" onClick={() => void handleSaveDisplayUom()} disabled={displaySaving}>
+                {displaySaving ? 'Saving...' : 'Save'}
+              </Button>
+              {currentDisplay && (
+                <Button variant="danger" size="sm" onClick={() => { setDisplayUomId(''); setDisplayFactor(''); void handleSaveDisplayUom() }} disabled={displaySaving}>
+                  Clear
+                </Button>
+              )}
+            </div>
+            {displayMessage && (
+              <p style={{ marginTop: 10, fontSize: 12.5, color: displayMessage.includes('failed') || displayMessage.includes('must') || displayMessage.includes('cannot') ? '#E85454' : '#6BBD59', fontFamily: "'Inter', sans-serif" }}>{displayMessage}</p>
+            )}
+          </div>
+
+          <div className="rounded-lg border p-4" style={{ background: '#1E1A14', borderColor: '#3A3428' }}>
             <MovementTimeline productId={product.id} />
           </div>
         </div>
@@ -187,7 +274,13 @@ export default function ProductDetailPage() {
                 <span style={{ color: '#A09888' }}>Current Balance</span>
                 <span style={{ color: '#F0EBE3', fontWeight: 500 }}>
                   {product.current_balance !== null && product.current_balance !== undefined
-                    ? product.current_balance.toFixed(2)
+                    ? (() => {
+                        const bal = product.current_balance
+                        const display = currentDisplay
+                        if (!display || !display.conversion_factor || display.conversion_factor <= 0) return bal.toFixed(2)
+                        const portions = bal / display.conversion_factor
+                        return `${Number.isInteger(portions) ? portions : portions.toFixed(1)} ${display.inventory_uoms?.name ?? 'units'} (${bal.toFixed(2)} base)`
+                      })()
                     : '—'}
                 </span>
               </div>

@@ -48,6 +48,7 @@ export interface InventoryProductUom {
   is_display: boolean
   conversion_factor: number
   created_at: string
+  inventory_uoms?: { name: string | null; symbol: string | null } | null
 }
 
 export interface InventoryLocation {
@@ -106,6 +107,8 @@ export interface InventoryProduct {
   shelf_life_days: number | null
   created_at: string
   updated_at: string
+  current_balance?: number | null
+  inventory_product_uoms?: InventoryProductUom[] | null
 }
 
 export interface InventoryTransaction {

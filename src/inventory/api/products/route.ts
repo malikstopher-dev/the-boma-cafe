@@ -19,7 +19,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     let query = supabase
       .from('inventory_products')
-      .select('*', { count: 'exact' })
+      .select('*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol))', { count: 'exact' })
 
     if (!showArchived) {
       query = query.eq('is_active', true).is('deleted_at', null)

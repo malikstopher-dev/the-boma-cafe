@@ -203,6 +203,20 @@ export async function getDailySheet(
           /* unconfigured product uom — count in base units */
         }
       }
+    } else {
+      // Fallback section: count in the product's display UOM (e.g. Portion)
+      // when one is configured, otherwise base units.
+      const { data: displayUom } = await supabase
+        .from('inventory_product_uoms')
+        .select('uom_id, conversion_factor, inventory_uoms(name)')
+        .eq('product_id', productId)
+        .eq('is_display', true)
+        .maybeSingle()
+      if (displayUom?.uom_id && Number(displayUom.conversion_factor) > 0) {
+        factor = Number(displayUom.conversion_factor)
+        countUomId = displayUom.uom_id as string
+        countUomName = (displayUom as { inventory_uoms?: { name?: string | null } | null }).inventory_uoms?.name ?? null
+      }
     }
 
     const expectedUnits = baseExpected / factor
@@ -311,6 +325,19 @@ export async function saveDailyCell(
   if (link?.count_uom_id) {
     const f = await getProductConversion(productId, link.count_uom_id as string)
     if (f !== null && f > 0) factor = Number(f)
+  } else {
+    // Fallback: the sheet counts in the product's display UOM (e.g. Portion)
+    // when configured — mirror the sheet builder so saved cells convert
+    // consistently back to base units.
+    const { data: displayUom } = await supabase
+      .from('inventory_product_uoms')
+      .select('conversion_factor')
+      .eq('product_id', productId)
+      .eq('is_display', true)
+      .maybeSingle()
+    if (displayUom && Number(displayUom.conversion_factor) > 0) {
+      factor = Number(displayUom.conversion_factor)
+    }
   }
 
   const baseQty = countedUnits * factor

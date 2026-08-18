@@ -21,6 +21,18 @@ type Product = {
   deleted_at: string | null
   reorder_threshold: number | null
   current_balance?: number | null
+  inventory_product_uoms?: Array<{
+    is_base: boolean
+    is_display: boolean
+    conversion_factor: number
+    inventory_uoms?: { name: string | null; symbol: string | null } | null
+  }> | null
+}
+
+function displayUnit(product: Product): { factor: number; name: string | null } | null {
+  const row = product.inventory_product_uoms?.find(u => u.is_display)
+  if (!row || !row.conversion_factor || row.conversion_factor <= 0) return null
+  return { factor: row.conversion_factor, name: row.inventory_uoms?.name ?? null }
 }
 
 const TYPE_OPTIONS = ['FOOD', 'BEVERAGE', 'CLEANING', 'PACKAGING', 'GENERAL']
@@ -123,9 +135,19 @@ export default function ProductsView({ forcedType }: { forcedType?: string }) {
       key: 'current_balance',
       header: 'Balance',
       sortable: true,
-      cell: product => (
-        <span>{product.current_balance !== null && product.current_balance !== undefined ? product.current_balance : '—'}</span>
-      ),
+      cell: product => {
+        const bal = product.current_balance
+        if (bal === null || bal === undefined) return <span>—</span>
+        const display = displayUnit(product)
+        if (!display) return <span>{bal}</span>
+        const portions = bal / display.factor
+        return (
+          <span>
+            {Number.isInteger(portions) ? portions : portions.toFixed(1)}{' '}
+            <span style={{ color: '#5A5666', fontSize: 12 }}>{display.name ?? 'units'}</span>
+          </span>
+        )
+      },
     },
     {
       key: 'reorder_threshold',

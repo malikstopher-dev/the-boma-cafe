@@ -14,7 +14,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from('inventory_products')
-      .select('*, inventory_product_uoms(*)')
+      .select('*, inventory_product_uoms(*, inventory_uoms(name, symbol))')
       .eq('id', id)
       .maybeSingle()
 
@@ -65,10 +65,16 @@ export async function PATCH(
       'unit_cost',
     ]
 
+    // True when a UOM swap (base uom_id or display_uom_id) was requested —
+    // survives the delete body.uom_id / delete body.display_uom_id mutations
+    // below, which otherwise make the in-body re-check dead code.
+    let uomSwapRequested = false
+
     // Unit swap: inventory_products has no uom_id column (UOM links live in
     // inventory_product_uoms). Replace the product's base/display UOM with
     // the requested one before applying the other field updates.
     if ('uom_id' in body) {
+      uomSwapRequested = true
       const uomId = body.uom_id as string | null
       delete body.uom_id
       if (uomId) {
@@ -101,6 +107,109 @@ export async function PATCH(
       }
     }
 
+    // Display UOM: the unit balances are shown/counted in (e.g. Portion) on
+    // top of the base unit. conversion_factor = base units per 1 display unit
+    // (toDisplayUnit divides by it). Cleared when display_uom_id is null.
+    if ('display_uom_id' in body) {
+      uomSwapRequested = true
+      const displayUomId = body.display_uom_id as string | null
+      const displayFactor = body.display_factor as number | undefined
+      delete body.display_uom_id
+      delete body.display_factor
+
+      if (displayFactor !== undefined && (typeof displayFactor !== 'number' || !Number.isFinite(displayFactor) || displayFactor <= 0)) {
+        return NextResponse.json(
+          { error: { code: 'VALIDATION_ERROR', message: 'Display factor must be a positive number' } },
+          { status: 400 },
+        )
+      }
+
+      if (displayUomId) {
+        const { data: uom } = await supabase
+          .from('inventory_uoms')
+          .select('id')
+          .eq('id', displayUomId)
+          .maybeSingle()
+        if (!uom) {
+          return NextResponse.json(
+            { error: { code: 'VALIDATION_ERROR', message: `Display UOM not found: ${displayUomId}` } },
+            { status: 400 },
+          )
+        }
+
+        const { data: baseUom } = await supabase
+          .from('inventory_product_uoms')
+          .select('uom_id')
+          .eq('product_id', id)
+          .eq('is_base', true)
+          .maybeSingle()
+        if (baseUom && baseUom.uom_id === displayUomId) {
+          return NextResponse.json(
+            { error: { code: 'VALIDATION_ERROR', message: 'Display UOM cannot be the same as the base UOM' } },
+            { status: 400 },
+          )
+        }
+
+        const { error: deleteErr } = await supabase
+          .from('inventory_product_uoms')
+          .delete()
+          .eq('product_id', id)
+          .eq('is_display', true)
+        if (deleteErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: deleteErr.message } },
+            { status: 500 },
+          )
+        }
+        const { error: insertErr } = await supabase
+          .from('inventory_product_uoms')
+          .insert({
+            product_id: id,
+            uom_id: displayUomId,
+            // one_base_uom CHECK forbids is_base AND is_display together.
+            is_base: false,
+            is_display: true,
+            conversion_factor: displayFactor ?? 1,
+          })
+        if (insertErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: insertErr.message } },
+            { status: 500 },
+          )
+        }
+
+        await supabase
+          .from('inventory_audit_log')
+          .insert({
+            table_name: 'inventory_product_uoms',
+            record_id: id,
+            action: 'display_uom_updated',
+            changes: { display_uom_id: displayUomId, display_factor: displayFactor ?? 1 },
+          })
+      } else {
+        const { error: deleteErr } = await supabase
+          .from('inventory_product_uoms')
+          .delete()
+          .eq('product_id', id)
+          .eq('is_display', true)
+        if (deleteErr) {
+          return NextResponse.json(
+            { error: { code: 'DB_ERROR', message: deleteErr.message } },
+            { status: 500 },
+          )
+        }
+
+        await supabase
+          .from('inventory_audit_log')
+          .insert({
+            table_name: 'inventory_product_uoms',
+            record_id: id,
+            action: 'display_uom_updated',
+            changes: { display_uom_id: null },
+          })
+      }
+    }
+
     const updates: Record<string, unknown> = {}
     for (const field of allowedFields) {
       if (field in body) {
@@ -109,7 +218,9 @@ export async function PATCH(
     }
 
     if (Object.keys(updates).length === 0) {
-      if ('uom_id' in body) {
+      // Nothing but a UOM swap was requested — the swap already happened
+      // above, so just return the current product.
+      if (uomSwapRequested) {
         const { data: product, error: getErr } = await supabase
           .from('inventory_products')
           .select('*')
