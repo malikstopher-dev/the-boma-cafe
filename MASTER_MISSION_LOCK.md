@@ -24,6 +24,7 @@
 - E1A (Smart Product Import — best-effort parser: name-only rows import, priority price-column scan incl. BOTTLE PRICE, per-row create/update/skip, Undo Last Import, bulk edit on products list, Import Products dialog; migrations 099 + 100) — COMPLETE (2026-08-18, commit e960177; migrations 099 + 100)
 - O1-D (Production ledger recovery — 61 evidenced pre-wipe transactions restored with original IDs/timestamps; balance cache rebuilt from ledger `SUM(quantity)`, 32 rows, 0 parity mismatches; PO reconciliation 6/6; gas tracker, daily sheet, owner KPIs, realtime (61 `stock.moved` events) all verified) — COMPLETE (2026-08-19, data restored in production; docs-only commit)
 - Migrations 096–102 applied (local == remote, 000–102; 016a filename-skip benign)
+- Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
 - 316/316 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
@@ -154,12 +155,12 @@
 - Live production checks: anonymous `realtime_events` cursor query is 200 with only id/event/table/entity/timestamp fields; `orders` returns no rows; direct `staff_messages` currently returns a 500 infinite-RLS-recursion error and is not used as a transport. A disposable Owner browser received a real `stock.low` event and refreshed `/dashboard` (3 -> 4 owner API requests) with no realtime errors; all probe records were deleted.
 - Commit `1060ba2` is pushed and deployed. SYNC-1D and later checkpoints remain approval-gated.
 
-### S1 — Sensitive Supplier Banking Details (QUEUED after U1 acceptance)
+### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.
 - Add optional bank name, account holder/name, account number, account type, branch code, and payment/reference information using the smallest additive design.
 - Treat banking data as sensitive business data: never expose it through public/client-facing endpoints, logs, analytics, realtime payloads, or unauthorized UI.
-- Implementation starts only after U1 is safely handled and the owner accepts the plan.
+- Implementation was approved after U1 acceptance and deployed with the supplier-integrity cutover.
 
 **Investigation result / proposed security design:**
 
@@ -170,12 +171,23 @@
 - Record only sanitized audit events (created/updated/revealed/deleted, supplier ID, actor, changed field names). Never log account number, branch code, encrypted payload, IV, tag, or submitted request bodies.
 - Before S1, replace supplier wildcard selects with explicit existing-column lists and add a minimal `{id,name}` options endpoint. Existing supplier routes are broadly authenticated but do not currently enforce supplier-specific admin RBAC; banking routes must not inherit that weakness.
 
+### S1 production result
+
+- Migration 103 installed `inventory_supplier_merge_log`, the controlled consolidation RPC, and rollback RPC. It did not execute consolidation during migration.
+- Migration 104 installed the isolated service-role-only `inventory_supplier_bank_details` table and encrypted banking RPCs. No banking rows remain after verification cleanup.
+- Vercel Production key `SUPPLIER_BANK_ENCRYPTION_KEY_V1` was generated as a fresh 32-byte base64 key and configured only for Production; the value was never printed or committed.
+- Controlled merge RPC executed once with merge ID `d6b9ace1-d53a-4f55-8806-0e1d39bd8c40`: 7 source suppliers archived, 2 survivors active.
+- Pre-merge references were preserved: 8 products, 8 purchase orders, 12 receipts, 1 invoice, 0 payments, 0 imports, 0 mappings, 0 reorder rules, and 0 price-history rows. Post-merge counts reconciled exactly.
+- Live RBAC: owner/full_manager banking reads and writes succeeded; manager/assistant_manager were denied; only owner deletion succeeded.
+- Live leakage checks found no plaintext banking value in the encrypted table, audit values, generic supplier APIs, public menu, or staff API responses.
+- Probe admin accounts, audit rows, and banking rows were deleted. Merge log and rollback metadata remain intentionally preserved.
+- Commit `736ebc0` was pushed to `main`; Vercel Production deployment was Ready and aliased to `the-boma-cafe.vercel.app`.
+
 ## Deferred queue (in order)
 
 - SYNC-1D onward — Unified Application Synchronization Program (approval-gated).
-- S1 — Sensitive Supplier Banking Details (after U1 acceptance; implementation approval-gated).
+- Supplier Data Integrity + Banking Details — COMPLETE; no follow-up supplier mission is active.
 - Optional (future consolidation): `/inv` retirement (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
-- Optional (future data ship): supplier dedup migration (six "National Beverage Co" rows + 1 archived, E2 finding).
 - (O1-D ledger-warning banner — MOOT: ledger restored 2026-08-19, no longer applicable.)
 - (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
 

@@ -2476,3 +2476,104 @@ Deploy the already verified U1-B menu transfer fix before touching data, prove a
 - Production proof after deployment: forged headers return `{authenticated:false}`; Kitchen inventory GET=403 while Kitchen board=200; anonymous signal cursor query=200; Owner dashboard received a real `stock.low` and refreshed 3->4 with no realtime errors. Direct `staff_messages` anonymous REST reads currently fail 500 due to recursive RLS and remain unused. All SYNC probe rows were deleted.
 - Verification: 316/316 Vitest, inventory strict TypeScript, local and Vercel production builds (187 pages) green. Commits `30f40d1` and `1060ba2` pushed and deployed.
 - Next SYNC checkpoint is D (order convergence), approval-gated. The user requested a third priority but did not name it; stop for clarification rather than selecting one.
+
+## Model Usage / Context Discipline
+
+### 1. SUBAGENTS
+- Do not spawn subagents unless the owner explicitly requests them.
+- Prefer completing the task in the primary agent context.
+
+### 2. TARGETED READING
+- Read only files relevant to the active task.
+- Do not recursively inspect unrelated directories.
+- Do not repeatedly re-read files whose relevant state is already established.
+- Exclude generated/vendor directories such as `node_modules`, `.next`, `dist`, `coverage`, build artifacts, caches, and generated outputs unless specifically required.
+
+### 3. PRESERVE MISSION CONTEXT
+- `MASTER_MISSION_LOCK` remains authoritative.
+- Do not save tokens by skipping required mission-lock checks.
+- Use existing documented investigation results instead of re-investigating completed work.
+- Do not reopen completed ships without evidence of regression.
+
+### 4. OUTPUT DISCIPLINE
+- Keep intermediate commentary concise.
+- Do not reproduce entire files when a targeted edit/diff is sufficient.
+- Do not generate repetitive explanations or boilerplate comments.
+- Final reports must still contain all fields required by the mission lock.
+
+### 5. SMALL, VERIFIED STEPS
+- Prefer the smallest change that satisfies the active mission.
+- Avoid unrelated refactors and speculative improvements.
+- Run targeted tests first.
+- Run broader required verification only when appropriate for the mission checkpoint/closure.
+- Do not repeatedly rerun unchanged expensive test/build commands without a reason.
+
+### 6. SEARCH DISCIPLINE
+- Use targeted searches for symbols/routes/tables first.
+- Broaden repository searches only when the targeted search is insufficient.
+- Do not dump large search results into the conversation when a concise evidence summary is enough.
+
+### 7. DIFFICULT TASKS MUST NOT BE SKIPPED
+- Context/token conservation must never justify guessing, skipping, weakening, or silently simplifying a required task.
+- If the current model cannot confidently complete a required step, STOP that step and report:
+  - what is established,
+  - what remains unresolved,
+  - why proceeding would require guessing,
+  - which stronger model/reasoning level is recommended,
+  - the minimum context/prompt that stronger model needs.
+- Continue independent safe work only when it does not depend on the unresolved issue.
+
+### 8. STOP POINTS
+- Respect explicit investigation, implementation, deployment, and approval boundaries.
+- Do not continue into the next phase merely because time/context remains.
+- Never automatically activate another mission.
+
+### 9. CONTEXT HANDOFF
+- At meaningful checkpoints, record concise durable findings in the project documentation required by the mission lock.
+- Prefer a compact verified checkpoint over carrying large conversational history forward.
+
+---
+
+## Session: Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19)
+
+### Objective
+
+Consolidate approved duplicate suppliers without deleting history and add isolated encrypted supplier banking details with role enforcement.
+
+### Production cutover
+
+- Vercel Production `SUPPLIER_BANK_ENCRYPTION_KEY_V1` was generated as a fresh 32-byte base64 key and configured only in Production. The value was never printed, logged, or committed. `SUPABASE_SERVICE_ROLE_KEY` was not changed.
+- Migrations 103 and 104 applied successfully; local and remote migration history match through 104.
+- Migration 103 is installation-only: merge log table, consolidation RPC, rollback RPC, grants, and indexes. No merge ran during migration.
+- Migration 104 is additive: isolated RLS-enabled `inventory_supplier_bank_details` table plus encrypted upsert/delete RPCs. Generic supplier DTOs remain separate.
+- Commit `736ebc0` pushed to `main`; Vercel Production deployment Ready and aliased to `the-boma-cafe.vercel.app`.
+
+### Controlled merge
+
+- Merge RPC executed exactly once with merge ID `d6b9ace1-d53a-4f55-8806-0e1d39bd8c40`.
+- Survivors: National Beverage Co `36458972-6f8c-4ee6-a9ea-7c6decd84398`; Premium Wines & Spirits `b8f0e88c-e841-4dd5-8db1-abebc2f10bd5`.
+- Seven approved sources were archived, not deleted.
+- Pre/post references reconciled: 8 products, 8 POs, 12 receipts, 1 invoice, 0 payments, 0 imports, 0 mappings, 0 reorder rules, and 0 price-history rows.
+- Merge log contains seven source entries and moved-reference rollback metadata.
+
+### Banking verification
+
+- Owner and full_manager read/write succeeded; manager and assistant_manager were denied; full_manager delete was denied; owner delete succeeded.
+- Fake probe banking payload was encrypted with AES-256-GCM. The account number and branch code were absent from stored columns, audit values, generic supplier responses, public menu response, and staff response.
+- Response exposed only masked account number `****3456`.
+- Probe accounts, audit rows, and banking row were deleted. Merge log remains as required rollback metadata.
+- Supplier list returned one active National Beverage Co row after consolidation.
+
+### Verification
+
+- `supabase db lint --linked`: no schema errors.
+- `npx vitest run src/inventory/__tests__/admin-rbac.test.ts --testTimeout=20000`: 29/29 passed.
+- Inventory strict TypeScript passed.
+- Root TypeScript passed.
+- Vercel production build passed and deployment became Ready.
+- `git diff --check` passed.
+- The three owner XLSX files remained untouched and untracked; the existing AGENTS modification was preserved.
+
+### Stop state
+
+Supplier Data Integrity + Banking Details is complete. Do not start SYNC-2, `/inv` retirement, or another mission.
