@@ -35,6 +35,8 @@ export interface RealtimeRefreshOptions {
   events: string[]
   /** Refetch function. Safe to change identity every render (ref-based). */
   onRefresh: () => void
+  /** Reconcile authoritative state when an established channel reconnects. */
+  onReconnect?: () => void
   /** Coalescing window in ms. Default 2000. */
   debounceMs?: number
   enabled?: boolean
@@ -43,14 +45,19 @@ export interface RealtimeRefreshOptions {
 const activeChannels = new Set<string>()
 
 export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribed: boolean } {
-  const { channel, events, onRefresh, debounceMs = 2000, enabled = true } = options
+  const { channel, events, onRefresh, onReconnect, debounceMs = 2000, enabled = true } = options
   const eventsKey = events.join(',')
   const [subscribed, setSubscribed] = useState(false)
   const refreshRef = useRef(onRefresh)
+  const reconnectRef = useRef(onReconnect)
+  const wasSubscribedRef = useRef(false)
   refreshRef.current = onRefresh
+  reconnectRef.current = onReconnect
 
   useEffect(() => {
     if (!enabled || eventsKey === '') return
+
+    wasSubscribedRef.current = false
 
     if (activeChannels.has(channel)) {
       console.warn(`[realtime] channel "${channel}" already active — skipping duplicate subscription`)
@@ -78,6 +85,8 @@ export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribe
         () => debouncer.trigger(),
       )
       .subscribe((status) => {
+        if (status === 'SUBSCRIBED' && wasSubscribedRef.current) reconnectRef.current?.()
+        if (status === 'SUBSCRIBED') wasSubscribedRef.current = true
         setSubscribed(status === 'SUBSCRIBED')
       })
 

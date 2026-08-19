@@ -7,9 +7,8 @@ import { STATUS_LABELS, STATUS_COLORS, requiresPaymentConfirmation } from '@/lib
 import { posService } from '@/lib/pos-service'
 import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { ORDER_BOARD_EVENTS } from '@/inventory/lib/order-status'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 
-const POLL_INTERVAL = 15000
-const FALLBACK_POLL_INTERVAL = 30000
 const TOTAL_TABLES = 20
 
 const TABLE_PALETTE = {
@@ -695,19 +694,19 @@ export default function OrdersPOS() {
   // RLS-blocked on that table. Subscribe to the anon-readable
   // realtime_events signal table (migration 080) and refetch instead —
   // loadOrders keeps the count beep and today-only filtering.
-  const { subscribed: realtimeConnected } = useRealtimeRefresh({
+  useRealtimeRefresh({
     channel: 'e1-admin-orders',
     events: [...ORDER_BOARD_EVENTS],
     enabled: !authExpired,
     onRefresh: () => { void loadOrders() },
+    onReconnect: () => { void loadOrders() },
   })
 
-  // ── Fallback polling (longer interval when Realtime is active) ──
-  useEffect(() => {
-    if (authExpired) return
-    const interval = setInterval(loadOrders, realtimeConnected ? FALLBACK_POLL_INTERVAL : POLL_INTERVAL)
-    return () => clearInterval(interval)
-  }, [loadOrders, authExpired, realtimeConnected])
+  // Realtime is primary. Reconcile only while the page is visible so inactive
+  // admin tabs do not continuously refetch the entire order list.
+  useVisibleInterval(() => {
+    if (!authExpired) void loadOrders()
+  }, 300000)
 
 
 

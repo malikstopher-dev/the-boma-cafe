@@ -12,6 +12,7 @@ import PrepTimeCountdown from '@/components/pos/PrepTimeCountdown'
 import { posTokens as t } from '@/components/pos/DesignSystem'
 import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { ORDER_BOARD_EVENTS } from '@/inventory/lib/order-status'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 
 export interface StationDisplayProps {
   station: 'kitchen' | 'bar'
@@ -202,21 +203,24 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   // postgres_changes subscription on `orders` never fired. Subscribe to
   // the anon-readable realtime_events signal table instead and refetch
   // (loadOrders keeps the ding + ready chime + 24h stale filtering).
-  // The poll stays as the fallback (15s when realtime is down, 30s up).
-  const { subscribed: realtimeActive } = useRealtimeRefresh({
+  useRealtimeRefresh({
     channel: `e1-station-${station}`,
     events: [...ORDER_BOARD_EVENTS],
     enabled: authed && !authExpired,
     onRefresh: () => { void loadOrders() },
+    onReconnect: () => { void loadOrders() },
   })
 
   useEffect(() => {
     if (!authed || authExpired) return
-    loadOrders()
+    void loadOrders()
+  }, [authed, authExpired, loadOrders])
 
-    const fallbackInterval = setInterval(loadOrders, realtimeActive ? 30000 : 15000)
-    return () => clearInterval(fallbackInterval)
-  }, [authed, authExpired, loadOrders, realtimeActive])
+  // Realtime is the primary transport. This only reconciles a visible board
+  // after a missed event or a prolonged transport outage.
+  useVisibleInterval(() => {
+    if (authed && !authExpired) void loadOrders()
+  }, 300000)
 
   const displayOrders = useMemo(() => {
     const safeOrders = Array.isArray(orders) ? orders : []

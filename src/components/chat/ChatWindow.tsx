@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
 
@@ -103,21 +104,21 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
     }).catch(() => {})
   }, [conversationId, currentUserId])
 
-  // Realtime (E1-5) + polling fallback.
+  // Realtime (E1-5) is the primary delivery path.
   // staff_messages is RLS-blocked for the anon browser key, so the old
   // postgres_changes channel on that table never fired. Consume the
   // anon-readable realtime_events signal table (migration 093) and
   // refetch — the merge is idempotent, so own optimistic sends are safe.
-  const { subscribed: realtimeActive } = useRealtimeRefresh({
+  useRealtimeRefresh({
     channel: `e1-chat-${conversationId}`,
     events: ['chat.message'],
     onRefresh: () => { void loadMessages() },
+    onReconnect: () => { void loadMessages() },
   })
 
-  useEffect(() => {
-    const pollInterval = setInterval(() => { void loadMessages() }, realtimeActive ? 30000 : 15000)
-    return () => clearInterval(pollInterval)
-  }, [loadMessages, realtimeActive])
+  // Reconcile a visible conversation conservatively after missed events or a
+  // prolonged transport outage; hidden chat windows make no periodic reads.
+  useVisibleInterval(() => { void loadMessages() }, 300000)
 
   // Auto-scroll to bottom
   useEffect(() => {
