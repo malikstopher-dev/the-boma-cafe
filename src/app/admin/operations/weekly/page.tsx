@@ -35,19 +35,23 @@ export default function WeeklyView() {
   const [selected, setSelected] = useState<number | null>(null)
   const [weekData, setWeekData] = useState<WeekRowsRes['data'] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const loadWeeks = useCallback(async () => {
     setLoading(true)
+    setError(null)
     fetch(`/api/inventory/weekly?year=${year}`)
-      .then(r => r.json())
-      .then((res: WeekListRes) => {
+      .then(async r => ({ ok: r.ok, json: await r.json() }))
+      .then(({ ok, json }) => {
+        if (!ok || json.error) throw new Error(json.error?.message || 'Failed to load weekly data')
+        const res = json as WeekListRes
         if (!res.data) return
         setWeeks(res.data.weeks)
         setCurrentWeek(res.data.currentWeek)
         const last = res.data.weeks[res.data.weeks.length - 1]
         setSelected(prev => prev ?? last?.week ?? res.data.currentWeek)
       })
-      .catch(() => {})
+      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load weekly data'))
       .finally(() => setLoading(false))
   }, [year])
 
@@ -56,10 +60,14 @@ export default function WeeklyView() {
   useEffect(() => {
     if (!selected) return
     setWeekData(null)
+    setError(null)
     fetch(`/api/inventory/weekly?year=${year}&week=${selected}&location_id=main`)
-      .then(r => r.json())
-      .then((res: WeekRowsRes) => { if (res.data) setWeekData(res.data) })
-      .catch(() => {})
+      .then(async r => ({ ok: r.ok, json: await r.json() }))
+      .then(({ ok, json }) => {
+        if (!ok || json.error) throw new Error(json.error?.message || 'Failed to load weekly data')
+        if (json.data) setWeekData(json.data as WeekRowsRes['data'])
+      })
+      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load weekly data'))
   }, [selected, year])
 
   const totals = useMemo(() => {
@@ -89,6 +97,7 @@ export default function WeeklyView() {
       description={`${year} · Mon–Sun weeks · Supplies received vs stock consumed, per week.`}
       actions={<Button variant="secondary" size="md" onClick={exportCsv} disabled={!weekData}>Export CSV</Button>}
     >
+      {error && <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 8, border: '1px solid #7F3434', background: '#321C1C', color: '#F3B0B0' }}>{error}</div>}
       {/* Week chips */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
         {weeks.map(w => (

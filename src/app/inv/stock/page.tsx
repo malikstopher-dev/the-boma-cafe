@@ -90,7 +90,7 @@ interface GridCol {
 
 const TAB_OPTIONS: Array<{ id: TabId; label: string }> = [
   { id: 'bar', label: 'Bar Stock' },
-  { id: 'kitchen', label: 'Kitchen Stock' },
+  { id: 'kitchen', label: 'Kitchen / Food Stock (Main Bar)' },
 ]
 
 const BLANK_ROW: StockRow = {

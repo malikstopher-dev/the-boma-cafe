@@ -1,4 +1,5 @@
 import { getInventoryClient } from '../lib/db'
+import { resolveLocationId } from '../lib/location'
 import { weekNumber, weekRange, lastWeekOfYear } from '../lib/weeks'
 import type { InventoryType } from './types'
 
@@ -40,6 +41,10 @@ export async function getWeeklyMovement(
 ): Promise<{ week: number; year: number; rows: WeeklyMovementRow[]; totals: WeeklyMovementRow }> {
   const { start, end } = weekRange(year, week)
   const supabase = getInventoryClient()
+  const resolvedLocationId = locationId == null ? null : await resolveLocationId(locationId)
+  if (locationId != null && resolvedLocationId == null) {
+    throw new Error(`No active inventory location found for "${locationId}"`)
+  }
   const endIso = end + 'T23:59:59.999Z'
   const startIso = start + 'T00:00:00.000Z'
 
@@ -49,10 +54,11 @@ export async function getWeeklyMovement(
     .gte('created_at', startIso)
     .lte('created_at', endIso)
 
-  if (locationId) query = query.eq('location_id', locationId)
+  if (resolvedLocationId) query = query.eq('location_id', resolvedLocationId)
   if (inventoryType) query = query.eq('inventory_products.inventory_type', inventoryType)
 
-  const { data: txns } = await query
+  const { data: txns, error } = await query
+  if (error) throw new Error(`Failed to load weekly movements: ${error.message}`)
 
   const byType = new Map<string, WeeklyMovementRow>()
   const totals: WeeklyMovementRow = { inventoryType: 'ALL', deliveredQty: 0, deliveredValue: 0, usedQty: 0, usedValue: 0 }
@@ -95,6 +101,10 @@ export async function getYearlyWeekSummary(
   locationId?: string | null,
 ): Promise<WeekSummary[]> {
   const supabase = getInventoryClient()
+  const resolvedLocationId = locationId == null ? null : await resolveLocationId(locationId)
+  if (locationId != null && resolvedLocationId == null) {
+    throw new Error(`No active inventory location found for "${locationId}"`)
+  }
   const startIso = `${year}-01-01T00:00:00.000Z`
   const endIso = `${year}-12-31T23:59:59.999Z`
 
@@ -104,9 +114,10 @@ export async function getYearlyWeekSummary(
     .gte('created_at', startIso)
     .lte('created_at', endIso)
 
-  if (locationId) query = query.eq('location_id', locationId)
+  if (resolvedLocationId) query = query.eq('location_id', resolvedLocationId)
 
-  const { data: txns } = await query
+  const { data: txns, error } = await query
+  if (error) throw new Error(`Failed to load weekly summary: ${error.message}`)
 
   const weeks = new Map<number, WeekSummary>()
   for (let w = 1; w <= lastWeekOfYear(year); w++) {
