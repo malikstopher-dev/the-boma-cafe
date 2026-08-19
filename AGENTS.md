@@ -2534,6 +2534,40 @@ Deploy the already verified U1-B menu transfer fix before touching data, prove a
 
 ---
 
+## Session: SYNC-2 Phase 2 — Inventory Truth Consistency (2026-08-20) - commit 7e29500
+
+### Objective
+
+Fix only the verified weekly location-alias/error-suppression defect and clarify the `/inv/stock` Kitchen label. No broader metric-classification or realtime redesign was performed.
+
+### Changes
+
+- `src/inventory/engine/weekly.ts` resolves supplied location aliases through `resolveLocationId()` for both weekly detail and yearly summary queries; omitted location remains all-location, and explicit UUIDs pass through.
+- Weekly query errors now throw clear errors instead of becoming empty business totals.
+- `src/app/admin/operations/weekly/page.tsx` displays API/query failures in an error banner.
+- `/inv/stock` tab label now reads `Kitchen / Food Stock (Main Bar)`; location and inventory-type behavior are unchanged.
+- Added `src/inventory/__tests__/weekly.test.ts` covering alias resolution, explicit UUIDs, delivered/used semantics, and query-error propagation.
+
+### Verification
+
+- Week 34 production: `main` and explicit Main Bar UUID both returned Delivered Qty `1,465`, Delivered Value `R168,150`, Used Qty `0`, Used Value `R0`; responses matched.
+- Production Stock Sheet returned 200.
+- Production owner/location dashboard returned 200.
+- Deployed Kitchen wording was present.
+- No production business rows were changed; temporary probe account and audit rows were deleted.
+- Weekly tests: 4/4.
+- Inventory strict TypeScript: passed.
+- Root TypeScript: passed.
+- Vercel Production build: passed and Ready.
+- Local build reached compilation/TypeScript but exceeded the machine timeout; no repeated local build was run.
+- Existing three owner XLSX files remained untouched and untracked.
+
+### Stop state
+
+SYNC-2 Phase 2 is complete. Do not start broader metric convergence, `/inv` retirement, supplier work, or another mission without approval.
+
+---
+
 ## Session: Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19)
 
 ### Objective

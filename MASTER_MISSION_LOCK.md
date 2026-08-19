@@ -25,6 +25,7 @@
 - O1-D (Production ledger recovery — 61 evidenced pre-wipe transactions restored with original IDs/timestamps; balance cache rebuilt from ledger `SUM(quantity)`, 32 rows, 0 parity mismatches; PO reconciliation 6/6; gas tracker, daily sheet, owner KPIs, realtime (61 `stock.moved` events) all verified) — COMPLETE (2026-08-19, data restored in production; docs-only commit)
 - Migrations 096–102 applied (local == remote, 000–102; 016a filename-skip benign)
 - Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
+- SYNC-2 Phase 2 (weekly location truth + explicit weekly errors + Kitchen label clarity) — COMPLETE (2026-08-20; commit 7e29500)
 - 316/316 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
@@ -155,6 +156,17 @@
 - Live production checks: anonymous `realtime_events` cursor query is 200 with only id/event/table/entity/timestamp fields; `orders` returns no rows; direct `staff_messages` currently returns a 500 infinite-RLS-recursion error and is not used as a transport. A disposable Owner browser received a real `stock.low` event and refreshed `/dashboard` (3 -> 4 owner API requests) with no realtime errors; all probe records were deleted.
 - Commit `1060ba2` is pushed and deployed. SYNC-1D and later checkpoints remain approval-gated.
 
+### SYNC-2 Phase 2 — Inventory Truth Consistency (COMPLETE 2026-08-20)
+
+- Fixed the verified weekly `location_id=main` alias defect by resolving aliases through `resolveLocationId()` before UUID filtering; explicit UUID behavior remains unchanged.
+- Weekly detail and yearly summary now surface Supabase query errors instead of converting failures into business zeros. The weekly UI displays the error state.
+- Clarified `/inv/stock` wording from `Kitchen Stock` to `Kitchen / Food Stock (Main Bar)` without changing location or inventory-type semantics.
+- Production Week 34 verification: `main` and the explicit Main Bar UUID both return Delivered Qty `1,465` and Delivered Value `R168,150`; both responses match.
+- Stock Sheet and owner/location dashboard production reads returned HTTP 200. No production business rows were changed.
+- Realtime architecture was unchanged; this was a calculation/error-handling checkpoint.
+- Commit `7e29500` was pushed and deployed to Vercel Production; cloud TypeScript/build completed successfully.
+- Local verification: weekly tests 4/4, inventory strict TypeScript passed, root TypeScript passed, and `git diff --check` passed. The local build reached compilation/TypeScript but exceeded the machine timeout; the Vercel production build completed successfully.
+
 ### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.
@@ -186,6 +198,7 @@
 ## Deferred queue (in order)
 
 - SYNC-1D onward — Unified Application Synchronization Program (approval-gated).
+- SYNC-2 broader metric-convergence work — approval-gated; Phase 2 only is complete.
 - Supplier Data Integrity + Banking Details — COMPLETE; no follow-up supplier mission is active.
 - Optional (future consolidation): `/inv` retirement (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
 - (O1-D ledger-warning banner — MOOT: ledger restored 2026-08-19, no longer applicable.)
