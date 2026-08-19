@@ -26,6 +26,7 @@
 - Migrations 096–102 applied (local == remote, 000–102; 016a filename-skip benign)
 - Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
 - SYNC-2 Phase 2 (weekly location truth + explicit weekly errors + Kitchen label clarity) — COMPLETE (2026-08-20; commit 7e29500)
+- SYNC-2 Phase 3 (canonical movement classification design) — COMPLETE (2026-08-20; documentation-only)
 - 316/316 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
@@ -167,6 +168,41 @@
 - Commit `7e29500` was pushed and deployed to Vercel Production; cloud TypeScript/build completed successfully.
 - Local verification: weekly tests 4/4, inventory strict TypeScript passed, root TypeScript passed, and `git diff --check` passed. The local build reached compilation/TypeScript but exceeded the machine timeout; the Vercel production build completed successfully.
 
+### SYNC-2 Phase 3 — Canonical Movement Classification Design (COMPLETE 2026-08-20)
+
+Documentation-only checkpoint. No runtime code, production data, configuration, tests, build, migration, or deployment changed.
+
+Approved canonical movement definitions for the next implementation checkpoint:
+
+- **Inbound / Received:** `purchase`, `return`, `transfer_in`
+- **Sold / Customer Usage:** `sale`, `sale_bottle`
+- **Internal Consumption:** `comp`, `staff`, negative `production`, `gas_usage`
+- **Waste / Loss:** `waste`, `breakage`, `spillage`, `expiry_loss`, `theft`, `stolen`, `donation`
+- **Adjustment:** explicit `adjustment` only
+- **Physical Count Variance:** `physical_count`, remaining separate from generic adjustment
+- **Total Outflow:** Sold + Internal Consumption + Waste/Loss
+
+Locked business rules:
+
+- Wastage remains separate from operational Used; waste is not double-counted as Used and Wastage.
+- Physical-count variance is not silently classified as a generic adjustment.
+- Physical location and `inventory_type` remain independent dimensions.
+- Current Stock Value remains a current balance metric; movement metrics remain period-based ledger metrics.
+- Shared classification centralizes business meaning without forcing unrelated KPIs to display identical numbers.
+
+### SYNC-2 Phase 4 — Canonical Movement Classification (APPROVED, NOT ACTIVE)
+
+Expected smallest implementation:
+
+- Add `src/inventory/lib/movement-classification.ts`.
+- Centralize canonical transaction-type definitions and classification helpers.
+- Update applicable TypeScript consumers and add parity/regression tests.
+- Preserve ledger authority and the balance-cache architecture.
+- Do not redesign SQL/RPCs unless separately proven necessary.
+- Do not retire `/inv` or redesign unrelated UI.
+
+Model recommendation: GPT-5.6 Luna Low. If an implementation question is not covered by the approved definitions, stop and report rather than inventing a business rule. Phase 4 must not activate automatically.
+
 ### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.
@@ -199,6 +235,7 @@
 
 - SYNC-1D onward — Unified Application Synchronization Program (approval-gated).
 - SYNC-2 broader metric-convergence work — approval-gated; Phase 2 only is complete.
+- SYNC-2 Phase 4 — Canonical Movement Classification — approved but not active.
 - Supplier Data Integrity + Banking Details — COMPLETE; no follow-up supplier mission is active.
 - Optional (future consolidation): `/inv` retirement (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
 - (O1-D ledger-warning banner — MOOT: ledger restored 2026-08-19, no longer applicable.)

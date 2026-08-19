@@ -2568,6 +2568,48 @@ SYNC-2 Phase 2 is complete. Do not start broader metric convergence, `/inv` reti
 
 ---
 
+## Session: SYNC-2 Phase 3 — Canonical Movement Classification Design (2026-08-20) - documentation-only
+
+### Objective
+
+Record the owner-approved canonical inventory movement definitions for the next checkpoint. No runtime code, production data, configuration, tests, build, migration, or deployment changed.
+
+### Approved definitions
+
+- **Inbound / Received:** `purchase`, `return`, `transfer_in`
+- **Sold / Customer Usage:** `sale`, `sale_bottle`
+- **Internal Consumption:** `comp`, `staff`, negative `production`, `gas_usage`
+- **Waste / Loss:** `waste`, `breakage`, `spillage`, `expiry_loss`, `theft`, `stolen`, `donation`
+- **Adjustment:** explicit `adjustment` only
+- **Physical Count Variance:** `physical_count`, separate from generic adjustment
+- **Total Outflow:** Sold + Internal Consumption + Waste/Loss
+
+### Locked business rules
+
+- Wastage remains separate from operational Used; waste is not double-counted as both Used and Wastage.
+- Physical-count variance must not be silently classified as a generic adjustment.
+- Physical location and `inventory_type` remain independent dimensions.
+- Current Stock Value remains a current balance metric.
+- Movement metrics remain period-based ledger metrics.
+- Shared classification centralizes business meaning without forcing unrelated KPIs to display identical numbers.
+
+### Next mission
+
+`SYNC-2 Phase 4 — Canonical Movement Classification` is approved but not active.
+
+Expected smallest implementation:
+
+- Add `src/inventory/lib/movement-classification.ts`.
+- Centralize canonical transaction-type definitions and classification helpers.
+- Update applicable TypeScript consumers and add parity/regression tests.
+- Preserve ledger authority and balance-cache architecture.
+- No SQL/RPC redesign unless separately proven necessary.
+- No `/inv` retirement or unrelated UI redesign.
+
+Model recommendation: GPT-5.6 Luna Low. If implementation encounters a semantic or architectural question not covered by these definitions, stop and report rather than inventing a rule. Do not activate Phase 4 automatically.
+
+---
+
 ## Session: Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19)
 
 ### Objective
