@@ -21,6 +21,9 @@ export type AdminPermission =
   | 'accounts.change_role'
   | 'security.settings'
   | 'security.sessions'
+  | 'supplier.bank.read'
+  | 'supplier.bank.write'
+  | 'supplier.bank.delete'
 
 const ALL: AdminPermission[] = [
   'view:owner_dashboard',
@@ -42,6 +45,9 @@ const ALL: AdminPermission[] = [
   'accounts.change_role',
   'security.settings',
   'security.sessions',
+  'supplier.bank.read',
+  'supplier.bank.write',
+  'supplier.bank.delete',
 ]
 
 // Manager: operational administration, no user/security/system config.
@@ -64,7 +70,7 @@ const ASSISTANT_MANAGER: AdminPermission[] = [
 
 const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
   owner: ALL,
-  full_manager: ALL.filter(p => !['accounts.delete', 'accounts.change_role', 'security.settings', 'security.sessions'].includes(p)),
+  full_manager: ALL.filter(p => !['accounts.delete', 'accounts.change_role', 'security.settings', 'security.sessions', 'supplier.bank.delete'].includes(p)),
   manager: MANAGER,
   assistant_manager: ASSISTANT_MANAGER,
 }

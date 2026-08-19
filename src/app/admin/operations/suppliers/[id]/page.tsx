@@ -27,6 +27,17 @@ interface SupplierDetail {
   products?: { id: string; name: string; sku: string | null; is_active: boolean }[]
 }
 
+interface BankDetails {
+  configured: boolean
+  bankName?: string
+  accountHolder?: string
+  maskedAccountNumber?: string
+  branchCode?: string
+  accountType?: string
+  paymentReferenceNote?: string
+  updatedAt?: string
+}
+
 const TERM_OPTIONS = [
   { value: 'CASH', label: 'Cash — due on receipt' },
   { value: 'COD', label: 'Cash on Delivery' },
@@ -45,6 +56,11 @@ export default function SupplierDetailPage() {
   const [form, setForm] = useState<Record<string, string>>({})
   const [showProductsModal, setShowProductsModal] = useState(false)
   const [allProducts, setAllProducts] = useState<ProductSummary[] | null>(null)
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null)
+  const [bankRestricted, setBankRestricted] = useState(false)
+  const [bankSaving, setBankSaving] = useState(false)
+  const [bankError, setBankError] = useState<string | null>(null)
+  const [bankForm, setBankForm] = useState({ bank_name: '', account_holder: '', account_number: '', branch_code: '', account_type: '', payment_reference_note: '' })
 
   const loadDetail = useCallback(() => {
     const id = params?.id as string
@@ -67,6 +83,13 @@ export default function SupplierDetailPage() {
             payment_term_days: json.data.payment_term_days != null ? String(json.data.payment_term_days) : '30',
             notes: json.data.notes || '',
           })
+          fetch(`/api/inventory/suppliers/${id}/bank-details`)
+            .then(async response => ({ response, json: await response.json() }))
+            .then(({ response, json }) => {
+              if (response.status === 403) setBankRestricted(true)
+              else if (response.ok) setBankDetails(json.data)
+            })
+            .catch(() => setBankError('Unable to load banking details'))
         }
       })
       .catch(() => setError('Failed to load supplier'))
@@ -126,6 +149,32 @@ export default function SupplierDetailPage() {
       const json = await res.json()
       setSupplier(json.data)
     }
+  }
+
+  async function handleBankSave() {
+    if (!supplier) return
+    setBankSaving(true)
+    setBankError(null)
+    try {
+      const res = await fetch(`/api/inventory/suppliers/${supplier.id}/bank-details`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bankForm),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error?.message || 'Unable to save banking details')
+      setBankDetails(json.data)
+      setBankForm({ bank_name: '', account_holder: '', account_number: '', branch_code: '', account_type: '', payment_reference_note: '' })
+    } catch (saveError) {
+      setBankError(saveError instanceof Error ? saveError.message : 'Unable to save banking details')
+    } finally {
+      setBankSaving(false)
+    }
+  }
+
+  async function handleBankDelete() {
+    if (!supplier || !confirm('Delete banking details for this supplier?')) return
+    const res = await fetch(`/api/inventory/suppliers/${supplier.id}/bank-details`, { method: 'DELETE' })
+    if (res.ok) setBankDetails({ configured: false })
+    else setBankError('Only the owner can delete banking details')
   }
 
   if (isLoading) return <AdminPage title="Supplier"><SkeletonCard /></AdminPage>
@@ -214,6 +263,28 @@ export default function SupplierDetailPage() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+
+        <div style={{background:'#1E1A14',borderRadius:8,border:'1px solid #3A3428',padding:16,gridColumn:'1 / -1'}}>
+          <h3 style={{fontWeight:600,marginBottom:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}>Banking Details</h3>
+          {bankRestricted ? <p style={{fontSize:14,color:'#A09888'}}>Restricted to owner and full manager roles.</p> : (
+            <>
+              {bankDetails?.configured ? (
+                <div className="flex flex-wrap gap-4 text-sm" style={{color:'#F0EBE3'}}>
+                  <span>{bankDetails.bankName}</span><span>{bankDetails.accountHolder}</span>
+                  <span>{bankDetails.maskedAccountNumber}</span><span>{bankDetails.branchCode}</span><span>{bankDetails.accountType}</span>
+                  <Button onClick={handleBankDelete} variant="danger" size="sm">Delete</Button>
+                </div>
+              ) : <p style={{fontSize:14,color:'#A09888'}}>No banking details configured.</p>}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4">
+                {([['bank_name','Bank name'],['account_holder','Account holder'],['account_number','Account number'],['branch_code','Branch code'],['account_type','Account type'],['payment_reference_note','Payment reference note']] as const).map(([key, label]) => (
+                  <input key={key} aria-label={label} placeholder={label} value={bankForm[key]} onChange={e => setBankForm(formValue => ({ ...formValue, [key]: e.target.value }))} style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:4,padding:'8px 10px',fontSize:12,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} />
+                ))}
+              </div>
+              {bankError && <p style={{color:'#E9A3A3',fontSize:12,marginTop:8}}>{bankError}</p>}
+              <Button onClick={handleBankSave} disabled={bankSaving} size="sm" style={{marginTop:12}}>{bankSaving ? 'Saving...' : 'Save Banking Details'}</Button>
+            </>
           )}
         </div>
       </div>
