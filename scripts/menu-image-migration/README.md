@@ -59,4 +59,13 @@ The controlled rollback command validates the external export against the approv
 node --env-file=.env.local scripts/menu-image-migration/cutover.mjs rollback --export "C:\absolute\external\rollback-export.json"
 ```
 
-No production mutation or deployment was performed while creating this tooling.
+## Production Result
+
+The controlled cutover completed on 2026-08-19:
+
+- Commit `bcc22ed` was pushed and deployed before any row changed.
+- Migration 101 installed service-role-only atomic apply/rollback functions.
+- The apply RPC hash-checked and updated exactly six rows in one transaction.
+- Verification found all six expected paths and zero remaining inline images.
+- The pre-cutover export remains outside the repository at `C:\Users\stoph\AppData\Local\Temp\opencode\u1b-menu-rollback-precutover-20260819.json` with SHA-256 `4eecf34af6b72f79c62fa88002ef6f6c15ceb79166412f32f7f6bb7f30e8000c`.
+- The six exact original PNGs and approved data-URI hashes remain in this directory and `manifest.json`.

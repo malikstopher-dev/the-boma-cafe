@@ -3,7 +3,7 @@
   "sourceTable": "public.menu_items",
   "imageField": "image",
   "expectedInlineImageCount": 6,
-  "productionMutationPerformed": false,
+  "productionMutationPerformed": true,
   "entries": [
     {
       "menuItemId": "286f0b05-bc0c-4678-b1f0-34147616efd6",

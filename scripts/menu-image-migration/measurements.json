@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-08-19",
-  "method": "Read-only production Supabase calls through the local route implementation; response JSON measured before HTTP framing; gzip level uses Node.js gzipSync defaults.",
+  "method": "Before values are read-only production measurements from the local guarded route implementation. After values were remeasured against the live Vercel deployment and production Supabase after the six-row cutover. Response JSON is measured before HTTP framing; gzip uses Node.js gzipSync defaults.",
   "before": {
     "route": "/api/menu/public",
     "supabaseCalls": 2,
@@ -17,7 +17,7 @@
     "menu": {
       "route": "/api/menu/public",
       "supabaseCalls": 3,
-      "supabaseBytes": 90804,
+      "supabaseBytes": 91464,
       "responseBytes": 78293,
       "gzipBytes": 13179,
       "itemRecords": 146,
@@ -29,7 +29,7 @@
     "homepage": {
       "route": "/api/menu/public/homepage",
       "supabaseCalls": 2,
-      "supabaseBytes": 1129,
+      "supabaseBytes": 1448,
       "responseBytes": 1179,
       "gzipBytes": 617,
       "itemRecords": 4,
@@ -52,11 +52,11 @@
     }
   },
   "worstCaseAllThreeRegenerate": {
-    "supabaseBytes": 132826,
+    "supabaseBytes": 133805,
     "responseBytes": 118292,
     "gzipBytes": 24154,
     "versusOneOldRegeneration": {
-      "supabaseReductionPercent": 99.12,
+      "supabaseReductionPercent": 99.114,
       "responseReductionPercent": 99.216,
       "gzipReductionPercent": 99.786
     }
@@ -67,5 +67,26 @@
     "optimizedWebpBytes": 700698,
     "reductionPercent": 93.776,
     "ssimRange": [0.976938, 0.982653]
+  },
+  "productionCutover": {
+    "migration": 101,
+    "rowsUpdated": 6,
+    "remainingInlineImages": 0,
+    "cmsBeforeBytes": 15103996,
+    "cmsAfterBytes": 93532,
+    "cmsAfterGzipBytes": 13524,
+    "cmsReductionPercent": 99.381,
+    "directMenuItemsAfterBytes": 94598,
+    "directMenuItemsAfterGzipBytes": 13197,
+    "fullResponseReductionPercent": 99.481,
+    "fullGzipReductionPercent": 99.883,
+    "fullSupabaseReductionPercent": 99.394,
+    "estimatedAt695Regenerations": {
+      "oldFullResponseGb": 10.487,
+      "newFullResponseMb": 54.414,
+      "newAllThreeResponsesMb": 82.213,
+      "newFullSupabaseMb": 63.567,
+      "newAllThreeSupabaseMb": 92.994
+    }
   }
 }

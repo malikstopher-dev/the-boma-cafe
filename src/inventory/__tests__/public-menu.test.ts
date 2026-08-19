@@ -102,7 +102,7 @@ describe('public menu projections', () => {
   })
 
   it('has a deterministic six-image manifest with valid optimized and rollback files', () => {
-    expect(migrationManifest.productionMutationPerformed).toBe(false)
+    expect(migrationManifest.productionMutationPerformed).toBe(true)
     expect(migrationManifest.entries).toHaveLength(6)
     expect(new Set(migrationManifest.entries.map(entry => entry.menuItemId)).size).toBe(6)
 
