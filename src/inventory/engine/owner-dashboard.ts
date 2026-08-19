@@ -98,6 +98,14 @@ export interface OwnerDashboardData {
   activity: OwnerActivityItem[]
   movement: OwnerMovementPoint[]
   supplierPaymentsEnabled: boolean
+  managementActivity: Array<{
+    id: string
+    admin_name: string | null
+    admin_role: string | null
+    action: string
+    target_type: string | null
+    created_at: string
+  }>
 }
 
 // ---------------------------------------------------------------------------
@@ -609,7 +617,7 @@ async function buildActivity(): Promise<OwnerActivityItem[]> {
 // Main entry
 // ---------------------------------------------------------------------------
 
-export async function getOwnerDashboard(
+export async function getOwnerDashboardLegacy(
   period: OwnerPeriod = 'this_week',
   customFrom?: string | null,
   customTo?: string | null,
@@ -748,7 +756,77 @@ export async function getOwnerDashboard(
     activity,
     movement,
     supplierPaymentsEnabled: payments.enabled && payables.enabled,
+    managementActivity: [],
   }
+}
+
+function isMissingOwnerDashboardRpc(error: { code?: string | null; message?: string | null }): boolean {
+  return error.code === 'PGRST202' || error.message?.includes('owner_dashboard') === true && error.message?.includes('schema cache') === true
+}
+
+function normalizeLegacyAlertPresentation(payload: any): void {
+  if (!Array.isArray(payload.alerts)) return
+  payload.alerts = payload.alerts.map((alert: any) => {
+    const receipt = /^(\d+) deliveries awaiting verification$/.exec(String(alert?.message ?? ''))
+    if (receipt) {
+      const count = Math.min(Number(receipt[1]), 5)
+      return { ...alert, message: `${count} delivery${count > 1 ? 's' : ''} awaiting verification` }
+    }
+    const invoice = /^(\d+) supplier invoices open$/.exec(String(alert?.message ?? ''))
+    if (invoice) {
+      const count = Math.min(Number(invoice[1]), 5)
+      return { ...alert, message: `${count} supplier invoice${count > 1 ? 's' : ''} open` }
+    }
+    return alert
+  })
+}
+
+function normalizeLegacyActivityPresentation(payload: any): void {
+  if (!Array.isArray(payload.activity)) return
+  payload.activity = payload.activity.map((activity: any) => {
+    const description = String(activity?.description ?? '')
+    const match = /\(([+-]?)(-?\d+(?:\.\d+)?)\)$/.exec(description)
+    if (!match) return activity
+    const numeric = Number(match[2])
+    if (!Number.isFinite(numeric)) return activity
+    const sign = match[1] || (numeric > 0 ? '+' : '')
+    return { ...activity, description: `${description.slice(0, match.index)}(${sign}${Math.abs(numeric)})` }
+  })
+}
+
+/**
+ * Primary owner-dashboard reader. Migration 102 moves the existing calculation
+ * into one database snapshot; the legacy engine remains only for a bounded
+ * missing-RPC rollout fallback, never for arbitrary RPC errors.
+ */
+export async function getOwnerDashboard(
+  period: OwnerPeriod = 'this_week',
+  customFrom?: string | null,
+  customTo?: string | null,
+): Promise<OwnerDashboardData> {
+  const range = getOwnerRange(period, customFrom, customTo)
+  const { data, error } = await getInventoryClient().rpc('owner_dashboard', {
+    p_start: range.start,
+    p_end: range.end,
+    p_previous_start: range.previousStart,
+    p_previous_end: range.previousEnd,
+  })
+
+  if (error) {
+    if (isMissingOwnerDashboardRpc(error)) {
+      return getOwnerDashboardLegacy(period, customFrom, customTo)
+    }
+    throw error
+  }
+
+  const payload = Array.isArray(data) ? data[0] : data
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('owner_dashboard returned an invalid payload')
+  }
+
+  normalizeLegacyAlertPresentation(payload)
+  normalizeLegacyActivityPresentation(payload)
+  return { range, ...payload } as OwnerDashboardData
 }
 
 export async function stockValueAt(startIso: string): Promise<number | null> {

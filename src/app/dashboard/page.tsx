@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { CSSProperties, ReactNode } from 'react'
 import { weekRange, currentWeekNumber, lastWeekOfYear } from '@/inventory/lib/weeks'
+import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 
 // ---------------------------------------------------------------------------
 // Data contract (mirrors src/inventory/engine/owner-dashboard.ts)
@@ -49,6 +51,7 @@ interface OwnerDashboardData {
   activity: Array<{ kind: string; description: string; person: string; at: string }>
   movement: Array<{ date: string; purchased: number; used: number }>
   supplierPaymentsEnabled: boolean
+  managementActivity: Array<{ id: string; admin_name: string | null; admin_role: string | null; action: string; target_type: string | null; created_at: string }>
 }
 
 // ---------------------------------------------------------------------------
@@ -205,27 +208,10 @@ export default function OwnerDashboardPage() {
   const [weekYear, setWeekYear] = useState(() => new Date().getFullYear())
   const [weekNo, setWeekNo] = useState(() => currentWeekNumber())
   const [weekApplied, setWeekApplied] = useState<{ y: number; w: number; start: string; end: string } | null>(null)
-  const [managementActivity, setManagementActivity] = useState<Array<{ id: string; admin_name: string | null; admin_role: string | null; action: string; target_type: string | null; created_at: string }>>([])
   const pathname = usePathname()
   const [navOpen, setNavOpen] = useState(false)
 
   const isActive = (href: string) => (href === '/inv' ? pathname === '/inv' || pathname === '/dashboard' : pathname.startsWith(href))
-
-  // Management activity (Mission E8): who did what in the admin system
-  const loadActivity = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/audit/recent?limit=10', { cache: 'no-store' })
-      if (!res.ok) return
-      const json = await res.json()
-      if (Array.isArray(json?.data)) setManagementActivity(json.data)
-    } catch { /* non-critical */ }
-  }, [])
-
-  useEffect(() => {
-    void loadActivity()
-    const timer = setInterval(() => { void loadActivity() }, 60000)
-    return () => clearInterval(timer)
-  }, [loadActivity])
 
   const load = useCallback(async (p: string, from?: string, to?: string, opts?: { silent?: boolean }) => {
     if (!opts?.silent) {
@@ -253,14 +239,21 @@ export default function OwnerDashboardPage() {
     void load(period, customFrom, customTo)
   }, [load, period, customFrom, customTo])
 
-  // Auto-refresh every 60s — silent background revalidation (no flash, scroll preserved)
-  useEffect(() => {
-    const timer = setInterval(() => { void load(period, customFrom, customTo, { silent: true }) }, 60000)
-    return () => clearInterval(timer)
+  const refreshSilently = useCallback(() => {
+    void load(period, customFrom, customTo, { silent: true })
   }, [load, period, customFrom, customTo])
 
+  // A visible safety refresh covers missed events/reconnects without the old two
+  // unconditional 60-second API loops. Mutations still refresh immediately below.
+  useVisibleInterval(refreshSilently, 300000)
+  useRealtimeRefresh({
+    channel: 'u1-owner-dashboard',
+    events: ['stock.moved', 'po.received', 'stock.count.updated', 'stock.low'],
+    onRefresh: refreshSilently,
+  })
+
   const pickPeriod = (p: string) => setPeriod(p)
-  const refresh = () => void load(period, customFrom, customTo, { silent: true })
+  const refresh = refreshSilently
 
   const weekOptions = useMemo(() => Array.from({ length: lastWeekOfYear(weekYear) }, (_, i) => i + 1), [weekYear])
 
@@ -708,11 +701,11 @@ export default function OwnerDashboardPage() {
 
               {/* Management activity (Mission E8) */}
               <ExcelCard title="MANAGEMENT ACTIVITY" subtitle="Latest admin actions, attributed to the manager who did them">
-                {managementActivity.length === 0 ? (
+                {data.managementActivity.length === 0 ? (
                   <p style={{ margin: 0, fontSize: 13, color: theme.textDim }}>No management activity recorded yet.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                    {managementActivity.map(a => (
+                    {data.managementActivity.map(a => (
                       <div key={a.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                         <span style={{ fontSize: 15, width: 20, color: theme.gold }}>◆</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
