@@ -166,6 +166,16 @@ const PROTECTED_API_PREFIXES = ['/api/admin', '/api/cms', '/api/waiters', '/api/
 const PUBLIC_API_EXCEPTIONS = ['/api/cms/public', '/api/waiters/active', '/api/menu/public', '/api/track-order', '/api/receipt/verify', '/api/staff/pin-login', '/api/staff/list', '/api/staff/session', '/api/admin/accounts/public']
 
 const PUBLIC_SUPABASE_POST_ROUTES = ['/api/supabase/orders', '/api/supabase/contact', '/api/supabase/bookings']
+const RESERVED_IDENTITY_HEADERS = [
+  'x-user-role',
+  'x-auth-valid',
+  'x-user-scope',
+  'x-admin-id',
+  'x-admin-name',
+  'x-admin-role',
+  'x-admin-session',
+  'x-user-staff-id',
+]
 
 function isProtectedApiPath(pathname: string): boolean {
   return PROTECTED_API_PREFIXES.some(prefix => pathname.startsWith(prefix))
@@ -173,6 +183,12 @@ function isProtectedApiPath(pathname: string): boolean {
 
 function isPublicApiException(pathname: string): boolean {
   return PUBLIC_API_EXCEPTIONS.some(p => pathname.startsWith(p))
+}
+
+function stripIdentityHeaders(headers: Headers): Headers {
+  const trusted = new Headers(headers)
+  for (const name of RESERVED_IDENTITY_HEADERS) trusted.delete(name)
+  return trusted
 }
 
 function setAuthHeaders(headers: Headers, role: string, admin?: { adminId?: string; adminName?: string; adminRole?: string; adminSession?: string }): Headers {
@@ -198,17 +214,21 @@ function redirectToLogin(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isApi = pathname.startsWith('/api/')
+  // Client requests must never be able to impersonate middleware-generated
+  // identity. Authenticated branches add fresh values after session validation.
+  const trustedHeaders = stripIdentityHeaders(request.headers)
+  const next = (headers = trustedHeaders) => NextResponse.next({ request: { headers } })
 
   // ── Page routes ─────────────────────────────────────────
   if (!isApi) {
     // Staff pages (PWA)
     if (pathname.startsWith('/staff')) {
-      if (pathname === '/staff/login' || pathname === '/staff/install') return NextResponse.next()
+      if (pathname === '/staff/login' || pathname === '/staff/install') return next()
       const auth = await verifyRole(request)
       if (!auth) {
         return NextResponse.redirect(new URL('/staff/login', request.url))
       }
-      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+      return next(setAuthHeaders(trustedHeaders, auth.role, auth))
     }
 
     // Waiter page: has its own client-side PasswordGate — pass through.
@@ -216,50 +236,50 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/waiter')) {
       const auth = await verifyRole(request)
       if (auth && (auth.role === 'admin' || auth.role === 'waiter')) {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+        return next(setAuthHeaders(trustedHeaders, auth.role, auth))
       }
-      return NextResponse.next()
+      return next()
     }
 
     // Inventory workspace pages — reuses the same auth as /admin (admin only)
     if (pathname.startsWith('/inv')) {
       const auth = await verifyRole(request)
       if (!auth || auth.role !== 'admin') return redirectToLogin(request)
-      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+      return next(setAuthHeaders(trustedHeaders, auth.role, auth))
     }
 
     // Owner Dashboard — the owner's first page after logging in (admin only)
     if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
       const auth = await verifyRole(request)
       if (!auth || auth.role !== 'admin') return redirectToLogin(request)
-      return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+      return next(setAuthHeaders(trustedHeaders, auth.role, auth))
     }
 
     // Admin pages — exact /admin is part of the admin area too (the matcher
     // runs for it; previously it slipped past this check unauthenticated).
-    if (pathname !== '/admin' && !pathname.startsWith('/admin/')) return NextResponse.next()
-    if (pathname === '/admin/login') return NextResponse.next()
+    if (pathname !== '/admin' && !pathname.startsWith('/admin/')) return next()
+    if (pathname === '/admin/login') return next()
 
     const auth = await verifyRole(request)
     if (!auth) return redirectToLogin(request)
 
     if (pathname === '/admin/kitchen') {
       if (auth.role === 'admin' || auth.role === 'kitchen') {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+        return next(setAuthHeaders(trustedHeaders, auth.role, auth))
       }
       return redirectToLogin(request)
     }
 
     if (pathname === '/admin/bar') {
       if (auth.role === 'admin' || auth.role === 'bar') {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+        return next(setAuthHeaders(trustedHeaders, auth.role, auth))
       }
       return redirectToLogin(request)
     }
 
     if (pathname === '/admin/messages') {
       if (['admin', 'kitchen', 'bar', 'waiter'].includes(auth.role)) {
-        return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+        return next(setAuthHeaders(trustedHeaders, auth.role, auth))
       }
       return redirectToLogin(request)
     }
@@ -267,27 +287,33 @@ export async function middleware(request: NextRequest) {
     // All other /admin/* routes: admin ONLY
     if (auth.role !== 'admin') return redirectToLogin(request)
 
-    return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, 'admin', auth) } })
+    return next(setAuthHeaders(trustedHeaders, 'admin', auth))
   }
 
   // ── API routes ──────────────────────────────────────────
-  if (!isProtectedApiPath(pathname)) return NextResponse.next()
-  if (isPublicApiException(pathname)) return NextResponse.next()
+  if (!isProtectedApiPath(pathname)) return next()
+  if (isPublicApiException(pathname)) return next()
 
   // /api/admin/auth POST (login) and GET (logout/session check) — allow unauthenticated
-  if (pathname === '/api/admin/auth' && (request.method === 'POST' || request.method === 'GET')) return NextResponse.next()
+  if (pathname === '/api/admin/auth' && (request.method === 'POST' || request.method === 'GET')) return next()
 
   // Allow public POST to specific supabase endpoints (public website order/book/contact forms)
-  if (pathname.startsWith('/api/supabase/') && request.method === 'POST' && PUBLIC_SUPABASE_POST_ROUTES.some(p => pathname.startsWith(p))) return NextResponse.next()
+  if (pathname.startsWith('/api/supabase/') && request.method === 'POST' && PUBLIC_SUPABASE_POST_ROUTES.some(p => pathname.startsWith(p))) return next()
 
   const auth = await verifyRole(request)
   if (!auth) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
   }
 
+  // Inventory APIs use the service-role client and include prices, suppliers,
+  // payables, approvals, and ledger mutations. They are management-only.
+  if (pathname.startsWith('/api/inventory') && auth.role !== 'admin') {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
+
   // Pass the full admin identity through so API routes can enforce RBAC
   // (x-admin-role etc.). Staff identities have no admin fields — skipped.
-  return NextResponse.next({ request: { headers: setAuthHeaders(request.headers, auth.role, auth) } })
+  return next(setAuthHeaders(trustedHeaders, auth.role, auth))
 }
 
 export const config = {

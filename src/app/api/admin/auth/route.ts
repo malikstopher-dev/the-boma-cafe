@@ -211,24 +211,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(safeRedirect, request.url));
     }
 
-    // Header identity set by middleware (admin session cookie)
-    const adminId = request.headers.get('x-admin-id');
-    const adminRole = request.headers.get('x-admin-role');
-    if (adminId && adminRole) {
-      return NextResponse.json({
-        authenticated: true,
-        role: 'admin',
-        user: {
-          id: adminId,
-          username: request.headers.get('x-admin-name') || adminId,
-          display_name: request.headers.get('x-admin-name') || adminId,
-          role: adminRole,
-          email: ADMIN_EMAIL,
-        },
-      });
-    }
-
-    // Fallback: cookie-based resolution (routes not covered by middleware)
+    // Resolve identity from a validated cookie, never caller-controlled headers.
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(ADMIN_SESSION_COOKIE);
     if (sessionCookie?.value) {

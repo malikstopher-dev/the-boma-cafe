@@ -33,18 +33,6 @@ export function expectedCookieValue(role: StaffRole): string {
   return createHash('sha256').update(`${role}:${secret}`).digest('hex')
 }
 
-/**
- * Fast role check: reads x-user-role header set by middleware (no cookie re-hash).
- * This is the preferred path for API routes called after middleware runs.
- */
-export function getRoleFromHeaders(headers: Headers): Session | null {
-  const role = headers.get('x-user-role') as Role | null
-  if (role === 'admin' || role === 'kitchen' || role === 'bar' || role === 'waiter') {
-    return { role }
-  }
-  return null
-}
-
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies()
   const kitchen = cookieStore.get(KITCHEN_COOKIE)
@@ -95,21 +83,13 @@ export async function assertAuthenticated(): Promise<NextResponse | null> {
 }
 
 /**
- * Middleware-based auth check for API route handlers.
- * Uses x-user-role header (set by middleware) to avoid re-hashing cookies.
- * Falls back to cookie-based getSession() for non-middleware routes.
+ * Cookie/session-based auth check for API route handlers. Request headers are
+ * deliberately ignored because callers can forge them before middleware.
  */
 export async function requireRoleFromHeadersOrSession(
-  headers: Headers,
+  _headers: Headers,
   roles: Role[],
 ): Promise<NextResponse | null> {
-  const fromHeaders = getRoleFromHeaders(headers)
-  if (fromHeaders && roles.includes(fromHeaders.role)) return null
-  if (fromHeaders && !roles.includes(fromHeaders.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  // Fallback: check cookies directly (for routes bypassing middleware or waiter)
   const session = await getSession()
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

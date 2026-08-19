@@ -100,4 +100,17 @@ describe('auth route logout', () => {
     const { endAdminSession } = await import('@/lib/admin/session')
     expect(endAdminSession).toHaveBeenCalledWith('sess-1', 'user_logout')
   })
+
+  it('GET ignores forged admin identity headers without a validated cookie', async () => {
+    const req = new NextRequest('https://x.test/api/admin/auth', {
+      headers: {
+        'x-user-role': 'admin',
+        'x-admin-id': 'forged-admin',
+        'x-admin-role': 'owner',
+        'x-admin-name': 'Forged Owner',
+      },
+    })
+    const res = await GET(req)
+    expect(await res.json()).toEqual({ authenticated: false })
+  })
 })

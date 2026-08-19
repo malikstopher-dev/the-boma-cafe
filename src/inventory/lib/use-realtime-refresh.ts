@@ -27,6 +27,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@/lib/supabase'
 import { createLeadingDebouncer } from './realtime-debounce'
+import { createSignalCursor, type RealtimeSignal } from './realtime-cursor'
 
 export interface RealtimeRefreshOptions {
   /** Unique per page, e.g. 'e1-ops-dashboard' */
@@ -67,6 +68,47 @@ export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribe
 
     const supabase = createBrowserClient()
     const debouncer = createLeadingDebouncer(debounceMs, () => refreshRef.current())
+    const cursor = createSignalCursor()
+    let reconciling = false
+    let reconcileQueued = false
+
+    const processSignal = (value: Partial<RealtimeSignal>) => {
+      if (cursor.accept(value.id)) debouncer.trigger()
+    }
+
+    const reconcile = async () => {
+      if (reconciling) {
+        reconcileQueued = true
+        return
+      }
+
+      reconciling = true
+      try {
+        do {
+          reconcileQueued = false
+          let hasMore = true
+          while (hasMore) {
+            const { data, error } = await supabase
+              .from('realtime_events')
+              .select('id, event_name, table_name, entity_id, created_at')
+              .in('event_name', events)
+              .gt('id', cursor.lastId)
+              .order('id', { ascending: true })
+              .limit(500)
+
+            if (error) {
+              console.warn('[realtime] signal catch-up failed', error.message)
+              break
+            }
+            const signals = (data ?? []) as RealtimeSignal[]
+            for (const signal of signals) processSignal(signal)
+            hasMore = signals.length === 500
+          }
+        } while (reconcileQueued)
+      } finally {
+        reconciling = false
+      }
+    }
 
     // Unquoted in-list values: verified live that WALRUS's filter parser
     // silently matches NOTHING for double-quoted values (e.g. "stock.low");
@@ -82,17 +124,29 @@ export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribe
           table: 'realtime_events',
           filter,
         },
-        () => debouncer.trigger(),
+        (payload) => processSignal(payload.new as RealtimeSignal),
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED' && wasSubscribedRef.current) reconnectRef.current?.()
-        if (status === 'SUBSCRIBED') wasSubscribedRef.current = true
+        if (status === 'SUBSCRIBED') {
+          const reconnected = wasSubscribedRef.current
+          wasSubscribedRef.current = true
+          void reconcile()
+          if (reconnected) reconnectRef.current?.()
+        }
         setSubscribed(status === 'SUBSCRIBED')
       })
+
+    const reconcileVisible = () => {
+      if (document.visibilityState === 'visible') void reconcile()
+    }
+    document.addEventListener('visibilitychange', reconcileVisible)
+    window.addEventListener('online', reconcileVisible)
 
     return () => {
       activeChannels.delete(channel)
       debouncer.dispose()
+      document.removeEventListener('visibilitychange', reconcileVisible)
+      window.removeEventListener('online', reconcileVisible)
       void supabase.removeChannel(channelRef).catch(() => {})
     }
     // eventsKey is the stable identity of the events list

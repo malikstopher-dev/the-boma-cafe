@@ -5,6 +5,7 @@ const supabaseServiceRoleKey = typeof process !== 'undefined' ? process.env.SUPA
 const supabaseAnonKey = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : undefined
 
 let _adminClient: SupabaseClient<any> | null = null
+let _browserClient: SupabaseClient<any> | null = null
 
 export function getAdminClient(): SupabaseClient<any> {
   if (_adminClient) return _adminClient
@@ -23,5 +24,9 @@ export function createBrowserClient(): SupabaseClient<any> {
   if (!key) {
     throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable is required')
   }
-  return createClient(supabaseUrl, key)
+  // One Supabase client multiplexes all page channels over one browser socket.
+  // Server callers retain isolated clients and never cache browser state.
+  if (typeof window === 'undefined') return createClient(supabaseUrl, key)
+  if (!_browserClient) _browserClient = createClient(supabaseUrl, key)
+  return _browserClient
 }

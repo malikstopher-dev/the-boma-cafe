@@ -227,13 +227,13 @@ describe('requireAdminPermission — identity enforcement', () => {
     })
   }
 
-  it('assistant_manager via middleware header is denied waiter.write', async () => {
+  it('forged middleware identity headers are denied without a validated cookie', async () => {
     const res = await requireAdminPermission(
       adminRequest({ 'x-admin-id': 'adm-1', 'x-admin-role': 'assistant_manager' }),
       'waiter.write',
     )
     expect(res).not.toBeNull()
-    expect(res!.status).toBe(403)
+    expect(res!.status).toBe(401)
   })
 
   it('assistant_manager via cookie fallback is denied waiter.create/edit/delete and accounts.write', async () => {
@@ -290,9 +290,6 @@ describe('requireAdminPermission — identity enforcement', () => {
   })
 
   it('assistant_manager cookie fallback is enforced even without middleware identity headers (bare /api/waiters path)', async () => {
-    // Two validateAdminSession passes (getRequestRole via next/headers cookies +
-    // getAdminContext cookie fallback) — each needs session/update/account impls.
-    cookieAccount('assistant_manager')
     cookieAccount('assistant_manager')
     const bareReq = new NextRequest('http://localhost/api/waiters', {
       headers: { cookie: 'boma_admin_session=sess-1' },
@@ -302,18 +299,19 @@ describe('requireAdminPermission — identity enforcement', () => {
     expect(res!.status).toBe(403)
   })
 
-  it('legacy admin (no identity, no session cookie) keeps full access during transition', async () => {
+  it('an unresolvable admin identity is denied', async () => {
     const res = await requireAdminPermission(adminRequest(), 'accounts.delete')
-    expect(res).toBeNull()
+    expect(res).not.toBeNull()
+    expect(res!.status).toBe(401)
   })
 
-  it('non-admin roles are always forbidden', async () => {
+  it('forged non-admin headers are denied', async () => {
     const waiterReq = new NextRequest('http://localhost/api/waiters', {
       headers: { 'x-user-role': 'waiter' },
     })
     const res = await requireAdminPermission(waiterReq, 'waiter.pin_reset')
     expect(res).not.toBeNull()
-    expect(res!.status).toBe(403)
+    expect(res!.status).toBe(401)
   })
 })
 
@@ -374,6 +372,19 @@ describe('change-password route (self-service)', () => {
     })
   }
 
+  function validOwnerContext() {
+    const future = new Date(Date.now() + 60_000).toISOString()
+    mockClient.from
+      .mockImplementationOnce(() => chain(() => Promise.resolve(ok({
+        id: 'sess-current', admin_id: 'adm-1', signed_out_at: null,
+        started_at: future, expires_at: future, last_active_at: new Date().toISOString(),
+      }))))
+      .mockImplementationOnce(() => chain())
+      .mockImplementationOnce(() => chain(() => Promise.resolve(ok({
+        id: 'adm-1', username: 'mahindra', display_name: 'Mr Mahendra', role: 'owner', is_active: true,
+      }))))
+  }
+
   it('rejects legacy admins without an individual identity', async () => {
     const res = await changePassword(authReq({ current_password: 'x', new_password: 'yyyyyy' }))
     expect(res.status).toBe(400)
@@ -389,13 +400,14 @@ describe('change-password route (self-service)', () => {
 
   it('rejects a wrong current password without touching the account', async () => {
     const hash = await hashPassword('Correct-Pw!1')
+    validOwnerContext()
     mockClient.from.mockImplementationOnce(() => chain(() => Promise.resolve(ok({ id: 'adm-1', username: 'mahindra', password_hash: hash }))))
 
     const res = await changePassword(
-      authReq({ current_password: 'Wrong-Pw!', new_password: 'New-Pw!234' }, { 'x-admin-id': 'adm-1', 'x-admin-role': 'owner' }),
+      authReq({ current_password: 'Wrong-Pw!', new_password: 'New-Pw!234' }, { cookie: 'boma_admin_session=sess-current' }),
     )
     expect(res.status).toBe(401)
-    expect(mockClient.from).toHaveBeenCalledTimes(1)
+    expect(mockClient.from).toHaveBeenCalledTimes(4)
   })
 
   it('changes the hash, keeps the current session, ends others, and audits', async () => {
@@ -403,6 +415,7 @@ describe('change-password route (self-service)', () => {
     const updateChain = chain(() => Promise.resolve(ok({ id: 'adm-1' })))
     const endChain = chain(() => Promise.resolve(ok(null)))
 
+    validOwnerContext()
     mockClient.from
       .mockImplementationOnce(() => chain(() => Promise.resolve(ok({ id: 'adm-1', username: 'mahindra', password_hash: hash }))))
       .mockImplementationOnce(() => updateChain)
@@ -411,9 +424,9 @@ describe('change-password route (self-service)', () => {
       .mockImplementationOnce(() => chain())
 
     const res = await changePassword(
-      authReq(
-        { current_password: 'Correct-Pw!1', new_password: 'New-Pw!234' },
-        { 'x-admin-id': 'adm-1', 'x-admin-role': 'owner', 'x-admin-session': 'sess-current' },
+        authReq(
+          { current_password: 'Correct-Pw!1', new_password: 'New-Pw!234' },
+          { cookie: 'boma_admin_session=sess-current' },
       ),
     )
     expect(res.status).toBe(200)
@@ -431,8 +444,8 @@ describe('change-password route (self-service)', () => {
     const idEqs = endChain.eq.mock.calls.filter((args: any[]) => args[0] === 'id').map((args: any[]) => args[1])
     expect(idEqs).toEqual(['sess-other'])
 
-    expect(mockClient.from).toHaveBeenNthCalledWith(5, 'admin_audit_log')
-    const auditChain = mockClient.from.mock.results[4]!.value as any
+    expect(mockClient.from).toHaveBeenNthCalledWith(8, 'admin_audit_log')
+    const auditChain = mockClient.from.mock.results[7]!.value as any
     const auditRow = auditChain.insert.mock.calls[0][0]
     expect(auditRow).toMatchObject({
       admin_id: 'adm-1', action: 'admin_accounts.password_change_self',
