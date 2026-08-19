@@ -23,8 +23,8 @@
 - E4 (Event-attributed POs — POs link to a confirmed booking/event; receiving costs to the event's cost centre; precedence: explicit receive-time cost_centre_id → PO cost_centre_id → location default; migration 098 + engine + API + UI) — COMPLETE (2026-08-18, commit 381056f; migration 098)
 - E1A (Smart Product Import — best-effort parser: name-only rows import, priority price-column scan incl. BOTTLE PRICE, per-row create/update/skip, Undo Last Import, bulk edit on products list, Import Products dialog; migrations 099 + 100) — COMPLETE (2026-08-18, commit e960177; migrations 099 + 100)
 - O1-D (Production ledger recovery — 61 evidenced pre-wipe transactions restored with original IDs/timestamps; balance cache rebuilt from ledger `SUM(quantity)`, 32 rows, 0 parity mismatches; PO reconciliation 6/6; gas tracker, daily sheet, owner KPIs, realtime (61 `stock.moved` events) all verified) — COMPLETE (2026-08-19, data restored in production; docs-only commit)
-- Migrations 096–100 applied (local == remote, 000–100; 016a filename-skip benign)
-- 284/284 Vitest passing; inventory strict TypeScript clean
+- Migrations 096–102 applied (local == remote, 000–102; 016a filename-skip benign)
+- 316/316 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 
@@ -57,14 +57,123 @@
 - Do not rewrite migrations. Do not edit applied migration history — replay via CREATE OR REPLACE in a new migration.
 - Break nothing: ledger parity, audit logs, RBAC, validation wording, API signatures.
 - Additive changes only. Leave production clean. End every session with Stop.
+- Never touch, import, delete, rename, stage, or commit the three untracked owner XLSX files.
 - **STANDING RULE (2026-08-16, owner directive):** Autonomous multi-ship runs must re-read MASTER_MISSION_LOCK.md before activating each subsequent ship. Never rely on the queue remembered from the previous ship. Max four ships per autonomous run; stop after the fourth ship even if more work is queued, and wait for owner permission.
 
 ## Active ship
 
-O1-D (Production Ledger Recovery) COMPLETE (2026-08-19). **No active ship — BOMA is in waiting state.** Await owner direction before starting anything new.
+### U1 — Vercel and Supabase Usage Audit (ACTIVE 2026-08-19)
+
+**Objective:** establish measurable, code-traced evidence for unusually high Vercel usage and Supabase egress, then apply only confirmed, functionality-preserving reductions. Investigation precedes implementation; do not guess.
+
+**Phase U1-A — Investigation only (COMPLETE 2026-08-19):**
+
+- Audit Vercel/Next.js request volume, function execution, cache behavior, image/file delivery, frontend refetching, and route response sizes.
+- Audit Supabase query shapes, selected columns, pagination, realtime subscriptions, storage requests, polling, and request/response transfer.
+- Trace every suspected hotspot through the current code and gather measurable read-only evidence where available.
+- Report verified causes and the smallest safe remediation plan before changing runtime behavior.
+
+**Verified evidence:**
+
+- `/api/menu/public` is 15,088,777 bytes uncompressed and 11,290,125 bytes over gzip. Its 146 menu items carry 15,021,455 image characters; six PNG data URIs account for 15,010,784 characters. One origin execution reads 15,094,796 bytes from Supabase and returns 15,088,777 bytes through Vercel.
+- The route is a 60-second prerender. A request after staleness was observed invoking the serverless origin, followed by a cache hit. At the current payload size, about 695 stale regenerations equal 10.48 GB of Vercel Fast Origin Transfer and roughly the same Supabase Database Egress.
+- `menu_items` is 17 MB for only 151 rows and has 1,205 sequential scans in the current 69-day PostgreSQL statistics window. The base64 image column is the table-size and transfer outlier.
+- One read-only `getOwnerDashboard('this_week')` execution against production made 101 Supabase requests, transferred 69,184 response-body bytes, and took 34.7 seconds. `/dashboard` repeats it every 60 seconds without visibility gating and separately polls recent audit activity every 60 seconds.
+- PostgreSQL statistics show 105,197 legacy worker pending-job polls, 58,474 current projected-column polls, and 18,324 scheduler scans in the 69-day statistics window. These dominate request count but return tiny empty bodies, so they are not the primary GB-scale egress cause.
+- Kitchen, bar, admin orders, and open chat retain 15/30-second REST polling even when their `realtime_events` subscriptions are healthy.
+- Supabase Storage currently contains 13 objects totaling 1,365,556 bytes (largest 318,649 bytes). Storage volume is not the current primary egress cause. Vercel static `gallery.mp4` is 20,636,261 bytes but is immutable-cached and affects Fast Data Transfer, not the confirmed Fast Origin/database transfer defect.
+- Vercel Hobby currently includes 100 GB Fast Data Transfer, up to 10 GB Fast Origin Transfer, 1 million invocations, 4 CPU-hours, and 360 GB-hours provisioned memory. Supabase Free includes 5 GB uncached and 5 GB cached egress.
+
+**Phase U1-B — Menu transfer remediation (COMPLETE AND VERIFIED LIVE 2026-08-19):**
+
+- Implement only confirmed fixes: caching/revalidation, request deduplication, pagination/selective queries, reduced or visibility-gated polling, and avoided database/storage transfers.
+- Preserve functionality, data, ledger parity, realtime behavior, RBAC, and API contracts.
+- Verify locally and with non-destructive measurements. Do not deploy or mutate production data without explicit owner approval.
+
+**Smallest safe remediation order:**
+
+1. Menu transfer emergency fix: move the six inline PNGs out of `menu_items.image` into ordinary optimized image objects/files, replace the data URIs with short URLs/paths using a rollback manifest, and prevent future public menu responses from serializing inline image data. Keep the exact images and existing menu behavior. This requires explicit approval for the production data update and later deployment.
+2. Owner dashboard aggregation: replace the 101-request fan-out with a database aggregation RPC/batched query path, reuse already-loaded transactions, remove supplier/product N+1 reads, and use realtime plus a visibility-gated conservative fallback instead of two unconditional 60-second polls.
+3. Realtime fallback correction: while subscribed, stop 30-second full-list polling on kitchen, bar, admin orders, and chat; retain visibility-return refresh, manual refresh, reconnect refresh, and a slower visibility-gated safety poll.
+4. Secondary request reductions: batch product balances/display UOMs, throttle admin session `last_active_at` writes, make marketing autosave dirty-state based and paginate versions, collapse duplicate public CMS fetches, and paginate/select explicit columns on growing APIs.
+5. Verify each change by re-measuring route bytes, Supabase calls/body bytes, cache transitions, hidden-tab behavior, and desktop/mobile functionality before any production deployment.
+
+**Menu transfer production result (2026-08-19):**
+
+- Six production PNG data URIs were read without mutation, backed up locally with SHA-256 rollback hashes, and converted deterministically to six WebP assets (11,257,981 bytes -> 700,698 bytes; 93.776% reduction; SSIM 0.976938-0.982653).
+- `scripts/menu-image-migration/manifest.json` maps each item ID/current value type to its deployed file/path and exact rollback source/hash. `productionMutationPerformed` is `true`.
+- `/api/menu/public` no longer selects inline image values with item metadata. A second explicit `id,image` projection excludes `%data:%`; known migrated IDs resolve to manifest paths; unknown inline images fail closed to `null`; a final recursive response guard strips any future data URI.
+- Consumer routes are split while retaining 60-second revalidation and `stale-while-revalidate=300`: full menu 146 items/19 categories, homepage four featured items only, waiter 146 orderable items with seven required fields and no images.
+- Measured full-menu response: 15,088,777 -> 78,293 bytes; gzip 11,290,125 -> 13,179; Supabase bytes 15,094,796 -> 90,804. All three new route variants regenerating once total 118,292 response bytes and 132,826 Supabase bytes (99.216% / 99.12% reductions versus one old regeneration).
+- No response contains `data:`. Six optimized assets have immutable cache headers. Exact PNG rollback files are excluded from Vercel uploads.
+- Verification: 311/311 Vitest passing with 20-second timeout for existing slow bcrypt/XLSX tests; inventory strict TypeScript clean; root TypeScript clean; `next build` green; route handlers return HTTP 200 with expected cache headers and measured payloads.
+- Commit `bcc22ed` was pushed and deployed to Vercel before database mutation. Migration 101 was then applied and its hash-guarded RPC updated exactly six `menu_items.image` values atomically; verification found six expected paths and zero remaining inline images.
+- Live results: full route 78,293 raw / 13,179 gzip; homepage 1,179 / 617; waiter 38,820 / 10,358; authenticated CMS 15,103,996 -> 93,532 raw (99.381% reduction); full-route Supabase path 15,094,796 -> 91,464 bytes (99.394% reduction).
+- All six static WebPs return 200 with matching SHA-256 and immutable caching. Desktop/mobile homepage, waiter food menu, and public menu render without horizontal overflow. Existing authenticated CMS returns 200 with 19 categories/146 items and zero data URIs.
+- Rollback remains ready: external 15,011,653-byte pre-cutover row export SHA-256 `4eecf34af6b72f79c62fa88002ef6f6c15ceb79166412f32f7f6bb7f30e8000c`, six committed original PNGs/hashes, and atomic service-role rollback RPC.
+- U1-B stop gate reached. Do not automatically start Owner dashboard or 15/30-second polling remediation; broader U1 remains active for separately approved checkpoints. S1 and SYNC-1C remain blocked.
+
+**U1-C — Owner dashboard and operational polling (COMPLETE AND VERIFIED LIVE 2026-08-19):**
+
+- Owner dashboard now uses `owner_dashboard()` (migration 102): 101 Supabase reads -> 1, 69,184 -> 6,594 aggregate response bytes, and 34.7s baseline -> 500ms live RPC. The separate audit fetch was folded into the response; the visible safety interval is 300 seconds and hidden tabs make zero periodic reads. `wss://*.supabase.co` was added to CSP so the existing invalidation channel is live.
+- Kitchen, Bar, Admin Orders, and open Chat no longer run 15/30-second full-list polls. They retain initial/manual loads, realtime invalidation, reconnect refresh, visibility return, and a 300-second visible-only safety reconciliation. A 35-second no-event production browser probe observed exactly one initial list fetch for each surface and left zero probe rows.
+- Commits `f786fa3`, `e7805b4`, and `30f40d1` are pushed and deployed. U1 secondary reductions remain separate future work; this approved checkpoint is closed.
+
+### SYNC-1 — Unified Application Synchronization Program (PLANNED 2026-08-19)
+
+**Goal:** make Admin, Owner, Waiter, Kitchen, Bar, Orders, Bookings, Inventory, supplier operations, and management statistics convergent views of one authoritative database state. Realtime delivers invalidation/change signals; it never becomes authoritative. Clients must recover by refetching authoritative state after missed, duplicate, delayed, or reconnect events.
+
+**Lock status:** the owner advanced the U1 gate and explicitly activated SYNC-1C. SYNC-1C is complete below; no later SYNC checkpoint is active.
+
+**Planned checkpoints:**
+
+1. `SYNC-1A` — system-wide authoritative-state/dependency audit, duplicate-calculation map, polling/realtime/cache/auth inventory, and measurable baseline (investigation only).
+2. `SYNC-1B` — explicit synchronization contracts for Orders, Inventory, Bookings, Menu/Products, and Dashboard Statistics; schema and authorization risk review (design only).
+3. `SYNC-1C` — smallest shared realtime invalidation/reconciliation foundation with reconnect, visibility, deduplication, and scoped authorization (local implementation; separately activated).
+4. `SYNC-1D` — Orders plus Kitchen/Bar/Waiter/Admin/Owner convergence and valid concurrent state transitions (local implementation; separately activated).
+5. `SYNC-1E` — Inventory mutation/log atomicity plus Admin/Owner convergence; trace the actual existing inventory log/audit source before any schema decision (local implementation; separately activated).
+6. `SYNC-1F` — Bookings and Menu/Product invalidation while preserving all U1-B DTO/image/payload protections (local implementation; separately activated).
+7. `SYNC-1G` — Owner/Admin aggregate convergence, eliminate the measured 101-request Owner fan-out, and remove aggressive polling with resilient safety reconciliation (local implementation; separately activated).
+8. `SYNC-1H` — multi-client, reconnect, duplicate-event, concurrent-update, authorization, cache, and performance acceptance suite (local verification; production actions separately approval-gated).
+
+**Non-negotiable contract:** `authorized mutation -> server/database transaction -> authoritative tables -> committed state -> scoped signal/cache invalidation -> affected clients reconcile`. No dashboard-to-dashboard synchronization, giant realtime payloads, wildcard subscriptions, client-authoritative copies, stale-write-last updates, or hidden-tab hammering.
+
+**SYNC-1A / SYNC-1B audit checkpoint (DOCUMENTATION COMPLETE 2026-08-19):**
+
+- Authoritative dependency map, duplicate-calculation inventory, current polling/realtime/auth map, target contracts, phased implementation gates, and acceptance scenarios are recorded in `docs/SYNC_1_ARCHITECTURE_AND_CONTRACTS.md`.
+- Highest-priority prerequisites are authorization and transaction correctness, not subscription cosmetics: unmatched routes can trust client-supplied internal role headers; most service-role inventory mutations are authenticated but not explicitly RBAC-gated; completion-to-deduction enqueue is not atomic; booking status has competing writers; ledger audit/cache/signal ordering is not atomic; arbitrary RPC errors can downgrade to non-atomic fallbacks.
+- Realtime currently has no cursor/catch-up/version protocol, uses multiple browser clients, exposes a global anonymous signal feed, and retains aggressive polling on key operational screens. Migration-derived source-table RLS/publication state conflicts with the original E1 documentation and must be live-verified before schema design.
+- `inventory_logs` does not exist in tracked schema/code. Quantity truth is `inventory_transactions`; inventory history sources are `inventory_audit_log` and `admin_audit_log`; `realtime_events` is invalidation only.
+- SYNC-1A/1B were documentation-only. The owner subsequently advanced U1 and explicitly activated SYNC-1C.
+
+**SYNC-1C — shared authentication and realtime foundation (COMPLETE AND VERIFIED LIVE 2026-08-19):**
+
+- Reserved identity headers are stripped at middleware ingress. Authorization now resolves from validated cookies/sessions only; `/api/admin/auth` no longer accepts `x-admin-*`, and unresolved admin identity fails closed instead of receiving legacy full access.
+- Inventory APIs are management-only at the middleware boundary. Live proof: a Kitchen session receives 403 from `/api/inventory/products` while `/admin/kitchen` remains 200; a forged owner-header request to `/api/admin/auth` now returns `{ authenticated: false }`.
+- Browser Supabase access is a window singleton. The generic realtime refresh hook now tracks the existing monotonic `realtime_events.id`, deduplicates a bounded signal history, catches up on subscribe/reconnect/visibility/online, and preserves consumers' authoritative refetch behavior.
+- Live production checks: anonymous `realtime_events` cursor query is 200 with only id/event/table/entity/timestamp fields; `orders` returns no rows; direct `staff_messages` currently returns a 500 infinite-RLS-recursion error and is not used as a transport. A disposable Owner browser received a real `stock.low` event and refreshed `/dashboard` (3 -> 4 owner API requests) with no realtime errors; all probe records were deleted.
+- Commit `1060ba2` is pushed and deployed. SYNC-1D and later checkpoints remain approval-gated.
+
+### S1 — Sensitive Supplier Banking Details (QUEUED after U1 acceptance)
+
+- Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.
+- Add optional bank name, account holder/name, account number, account type, branch code, and payment/reference information using the smallest additive design.
+- Treat banking data as sensitive business data: never expose it through public/client-facing endpoints, logs, analytics, realtime payloads, or unauthorized UI.
+- Implementation starts only after U1 is safely handled and the owner accepts the plan.
+
+**Investigation result / proposed security design:**
+
+- Do not add plaintext bank columns to `inventory_suppliers`: its list/detail/archived and mutation-return routes use `select('*')` or unqualified `.select()` and would leak new columns into unrelated browser pages.
+- Use a separate service-role-only, RLS-enabled `inventory_supplier_bank_details` table with an application-encrypted payload, account last-four metadata, key version, timestamps, and updating admin ID. Keep the encryption key only in server environment configuration.
+- Use a dedicated owner-only API and separately loaded owner-only supplier-detail panel. Require a resolved individual owner identity; deny staff, assistant manager, manager, full manager, missing identity, and legacy/unresolvable contexts.
+- Return masked explicit DTOs only; never return ciphertext or include banking data in supplier list/options, reports, exports, analytics, realtime, console logs, or audit before/after JSON.
+- Record only sanitized audit events (created/updated/revealed/deleted, supplier ID, actor, changed field names). Never log account number, branch code, encrypted payload, IV, tag, or submitted request bodies.
+- Before S1, replace supplier wildcard selects with explicit existing-column lists and add a minimal `{id,name}` options endpoint. Existing supplier routes are broadly authenticated but do not currently enforce supplier-specific admin RBAC; banking routes must not inherit that weakness.
 
 ## Deferred queue (in order)
 
+- SYNC-1D onward — Unified Application Synchronization Program (approval-gated).
+- S1 — Sensitive Supplier Banking Details (after U1 acceptance; implementation approval-gated).
 - Optional (future consolidation): `/inv` retirement (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
 - Optional (future data ship): supplier dedup migration (six "National Beverage Co" rows + 1 archived, E2 finding).
 - (O1-D ledger-warning banner — MOOT: ledger restored 2026-08-19, no longer applicable.)

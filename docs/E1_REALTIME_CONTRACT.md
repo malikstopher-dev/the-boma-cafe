@@ -4,6 +4,14 @@ Single source of truth for the realtime refresh architecture introduced by Ship 
 Transport is **Supabase Realtime `postgres_changes`** — no new framework, no event bus,
 no broadcast channels.
 
+> Historical-policy note (SYNC-1A, 2026-08-19): the RLS matrix below records the
+> policy understood when E1-1 shipped. Later tracked migrations appear to retain
+> anonymous SELECT policies/publication membership for some source tables, including
+> `orders` and `staff_messages`. Treat the matrix as historical until production
+> grants, RLS policies, and publication membership are verified read-only. Current
+> browser consumers use `realtime_events`; see
+> `docs/SYNC_1_ARCHITECTURE_AND_CONTRACTS.md` for the current audit and target contract.
+
 ## Why a signal table
 
 All admin/staff browsers connect with the **anon key** (auth is cookie/PIN based — there

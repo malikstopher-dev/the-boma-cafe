@@ -2356,3 +2356,123 @@ Owner-directed recovery of the production `inventory_transactions` ledger (wiped
 - Realtime trigger fires stock.moved per inserted row (bulk restores emit N events - expected, harmless).
 - `inventory_audit_log` is NOT a complete movement record (no unit_cost/timestamps per move) - cannot reconstruct costs or exact ordering.
 - BOMA returned to waiting state with no active ship after this closure.
+
+---
+
+## Session: U1-B Menu Transfer Remediation - Local Only (2026-08-19)
+
+### Objective
+Remove inline base64/data-URI images from every public menu response, split the homepage/waiter/full-menu DTOs, preserve exact visuals using locally prepared optimized files, and prepare a deterministic production migration/rollback manifest. Local code only: no production mutation, storage upload, deployment, staging, commit, or push.
+
+### Root cause fixed locally
+- `/api/menu/public` selected `menu_items.image`; six PNG data URIs contributed 15,010,784 of the response characters.
+- Homepage downloaded all 146 items/19 categories to show four featured items; waiter downloaded all images but rendered none.
+
+### Implementation
+- `src/lib/public-menu.ts`: explicit view projections, safe non-data image-reference query, six-ID manifest fallback, recursive data-URI response guard, 60s + SWR cache headers.
+- Routes: full `/api/menu/public`, new `/homepage`, new `/waiter`; consumers updated in homepage and waiter PWA.
+- Six read-only production PNG captures converted to WebP under `public/menu/migrated`; exact PNG rollback files and hashes under `scripts/menu-image-migration`; originals excluded by `.vercelignore`.
+- Deterministic `prepare.mjs`, `manifest.json`, `measurements.json`, and migration/rollback README. Second preparation run produced identical manifest and asset hashes.
+- `next.config.js`: immutable cache headers for `/menu/migrated/*`.
+- Seven regression tests cover projections, exact field sets, manifest/file hashes, migrated resolution, normal URLs, unknown inline values, and nested final guarding.
+
+### Measurements
+- Old: Supabase 15,094,796 bytes; response 15,088,777; gzip 11,290,125; 146 items + 19 categories; raw data URIs present.
+- Full menu: Supabase 90,804; response 78,293; gzip 13,179; records preserved; no data URI.
+- Homepage: Supabase 1,129; response 1,179; gzip 617; four items only; no categories/data URI.
+- Waiter: Supabase 40,893; response 38,820; gzip 10,358; seven item fields, no images/data URI.
+- Worst case all three caches regenerate: 132,826 Supabase bytes + 118,292 response bytes, 99.12% / 99.216% lower than one old regeneration.
+- Images: 11,257,981 PNG bytes -> 700,698 WebP bytes (93.776% reduction); SSIM range 0.976938-0.982653.
+
+### Verification
+- 311/311 Vitest passing (`--testTimeout=20000`; default 5s timed out only pre-existing slow bcrypt/XLSX tests on this machine).
+- Inventory strict TypeScript clean; root TypeScript clean; Next production build green (187 static pages, all three menu routes prerendered at 1m).
+- Direct route execution against read-only production queries: HTTP 200, `s-maxage=60, stale-while-revalidate=300`, exact measured payloads, zero `data:` strings.
+
+### Remaining / approval gate
+- Production still stores six data URIs. Authenticated `/api/cms/menu` -> `getMenuItems()` -> `select('*')` remains the only known raw data-URI API path until the six rows are updated.
+- Proposed next sequence requires explicit approval: fresh hash/export backup -> deploy guarded code/assets -> verify -> one-transaction six-row path update -> remeasure. Rollback reconstructs exact data URIs from PNG backups and verifies manifest SHA-256 before a transactional restore.
+- Dashboard/polling remediation and supplier banking were not started.
+
+---
+
+## Session: SYNC-1A / SYNC-1B Unified Synchronization Audit and Contracts (2026-08-19) - documentation only
+
+### Objective
+Map how Admin, Owner, Waiter, Kitchen, Bar, Orders, Bookings, Inventory, suppliers, and dashboards currently synchronize; identify authoritative state, duplicate calculations, mutation races, realtime/polling/cache/auth boundaries; then define explicit synchronization contracts and phased acceptance gates. U1 remains active, so this session was limited to investigation, design, documentation, and mission planning.
+
+### Deliverable
+- Added `docs/SYNC_1_ARCHITECTURE_AND_CONTRACTS.md`: authority matrix; Orders, Inventory/PO, Booking, Menu/Product, Dashboard, realtime, polling, caching, and authorization maps; severity-ranked risks; target domain contracts; planned checkpoints SYNC-1C through SYNC-1H; multi-client acceptance suite; required live-verification list.
+- Updated `MASTER_MISSION_LOCK.md` with the SYNC-1A/1B documentation checkpoint. SYNC-1 implementation remains blocked until U1 advances/closes and the owner explicitly activates a checkpoint.
+
+### Key findings
+- `orders` is operational order truth; `inventory_transactions` is stock truth; `inventory_product_balances` is a display cache; `realtime_events` is invalidation only. No tracked `inventory_logs` object exists.
+- Order completion commits before best-effort deduction enqueue; split creation is non-atomic; sibling grouping is asymmetric; cancellation has a competing writer; station assignment is client-supplied; order deduction lacks an explicit station-to-location contract.
+- Inventory has four direct ledger-writer mechanisms. The central TypeScript writer separates ledger, audit, and cache writes; RPC routes can fall back on arbitrary errors to non-atomic paths; service-role inventory APIs generally lack explicit route RBAC.
+- Booking status has competing mutation authorities. Canonical status commits before non-blocking inventory/availability hooks; tracked availability states conflict with `releaseAvailability('cancelled')`; submission lacks a final locked conflict check.
+- Realtime has no cursor, catch-up, entity version, or event-ID deduplication; browser wrappers create separate Supabase clients; key screens still poll at 15/30/60 seconds. The canonical Owner dashboard has no realtime and retains the measured 101-call fan-out.
+- Tracked later migrations appear to conflict with the original E1 RLS documentation for direct anonymous order/message reads. Production RLS, grants, publication membership, waiter-view privileges, and edge handling of internal auth headers require read-only live verification before implementation.
+- U1-B public menu protections remain frozen. Authenticated CMS still reads `menu_items.select('*')` until the separately approval-gated six-row production image migration.
+
+### State and gate
+- Documentation-only: no runtime source edit for SYNC-1, no migration, no production query or mutation, no staging, no commit, no push, no deploy.
+- Existing U1-B local runtime/assets changes were preserved exactly.
+- The three untracked owner XLSX files were not touched.
+- Next permissible action: owner reviews the architecture and, only after the U1 gate advances/closes, explicitly activates SYNC-1C. Stop otherwise.
+
+---
+
+## Session: U1-B Controlled Production Cutover (2026-08-19) - commits bcc22ed + closeout
+
+### Objective
+Deploy the already verified U1-B menu transfer fix before touching data, prove all routes/assets/desktop/mobile behavior, then atomically replace only the six approved production `menu_items.image` data URIs with immutable WebP paths. Stop before other U1 sources.
+
+### Preflight
+- Re-read the mission lock and isolated only U1-B files; SYNC docs and the three owner XLSX files were not staged in the runtime commit.
+- Fresh production export verified exactly six inline-image IDs. Every production data-URI SHA-256 and decoded PNG SHA-256 matched `manifest.json`.
+- All six rollback PNGs reconstructed to the approved data-URI hashes; all six WebPs matched approved hashes.
+- External rollback export: `C:\Users\stoph\AppData\Local\Temp\opencode\u1b-menu-rollback-precutover-20260819.json`, 15,011,653 bytes, SHA-256 `4eecf34af6b72f79c62fa88002ef6f6c15ceb79166412f32f7f6bb7f30e8000c`.
+
+### Commit and deployment
+- Commit `bcc22ed` (`U1-B: eliminate inline menu image transfer`) contains only guarded DTO/runtime changes, six WebPs, exact rollback PNGs/tooling, tests, and migration 101. Pushed to `main`.
+- Vercel production deployment `the-boma-cafe-49msvtkim-malikstopher-5581s-projects.vercel.app` built 187 pages and was aliased to `the-boma-cafe.vercel.app` before any menu row changed.
+- Before DB cutover: six assets returned 200 with matching hashes/immutable caching; all three public routes returned 200 with zero data URIs; desktop/mobile homepage, waiter, and public menu rendered; authenticated CMS still returned 200 with its six original data URIs.
+
+### Atomic production mutation
+- Migration 101 installed service-role-only `apply_u1b_menu_image_cutover()` and `rollback_u1b_menu_image_cutover(jsonb)`. Applying the migration did not change menu rows.
+- Apply RPC locked/hash-checked all six rows and returned `{outcome:'applied', updated:6}`. Immediate verify returned six expected paths and zero inline images. A repeat apply returned `already_applied` with zero updates.
+- Migration history local == remote through 101.
+
+### Live measurements and verification
+- Public full: 15,088,777 -> 78,293 raw bytes (99.481%); gzip 11,290,125 -> 13,179 (99.883%).
+- Supabase full-route query path: 15,094,796 -> 91,464 bytes (99.394%).
+- Homepage: 1,179 raw / 617 gzip; Waiter: 38,820 / 10,358. Worst-case all three regenerate: 118,292 response bytes + 133,805 Supabase bytes (99.216% / 99.114% below one old full regeneration).
+- Authenticated CMS: 15,103,996 -> 93,532 raw bytes; 13,524 gzip; 19 categories/146 items; zero data URIs (99.381% raw reduction).
+- Direct production `menu_items select *`: 146 rows, 94,598 raw / 13,197 gzip, zero data URIs.
+- At the historical 695-regeneration equivalent: Vercel full response falls from 10.487 GB to 54.414 MB; even all three routes regenerating 695 times total 82.213 MB. Supabase falls to 63.567 MB for full or 92.994 MB for all three.
+- Six WebPs still return 200 with exact hashes and one-year immutable caching. Desktop/mobile homepage, waiter food menu, and public menu passed without overflow. Known unrelated warnings remain: Microsoft Clarity CSP block and three pre-existing mobile `/menu/*.jpg` Next Image 400s.
+
+### Tests and rollback
+- 311/311 Vitest; inventory strict TypeScript; root TypeScript; full Next production build green (187 pages).
+- Rollback is immediately available through the external export plus six original PNGs/hashes and one atomic RPC. No rollback was required.
+- No probe account or business row was created. Kitchen CMS verification used the existing shared role cookie; browser waiter verification used isolated temporary browser storage only.
+
+### Gate
+- U1-B COMPLETE and verified live. Broader U1 high-usage sources remain known but were not started. Stop at this checkpoint; Owner dashboard, Kitchen/Bar/Admin/Chat polling, SYNC-1C, supplier work, and `/inv` retirement remain untouched.
+
+---
+
+## Session: U1-C Operational Polling + SYNC-1C Foundation (2026-08-19) - commits 30f40d1, 1060ba2
+
+### U1-C
+- Owner dashboard aggregation was deployed earlier in this session: migration 102 reduces `getOwnerDashboard` from 101 Supabase calls to one aggregate RPC call. Live result: 500ms and 6,594 bytes; the old baseline was 34.7s and 69,184 bytes. The separate activity API poll was removed, safety polling is visible-only at 300 seconds, and CSP now allows `wss://*.supabase.co`.
+- Kitchen, Bar, Admin Orders, and open Chat removed 15/30-second full-list fallback loops. They retain initial/manual data loads, realtime invalidation, reconnect refresh, visibility return, and a 300-second visible safety refresh.
+- Production browser probe held each surface open for 35 seconds with no events: Kitchen orders=1, Bar orders=1, Admin orders=1, Chat messages=1 initial fetch, with no repeat poll. Probe account, audit rows, conversation, and messages were deleted.
+
+### SYNC-1C
+- Live preflight proved two real holes: forged `x-admin-*` headers authenticated `/api/admin/auth`, and a Kitchen session could read `/api/inventory/products`.
+- `middleware.ts` now strips all reserved identity headers at ingress and allows inventory APIs only for validated admin sessions. `getAdminContext`, role helpers, admin auth, and permission gates validate cookies/sessions only; unresolvable identity fails closed.
+- `createBrowserClient()` is now a browser-window singleton. `useRealtimeRefresh()` now has an event-ID cursor, bounded deduplication, signal-table catch-up on subscribe/reconnect/visibility/online, and retains minimal invalidation payloads plus authoritative refetches. `realtime-cursor.test.ts` covers bigint-safe monotonic IDs and bounded deduplication.
+- Production proof after deployment: forged headers return `{authenticated:false}`; Kitchen inventory GET=403 while Kitchen board=200; anonymous signal cursor query=200; Owner dashboard received a real `stock.low` and refreshed 3->4 with no realtime errors. Direct `staff_messages` anonymous REST reads currently fail 500 due to recursive RLS and remain unused. All SYNC probe rows were deleted.
+- Verification: 316/316 Vitest, inventory strict TypeScript, local and Vercel production builds (187 pages) green. Commits `30f40d1` and `1060ba2` pushed and deployed.
+- Next SYNC checkpoint is D (order convergence), approval-gated. The user requested a third priority but did not name it; stop for clarification rather than selecting one.
