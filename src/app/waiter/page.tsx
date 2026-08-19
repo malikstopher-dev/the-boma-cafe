@@ -19,8 +19,7 @@ import {
 } from '@/inventory/lib/order-status'
 
 interface MenuItem {
-  id: string; categoryId: string; name: string; description: string; price: string; image?: string
-  sizes?: { name: string; price: string }[]; addOns?: { name: string; price: string }[]; isAvailable: boolean
+  id: string; categoryId: string; name: string; description: string; price: string; isAvailable: boolean
 }
 interface MenuCategory { id: string; name: string; description: string; order: number; isActive: boolean }
 interface BarItem {
@@ -99,7 +98,7 @@ export default function WaiterPage() {
     if (!authed) return
     setMenuLoading(true)
     Promise.all([
-      fetch('/api/menu/public').then(r => r.json()).catch(() => ({ categories: [], menuItems: [] })),
+      fetch('/api/menu/public/waiter').then(r => r.json()).catch(() => ({ categories: [], menuItems: [] })),
       fetch('/api/bar/public').then(r => r.json()).catch(() => ({ categories: [], items: [] })),
     ]).then(([menuData, barData]) => {
       setCategories(menuData.categories || [])

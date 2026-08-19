@@ -1,0 +1,71 @@
+{
+  "measuredAt": "2026-08-19",
+  "method": "Read-only production Supabase calls through the local route implementation; response JSON measured before HTTP framing; gzip level uses Node.js gzipSync defaults.",
+  "before": {
+    "route": "/api/menu/public",
+    "supabaseCalls": 2,
+    "supabaseBytes": 15094796,
+    "responseBytes": 15088777,
+    "gzipBytes": 11290125,
+    "itemRecords": 146,
+    "categoryRecords": 19,
+    "itemFields": 15,
+    "categoryFields": 6,
+    "containsDataUri": true
+  },
+  "after": {
+    "menu": {
+      "route": "/api/menu/public",
+      "supabaseCalls": 3,
+      "supabaseBytes": 90804,
+      "responseBytes": 78293,
+      "gzipBytes": 13179,
+      "itemRecords": 146,
+      "categoryRecords": 19,
+      "itemFields": 15,
+      "categoryFields": 6,
+      "containsDataUri": false
+    },
+    "homepage": {
+      "route": "/api/menu/public/homepage",
+      "supabaseCalls": 2,
+      "supabaseBytes": 1129,
+      "responseBytes": 1179,
+      "gzipBytes": 617,
+      "itemRecords": 4,
+      "categoryRecords": 0,
+      "itemFields": 7,
+      "categoryFields": 0,
+      "containsDataUri": false
+    },
+    "waiter": {
+      "route": "/api/menu/public/waiter",
+      "supabaseCalls": 2,
+      "supabaseBytes": 40893,
+      "responseBytes": 38820,
+      "gzipBytes": 10358,
+      "itemRecords": 146,
+      "categoryRecords": 19,
+      "itemFields": 7,
+      "categoryFields": 6,
+      "containsDataUri": false
+    }
+  },
+  "worstCaseAllThreeRegenerate": {
+    "supabaseBytes": 132826,
+    "responseBytes": 118292,
+    "gzipBytes": 24154,
+    "versusOneOldRegeneration": {
+      "supabaseReductionPercent": 99.12,
+      "responseReductionPercent": 99.216,
+      "gzipReductionPercent": 99.786
+    }
+  },
+  "preparedImages": {
+    "count": 6,
+    "originalPngBytes": 11257981,
+    "optimizedWebpBytes": 700698,
+    "reductionPercent": 93.776,
+    "ssimRange": [0.976938, 0.982653]
+  }
+}

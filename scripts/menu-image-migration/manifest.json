@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "sourceTable": "public.menu_items",
+  "imageField": "image",
+  "expectedInlineImageCount": 6,
+  "productionMutationPerformed": false,
+  "entries": [
+    {
+      "menuItemId": "286f0b05-bc0c-4678-b1f0-34147616efd6",
+      "menuItemName": "Boma Breakfast",
+      "currentImage": {
+        "valueType": "data-uri",
+        "mimeType": "image/png",
+        "characterLength": 2434282,
+        "dataUriSha256": "42c79adbb5a55873174a4d359247ffbe8673e6aab0a5eccb5522971522a7005a",
+        "binaryBytes": 1825694,
+        "binarySha256": "50f6827f5831c8dec81e4db1c210ef702b98a262dc90fae2a70f144fd41d184c",
+        "width": 1184,
+        "height": 864
+      },
+      "proposedImage": {
+        "sourceFile": "public/menu/migrated/boma-breakfast-286f0b05.webp",
+        "objectName": "menu/migrated/boma-breakfast-286f0b05.webp",
+        "finalPath": "/menu/migrated/boma-breakfast-286f0b05.webp",
+        "mimeType": "image/webp",
+        "bytes": 117258,
+        "sha256": "e3a6760bf4ab848e9a8b87e8fa362fb4a4a18cf60d84ab3ef566892042e337e2",
+        "maxWidth": 1600,
+        "quality": 82
+      },
+      "rollback": {
+        "originalFile": "scripts/menu-image-migration/originals/boma-breakfast-286f0b05.png",
+        "reconstructAs": "image/png;base64",
+        "expectedDataUriSha256": "42c79adbb5a55873174a4d359247ffbe8673e6aab0a5eccb5522971522a7005a",
+        "sqlTemplate": "UPDATE public.menu_items SET image = :reconstructed_data_uri WHERE id = '286f0b05-bc0c-4678-b1f0-34147616efd6';"
+      }
+    },
+    {
+      "menuItemId": "9b0a6a5f-b932-4361-9ba0-20b9121c2e5c",
+      "menuItemName": "Braai Platter for 2",
+      "currentImage": {
+        "valueType": "data-uri",
+        "mimeType": "image/png",
+        "characterLength": 2686346,
+        "dataUriSha256": "71bed702c001feae2c135479a1f41abf8ec3eb0bcb76453e5b53663bd25e1d8d",
+        "binaryBytes": 2014742,
+        "binarySha256": "ec0fbbac34f1f45167828888ee698789bfebdb2854c9e028cc90664b9b8d6d20",
+        "width": 1184,
+        "height": 864
+      },
+      "proposedImage": {
+        "sourceFile": "public/menu/migrated/braai-platter-for-2-9b0a6a5f.webp",
+        "objectName": "menu/migrated/braai-platter-for-2-9b0a6a5f.webp",
+        "finalPath": "/menu/migrated/braai-platter-for-2-9b0a6a5f.webp",
+        "mimeType": "image/webp",
+        "bytes": 133648,
+        "sha256": "0ca43ec4e84bc2551c1712a8fdc08994a1fd9a69fcf8bade0205747f17429ca3",
+        "maxWidth": 1600,
+        "quality": 82
+      },
+      "rollback": {
+        "originalFile": "scripts/menu-image-migration/originals/braai-platter-for-2-9b0a6a5f.png",
+        "reconstructAs": "image/png;base64",
+        "expectedDataUriSha256": "71bed702c001feae2c135479a1f41abf8ec3eb0bcb76453e5b53663bd25e1d8d",
+        "sqlTemplate": "UPDATE public.menu_items SET image = :reconstructed_data_uri WHERE id = '9b0a6a5f-b932-4361-9ba0-20b9121c2e5c';"
+      }
+    },
+    {
+      "menuItemId": "9de22ca0-d610-4524-be41-a7d52f0efa31",
+      "menuItemName": "1/4 Chicken, Pap & Gravy",
+      "currentImage": {
+        "valueType": "data-uri",
+        "mimeType": "image/png",
+        "characterLength": 2702766,
+        "dataUriSha256": "a5df598a766448b4028752df872f4432f72f7d7b068ff46d57c1da5ec414e09f",
+        "binaryBytes": 2027057,
+        "binarySha256": "0126fa5070e45f9c7a6f0784bef1e960925269755a07feeffbda46237727e64b",
+        "width": 1184,
+        "height": 864
+      },
+      "proposedImage": {
+        "sourceFile": "public/menu/migrated/1-4-chicken-pap-and-gravy-9de22ca0.webp",
+        "objectName": "menu/migrated/1-4-chicken-pap-and-gravy-9de22ca0.webp",
+        "finalPath": "/menu/migrated/1-4-chicken-pap-and-gravy-9de22ca0.webp",
+        "mimeType": "image/webp",
+        "bytes": 129318,
+        "sha256": "551eb3b9294a4712c83286b3ea3a9cba767b883ab04ccced32b858e5e2fb36b1",
+        "maxWidth": 1600,
+        "quality": 82
+      },
+      "rollback": {
+        "originalFile": "scripts/menu-image-migration/originals/1-4-chicken-pap-and-gravy-9de22ca0.png",
+        "reconstructAs": "image/png;base64",
+        "expectedDataUriSha256": "a5df598a766448b4028752df872f4432f72f7d7b068ff46d57c1da5ec414e09f",
+        "sqlTemplate": "UPDATE public.menu_items SET image = :reconstructed_data_uri WHERE id = '9de22ca0-d610-4524-be41-a7d52f0efa31';"
+      }
+    },
+    {
+      "menuItemId": "a99a981d-9d12-4db8-9ba0-9b3ca43a4fdb",
+      "menuItemName": "200g Ribs & Steak",
+      "currentImage": {
+        "valueType": "data-uri",
+        "mimeType": "image/png",
+        "characterLength": 2006342,
+        "dataUriSha256": "cb813dd98016a537cebb44b4c20d8e28937454f37d716f9178d4cf7d558ed9f8",
+        "binaryBytes": 1504738,
+        "binarySha256": "1487d16b81062ff9e4b7668bcf2983a63e38703a892a676e51256c4038ba90e4",
+        "width": 1152,
+        "height": 896
+      },
+      "proposedImage": {
+        "sourceFile": "public/menu/migrated/200g-ribs-and-steak-a99a981d.webp",
+        "objectName": "menu/migrated/200g-ribs-and-steak-a99a981d.webp",
+        "finalPath": "/menu/migrated/200g-ribs-and-steak-a99a981d.webp",
+        "mimeType": "image/webp",
+        "bytes": 87756,
+        "sha256": "2dea2f037e9f175426e025b33998dde2e2aaf7e0c86400cd9ace601d4ec57a7a",
+        "maxWidth": 1600,
+        "quality": 82
+      },
+      "rollback": {
+        "originalFile": "scripts/menu-image-migration/originals/200g-ribs-and-steak-a99a981d.png",
+        "reconstructAs": "image/png;base64",
+        "expectedDataUriSha256": "cb813dd98016a537cebb44b4c20d8e28937454f37d716f9178d4cf7d558ed9f8",
+        "sqlTemplate": "UPDATE public.menu_items SET image = :reconstructed_data_uri WHERE id = 'a99a981d-9d12-4db8-9ba0-9b3ca43a4fdb';"
+      }
+    },
+    {
+      "menuItemId": "b9596e30-6865-40e1-b759-ddaf16c23843",
+      "menuItemName": "Full Chicken, Chips & 4 Rotis",
+      "currentImage": {
+        "valueType": "data-uri",
+        "mimeType": "image/png",
+        "characterLength": 2516130,
+        "dataUriSha256": "9d1d301ba5cab542f4f8977a0721cf5076cbff20d5df8f3f418dfe57552716a1",
+        "binaryBytes": 1887079,
+        "binarySha256": "9d8270add16b9a392b0ab974d19203dc5b14e0d825d1ae2e79120261c1d2a47e",
+        "width": 1184,
+        "height": 864
+      },
+      "proposedImage": {
+        "sourceFile": "public/menu/migrated/full-chicken-chips-and-4-rotis-b9596e30.webp",
+        "objectName": "menu/migrated/full-chicken-chips-and-4-rotis-b9596e30.webp",
+        "finalPath": "/menu/migrated/full-chicken-chips-and-4-rotis-b9596e30.webp",
+        "mimeType": "image/webp",
+        "bytes": 109368,
+        "sha256": "f31d21a756f8451f658e055aab45a19a33bdce3fd0ebee1fd393537a67917eef",
+        "maxWidth": 1600,
+        "quality": 82
+      },
+      "rollback": {
+        "originalFile": "scripts/menu-image-migration/originals/full-chicken-chips-and-4-rotis-b9596e30.png",
+        "reconstructAs": "image/png;base64",
+        "expectedDataUriSha256": "9d1d301ba5cab542f4f8977a0721cf5076cbff20d5df8f3f418dfe57552716a1",
+        "sqlTemplate": "UPDATE public.menu_items SET image = :reconstructed_data_uri WHERE id = 'b9596e30-6865-40e1-b759-ddaf16c23843';"
+      }
+    },
+    {
+      "menuItemId": "ba8efd95-8536-4b78-9aed-21d8f5d847f3",
+      "menuItemName": "Boma Pastry Platter",
+      "currentImage": {
+        "valueType": "data-uri",
+        "mimeType": "image/png",
+        "characterLength": 2664918,
+        "dataUriSha256": "c7e0b47e8808ac83576f7e24ff2f2301e41241499cc6072d513b0788ae1ba0eb",
+        "binaryBytes": 1998671,
+        "binarySha256": "a726ef66fb438c461ca912a41f594c02730b9ce857ce15a46c9e31b29b001111",
+        "width": 1184,
+        "height": 864
+      },
+      "proposedImage": {
+        "sourceFile": "public/menu/migrated/boma-pastry-platter-ba8efd95.webp",
+        "objectName": "menu/migrated/boma-pastry-platter-ba8efd95.webp",
+        "finalPath": "/menu/migrated/boma-pastry-platter-ba8efd95.webp",
+        "mimeType": "image/webp",
+        "bytes": 123350,
+        "sha256": "e01c1ccf29c2827395933a4172499579750e1d23538e744ee88da08a5b0ee002",
+        "maxWidth": 1600,
+        "quality": 82
+      },
+      "rollback": {
+        "originalFile": "scripts/menu-image-migration/originals/boma-pastry-platter-ba8efd95.png",
+        "reconstructAs": "image/png;base64",
+        "expectedDataUriSha256": "c7e0b47e8808ac83576f7e24ff2f2301e41241499cc6072d513b0788ae1ba0eb",
+        "sqlTemplate": "UPDATE public.menu_items SET image = :reconstructed_data_uri WHERE id = 'ba8efd95-8536-4b78-9aed-21d8f5d847f3';"
+      }
+    }
+  ]
+}
