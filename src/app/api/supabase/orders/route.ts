@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     // ── Central validation ─────────────────────────────────
     const validation = validateOrder(body)
     if (!validation.valid) {
-      const first = validation.errors[0]
+      const first = validation.errors[0]!
       return NextResponse.json({
         error: first.message,
         fields: validation.errors,
@@ -334,7 +334,7 @@ export async function PATCH(request: NextRequest) {
       currentPaymentStatus = fetched.payment_status
       orderSource = fetched.source || 'online'
 
-      if (['completed', 'cancelled'].includes(currentStatus)) {
+      if (currentStatus !== null && ['completed', 'cancelled'].includes(currentStatus)) {
         return NextResponse.json({ error: `Cannot update a ${currentStatus} order` }, { status: 400 })
       }
 
@@ -397,6 +397,49 @@ export async function PATCH(request: NextRequest) {
       updateBody.payment_confirmed_by = role ?? 'admin'
     }
 
+    // ── Inventory durability contract: queue stock deduction BEFORE
+    // committing completion. 'completed' is terminal (see guard above), so an
+    // enqueue attempted AFTER the status commit could be silently lost forever
+    // if the RPC failed — the order would look completed while its stock was
+    // never deducted. Enqueueing first means a failed enqueue aborts the
+    // completion (503): the order keeps its previous status and the operator
+    // can simply retry. The RPC is idempotent per order
+    // (`order_deduction:<id>` replaces dead_letter/failed slots, converges
+    // concurrent completers on one job), and post-enqueue delivery remains
+    // owned by the worker retry/dead-letter machinery (E1-4) — unchanged.
+    // Race note: the worker may claim the job in the milliseconds before the
+    // status commit lands; deduct_order_items then throws "Only completed
+    // orders can be deducted" and its existing backoff retry succeeds once
+    // the commit is visible. A lost CAS race (409 below) leaves the queued
+    // job for the actual winner's completion via the shared idempotency key;
+    // it dead-letters only if the order genuinely never completes — visible
+    // signal, never silent loss.
+    if (updateBody.status === 'completed') {
+      try {
+        const { error: enqueueError } = await getAdminClient().rpc(
+          'enqueue_background_job',
+          {
+            p_job_type: 'order_deduction',
+            p_payload: { order_id: id },
+            p_idempotency_key: `order_deduction:${id}`,
+            p_max_retries: 3,
+          },
+        )
+        if (enqueueError) {
+          throw new Error(enqueueError.message)
+        }
+      } catch (enqueueFailure) {
+        console.error(
+          '[orders PATCH] inventory deduction queueing failed — completion aborted:',
+          enqueueFailure instanceof Error ? enqueueFailure.message : String(enqueueFailure),
+        )
+        return NextResponse.json(
+          { error: 'Could not queue the inventory deduction for this order, so completion was not applied. Please try again.' },
+          { status: 503 },
+        )
+      }
+    }
+
     let query = getAdminClient().from('orders').update(updateBody).eq('id', id)
     if (updateBody.status && currentStatus) {
       query = query.eq('status', currentStatus)
@@ -449,31 +492,9 @@ export async function PATCH(request: NextRequest) {
           break
       }
 
-      // ── Inventory: queue stock deduction when order completes (E1-4) ──
-      // The background worker (src/jobs/handlers/order-deduction.ts) performs
-      // the deduction asynchronously via the F2 deduct_order_items RPC
-      // (engine fallback), preserving F3 attribution. Idempotency key per
-      // order: dead_letter/failed slots are replaced by the enqueue RPC, so
-      // re-enqueues always produce a fresh pending job. The enqueue never
-      // fails the PATCH — deduction is best-effort and retryable.
-      if (updateBody.status === 'completed') {
-        try {
-          const { error: enqueueError } = await getAdminClient().rpc(
-            'enqueue_background_job',
-            {
-              p_job_type: 'order_deduction',
-              p_payload: { order_id: updated.id },
-              p_idempotency_key: `order_deduction:${updated.id}`,
-              p_max_retries: 3,
-            },
-          )
-          if (enqueueError) {
-            console.error('[orders PATCH] failed to queue order deduction:', enqueueError.message)
-          }
-        } catch (err) {
-          console.error('[orders PATCH] failed to queue order deduction:', String(err))
-        }
-      }
+      // ── Inventory: the order_deduction job is enqueued BEFORE the status
+      // commit above (durability contract — see the enqueue block). Nothing
+      // to do here anymore; worker retry/dead-letter handles delivery (E1-4).
     }
 
     return NextResponse.json({

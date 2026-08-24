@@ -180,7 +180,7 @@ async function sendMessages(
     const response = await messaging.sendEachForMulticast(message)
     const invalidTokens: string[] = []
 
-    response.responses.forEach((resp, idx) => {
+    response.responses.forEach((resp: { success: boolean; error?: { code?: string } }, idx: number) => {
       if (!resp.success) {
         const code = resp.error?.code
         if (
@@ -188,7 +188,10 @@ async function sendMessages(
           code === 'messaging/registration-token-not-registered' ||
           code === 'messaging/unregistered'
         ) {
-          invalidTokens.push(tokens[idx])
+          const token = tokens[idx]
+          if (token) {
+            invalidTokens.push(token)
+          }
         }
       }
     })

@@ -203,6 +203,15 @@ Expected smallest implementation:
 
 Model recommendation: GPT-5.6 Luna Low. If an implementation question is not covered by the approved definitions, stop and report rather than inventing a business rule. Phase 4 must not activate automatically.
 
+### SYNC-1 Ship 1 — Completion→Deduction Intent Durability (COMPLETE 2026-08-25)
+
+- Fixed the audit's Critical finding: order completion committed terminally BEFORE the `order_deduction` job was enqueued; an enqueue failure was logged-and-ignored, silently losing the deduction intent forever ('completed' cannot be re-transitioned).
+- `src/app/api/supabase/orders/route.ts` PATCH: `enqueue_background_job('order_deduction')` now runs BEFORE the compare-and-set status update whenever `status==='completed'`. RPC error/throw aborts completion with 503 — the order keeps its prior status and can be retried safely (idempotency key replaces dead slots; concurrent completers converge on one job; a lost CAS race hands the job to the winner via the shared key). Post-enqueue delivery unchanged (worker retry/dead-letter, E1-4). Non-blocking hooks (push notifications, order_events) preserved.
+- 6 regression tests (`src/inventory/__tests__/order-completion-deduction-enqueue.test.ts`): enqueue-before-update ordering, 503-no-update on RPC error and throw, zero RPC on non-completion transitions, notification-failure non-blocking precedent, `already_queued` convergence.
+- 5 type-only corrections surfaced by first pulling the orders route + libs into the strict inventory graph (route errors[0]! + null-narrow; push.ts forEach param types + token guard; orderService optional menu_item_id guard). Zero behavior change. Single completion writer confirmed by grep (this route only).
+- Verification: new tests 6/6; full suite 326/326 (33 files); inventory strict tsc clean; root tsc clean; next build green. Live requests: 0.
+- Race note: a worker claim in the ms-gap before commit hits `deduct_order_items`' "Only completed orders" guard and succeeds on its existing backoff retry once the commit lands. A queued job dead-letters only if the order genuinely never completes — visible signal, never silent loss.
+
 ### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.

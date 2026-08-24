@@ -185,7 +185,7 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
 
       return { enriched: [], total: 0, error: `Bar item not found: ${item.menu_item_id ?? item.bar_item_id}` }
     } else {
-      const row = menuMap.get(item.menu_item_id)
+      const row = item.menu_item_id ? menuMap.get(item.menu_item_id) : undefined
       if (!row) {
         return { enriched: [], total: 0, error: `Menu item not found: ${item.menu_item_id}` }
       }

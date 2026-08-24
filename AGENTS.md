@@ -2653,3 +2653,26 @@ Consolidate approved duplicate suppliers without deleting history and add isolat
 ### Stop state
 
 Supplier Data Integrity + Banking Details is complete. Do not start SYNC-2, `/inv` retirement, or another mission.
+
+---
+
+## Session: SYNC-1 Ship 1 — Completion→Deduction Intent Durability (2026-08-25)
+
+### Objective
+Fix the root-cause audit's #1 (Critical) finding: `PATCH /api/supabase/orders` committed the terminal 'completed' status BEFORE enqueueing the `order_deduction` background job; an enqueue failure was logged and the PATCH still returned success, silently losing the deduction intent forever since 'completed' cannot be re-transitioned.
+
+### Change (additive; no migration, no middleware)
+- `src/app/api/supabase/orders/route.ts` — enqueue moved BEFORE the CAS status update (gated on `status==='completed'`, placed after all validation/state-machine/payment guards). Enqueue RPC error or throw → 503 "Could not queue the inventory deduction… completion was not applied"; order keeps prior status. Concurrency properties: shared idempotency key `order_deduction:<id>` converges concurrent completers (`already_queued`), a lost CAS race leaves the job for the actual winner; worker claim in the ms pre-commit gap hits the F2 guard and succeeds on existing backoff retry. Old post-commit enqueue block replaced by a pointer comment.
+- `src/inventory/__tests__/order-completion-deduction-enqueue.test.ts` (NEW, 6 tests): happy path asserts exactly one RPC ordered strictly before UPDATE via call-log; RPC error and throw each → 503 with UPDATE never invoked; non-completion transition makes zero RPC calls; push-notification rejection does not fail a transition (E1-4 non-blocking precedent locked); `already_queued` outcome completes normally.
+- 5 type-only corrections required because the ship's test first pulled the orders route + libs into the strict inventory tsconfig graph: route.ts:148 `errors[0]!`; route.ts:337 null-narrow on terminal-status includes; push.ts forEach `(resp: {success; error?{code?}}, idx: number)` annotation + token undefined-guard; orderService.ts optional `menu_item_id` guard in the kitchen branch (same runtime result via not-found path). No behavior/wording/signature changes.
+
+### Verification (all local/static — live requests: 0)
+- New tests 6/6; full suite **326/326** passing (33 files, `--testTimeout=20000`); inventory strict tsc exit 0; root `npx tsc --noEmit` exit 0; `npm run build` green.
+- Grep confirmed orders/route.ts PATCH is the ONLY order-completion writer (booking routes touch the bookings table; analytics is read-only).
+
+### Five-gate closeout
+Scope: only the ship files changed. Lock: additive-only, frozen rules untouched. Evidence: commands above. Repo state: clean except ship files + the 3 frozen owner XLSX files. Deployment: pushed to main and deployed via `vercel --prod` after owner approval ("go ahead"); no prod data touched.
+
+### Notes
+- Ships 2–4 of the audit sequence remain queued pending owner go-ahead per ship: Ship 2 station-routing/scoped reads/atomic split; Ship 3 RBAC = PLAN ONLY (STOP POINTS); Ship 4 realtime scope columns = proposal + approval flag.
+
