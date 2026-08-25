@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import type { ApiResponse } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 type BatchLinkResult = {
   linked: number
@@ -9,6 +10,8 @@ type BatchLinkResult = {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<BatchLinkResult>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const supabase = getInventoryClient()
     const body = await request.json().catch(() => ({}))

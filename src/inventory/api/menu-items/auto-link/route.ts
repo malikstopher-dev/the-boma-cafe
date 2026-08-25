@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import type { ApiResponse } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 type AutoLinkResult = {
   linked: {
@@ -56,6 +57,8 @@ function matchScore(barItemName: string, productName: string): number {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<AutoLinkResult>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const supabase = getInventoryClient()
     const body = await request.json().catch(() => ({}))

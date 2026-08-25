@@ -6,6 +6,7 @@ import { WasteValidationError } from '@/inventory/lib/errors'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction[]>>> {
   try {
@@ -26,6 +27,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const body = await request.json()
 

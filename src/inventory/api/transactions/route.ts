@@ -3,6 +3,7 @@ import { getInventoryClient } from '@/inventory/lib/db'
 import { createTransaction } from '@/inventory/engine/ledger'
 import { getInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import { resolveLocationId } from '@/inventory/lib/location'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 import type { ApiResponse, InventoryTransaction, CreateTransactionInput } from '@/inventory/engine/types'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
 
@@ -73,6 +74,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
+
   try {
     const body = (await request.json()) as CreateTransactionInput
 

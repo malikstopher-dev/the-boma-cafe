@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createProductionRun, listProductionRuns } from '@/inventory/engine/production-runs'
 import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, ProductionRunStatus } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
   try {
@@ -22,6 +23,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const body = await request.json()
     if (!body.recipe_id || !body.quantity_planned) {

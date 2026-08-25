@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
 import { getStockCount } from '@/inventory/engine/stock-counts'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(
   request: NextRequest,
@@ -31,6 +32,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id } = await params
     const supabase = getInventoryClient()

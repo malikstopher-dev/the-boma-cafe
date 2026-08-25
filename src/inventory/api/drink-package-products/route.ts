@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse, DrinkPackageProduct } from '@/inventory/engine/types'
 import { getAllDrinkPackageProducts, addDrinkPackageProduct } from '@/inventory/engine/reservations'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(): Promise<NextResponse<ApiResponse<unknown[]>>> {
   try {
@@ -15,6 +16,8 @@ export async function GET(): Promise<NextResponse<ApiResponse<unknown[]>>> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<DrinkPackageProduct>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const body = await request.json()
     const { drink_package_id, product_id, quantity_per_person } = body

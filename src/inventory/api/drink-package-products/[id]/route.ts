@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse } from '@/inventory/engine/types'
 import { removeDrinkPackageProduct, getDrinkPackageProducts } from '@/inventory/engine/reservations'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(
   request: NextRequest,
@@ -22,6 +23,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<null>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id } = await params
     await removeDrinkPackageProduct(id)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { defaultCostCentreNameForLocation, findCostCentreIdByName } from '@/inventory/lib/cost-centre'
 import type { ApiResponse, InventoryLocation } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryLocation[]>>> {
@@ -53,6 +54,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryLocation>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const supabase = getInventoryClient()
     const body = await request.json()

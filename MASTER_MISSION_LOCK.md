@@ -221,6 +221,16 @@ Model recommendation: GPT-5.6 Luna Low. If an implementation question is not cov
 - Dead raw-station splitter `splitItemsByStation` removed (zero callers). No migration; middleware untouched; API signatures unchanged.
 - Verification: new 12-test suite `order-station-integrity.test.ts` (spoof attempts both directions, cocktail regression guard, derived-split subtotals + parent pointer, rollback with zero survivors, sibling symmetry, role-pinned reads incl. admin passthrough); full suite **338/338** (34 files); inventory strict tsc clean; root tsc clean; next build green. Live requests: 0.
 
+### SYNC-1 Ship 3 — Inventory RBAC Enforcement (COMPLETE 2026-08-25)
+
+- Owner decisions locked (2026-08-25): Tier C includes waste/gas recording for managers (assistant_manager loses breakage/gas logging); hard product delete = owner/full_manager ONLY while soft-archive/edit stays manager-tier; **stock-count/daily-stock SUBMIT stays manager-tier but APPROVAL is owner+full_manager ONLY**.
+- New helper `src/inventory/lib/require-inventory-permission.ts` — delegates to E8's fail-closed `requireAdminPermission()`; realizes the never-built `requireInventoryRole()` seam from MASTER_TECHNICAL_ARCHITECTURE.md without header trust.
+- ONE additive permission key: `inventory.final_approve` (owner + full_manager). No existing key's semantics changed.
+- **68 route files wired**: 51 × `inventory.config.write`, 20 × `inventory.approve`, 2 × `inventory.final_approve`, 3 × `inventory.destructive` (products hard-DELETE, product-import undo, bulk conditional destructive-vs-write). All GET surfaces remain any-admin. The 11 attribution-only endpoints (imports apply/rollback, product-import apply/undo, POs approve/order/receive/cancel, stock-counts approve, waste POST, products bulk) now ENFORCE as well as attribute.
+- Net effect: assistant_manager = read-only inventory; manager = full operations minus variance approvals and hard deletes; owner/full_manager unchanged.
+- Verification: new 19-test tier matrix `inventory-rbac-tiers.test.ts` (all four roles × representative routes per tier, fail-closed 401, bulk conditional, permission-map unit assertions); `import-apply-route` + `portion-uom` suites updated with admin-context mocks (their routes now gate). Full suite **357/357** (35 files); inventory strict tsc clean; root tsc clean; next build green. Live requests: 0.
+- UI note: screens do not hide buttons per role yet — denied actions surface as clean 403s until a future cosmetic pass.
+
 ### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.

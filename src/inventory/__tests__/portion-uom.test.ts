@@ -11,6 +11,19 @@ vi.mock('../lib/db', () => ({
   getInventoryClient: vi.fn(() => mockClient),
 }))
 
+// Ship 3 added a route-level permission gate (inventory.config.write);
+// act as an owner so the gate passes and the PATCH flow is exercised.
+vi.mock('@/lib/admin/context', () => ({
+  getAdminContext: vi.fn(async () => ({
+    adminId: 'admin-1',
+    username: 'tester',
+    displayName: 'Tester',
+    role: 'owner',
+    legacy: false,
+    sessionId: 's1',
+  })),
+}))
+
 vi.mock('../engine/stock-counts', () => ({
   createStockCount: vi.fn().mockResolvedValue({ stockCount: { id: 'sc-1', status: 'in_progress' }, productCount: 0 }),
   saveCountItem: vi.fn().mockResolvedValue({ id: 'item-1' }),

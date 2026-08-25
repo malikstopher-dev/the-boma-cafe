@@ -2698,3 +2698,25 @@ Fix audit findings: station trusted from client payload; any staff role could re
 ### Handover
 Ship 3 next = RBAC enforcement PLAN ONLY (STOP POINTS — no code until owner approves).
 
+---
+
+## Session: SYNC-1 Ship 3 — Inventory RBAC Enforcement (2026-08-25)
+
+### Objective
+Close the audit's manager-tier RBAC gap: 122/123 inventory endpoints enforced only middleware any-admin; assistant_manager held full ledger-write power. Owner approved implementation WITH four tier decisions: (1) waste/gas = Tier C managers (assistant loses breakage logging); (2) hard product delete owner/full only, soft-archive manager-tier; (3) stock-count/daily-stock SUBMIT stays manager, APPROVAL becomes owner+full_manager only via NEW key inventory.final_approve.
+
+### Change (additive; no migration, no middleware)
+- `src/inventory/lib/require-inventory-permission.ts` (NEW) — delegates to requireAdminPermission; returns NextResponse<any>|null so precisely-typed handlers accept the denial. Realizes MASTER_TECH doc's never-built requireInventoryRole() seam without header trust.
+- `src/lib/admin/permissions.ts` — +1 key 'inventory.final_approve' (union + ALL). Owner=ALL; full_manager=ALL-minus-5 → gets it; manager/assistant do not.
+- **68 route impls wired** via exact-signature codemod (temp-dir script, never committed): 51 config.write / 20 approve / 2 final_approve / 3 destructive. products/[id] per-method tiers (PATCH=B, DELETE=D); bulk conditional on body.delete===true && patch.is_active===false. Reads untouched.
+- 11 attribution-only endpoints upgraded to enforce+attribute.
+
+### Tests
+`src/inventory/__tests__/inventory-rbac-tiers.test.ts` (NEW, 19): permission-map unit assertions ×4 roles; representative route matrix per tier (403 denials incl. bulk-delete-intent-before-any-write; pass-cells assert NOT 401/403); fail-closed null-context → 401 (required next/headers mock — cookies() outside scope lesson). `import-apply-route.test.ts` + `portion-uom.test.ts`: added getAdminContext owner mocks (routes now gate; adminId 'admin-1' preserves performed_by assertion). Mock lessons: NextResponse generic invariance vs typed handlers (helper returns NextResponse<any>); RequestInit cast breaks NextRequest signal typing — build plain init object.
+
+### Verification (all local/static — live requests: 0)
+19/19 new; full suite **357/357** (35 files, --testTimeout=20000); inventory strict tsc exit 0; root tsc exit 0; npm build green. Wiring verified by scan: 68 gated files, 0 missing imports, tier refs {config.write:51, approve:20, final_approve:2, destructive:3}. Pushed and deployed via vercel --prod after owner approval ("go ahead"); no prod data touched.
+
+### Handover
+Ship 4 next = realtime scope columns PROPOSAL ONLY (STOP POINTS — additive migration design, needs explicit owner approval before anything lands).
+

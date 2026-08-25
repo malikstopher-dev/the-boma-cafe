@@ -3,11 +3,14 @@ import type { ApiResponse } from '@/inventory/engine/types'
 import { cancelPurchaseOrder } from '@/inventory/engine/purchase-orders'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const { id } = await params
     const admin = await getAdminContext(request)

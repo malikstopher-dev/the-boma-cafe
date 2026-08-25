@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/inventory/engine/types'
 import type { ImportRollbackResult } from '@/inventory/import/ImportTypes'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 const importService = new ImportService()
 
@@ -11,6 +12,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<ImportRollbackResult>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const { id } = await params
     const admin = await getAdminContext(request)

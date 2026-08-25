@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import type { ApiResponse, CostCentre } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<CostCentre>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id } = await context.params
     const body = await request.json()

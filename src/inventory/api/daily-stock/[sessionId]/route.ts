@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { saveDailyCell, submitDailySession } from '../../../engine/daily-entry'
 import { isUuid, uuidError } from '../../../lib/api-utils'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,6 +21,8 @@ function validateSessionId(sessionId: string): NextResponse | null {
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { sessionId } = await params
     const bad = validateSessionId(sessionId)
@@ -45,6 +48,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { sessionId } = await params
     const bad = validateSessionId(sessionId)

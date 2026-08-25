@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse, InventoryReservation } from '@/inventory/engine/types'
 import { getReservation } from '@/inventory/engine/reservations'
 import { getInventoryClient } from '@/inventory/lib/db'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(
   request: NextRequest,
@@ -31,6 +32,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<InventoryReservation>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id } = await params
     const body = await request.json()

@@ -5,6 +5,7 @@ import type { ImportApplyResult } from '@/inventory/import/ImportTypes'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 const importService = new ImportService()
 
@@ -21,6 +22,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<ImportApplyResult>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const { id } = await params
 

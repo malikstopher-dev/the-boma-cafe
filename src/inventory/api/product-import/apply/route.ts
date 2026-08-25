@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/inventory/engine/types'
 import { applyProductImport, type ImportDecisionRow } from '@/inventory/engine/product-import'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export const maxDuration = 60
 
@@ -10,6 +11,8 @@ const INVENTORY_TYPES = ['FOOD', 'BEVERAGE', 'CLEANING', 'PACKAGING', 'GENERAL']
 const ACTIONS = ['create', 'update', 'skip']
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const body = await request.json()
 

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateItemStatus } from '@/inventory/engine/checklist'
 import type { ApiResponse, ChecklistItemStatus } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; itemId: string }> }): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id, itemId } = await params
     const body = await request.json()

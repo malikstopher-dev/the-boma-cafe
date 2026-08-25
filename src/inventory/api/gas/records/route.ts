@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 import { recordGas } from '../../../engine/gas'
 import { requireString, getHeader } from '../../../lib/api-utils'
 
@@ -7,6 +8,9 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
+
   try {
     const body = await request.json().catch(() => null)
     if (!body) return NextResponse.json({ error: { message: 'Invalid body' } }, { status: 400 })

@@ -3,11 +3,14 @@ import type { NextRequest } from 'next/server'
 import { getInventoryClient } from '../../../../lib/db'
 import { requireString, getHeader } from '../../../../lib/api-utils'
 import { writeAuditLog } from '../../../../lib/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id } = await params
     const body = await request.json().catch(() => null)

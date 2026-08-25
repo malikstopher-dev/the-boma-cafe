@@ -15,6 +15,7 @@ export type AdminPermission =
   | 'bar_menu.write'
   | 'inventory.config.write'
   | 'inventory.approve'
+  | 'inventory.final_approve'
   | 'inventory.destructive'
   | 'accounts.write'
   | 'accounts.delete'
@@ -39,6 +40,9 @@ const ALL: AdminPermission[] = [
   'bar_menu.write',
   'inventory.config.write',
   'inventory.approve',
+  // Stock-count / daily-stock APPROVAL only — owner + full_manager (Ship 3,
+  // owner decision 2026-08-25: submissions stay manager-tier, approvals do not).
+  'inventory.final_approve',
   'inventory.destructive',
   'accounts.write',
   'accounts.delete',

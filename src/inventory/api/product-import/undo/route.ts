@@ -3,10 +3,13 @@ import type { ApiResponse } from '@/inventory/engine/types'
 import { undoProductImport } from '@/inventory/engine/product-import'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export const maxDuration = 60
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.destructive')
+  if (denied) return denied
   try {
     const body = await request.json()
     if (!body.importId) {

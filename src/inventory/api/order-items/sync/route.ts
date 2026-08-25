@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncOrderItems } from '@/inventory/engine/order-items'
 import type { ApiResponse, OrderItemDetail } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<OrderItemDetail>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const body = await request.json()
     if (!body.order_id) {

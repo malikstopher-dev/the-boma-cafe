@@ -11,6 +11,19 @@ vi.mock('@/inventory/lib/db', () => ({
   getInventoryClient: vi.fn(() => mockClient),
 }))
 
+// Ship 3 added a route-level permission gate; provide an admin identity
+// (owner) so the gate passes and attribution stays 'admin-1'.
+vi.mock('@/lib/admin/context', () => ({
+  getAdminContext: vi.fn(async () => ({
+    adminId: 'admin-1',
+    username: 'tester',
+    displayName: 'Tester',
+    role: 'owner',
+    legacy: false,
+    sessionId: 's1',
+  })),
+}))
+
 const { mockApply } = vi.hoisted(() => ({
   mockApply: vi.fn(),
 }))

@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createTransaction } from '@/inventory/engine/ledger'
 import type { ApiResponse, InventoryTransaction, CreateTransactionInput } from '@/inventory/engine/types'
 import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError } from '@/inventory/lib/errors'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction[]>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const body = await request.json()
     const transactions = body.transactions as CreateTransactionInput[]

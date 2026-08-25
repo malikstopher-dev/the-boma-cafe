@@ -3,6 +3,7 @@ import { getInventoryClient } from '@/inventory/lib/db'
 import { resolveLocationId } from '@/inventory/lib/location'
 import type { ApiResponse, InventoryStockCount } from '@/inventory/engine/types'
 import { createStockCount, listStockCounts } from '@/inventory/engine/stock-counts'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryStockCount[]>>> {
   try {
@@ -20,6 +21,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const body = await request.json()
     const { location_id, performed_by, notes } = body

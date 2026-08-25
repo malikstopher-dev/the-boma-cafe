@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { refreshDashboardCache } from '@/inventory/engine/dashboard'
 import type { ApiResponse } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ refreshed: boolean }>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const body = await request.json()
     const { location_id } = body

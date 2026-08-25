@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import type { ApiResponse, InventoryUomConversion } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(): Promise<NextResponse<ApiResponse<InventoryUomConversion[]>>> {
   try {
@@ -27,6 +28,8 @@ export async function GET(): Promise<NextResponse<ApiResponse<InventoryUomConver
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryUomConversion>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const supabase = getInventoryClient()
     const body = await request.json()

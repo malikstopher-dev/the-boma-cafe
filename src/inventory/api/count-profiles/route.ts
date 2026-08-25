@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { getInventoryClient } from '../../lib/db'
 import { requireString, getHeader } from '../../lib/api-utils'
 import { writeAuditLog } from '../../lib/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const body = await request.json().catch(() => null)
     if (!body) return NextResponse.json({ error: { message: 'Invalid body' } }, { status: 400 })

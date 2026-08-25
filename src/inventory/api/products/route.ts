@@ -4,6 +4,7 @@ import { getInventoryTypeFilter, applyInventoryTypeFilter } from '@/inventory/li
 import { resolveLocationId } from '@/inventory/lib/location'
 import { getCurrentBalance } from '@/inventory/engine/ledger'
 import type { ApiResponse, InventoryProduct } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryProduct[]>>> {
   try {
@@ -95,6 +96,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryProduct>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const supabase = getInventoryClient()
     const body = await request.json()

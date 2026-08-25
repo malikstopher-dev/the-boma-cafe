@@ -3,6 +3,7 @@ import { getInventoryClient } from '@/inventory/lib/db'
 import { resolveLocationId } from '@/inventory/lib/location'
 import { getCurrentBalance } from '@/inventory/engine/ledger'
 import type { ApiResponse, InventoryProduct } from '@/inventory/engine/types'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function GET(
   request: NextRequest,
@@ -51,6 +52,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<InventoryProduct>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.config.write')
+  if (denied) return denied
   try {
     const { id } = await params
     const supabase = getInventoryClient()
@@ -296,6 +299,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<void>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.destructive')
+  if (denied) return denied
   try {
     const { id } = await params
     const supabase = getInventoryClient()

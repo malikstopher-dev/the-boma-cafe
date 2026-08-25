@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ApiResponse, InventoryReservation } from '@/inventory/engine/types'
 import { autoReserveForBooking } from '@/inventory/engine/reservations'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryReservation[]>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const body = await request.json()
     const { booking_id } = body

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 import type { ApiResponse } from '@/inventory/engine/types'
 
 // Bulk edit endpoint (E1A): applies a single patch to many products. Patch
@@ -46,6 +47,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         { status: 400 },
       )
     }
+    // Conditional tier: a bulk request that asks for hard deletes requires
+    // owner/full_manager; plain archive/edit stays manager-tier.
+    const requestsHardDelete = patch.is_active === false && body.delete === true
+    const denied = await requireInventoryPermission(
+      request,
+      requestsHardDelete ? 'inventory.destructive' : 'inventory.config.write',
+    )
+    if (denied) return denied
     if (patch.is_active === false && !('deleted_at' in patch)) {
       updates.deleted_at = new Date().toISOString()
     }

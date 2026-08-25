@@ -5,11 +5,14 @@ import { getInventoryClient } from '@/inventory/lib/db'
 import { MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
 import { getAdminContext } from '@/lib/admin/context'
 import { logAdminAction } from '@/lib/admin/audit'
+import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<unknown>>> {
+  const denied = await requireInventoryPermission(request, 'inventory.approve')
+  if (denied) return denied
   try {
     const { id } = await params
     const body = await request.json()
