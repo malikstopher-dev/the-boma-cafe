@@ -109,9 +109,12 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
   // postgres_changes channel on that table never fired. Consume the
   // anon-readable realtime_events signal table (migration 093) and
   // refetch — the merge is idempotent, so own optimistic sends are safe.
+  // Ship 4: scopeId pins the live binding to THIS conversation's events
+  // (migration 105) instead of receiving every chat event house-wide.
   useRealtimeRefresh({
     channel: `e1-chat-${conversationId}`,
     events: ['chat.message'],
+    scopeId: conversationId,
     onRefresh: () => { void loadMessages() },
     onReconnect: () => { void loadMessages() },
   })

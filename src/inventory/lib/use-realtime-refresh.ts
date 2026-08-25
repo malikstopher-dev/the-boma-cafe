@@ -28,12 +28,20 @@ import { useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@/lib/supabase'
 import { createLeadingDebouncer } from './realtime-debounce'
 import { createSignalCursor, type RealtimeSignal } from './realtime-cursor'
+import { buildLiveFilter, buildEventNameFilter } from './realtime-filter'
 
 export interface RealtimeRefreshOptions {
   /** Unique per page, e.g. 'e1-ops-dashboard' */
   channel: string
   /** Logical event names from the contract, e.g. ['stock.moved', 'po.received'] */
   events: string[]
+  /**
+   * Optional scope (Ship 4): subscribe only to rows emitted with this
+   * scope_id (e.g. a conversation id). Replaces the live event_name
+   * filter (postgres_changes allows one WALRUS condition per binding);
+   * the catch-up query keeps both conditions.
+   */
+  scopeId?: string
   /** Refetch function. Safe to change identity every render (ref-based). */
   onRefresh: () => void
   /** Reconcile authoritative state when an established channel reconnects. */
@@ -46,7 +54,7 @@ export interface RealtimeRefreshOptions {
 const activeChannels = new Set<string>()
 
 export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribed: boolean } {
-  const { channel, events, onRefresh, onReconnect, debounceMs = 2000, enabled = true } = options
+  const { channel, events, scopeId, onRefresh, onReconnect, debounceMs = 2000, enabled = true } = options
   const eventsKey = events.join(',')
   const [subscribed, setSubscribed] = useState(false)
   const refreshRef = useRef(onRefresh)
@@ -88,10 +96,14 @@ export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribe
           reconcileQueued = false
           let hasMore = true
           while (hasMore) {
-            const { data, error } = await supabase
+            let query = supabase
               .from('realtime_events')
               .select('id, event_name, table_name, entity_id, created_at')
               .in('event_name', events)
+            // REST combines filters (unlike the live binding): a scoped
+            // subscriber catches up on its slice only.
+            if (scopeId !== undefined && scopeId !== '') query = query.eq('scope_id', scopeId)
+            const { data, error } = await query
               .gt('id', cursor.lastId)
               .order('id', { ascending: true })
               .limit(500)
@@ -110,10 +122,12 @@ export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribe
       }
     }
 
-    // Unquoted in-list values: verified live that WALRUS's filter parser
+    // Unquoted values: verified live that WALRUS's filter parser
     // silently matches NOTHING for double-quoted values (e.g. "stock.low");
     // bare `in.(stock.low,po.received)` delivers correctly (dots are fine).
-    const filter = `event_name=in.(${events.join(',')})`
+    // Scoped subscriptions (Ship 4) swap the in-list for a single
+    // scope_id equality — postgres_changes allows ONE condition per binding.
+    const filter = buildLiveFilter(events, scopeId)
     const channelRef = supabase
       .channel(channel)
       .on(
@@ -149,8 +163,9 @@ export function useRealtimeRefresh(options: RealtimeRefreshOptions): { subscribe
       window.removeEventListener('online', reconcileVisible)
       void supabase.removeChannel(channelRef).catch(() => {})
     }
-    // eventsKey is the stable identity of the events list
-  }, [channel, eventsKey, debounceMs, enabled])
+    // eventsKey is the stable identity of the events list; scopeId changes
+    // re-subscribe (per-conversation channels are distinct anyway)
+  }, [channel, eventsKey, scopeId, debounceMs, enabled])
 
   return { subscribed }
 }

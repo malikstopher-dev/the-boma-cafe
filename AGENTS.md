@@ -2720,3 +2720,27 @@ Close the audit's manager-tier RBAC gap: 122/123 inventory endpoints enforced on
 ### Handover
 Ship 4 next = realtime scope columns PROPOSAL ONLY (STOP POINTS — additive migration design, needs explicit owner approval before anything lands).
 
+---
+
+## Session: SYNC-1 Ship 4 — Realtime Scope Columns, Option A (2026-08-25)
+
+### Objective
+Ship 4 of the audit sequence (owner picked Option A from the proposal): scope columns on the realtime_events signal table so consumers subscribe to their slice — chat per conversation, order events per station. Bookings/stock/PO/notification events stay global (NULL scope). Explicitly an efficiency/noise ship: the table remains anon-readable by architecture (cookie-authed boards), so this is not metadata confidentiality.
+
+### Change
+- `supabase/migrations/105_realtime_scope_columns.sql` (applied to prod): guarded ADD COLUMN scope_type/scope_id + partial index; CREATE OR REPLACE replays only — new emit_chat_message_event() and emit_order_created_event(), replayed emit_order_status_event() (081 body + scope cols); generic emitter untouched; triggers re-pointed for chat + order.created; NOTIFY pgrst.
+- `src/inventory/lib/realtime-filter.ts` (NEW) — pure WALRUS filter builder (unquoted values; one condition per postgres_changes binding).
+- `use-realtime-refresh.ts` — optional scopeId: live binding swaps to scope_id=eq.<id>; REST catch-up keeps event_name.in + scope_id.eq combined; re-subscribes on change; unscoped path byte-for-byte unchanged.
+- `ChatWindow.tsx` — passes scopeId=conversationId. MessageNotifications/staff-layout/Sidebar stay global (toasts/unread span conversations).
+
+### Tests + Verification
+- New `realtime-filter.test.ts` 6/6 (in-list form preserved; scope swap; empty-string fallback; unquoted station names).
+- Full suite **363/363** (36 files); inventory strict tsc exit 0; root tsc exit 0; next build green after one transient Google Fonts fetch retry (O1-Phase-2 precedent).
+- LIVE (8 counted requests, prod left clean): post-push anon scoped query 200; controlled chat probe returned chat.message with exact conversation scope + entity match; probe rows + emitted signal row deleted; residue [].
+
+### Five-gate closeout
+Scope: 7 files (migration, lib, hook, ChatWindow, tests) + docs. Lock: additive-only, migration history untouched (replay pattern), frozen rules respected. Evidence above. Repo state clean except ship files + frozen XLSX. Deployment: migration pushed BEFORE code deploy (safe both orders); commit pushed; vercel --prod aliased.
+
+### Run state
+Autonomous run Ships 1–4 COMPLETE (max four per standing rule). Queue empty. Awaiting owner direction.
+

@@ -231,6 +231,14 @@ Model recommendation: GPT-5.6 Luna Low. If an implementation question is not cov
 - Verification: new 19-test tier matrix `inventory-rbac-tiers.test.ts` (all four roles × representative routes per tier, fail-closed 401, bulk conditional, permission-map unit assertions); `import-apply-route` + `portion-uom` suites updated with admin-context mocks (their routes now gate). Full suite **357/357** (35 files); inventory strict tsc clean; root tsc clean; next build green. Live requests: 0.
 - UI note: screens do not hide buttons per role yet — denied actions surface as clean 403s until a future cosmetic pass.
 
+### SYNC-1 Ship 4 — Realtime Scope Columns (COMPLETE 2026-08-25, Option A)
+
+- Owner picked Option A: `realtime_events` gains `scope_type` / `scope_id` (migration 105, guarded) + partial index `(event_name, scope_id)`; history-immutable replays only — new `emit_chat_message_event()` scopes `conversation/<id>`; new `emit_order_created_event()` + replayed `emit_order_status_event()` (081 cancelled case preserved) scope `station/kitchen|bar`; generic emitter untouched so bookings/stock/PO/notification rows stay NULL = global.
+- WALRUS constraint encoded in pure lib `realtime-filter.ts`: postgres_changes allows ONE condition per binding, so a scoped live binding swaps the event_name in-list for a bare unquoted `scope_id=eq.<id>`; REST catch-up keeps both conditions.
+- Hook `use-realtime-refresh` gained optional `scopeId` (live filter swap + scoped catch-up + re-subscribe on change); ChatWindow passes its conversation id. Toasts/unread badges stay global by design.
+- Verified LIVE after applying 105 to prod (`supabase db push`, local == remote): anon scoped query 200; controlled probe (probe conversation+message, service-role inserts, full cleanup incl. signal row, residue []) returned `chat.message` with exact `scope_type='conversation'` + matching `scope_id` + `entity_id`. 8 counted read-mostly requests; prod left clean.
+- Local battery: filter tests 6/6; full suite **363/363** (36 files); inventory strict tsc exit 0; root tsc exit 0; next build green (one transient Google Fonts fetch retry). Pushed and deployed via vercel --prod after owner approval.
+
 ### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.
