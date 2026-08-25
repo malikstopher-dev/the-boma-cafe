@@ -212,6 +212,15 @@ Model recommendation: GPT-5.6 Luna Low. If an implementation question is not cov
 - Verification: new tests 6/6; full suite 326/326 (33 files); inventory strict tsc clean; root tsc clean; next build green. Live requests: 0.
 - Race note: a worker claim in the ms-gap before commit hits `deduct_order_items`' "Only completed orders" guard and succeeds on its existing backoff retry once the commit lands. A queued job dead-letters only if the order genuinely never completes — visible signal, never silent loss.
 
+### SYNC-1 Ship 2 — Station Authority, Scoped Reads, Split Integrity (COMPLETE 2026-08-25)
+
+- **Server-side station derivation** (`orderService.enrichItems`): resolvable `bar_items` row → bar; menu_item whose category has `is_bar=true` (migration 028's existing signal, surfaced through `getMenuItemsByIds`) → bar; otherwise kitchen. The client-supplied `station` field is still accepted for API compatibility but never trusted. Food-menu cocktails keep bar routing via their category. Legacy not-found wording preserved verbatim.
+- **Station-scoped reads** (`orders/route.ts` GET list): kitchen sessions pinned to `station=kitchen`, bar to `bar`, regardless of query params; admin/waiter unaffected (waiter ownership-scoping remains a later checkpoint, noted in-code).
+- **Split integrity**: mixed carts enrich once and split ENRICHED lines with per-part subtotals; a failed second-station insert compensating-deletes the first order (order_events cascade via migration 009 FK) and reports loudly if the rollback itself fails; error preserves the client-parsed `'first order created'` phrase.
+- **Symmetric siblings**: `getSiblingOrders()` and the `?sibling_of=` endpoint resolve the group from ANY member (root = own group id); a root query previously returned [].
+- Dead raw-station splitter `splitItemsByStation` removed (zero callers). No migration; middleware untouched; API signatures unchanged.
+- Verification: new 12-test suite `order-station-integrity.test.ts` (spoof attempts both directions, cocktail regression guard, derived-split subtotals + parent pointer, rollback with zero survivors, sibling symmetry, role-pinned reads incl. admin passthrough); full suite **338/338** (34 files); inventory strict tsc clean; root tsc clean; next build green. Live requests: 0.
+
 ### S1 — Sensitive Supplier Banking Details (COMPLETE 2026-08-19)
 
 - Inspect supplier schema, APIs, UI, and authorization boundaries during U1-A planning.

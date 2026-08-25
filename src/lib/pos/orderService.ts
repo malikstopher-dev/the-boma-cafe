@@ -1,6 +1,6 @@
 import { getAdminClient } from '@/lib/supabase'
 import { getMenuItemsByIds, type DbMenuItem } from '@/lib/menu-prices'
-import type { EnrichedItem, OrderItemInput, OrderRecord, OrderStatus, Station, OrderEventType, OrderSplitResult } from './types'
+import type { EnrichedItem, OrderItemInput, OrderRecord, OrderStatus, Station, OrderEventType } from './types'
 
 const MIN_TOTAL = 1
 const MAX_TOTAL = 99999
@@ -113,14 +113,19 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
   const enriched: EnrichedItem[] = []
   let total = 0
 
-  // Look up in the food menu (menu_items): kitchen items plus cocktail-style
-  // items that live in the food menu but carry station:"bar".
+  // ── Server-authoritative station derivation ────────────────
+  // The station is derived from item TYPE, never from the client payload:
+  //   1. a resolvable bar_items row            -> 'bar'
+  //   2. a menu_item in an is_bar category     -> 'bar' (cocktails that live
+  //      on the food menu — migration 028 signal)
+  //   3. any other resolved menu_item          -> 'kitchen'
+  // A client-supplied `station` field is accepted for API compatibility but
+  // is never trusted for routing or pricing.
   const foodIds = items
-    .filter(i => i.menu_item_id && (i.station !== 'bar' || !i.bar_item_id))
+    .filter(i => i.menu_item_id)
     .map(i => i.menu_item_id!)
-  // bar_items lookup only applies when a real bar_item_id is supplied.
   const barIds = items
-    .filter(i => i.station === 'bar' && i.bar_item_id)
+    .filter(i => i.bar_item_id)
     .map(i => i.bar_item_id!)
   const [menuMap, barMap] = await Promise.all([
     foodIds.length > 0 ? getMenuItemsByIds(foodIds) : Promise.resolve(new Map<string, DbMenuItem>()),
@@ -128,91 +133,63 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
   ])
 
   for (const item of items) {
-    if (item.station === 'bar') {
-      // A real bar_item_id resolves via bar_items (single/bottle/glass/shot pricing).
-      const barRow = item.bar_item_id ? barMap.get(item.bar_item_id) : undefined
-      if (barRow) {
-        const { price: itemPrice, matched: sizeMatched } = resolveBarSizePrice(barRow, item.selected_size)
-        if (itemPrice < 0) {
-          return { enriched: [], total: 0, error: `Invalid price for bar item: ${barRow.name}` }
-        }
-        const linePrice = itemPrice
-        const subtotal = linePrice * item.quantity
-        enriched.push({
-          menu_item_id: barRow.id,
-          name: barRow.name,
-          price: linePrice,
-          quantity: item.quantity,
-          subtotal,
-          station: 'bar',
-          ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
-          ...(item.notes ? { notes: item.notes } : {}),
-        })
-        total += subtotal
-        continue
-      }
-
-      // No bar_item_id (or not in bar_items): this is a food-menu item whose
-      // station is "bar" (e.g. a cocktail in menu_items). Enrich via the food
-      // menu but keep station:"bar" so it routes to the bar station.
-      const menuRow = item.menu_item_id ? menuMap.get(item.menu_item_id) : undefined
-      if (menuRow) {
-        const { price: itemPrice, matched: sizeMatched } = resolveSizePrice(menuRow, item.selected_size)
-        if (itemPrice < 0) {
-          const reason = item.selected_size
-            ? `Size "${item.selected_size}" not found for item: ${menuRow.name}`
-            : `Invalid price for item: ${menuRow.name}`
-          return { enriched: [], total: 0, error: reason }
-        }
-        const resolvedAddOns = resolveAddOnPrices(menuRow, item.selected_add_ons)
-        const addOnTotal = resolvedAddOns.reduce((s, a) => s + a.price, 0)
-        const linePrice = itemPrice + addOnTotal
-        const subtotal = linePrice * item.quantity
-        enriched.push({
-          menu_item_id: menuRow.id,
-          name: menuRow.name,
-          price: linePrice,
-          quantity: item.quantity,
-          subtotal,
-          station: 'bar',
-          ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
-          ...(resolvedAddOns.length > 0 ? { selected_add_ons: resolvedAddOns } : {}),
-          ...(item.notes ? { notes: item.notes } : {}),
-        })
-        total += subtotal
-        continue
-      }
-
-      return { enriched: [], total: 0, error: `Bar item not found: ${item.menu_item_id ?? item.bar_item_id}` }
-    } else {
-      const row = item.menu_item_id ? menuMap.get(item.menu_item_id) : undefined
-      if (!row) {
-        return { enriched: [], total: 0, error: `Menu item not found: ${item.menu_item_id}` }
-      }
-      const { price: itemPrice, matched: sizeMatched } = resolveSizePrice(row, item.selected_size)
+    const barRow = item.bar_item_id ? barMap.get(item.bar_item_id) : undefined
+    if (barRow) {
+      // Real bar_items product -> BAR (single/bottle/glass/shot pricing).
+      const { price: itemPrice, matched: sizeMatched } = resolveBarSizePrice(barRow, item.selected_size)
       if (itemPrice < 0) {
-        const reason = item.selected_size
-          ? `Size "${item.selected_size}" not found for item: ${row.name}`
-          : `Invalid price for item: ${row.name}`
-        return { enriched: [], total: 0, error: reason }
+        return { enriched: [], total: 0, error: `Invalid price for bar item: ${barRow.name}` }
       }
-      const resolvedAddOns = resolveAddOnPrices(row, item.selected_add_ons)
-      const addOnTotal = resolvedAddOns.reduce((s, a) => s + a.price, 0)
-      const linePrice = itemPrice + addOnTotal
+      const linePrice = itemPrice
       const subtotal = linePrice * item.quantity
       enriched.push({
-        menu_item_id: row.id,
-        name: row.name,
+        menu_item_id: barRow.id,
+        name: barRow.name,
         price: linePrice,
         quantity: item.quantity,
         subtotal,
-        station: 'kitchen',
+        station: 'bar',
         ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
-        ...(resolvedAddOns.length > 0 ? { selected_add_ons: resolvedAddOns } : {}),
         ...(item.notes ? { notes: item.notes } : {}),
       })
       total += subtotal
+      continue
     }
+
+    const menuRow = item.menu_item_id ? menuMap.get(item.menu_item_id) : undefined
+    if (!menuRow) {
+      // Preserve the legacy wording per missing-ID kind.
+      if (item.bar_item_id) {
+        return { enriched: [], total: 0, error: `Bar item not found: ${item.bar_item_id}` }
+      }
+      return { enriched: [], total: 0, error: `Menu item not found: ${item.menu_item_id ?? 'unknown'}` }
+    }
+
+    // Food-menu product -> kitchen, unless it sits in a bar category.
+    const station: Station = menuRow.category_is_bar === true ? 'bar' : 'kitchen'
+    const { price: itemPrice, matched: sizeMatched } = resolveSizePrice(menuRow, item.selected_size)
+    if (itemPrice < 0) {
+      const reason = item.selected_size
+        ? `Size "${item.selected_size}" not found for item: ${menuRow.name}`
+        : `Invalid price for item: ${menuRow.name}`
+      return { enriched: [], total: 0, error: reason }
+    }
+    const resolvedAddOns = resolveAddOnPrices(menuRow, item.selected_add_ons)
+    const addOnTotal = resolvedAddOns.reduce((s, a) => s + a.price, 0)
+    const linePrice = itemPrice + addOnTotal
+    const subtotal = linePrice * item.quantity
+    enriched.push({
+      menu_item_id: menuRow.id,
+      name: menuRow.name,
+      price: linePrice,
+      quantity: item.quantity,
+      subtotal,
+      station,
+      ...(sizeMatched && item.selected_size ? { selected_size: { name: item.selected_size, price: itemPrice } } : {}),
+      ...(resolvedAddOns.length > 0 ? { selected_add_ons: resolvedAddOns } : {}),
+      ...(item.notes ? { notes: item.notes } : {}),
+    })
+    total += subtotal
   }
 
   return { enriched, total: Math.round(total * 100) / 100, error: null }
@@ -239,19 +216,6 @@ async function generateOrderRef(): Promise<string> {
 
   const seq = ((count ?? 0) + 1).toString().padStart(3, '0')
   return `${yyyymmdd}-${seq}`
-}
-
-export function splitItemsByStation(input: CreateOrderInputType): OrderSplitResult {
-  const kitchenItems = input.items.filter(i => i.station !== 'bar')
-  const barItems = input.items.filter(i => i.station === 'bar')
-  const result: OrderSplitResult = {}
-  if (kitchenItems.length > 0) {
-    result.kitchen = { ...input, items: kitchenItems }
-  }
-  if (barItems.length > 0) {
-    result.bar = { ...input, items: barItems }
-  }
-  return result
 }
 
 const SUBMISSION_WINDOW_MS = 5000
@@ -315,7 +279,10 @@ export type CreateOrderResult = {
   error: string | null
 }
 
-export async function createOrder(input: CreateOrderInputType): Promise<CreateOrderResult> {
+export async function createOrder(
+  input: CreateOrderInputType,
+  precomputed?: { enriched: EnrichedItem[]; total: number },
+): Promise<CreateOrderResult> {
   const idempotencyKey = input.idempotency_key || generateIdempotencyKey()
 
   // ── In-memory dedup (same request within 5s window) ────────
@@ -338,21 +305,30 @@ export async function createOrder(input: CreateOrderInputType): Promise<CreateOr
     // Column may not exist yet (schema cache delay) — continue
   }
 
-  // ── Normalize items ────────────────────────────────────────
-  const parsedItems: OrderItemInput[] = input.items.map((i: any) => ({
-    menu_item_id: i.menu_item_id || i.id,
-    quantity: i.quantity ?? 1,
-    selected_size: i.selected_size,
-    selected_add_ons: i.selected_add_ons,
-    notes: i.notes,
-    station: i.station,
-    bar_item_id: i.bar_item_id,
-  }))
-
-  // ── Server-authoritative pricing ───────────────────────────
-  const { enriched, total, error: enrichError } = await enrichItems(parsedItems)
-  if (enrichError) {
-    return { order: null, duplicate: false, error: enrichError }
+  // ── Server-authoritative pricing + station derivation ─────
+  // Split callers pass precomputed enrichment so mixed carts are priced and
+  // station-derived exactly once; solo callers enrich here.
+  let enriched: EnrichedItem[]
+  let total: number
+  if (precomputed) {
+    enriched = precomputed.enriched
+    total = precomputed.total
+  } else {
+    const parsedItems: OrderItemInput[] = input.items.map((i: any) => ({
+      menu_item_id: i.menu_item_id || i.id,
+      quantity: i.quantity ?? 1,
+      selected_size: i.selected_size,
+      selected_add_ons: i.selected_add_ons,
+      notes: i.notes,
+      station: i.station,
+      bar_item_id: i.bar_item_id,
+    }))
+    const result = await enrichItems(parsedItems)
+    if (result.error) {
+      return { order: null, duplicate: false, error: result.error }
+    }
+    enriched = result.enriched
+    total = result.total
   }
 
   if (total < MIN_TOTAL || total > MAX_TOTAL) {
@@ -394,9 +370,9 @@ export async function createOrder(input: CreateOrderInputType): Promise<CreateOr
     insertPayload.delivery_address = input.delivery_address.trim()
   }
 
-  if (input.station) {
-    insertPayload.station = input.station
-  } else if (enriched.some(i => i.station === 'bar')) {
+  // Station is derived from the enriched item TYPES (bar_items row or bar
+  // category) — the client-supplied station field is never trusted.
+  if (enriched.some(i => i.station === 'bar')) {
     insertPayload.station = 'bar'
   } else {
     insertPayload.station = 'kitchen'
@@ -477,14 +453,20 @@ export async function getSiblingOrders(orderId: string): Promise<OrderRecord[]> 
   try {
     const { data: current } = await getAdminClient()
       .from('orders')
-      .select('parent_order_id')
+      .select('id, parent_order_id')
       .eq('id', orderId)
       .single()
-    if (!current?.parent_order_id) return []
+    if (!current) return []
+    // Symmetric group resolution: children point at the root, but the root
+    // itself has no parent — so the root is its own group id. Querying both
+    // sides of the relationship returns the complete group from ANY member,
+    // fixing the old asymmetric behavior (root saw no siblings).
+    const row = current as unknown as { id: string; parent_order_id: string | null }
+    const groupId = row.parent_order_id ?? row.id
     const { data: siblings } = await getAdminClient()
       .from('orders')
       .select('*')
-      .eq('parent_order_id', current.parent_order_id)
+      .or(`parent_order_id.eq.${groupId},id.eq.${groupId}`)
       .neq('id', orderId)
     return (siblings || []) as unknown as OrderRecord[]
   } catch {
@@ -497,35 +479,92 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
   duplicate: boolean
   error: string | null
 }> {
-  const splits = splitItemsByStation(input)
-  if (!splits.kitchen && !splits.bar) {
+  const baseKey = input.idempotency_key || generateIdempotencyKey()
+
+  // Enrich ONCE with server-side station derivation, then split the ENRICHED
+  // lines — a client-supplied item.station can no longer influence grouping.
+  const parsedItems: OrderItemInput[] = input.items.map((i: any) => ({
+    menu_item_id: i.menu_item_id || i.id,
+    quantity: i.quantity ?? 1,
+    selected_size: i.selected_size,
+    selected_add_ons: i.selected_add_ons,
+    notes: i.notes,
+    station: i.station,
+    bar_item_id: i.bar_item_id,
+  }))
+  const { enriched, error: enrichError } = await enrichItems(parsedItems)
+  if (enrichError) {
+    return { orders: [], duplicate: false, error: enrichError }
+  }
+
+  const kitchenItems = enriched.filter(i => i.station !== 'bar')
+  const barItems = enriched.filter(i => i.station === 'bar')
+  const parts: { items: EnrichedItem[]; total: number }[] = []
+  if (kitchenItems.length > 0) {
+    parts.push({ items: kitchenItems, total: Math.round(kitchenItems.reduce((s, i) => s + i.subtotal, 0) * 100) / 100 })
+  }
+  if (barItems.length > 0) {
+    parts.push({ items: barItems, total: Math.round(barItems.reduce((s, i) => s + i.subtotal, 0) * 100) / 100 })
+  }
+  if (parts.length === 0) {
     return { orders: [], duplicate: false, error: 'No items to order' }
   }
 
-  const orders: OrderRecord[] = []
-  const baseKey = input.idempotency_key || generateIdempotencyKey()
+  const createdOrders: OrderRecord[] = []
+  let firstId: string | null = null
 
-  const firstSplit = splits.kitchen ?? splits.bar!
-  const firstRes = await createOrder({ ...firstSplit, idempotency_key: `${baseKey}-first` })
-  if (firstRes.error) return { orders: [], duplicate: firstRes.duplicate, error: firstRes.error }
-  const first = firstRes.order!
-  orders.push(first)
+  for (let idx = 0; idx < parts.length; idx++) {
+    const part = parts[idx]!
+    const res = await createOrder(
+      {
+        ...input,
+        items: part.items as unknown as OrderItemInput[],
+        idempotency_key: idx === 0 ? `${baseKey}-first` : `${baseKey}-second`,
+        ...(idx > 0 && firstId ? { parent_order_id: firstId } : {}),
+      },
+      { enriched: part.items, total: part.total },
+    )
 
-  const secondSplit = splits.kitchen && splits.bar
-    ? (firstSplit === splits.kitchen ? splits.bar : splits.kitchen)
-    : undefined
+    if (res.error || !res.order) {
+      if (idx === 0) {
+        return { orders: [], duplicate: res.duplicate, error: res.error ?? 'Failed to create order' }
+      }
 
-  if (secondSplit) {
-    const secondRes = await createOrder({
-      ...secondSplit,
-      idempotency_key: `${baseKey}-second`,
-      parent_order_id: first.id,
-    })
-    if (secondRes.error) {
-      return { orders: [first], duplicate: false, error: `First order created (${first.order_ref}) but second failed: ${secondRes.error}` }
+      // ── Compensating rollback: supabase-js cannot wrap both inserts in one
+      // transaction, so a second-station failure DELETES the already-created
+      // first order (order_events cascade with it). The caller receives an
+      // error and NO partial state survives. A brief order.created signal for
+      // the rolled-back row may have fanned out; consumers refetch and simply
+      // won't find it. If the rollback itself fails, surface it loudly rather
+      // than pretending nothing happened.
+      const rollbackIds: string[] = createdOrders.map(o => o.id)
+      let rollbackOk = true
+      for (const rid of rollbackIds) {
+        try {
+          const { error: delError } = await getAdminClient()
+            .from('orders')
+            .delete()
+            .eq('id', rid)
+          if (delError) {
+            console.error(`[splitAndCreateOrders] rollback delete failed for ${rid}:`, delError.message)
+            rollbackOk = false
+          }
+        } catch (delThrow) {
+          console.error(`[splitAndCreateOrders] rollback delete threw for ${rid}:`, String(delThrow))
+          rollbackOk = false
+        }
+      }
+
+      return {
+        orders: rollbackOk ? [] : createdOrders,
+        duplicate: false,
+        error: `First order created (${createdOrders[0]?.order_ref ?? ''}) but second failed${rollbackOk ? ' and was rolled back' : ' AND ROLLBACK FAILED — manual cleanup required'}: ${res.error}`,
+      }
     }
-    if (secondRes.order) orders.push(secondRes.order)
+
+    createdOrders.push(res.order)
+    if (idx === 0) firstId = res.order.id
   }
 
-  return { orders, duplicate: firstRes.duplicate, error: null }
+  return { orders: createdOrders, duplicate: false, error: null }
 }

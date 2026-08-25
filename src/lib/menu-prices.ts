@@ -8,6 +8,11 @@ export interface DbMenuItem {
   price: string | null
   sizes: string | null
   add_ons: string | null
+  /**
+   * Server-authoritative station hint from menu_categories.is_bar
+   * (migration 028). Null/absent = treat as kitchen.
+   */
+  category_is_bar?: boolean | null
 }
 
 // Emergency fallback — used only when Supabase is unreachable.
@@ -32,10 +37,17 @@ export async function getMenuItemsByIds(ids: string[]): Promise<Map<string, DbMe
   try {
     const { data, error } = await getAdminClient()
       .from('menu_items')
-      .select('id, name, description, price, sizes, add_ons')
+      .select('id, name, description, price, sizes, add_ons, menu_categories(is_bar)')
       .in('id', ids)
     if (!error && data) {
-      for (const item of data) result.set(item.id, item)
+      for (const item of data) {
+        const row = item as Record<string, unknown>
+        const category = row.menu_categories as { is_bar?: boolean | null } | null | undefined
+        result.set(item.id, {
+          ...(row as unknown as DbMenuItem),
+          category_is_bar: category?.is_bar ?? null,
+        })
+      }
     }
     if (error) {
       console.error('Supabase menu lookup error:', error.message)

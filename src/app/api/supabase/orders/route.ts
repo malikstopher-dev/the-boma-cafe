@@ -63,28 +63,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data)
   }
 
-  // Sibling lookup: ?sibling_of=<id> returns all orders sharing the same parent_order_id
+  // Sibling lookup: ?sibling_of=<id> returns the complete split group from
+  // ANY member — children resolve through parent_order_id, and the ROOT
+  // (which has no parent) resolves as its own group. Previously a root query
+  // returned [] (asymmetric).
   const siblingOf = searchParams.get('sibling_of')
   if (siblingOf) {
     const { data: parent } = await getAdminClient()
       .from('orders')
-      .select('parent_order_id')
+      .select('id, parent_order_id')
       .eq('id', siblingOf)
       .maybeSingle()
-    if (!parent?.parent_order_id) {
+    const groupId = (parent as { id?: string; parent_order_id?: string | null } | null)?.parent_order_id
+      ?? (parent as { id?: string } | null)?.id
+    if (!groupId) {
       return NextResponse.json({ orders: [] })
     }
     const { data: siblings, error: sibError } = await getAdminClient()
       .from('orders')
       .select(isAdmin ? '*' : 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason')
-      .eq('parent_order_id', parent.parent_order_id)
+      .or(`parent_order_id.eq.${groupId},id.eq.${groupId}`)
     if (sibError) return NextResponse.json({ error: sibError.message }, { status: 500 })
     return NextResponse.json({ orders: siblings })
   }
 
   const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500)
   const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10), 0)
-  const station = searchParams.get('station')
+  let station = searchParams.get('station')
+
+  // Station-scoped reads (SYNC-1D): board roles are pinned server-side to
+  // their OWN station — a kitchen session cannot fetch bar or all-station
+  // rows by passing a different ?station= value, and vice versa. Admin and
+  // waiter surfaces are unaffected (waiter scoping is ownership-based, a
+  // separate checkpoint).
+  if (role === 'kitchen') station = 'kitchen'
+  else if (role === 'bar') station = 'bar'
+
   const full = isAdmin && searchParams.get('full') === '1'
 
   // PII-safe columns: phone and delivery_address are admin-only.

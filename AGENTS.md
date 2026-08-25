@@ -2676,3 +2676,25 @@ Scope: only the ship files changed. Lock: additive-only, frozen rules untouched.
 ### Notes
 - Ships 2–4 of the audit sequence remain queued pending owner go-ahead per ship: Ship 2 station-routing/scoped reads/atomic split; Ship 3 RBAC = PLAN ONLY (STOP POINTS); Ship 4 realtime scope columns = proposal + approval flag.
 
+---
+
+## Session: SYNC-1 Ship 2 — Station Authority + Scoped Reads + Split Integrity (2026-08-25)
+
+### Objective
+Fix audit findings: station trusted from client payload; any staff role could read all stations via GET ?station=; two-insert split non-atomic with orphaned first order on second failure; sibling grouping asymmetric (root saw no siblings).
+
+### Change (additive; no migration, no middleware)
+- `src/lib/menu-prices.ts` — getMenuItemsByIds embeds `menu_categories(is_bar)` (migration 028 signal); DbMenuItem gains optional `category_is_bar`.
+- `src/lib/pos/orderService.ts` — enrichItems derives station server-side: bar_items row → bar; menu_items in is_bar category → bar; else kitchen; client `station` ignored for authority. createOrder accepts optional precomputed enrichment. splitAndCreateOrders enriches once, splits ENRICHED lines w/ per-part subtotals, compensating DELETE of first order on second-part failure (cascade via order_events FK), loud ROLLBACK FAILED wording if delete fails, legacy 'first order created' phrase preserved. getSiblingOrders symmetric via groupId = parent_order_id ?? id with `.or(parent.eq.G,id.eq.G)`. Dead splitItemsByStation removed.
+- `src/app/api/supabase/orders/route.ts` — GET list pins kitchen→kitchen / bar→bar regardless of query; admin/waiter unchanged (waiter ownership-scoping = later checkpoint). sibling_of endpoint symmetric.
+- Legacy not-found error strings preserved verbatim.
+
+### Tests
+`src/inventory/__tests__/order-station-integrity.test.ts` (12): food-spoof→kitchen; bar_item no-station→bar; kitchen-spoof→bar; is_bar cocktail→bar; derived split subtotals(50/80)+child parent pointer; second-part failure → 1 DELETE + zero survivors + 'rolled back' message; root sees children (was []); child sees root; kitchen pinned despite ?station=bar; bar pinned unprompted; admin passthrough both; unscoped admin omits filter. Mock lessons: supabase-js `.single()` unwraps rows[0] — mock must return {data:<row>}; insert chains need thenable + .select().single(); log args[0] IS the payload row.
+
+### Verification (all local/static — live requests: 0)
+12/12 new; full suite **338/338** (34 files, --testTimeout=20000); inventory strict tsc exit 0; root tsc exit 0; next build green. Repo tree = 4 ship files only (+frozen XLSX). Pushed and deployed via `vercel --prod` after owner approval ("go ahead"); no prod data touched.
+
+### Handover
+Ship 3 next = RBAC enforcement PLAN ONLY (STOP POINTS — no code until owner approves).
+
