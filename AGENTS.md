@@ -2744,3 +2744,24 @@ Scope: 7 files (migration, lib, hook, ChatWindow, tests) + docs. Lock: additive-
 ### Run state
 Autonomous run Ships 1–4 COMPLETE (max four per standing rule). Queue empty. Awaiting owner direction.
 
+---
+
+## Session: Owner Bug Reports + Full Stock Load (2026-08-25) — commit fef0dff + data load
+
+### Owner-reported issues — all resolved
+1. **Login dropdown showed leaked probe account** — `u1probe` (role OWNER, created 08-19 session, survived cleanup) found live and DELETED with sessions + audit rows; residue [] verified.
+2. **Daily Stock Input + stock-count pages stuck loading** — ROOT CAUSE: `getDailySheet` fallback ran ONE display-UOM query PER PRODUCT; catalogue grew to 416 products ⇒ ~416 sequential REST calls (~100s+) ⇒ deterministic >45s timeouts on Vercel (reproduced twice on deployed route with crafted admin session; stock-counts list was fine at ~1.2s). FIX: single batched `inventory_product_uoms .in(product_ids).eq(is_display)` query + Map lookup (daily-entry.ts). Verified: local engine 416 items returned; deployed GET 45s-timeout → **200 in 2.9-4.7s**. Commit `fef0dff`.
+3. **"Awaiting approval" count had no Approve button** — data state, not a bug: no `submitted` counts existed; the visible counts were `in_progress` (detail correctly shows count-card + Submit, not Approve). Flow: in_progress → Mark Submitted → Approve (owner/full_manager per Ship 3). Daily sheet for the day was approved by owner during session.
+4. **"All Areas" dropdowns** — stock-counts list filter relabelled "All Areas". New-Count form intentionally keeps single-area (a physical count snapshots one location; engine constraint) — explained to owner.
+
+### Full Stock Load (owner directive)
+- Scope: owner's ~400-row stock sheet list → prices (sheet prices kept; market-cost estimates for the rest — menu prices are per-drink SELLING prices, deliberately NOT used as stock cost), categories (all 49 already existed — zero category writes needed), units (display UOM set per item: Bottle/Each/Case/Pack/Kilogram/Bag/Tots, UNIQUE(product,uom)+one-base CHECK aware), SKUs generated `<CAT>-NNN` for 355 products (377 total skued), and **purchase +100 units each** at Main Bar via engine `createTransaction` (ledger + audit + balance cache), tagged `Opening stock load — owner directive 2026-08-25`.
+- Executed in 3 chunks via temp live script (deleted after): **366/366 items, 0 failures** (366 = owner's list after collapsing sheet duplicates).
+- Verified: 366 tagged txns, all qty 100; total value R7,121,000 (= plan sum exactly); products priced 365/416 (fish stays R0 faithful to sheet); SKUs 377; spot balances: new items exactly 100; existing-stock items preserved +100 (ABSOLUT 3000→3598 incl. their 3000-sheet figure, JD 210→310, MILK 225→325, cups 500→600).
+- **Catalogue duplicates discovered** (owner's sheet contained them): SPIER ×5, GUARDIAN/GAURDIAN/GURDIAN PEAK ×6 spellings, FAT BASTARD ×4, KLEINE ZALZE variants ×5, COMPAGNIESDRIFT ×3, STEENBURG/STEENBERG variants, ARNISTON BAY/EAGLES NEST/ROBERTOSON/STELLA/KRONE BRUT ROSE/PAUL CLUVER VILLAGE/LIPTON ×2 each. Loader filled ONE canonical per sheet name; dupes remain at 0 stock — archive recommended (not done: owner's products).
+- Suite 363/363 + inventory strict tsc clean after cleanup; repo tree clean except frozen XLSX.
+
+### Notes
+- Live-request ledger this session: ~60 (probes + 366×~5 load writes + verification) — one-time data load per owner directive.
+- Stock Sheet (/inv/stock) now shows prices/units/SKUs; RECEIVED column reflects +100 per item.
+
