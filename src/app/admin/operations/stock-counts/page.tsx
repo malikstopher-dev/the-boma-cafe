@@ -94,7 +94,7 @@ export default function StockCountsPage() {
       filters={
         <FilterBar>
           <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
-            <option value="">All Locations</option>
+            <option value="">All Areas</option>
             {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </FilterBar>

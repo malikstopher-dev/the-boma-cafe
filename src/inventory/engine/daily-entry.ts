@@ -136,6 +136,26 @@ export async function getDailySheet(
     for (const p of fallbackProducts) productIds.add(p.id)
   }
 
+  // 2b. Display-UOM configuration for every product in ONE query.
+  // N+1 fix: the per-product lookup below previously ran one query PER
+  // product — at 416 catalogue products that meant ~416 sequential REST
+  // calls (~100s+) and the Daily Stock Input page timing out on Vercel.
+  const displayUomMap = new Map<string, { uomId: string; factor: number; name: string | null }>()
+  if (productIds.size > 0) {
+    const { data: displayRows } = await supabase
+      .from('inventory_product_uoms')
+      .select('product_id, uom_id, conversion_factor, inventory_uoms(name)')
+      .in('product_id', [...productIds])
+      .eq('is_display', true)
+    for (const r of iterate(displayRows as Array<Record<string, unknown>> | null | undefined)) {
+      displayUomMap.set(r.product_id as string, {
+        uomId: r.uom_id as string,
+        factor: Number(r.conversion_factor) || 0,
+        name: (r as { inventory_uoms?: { name?: string | null } | null }).inventory_uoms?.name ?? null,
+      })
+    }
+  }
+
   // 3. Expected balances at end of the day (base units) + latest unit cost
   const expectedMap = new Map<string, number>()
   const costMap = new Map<string, number | null>()
@@ -205,17 +225,13 @@ export async function getDailySheet(
       }
     } else {
       // Fallback section: count in the product's display UOM (e.g. Portion)
-      // when one is configured, otherwise base units.
-      const { data: displayUom } = await supabase
-        .from('inventory_product_uoms')
-        .select('uom_id, conversion_factor, inventory_uoms(name)')
-        .eq('product_id', productId)
-        .eq('is_display', true)
-        .maybeSingle()
-      if (displayUom?.uom_id && Number(displayUom.conversion_factor) > 0) {
-        factor = Number(displayUom.conversion_factor)
-        countUomId = displayUom.uom_id as string
-        countUomName = (displayUom as { inventory_uoms?: { name?: string | null } | null }).inventory_uoms?.name ?? null
+      // when one is configured, otherwise base units. (Pre-fetched above —
+      // no per-product query here.)
+      const display = displayUomMap.get(productId)
+      if (display && display.factor > 0) {
+        factor = display.factor
+        countUomId = display.uomId
+        countUomName = display.name
       }
     }
 

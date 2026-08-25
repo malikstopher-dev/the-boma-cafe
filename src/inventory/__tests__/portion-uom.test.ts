@@ -191,12 +191,12 @@ describe('daily-entry display UOM resolution', () => {
     fromSelect('inventory_count_profiles', [])
     // fallback products
     fromSelect('inventory_products', [{ id: 'prod-1', name: 'Chicken', sku: 'C-1' }])
+    // batched display-UOM lookup: 1 Portion = 0.2 base units
+    fromSelect('inventory_product_uoms', [{ product_id: 'prod-1', uom_id: 'uom-portion', conversion_factor: 0.2, inventory_uoms: { name: 'Portion' } }])
     // transactions for expected balance: 5 base units
     fromSelect('inventory_transactions', [{ product_id: 'prod-1', quantity: 5, unit_cost: 40 }])
     // saved count items
     fromSelect('inventory_stock_count_items', [])
-    // display UOM lookup: 1 Portion = 0.2 base units
-    fromSelect('inventory_product_uoms', { uom_id: 'uom-portion', conversion_factor: 0.2, inventory_uoms: { name: 'Portion' } })
     // location name
     fromSelect('inventory_locations', { name: 'Main Bar' })
 
@@ -215,9 +215,9 @@ describe('daily-entry display UOM resolution', () => {
     fromSelect('inventory_stock_counts', null)
     fromSelect('inventory_count_profiles', [])
     fromSelect('inventory_products', [{ id: 'prod-2', name: 'Beef', sku: 'B-1' }])
+    fromSelect('inventory_product_uoms', [])
     fromSelect('inventory_transactions', [{ product_id: 'prod-2', quantity: 3, unit_cost: 50 }])
     fromSelect('inventory_stock_count_items', [])
-    fromSelect('inventory_product_uoms', null)
     fromSelect('inventory_locations', { name: 'Main Bar' })
 
     const sheet = await getDailySheet('main', '2026-08-18')
