@@ -28,15 +28,20 @@ const TRANSITIONS: Transition[] = [
   { from: 'pending',    to: 'confirmed',  action: 'accept',          label: 'Accept',          role: 'admin',   source: 'online' },
   { from: 'confirmed',  to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'kitchen', source: 'any' },
   { from: 'preparing',  to: 'ready',      action: 'mark_ready',      label: 'Mark Ready',      role: 'kitchen', source: 'any' },
+  { from: 'preparing',  to: 'ready',      action: 'mark_ready',      label: 'Mark Ready',      role: 'bar',     source: 'any' },
   { from: 'ready',      to: 'completed',  action: 'pay',             label: 'Complete',        role: 'foh',     source: 'any' },
 
   // ── Waiter workflow: NEW → CONFIRMED → PREPARING → READY → SERVED → COMPLETED ──
   // Admin can optionally confirm before kitchen starts (or skip — kitchen can go pending→preparing directly)
   { from: 'pending',    to: 'confirmed',  action: 'accept',          label: 'Confirm',         role: 'admin',   source: 'waiter' },
+  { from: 'pending',    to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'kitchen', source: 'any' },
   { from: 'pending',    to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'kitchen', source: 'waiter' },
   { from: 'pending',    to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'bar',     source: 'waiter' },
   { from: 'confirmed',  to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'kitchen', source: 'waiter' },
+  { from: 'confirmed',  to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'kitchen', source: 'any' },
   { from: 'confirmed',  to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'bar',     source: 'waiter' },
+  { from: 'confirmed',  to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'bar',     source: 'any' },
+  { from: 'pending',    to: 'preparing',  action: 'start_prep',      label: 'Start Prep',      role: 'bar',     source: 'any' },
   { from: 'preparing',  to: 'ready',      action: 'mark_ready',      label: 'Mark Ready',      role: 'kitchen', source: 'waiter' },
   { from: 'preparing',  to: 'ready',      action: 'mark_ready',      label: 'Mark Ready',      role: 'bar',     source: 'waiter' },
   { from: 'ready',      to: 'served',     action: 'mark_served',     label: 'Mark Served',     role: 'waiter',  source: 'waiter' },

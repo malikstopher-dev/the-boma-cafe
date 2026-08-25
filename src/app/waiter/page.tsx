@@ -317,7 +317,7 @@ export default function WaiterPage() {
   const barItems_ = cart.filter(c => c.station === 'bar')
 
   return (
-    <div style={{ minHeight: '100dvh', background: t.colors.bg.primary, color: t.colors.text.primary, display: 'flex', flexDirection: 'column', fontFamily: t.typography.fontFamily }}>
+    <div style={{ height: '100dvh', background: t.colors.bg.primary, color: t.colors.text.primary, display: 'flex', flexDirection: 'column', fontFamily: t.typography.fontFamily }}>
       {/* Header */}
       {tableNumber && (
         <div style={{
