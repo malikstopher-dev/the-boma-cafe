@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import PremiumAuthShell from '@/components/auth/PremiumAuthShell'
 
 const ROLES = [
-  { key: 'kitchen', label: 'Kitchen', icon: '👨‍🍳', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', desc: 'View and process food orders' },
-  { key: 'bar', label: 'Bar', icon: '🍸', color: '#8b5cf6', bg: 'rgba(139,92,244,0.1)', desc: 'View and process drink orders' },
-  { key: 'waiter', label: 'Waiter', icon: '📋', color: '#10b981', bg: 'rgba(16,185,129,0.1)', desc: 'Take orders and manage tables' },
+  { key: 'kitchen', label: 'Kitchen', icon: 'K', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)', desc: 'View and process food orders' },
+  { key: 'bar', label: 'Bar', icon: 'B', color: '#a78bfa', bg: 'rgba(167,139,250,0.1)', desc: 'View and process drink orders' },
+  { key: 'waiter', label: 'Waiter', icon: 'W', color: '#34d399', bg: 'rgba(52,211,153,0.1)', desc: 'Take orders and manage tables' },
 ]
 
 export default function StaffLogin() {
@@ -74,14 +75,9 @@ export default function StaffLogin() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', background: '#0f0f1a' }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🍽️</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>The Boma Café</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', margin: 0 }}>Staff Portal</p>
-        </div>
-
+    <PremiumAuthShell eyebrow="Boma Cafe / Staff" title="Choose your station." subtitle="Use the shared station login to enter Kitchen, Bar, or Waiter operations.">
+    <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         {step === 'role' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {ROLES.map((r) => (
@@ -163,5 +159,6 @@ export default function StaffLogin() {
         </div>
       </div>
     </div>
+    </PremiumAuthShell>
   )
 }

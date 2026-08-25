@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
+import PremiumAuthShell from '@/components/auth/PremiumAuthShell';
 
 interface PublicAccount {
   username: string;
@@ -59,27 +60,23 @@ function LoginForm() {
   };
 
   return (
+    <PremiumAuthShell eyebrow="Boma Cafe / Admin" title="Welcome back." subtitle="Sign in to the management workspace. Every action is recorded against your account.">
     <div style={{
-      minHeight: '100vh',
+      minHeight: 'auto',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1A1610 0%, #242018 100%)',
-      padding: '2rem'
+      background: 'transparent',
+      padding: 0
     }}>
       <div style={{
-        background: '#1E1A14',
-        borderRadius: '24px',
-        padding: '3rem',
+        background: 'transparent',
+        borderRadius: 0,
+        padding: 0,
         width: '100%',
-        maxWidth: '450px',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.3)'
+        maxWidth: 'none',
+        boxShadow: 'none'
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', color: '#F0EBE3', marginBottom: '0.5rem' }}>Admin Login</h1>
-          <p style={{ color: '#A09888' }}>Sign in as yourself — every action is recorded</p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#F0EBE3', fontWeight: 500 }}>
@@ -199,6 +196,7 @@ function LoginForm() {
         </div>
       </div>
     </div>
+    </PremiumAuthShell>
   );
 }
 

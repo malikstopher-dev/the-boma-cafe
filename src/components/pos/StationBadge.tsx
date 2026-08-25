@@ -7,8 +7,8 @@ interface StationBadgeProps {
 }
 
 const STATION_CONFIG: Record<Station, { label: string; icon: string; color: string; bg: string }> = {
-  kitchen: { label: 'Kitchen', icon: '🍳', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-  bar:     { label: 'Bar',     icon: '🍸', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
+  kitchen: { label: 'Kitchen', icon: 'K', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+  bar:     { label: 'Bar',     icon: 'B', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
 }
 
 const SIZE_MAP = {

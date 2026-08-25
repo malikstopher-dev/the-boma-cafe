@@ -21,8 +21,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // gate, which never updates auth-context (role stays null there) — resolve
   // the staff destination from the pathname itself, which is authoritative.
   const dashboardTarget =
-    pathname === '/admin/kitchen' ? '/staff/kitchen'
-    : pathname === '/admin/bar' ? '/staff/bar'
+    role !== 'admin' && (role === null || role === 'kitchen') && pathname === '/admin/kitchen' ? '/staff/kitchen'
+    : role !== 'admin' && (role === null || role === 'bar') && pathname === '/admin/bar' ? '/staff/bar'
     : role === 'kitchen' ? '/staff/kitchen'
     : role === 'bar' ? '/staff/bar'
     : role === 'waiter' ? '/staff/waiter'

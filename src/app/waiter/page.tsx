@@ -10,6 +10,7 @@ import { posTokens as t } from '@/components/pos/DesignSystem'
 import ErrorBoundary from '@/components/pos/ErrorBoundary'
 import PinLogin from '@/components/staff/PinLogin'
 import LockScreen from '@/components/staff/LockScreen'
+import FloorPlan from '@/components/ops/FloorPlan'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
 import {
   ORDER_LIVE_EVENTS,
@@ -351,21 +352,7 @@ export default function WaiterPage() {
         {tab === 'tables' && (
           <div style={{ flex: 1, minHeight: 0, padding: 16, overflowY: 'auto' }}>
             <h2 style={{ fontSize: t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, margin: '0 0 12px' }}>Select Table</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-              {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
-                <button key={n} onClick={() => { setTableNumber(n); setTab('food') }}
-                  style={{
-                    padding: '16px 8px', borderRadius: t.radius.lg,
-                    border: tableNumber === n ? '2px solid #10b981' : `2px solid ${t.colors.border.default}`,
-                    background: tableNumber === n ? 'rgba(16,185,129,0.15)' : t.colors.bg.card,
-                    color: t.colors.text.primary, fontSize: t.typography.fontSize.lg,
-                    fontWeight: t.typography.fontWeight.bold, cursor: 'pointer', minHeight: 56,
-                    fontFamily: t.typography.fontFamily,
-                  }}>
-                  {n}
-                </button>
-              ))}
-            </div>
+            <FloorPlan tableCount={20} selectedTable={tableNumber} onSelect={(n) => { setTableNumber(n); setTab('food') }} />
             <div style={{ marginTop: 16 }}>
               <label style={{ fontSize: t.typography.fontSize.sm, color: t.colors.text.muted, display: 'block', marginBottom: 6, fontWeight: t.typography.fontWeight.semibold }}>Signed in as</label>
               <div style={{

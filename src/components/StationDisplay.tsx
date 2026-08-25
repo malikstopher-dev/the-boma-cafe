@@ -9,6 +9,7 @@ import CountBadge from '@/components/pos/CountBadge'
 import CancelModal from '@/components/pos/CancelModal'
 import PrepTimeSelector from '@/components/pos/PrepTimeSelector'
 import PrepTimeCountdown from '@/components/pos/PrepTimeCountdown'
+import TicketCard from '@/components/pos/TicketCard'
 import { posTokens as t } from '@/components/pos/DesignSystem'
 import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { ORDER_BOARD_EVENTS } from '@/inventory/lib/order-status'
@@ -49,11 +50,11 @@ const READY_CLEANUP_MS = 5 * 60 * 1000
 const STALE_ORDER_MS = 24 * 60 * 60 * 1000
 
 const COLUMNS = [
-  { key: 'pending',   label: 'NEW',      icon: '🆕', color: '#f59e0b', bg: 'rgba(245,158,11,0.04)' },
-  { key: 'confirmed', label: 'CONFIRMED', icon: '✅', color: '#3b82f6', bg: 'rgba(59,130,246,0.04)' },
-  { key: 'preparing', label: 'PREPARING', icon: '🔥', color: '#eab308', bg: 'rgba(234,179,8,0.04)' },
-  { key: 'packing',   label: 'PACKING',  icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.04)' },
-  { key: 'ready',     label: 'READY',    icon: '✅', color: '#10b981', bg: 'rgba(16,185,129,0.04)' },
+  { key: 'pending',   label: 'NEW',      icon: 'N', color: '#fbbf24', bg: 'rgba(251,191,36,0.04)' },
+  { key: 'confirmed', label: 'CONFIRMED', icon: 'C', color: '#60a5fa', bg: 'rgba(96,165,250,0.04)' },
+  { key: 'preparing', label: 'PREPARING', icon: 'P', color: '#fbbf24', bg: 'rgba(251,191,36,0.04)' },
+  { key: 'packing',   label: 'PACKING',  icon: 'P', color: '#a78bfa', bg: 'rgba(167,139,250,0.04)' },
+  { key: 'ready',     label: 'READY',    icon: 'R', color: '#34d399', bg: 'rgba(52,211,153,0.04)' },
 ]
 
 function playDing() {
@@ -255,7 +256,9 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   const updateStatus = async (id: string, status: string, prepTimeMinutes?: number) => {
     setUpdating(id)
     try {
-      const body: Record<string, any> = { status }
+      const currentOrder = orders.find(o => o.id === id)
+      const body: Record<string, any> = {}
+      if (currentOrder?.status !== status) body.status = status
       if (prepTimeMinutes !== undefined) {
         body.preparation_time_minutes = prepTimeMinutes
         body.estimated_prep_minutes = prepTimeMinutes
@@ -270,7 +273,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
         setCardErrors(prev => { const n = { ...prev }; delete n[id]; return n })
         setOrders(prev => prev.map(o => {
           if (o.id !== id) return o
-          const updated = { ...o, status, preparation_time_minutes: prepTimeMinutes ?? o.preparation_time_minutes }
+           const updated = { ...o, status: body.status ? status : o.status, preparation_time_minutes: prepTimeMinutes ?? o.preparation_time_minutes }
           if (prepTimeMinutes !== undefined) {
             updated.estimated_prep_minutes = prepTimeMinutes
             updated.prep_started_at = new Date().toISOString()
@@ -330,7 +333,12 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   const handlePrepTimeSelect = async (minutes: number) => {
     if (!prepSelectorOrderId) return
     setPrepSelectorLoading(true)
-    await updateStatus(prepSelectorOrderId, 'preparing', minutes)
+    const order = orders.find(o => o.id === prepSelectorOrderId)
+    if (order?.status === 'preparing') {
+      await updateStatus(prepSelectorOrderId, order.status, minutes)
+    } else {
+      await updateStatus(prepSelectorOrderId, 'preparing', minutes)
+    }
     setPrepSelectorLoading(false)
     setPrepSelectorOpen(false)
     setPrepSelectorOrderId(null)
@@ -678,15 +686,13 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
   const itemCount = items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0)
 
   return (
-    <div className={isNew ? 'pos-new-flash' : fading ? 'pos-fade-ready' : ''} style={{
+    <TicketCard status={order.status as any} accent={col.color} className={isNew ? 'pos-new-flash' : fading ? 'pos-fade-ready' : ''} style={{
       background: t.colors.bg.card, borderRadius: t.radius.lg, padding: isMobile ? 12 : 14,
-      border: isFocused ? `2px solid ${col.color}` : `1px solid ${col.color}30`,
+       border: isFocused ? `2px solid ${col.color}` : `1px solid ${col.color}30`,
       boxShadow: isFocused ? `0 0 16px ${col.color}25` : t.shadow.sm,
       transition: 'opacity 0.3s, transform 0.3s', opacity: fading ? 0 : 1, position: 'relative', overflow: 'hidden',
     }}>
       {/* Colored left accent */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: col.color, borderRadius: '3px 0 0 3px' }} />
-
       {/* Row 1: Ref + Timer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, paddingLeft: 6 }}>
         <span style={{ fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.xl, fontWeight: t.typography.fontWeight.extrabold, fontFamily: t.typography.fontFamilyMono, color: t.colors.text.primary, lineHeight: 1.2 }}>{displayRef}</span>
@@ -713,16 +719,16 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
             color: order.payment_status === 'paid' ? '#10b981' : '#f59e0b',
             border: `1px solid ${order.payment_status === 'paid' ? '#10b98130' : '#f59e0b30'}`,
           }}>
-            {order.payment_status === 'paid' ? '✅ Paid' : '⏳ Pay'}
+            {order.payment_status === 'paid' ? 'Paid' : 'Pay'}
           </span>
         )}
       </div>
 
       {/* Row 3: Meta info */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6, paddingLeft: 6, fontSize: t.typography.fontSize.sm, color: t.colors.text.secondary }}>
-        {order.table_number && <span style={{ fontWeight: t.typography.fontWeight.bold, color: '#ef4444' }}>🪑 T{order.table_number}</span>}
-        {order.waiter_name && <span style={{ fontWeight: t.typography.fontWeight.semibold }}>👤 {order.waiter_name}</span>}
-        <span>📦 {itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+        {order.table_number && <span style={{ fontWeight: t.typography.fontWeight.bold, color: '#ef4444' }}>TABLE {order.table_number}</span>}
+        {order.waiter_name && <span style={{ fontWeight: t.typography.fontWeight.semibold }}>WAITER {order.waiter_name}</span>}
+        <span>{itemCount} ITEM{itemCount !== 1 ? 'S' : ''}</span>
         <span style={{ fontWeight: t.typography.fontWeight.bold, color: t.colors.text.primary }}>R{order.total.toFixed(0)}</span>
       </div>
 
@@ -735,7 +741,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
                 <strong style={{ color: t.colors.text.primary }}>{item.quantity}x</strong>{' '}
                 <span style={{ color: t.colors.text.secondary }}>{item.name}</span>
               </span>
-              {item.notes && <span style={{ fontSize: t.typography.fontSize.xs, color: '#fbbf24', fontWeight: t.typography.fontWeight.semibold, marginLeft: 8, flexShrink: 0 }}>⚠️ {item.notes}</span>}
+              {item.notes && <span style={{ fontSize: t.typography.fontSize.xs, color: '#fbbf24', fontWeight: t.typography.fontWeight.semibold, marginLeft: 8, flexShrink: 0 }}>NOTE: {item.notes}</span>}
             </div>
           ))}
         </div>
@@ -744,7 +750,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
       {/* Special instructions */}
       {hasNotes && (
         <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: t.radius.md, padding: 8, marginBottom: 6, marginLeft: 6 }}>
-          <span style={{ fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚠️ Notes</span>
+          <span style={{ fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.bold, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</span>
           {items.filter((i: any) => i.notes).map((item: any, idx: number) => (
             <div key={idx} style={{ fontSize: t.typography.fontSize.sm, color: '#fde68a', marginTop: 2 }}><strong>{item.name}:</strong> {item.notes}</div>
           ))}
@@ -753,7 +759,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
 
       {metadata.orderNotes && (
         <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: t.radius.md, padding: 8, marginBottom: 6, marginLeft: 6 }}>
-          <span style={{ fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.extrabold, color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚠️ Order Note</span>
+          <span style={{ fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.extrabold, color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order Note</span>
           <div style={{ fontSize: t.typography.fontSize.sm, color: '#fca5a5', marginTop: 2 }}>{metadata.orderNotes}</div>
         </div>
       )}
@@ -761,7 +767,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
       {/* Card error */}
       {cardErrors[order.id] && (
         <div style={{ padding: '4px 8px', marginBottom: 6, borderRadius: t.radius.sm, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, textAlign: 'center', marginLeft: 6 }}>
-          ⚠ {cardErrors[order.id]}
+          Error: {cardErrors[order.id]}
         </div>
       )}
 
@@ -782,10 +788,10 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
         {order.status === 'pending' && order.source !== 'waiter' && (
           <>
             <div style={{ width: '100%', padding: 10, borderRadius: t.radius.md, background: 'rgba(245,158,11,0.08)', color: '#f59e0b', fontSize: t.typography.fontSize.sm, fontWeight: t.typography.fontWeight.semibold, textAlign: 'center', border: '1px solid rgba(245,158,11,0.2)' }}>
-              ⏳ Awaiting admin confirmation
+              Awaiting admin confirmation
             </div>
             <button onClick={() => openCancelModal(order.id, displayRef)} style={{ width: '100%', marginTop: 4, padding: 8, border: '1px solid rgba(239,68,68,0.3)', borderRadius: t.radius.sm, background: 'transparent', color: '#ef4444', fontSize: t.typography.fontSize.xs, fontWeight: t.typography.fontWeight.semibold, cursor: 'pointer', fontFamily: t.typography.fontFamily }}>
-              ❌ Cancel
+              Cancel
             </button>
           </>
         )}
@@ -830,7 +836,7 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
                 fontWeight: t.typography.fontWeight.extrabold, cursor: updating === order.id ? 'not-allowed' : 'pointer',
                 opacity: updating === order.id ? 0.5 : 1, fontFamily: t.typography.fontFamily, touchAction: 'manipulation',
               }}>
-              {updating === order.id ? '...' : '✅ MARK READY'}
+            {updating === order.id ? '...' : 'MARK READY'}
             </button>
           </>
         )}
@@ -840,6 +846,6 @@ function OrderCard({ order, col, colIdx, focusedCol, focusedIdx, updating, updat
           </div>
         )}
       </div>
-    </div>
+    </TicketCard>
   )
 }

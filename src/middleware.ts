@@ -14,8 +14,7 @@ const BAR_PASSWORD = process.env.BAR_PASSWORD
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const SESSION_DURATION_MS = 8 * 60 * 60 * 1000 // 8 hours
-const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+// Sessions persist until voluntary logout — no inactivity timeout.
 
 async function hashSHA256(input: string): Promise<string> {
   const data = new TextEncoder().encode(input)
@@ -68,9 +67,8 @@ async function verifyRole(request: NextRequest): Promise<AuthResult> {
       if (!error && data) {
         const now = new Date()
         const expiresAt = new Date(data.expires_at)
-        const lastActive = new Date(data.last_active_at)
 
-        if (now > expiresAt || (now.getTime() - lastActive.getTime()) > INACTIVITY_TIMEOUT_MS) {
+        if (now > expiresAt) {
           const response = NextResponse.next()
           response.cookies.delete(ADMIN_SESSION_COOKIE)
           return null
@@ -132,10 +130,9 @@ async function verifyRole(request: NextRequest): Promise<AuthResult> {
       if (!error && data) {
         const now = new Date()
         const expiresAt = new Date(data.expires_at)
-        const lastActive = new Date(data.last_active_at)
 
-        // Check hard expiry and inactivity
-        if (now > expiresAt || (now.getTime() - lastActive.getTime()) > INACTIVITY_TIMEOUT_MS) {
+        // Keep staff sessions alive until hard expiry or explicit logout.
+        if (now > expiresAt) {
           // Session expired — clear cookie
           const response = NextResponse.next()
           response.cookies.delete(STAFF_SESSION_COOKIE)

@@ -100,10 +100,10 @@ describe('getSession — PIN staff session (boma_staff_session)', () => {
     expect(await getSession()).toBeNull()
   })
 
-  it('inactive > 30 min staff session → null', async () => {
+  it('stale activity does not expire a still-valid staff session', async () => {
     setCookie('boma_staff_session', 'sess-4')
     sbState.staffSession = { id: 'sess-4', role: 'waiter', signed_out_at: null, expires_at: FUTURE, last_active_at: STALE }
-    expect(await getSession()).toBeNull()
+    expect(await getSession()).toEqual({ role: 'waiter' })
   })
 
   it('signed-out / unknown session → null', async () => {

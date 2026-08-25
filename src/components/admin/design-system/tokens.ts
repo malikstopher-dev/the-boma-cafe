@@ -1,41 +1,41 @@
-// Design tokens — Warm Gold Dark Theme
+// Design tokens — Navy / Violet / Amber Operations Theme
 // The Boma Cafe Operations Platform
 
 export const tokens = {
   colors: {
     bg: {
-      primary: '#1A1610',
-      secondary: '#242018',
-      tertiary: '#2A261E',
-      inverse: '#F0EBE3',
+      primary: '#0F172A',
+      secondary: '#111827',
+      tertiary: '#1B2336',
+      inverse: '#F8FAFC',
     },
     surface: {
-      default: '#242018',
-      raised: '#2A261E',
+      default: '#111827',
+      raised: '#1B2336',
       overlay: 'rgba(0,0,0,0.6)',
     },
     border: {
-      default: '#3A3428',
-      strong: '#4A4438',
-      focus: '#C8A04E',
+      default: '#334155',
+      strong: '#475569',
+      focus: '#FBBF24',
     },
     text: {
-      primary: '#F0EBE3',
-      secondary: '#A09888',
-      muted: '#6B6358',
-      inverse: '#1A1610',
-      link: '#C8A04E',
+      primary: '#F8FAFC',
+      secondary: '#CBD5E1',
+      muted: '#94A3B8',
+      inverse: '#0F172A',
+      link: '#FBBF24',
     },
     accent: {
-      default: '#C8A04E',
-      hover: '#B8923E',
-      bg: 'rgba(200,160,78,0.10)',
-      text: '#C8A04E',
+      default: '#FBBF24',
+      hover: '#F59E0B',
+      bg: 'rgba(251,191,36,0.10)',
+      text: '#FBBF24',
     },
     success: {
-      default: '#4CAF50',
-      bg: 'rgba(76,175,80,0.10)',
-      text: '#4CAF50',
+      default: '#34D399',
+      bg: 'rgba(52,211,153,0.10)',
+      text: '#34D399',
     },
     warning: {
       default: '#FBBF24',

@@ -3,8 +3,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { getAdminClient } from '@/lib/supabase'
 import type { StaffProfile } from './auth'
 
-const SESSION_DURATION_MS = 8 * 60 * 60 * 1000 // 8 hours
-const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+const SESSION_DURATION_MS = 365 * 24 * 60 * 60 * 1000 // persist until voluntary logout
 
 export interface StaffSession {
   sessionId: string
@@ -88,16 +87,9 @@ export async function validateSession(sessionToken: string): Promise<StaffSessio
 
   const now = new Date()
   const expiresAt = new Date(data.expires_at)
-  const lastActive = new Date(data.last_active_at)
 
   // Check hard expiry
   if (now > expiresAt) {
-    await endSession(sessionToken, 'timeout')
-    return null
-  }
-
-  // Check inactivity
-  if (now.getTime() - lastActive.getTime() > INACTIVITY_TIMEOUT_MS) {
     await endSession(sessionToken, 'timeout')
     return null
   }

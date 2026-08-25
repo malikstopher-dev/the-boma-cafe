@@ -10,7 +10,6 @@ const BAR_COOKIE = 'boma_bar_auth'
 const ADMIN_SESSION_COOKIE = 'boma_admin_session'
 const STAFF_SESSION_COOKIE = 'boma_staff_session'
 
-const STAFF_INACTIVITY_MS = 30 * 60 * 1000 // mirrors middleware staff-session rules
 
 export type Role = 'admin' | 'kitchen' | 'waiter' | 'bar'
 
@@ -74,8 +73,7 @@ export async function getSession(): Promise<Session | null> {
       if (data) {
         const now = new Date()
         const expired = now > new Date(data.expires_at as string)
-        const inactive = now.getTime() - new Date(data.last_active_at as string).getTime() > STAFF_INACTIVITY_MS
-        if (!expired && !inactive) {
+        if (!expired) {
           const role = data.role as Role
           if (role === 'admin' || role === 'kitchen' || role === 'bar' || role === 'waiter') {
             return { role }

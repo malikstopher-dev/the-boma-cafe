@@ -8,6 +8,7 @@ import { posService } from '@/lib/pos-service'
 import { useRealtimeRefresh } from '@/inventory/lib/use-realtime-refresh'
 import { ORDER_BOARD_EVENTS } from '@/inventory/lib/order-status'
 import { useVisibleInterval } from '@/inventory/lib/use-visible-interval'
+import TicketCard from '@/components/pos/TicketCard'
 
 const TOTAL_TABLES = 20
 
@@ -169,10 +170,11 @@ function OrderCard({
   }
 
   return (
-    <div
+    <TicketCard
+      status={status}
       onClick={onClick}
       style={{
-        background: selected ? '#242018' : '#1E1A14',
+        background: selected ? '#1B2336' : '#0F172A',
         borderRadius: '10px',
         padding: '0.6rem 0.75rem',
         border: selected ? `2px solid ${color}` : '1px solid rgba(255,255,255,0.05)',
@@ -200,11 +202,11 @@ function OrderCard({
           {label}
         </span>
         <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap' }}>
-          {order.order_type === 'pickup' ? '📦 Pickup' : order.order_type === 'delivery' ? '🚚 Delivery' : '🍽️ Dine-in'}
+           {order.order_type === 'pickup' ? 'Pickup' : order.order_type === 'delivery' ? 'Delivery' : 'Dine-in'}
         </span>
         <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap' }}>⏱ {timeSince(order.created_at)}</span>
-        {tn && <span style={{ fontSize: '0.7rem', color: '#38BDF8', fontWeight: 600, whiteSpace: 'nowrap' }}>🪑 {tn}</span>}
-        {order.waiter_name && <span style={{ fontSize: '0.7rem', color: '#E85454', fontWeight: 600, whiteSpace: 'nowrap' }}>🍽️ {order.waiter_name}</span>}
+         {tn && <span style={{ fontSize: '0.7rem', color: '#38BDF8', fontWeight: 600, whiteSpace: 'nowrap' }}>TABLE {tn}</span>}
+         {order.waiter_name && <span style={{ fontSize: '0.7rem', color: '#E85454', fontWeight: 600, whiteSpace: 'nowrap' }}>WAITER {order.waiter_name}</span>}
         {requiresPaymentConfirmation(order.order_type) && (
           <PaymentBadge paymentStatus={order.payment_status} />
         )}
@@ -226,7 +228,7 @@ function OrderCard({
             }}
             title="Confirm waiter order (kitchen can also start without this)"
           >
-            ✅ Confirm
+             Confirm
           </button>
         )}
         {order.source !== 'waiter' && order.order_type === 'dine-in' && order.status === 'pending' && (
@@ -239,7 +241,7 @@ function OrderCard({
             }}
             title="Approve dine-in order (no payment required — paid at table). Then assign a waiter on duty."
           >
-            ✅ Approve
+             Approve
           </button>
         )}
         {!['completed', 'cancelled'].includes(order.status) && (
@@ -253,7 +255,7 @@ function OrderCard({
                 fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
-              {order.waiter_name ? `🍽️ ${order.waiter_name}` : '+ Assign Waiter'}
+               {order.waiter_name ? `WAITER ${order.waiter_name}` : '+ Assign Waiter'}
             </button>
             {showWaiterDropdown && (
               <div style={{
@@ -278,7 +280,7 @@ function OrderCard({
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                     onMouseLeave={e => e.currentTarget.style.background = order.waiter_name === w.name ? 'rgba(232,84,84,0.2)' : 'transparent'}
                   >
-                    👤 {w.name}
+                     {w.name}
                   </button>
                 ))}
                 {waiters.filter(w => w.active).length === 0 && (
@@ -394,7 +396,7 @@ function OrderCard({
           {items.some(i => i.notes) && (
             <div style={{ marginTop: '0.4rem' }}>
               {items.filter(i => i.notes).map((item, i) => (
-                <div key={i} style={{ fontSize: '0.75rem', color: '#C8A04E', marginTop: '0.1rem' }}>⚠️ {item.name}: {item.notes}</div>
+                 <div key={i} style={{ fontSize: '0.75rem', color: '#FBBF24', marginTop: '0.1rem' }}>NOTE: {item.name}: {item.notes}</div>
               ))}
             </div>
           )}
@@ -408,7 +410,7 @@ function OrderCard({
           </span>
         </div>
       )}
-    </div>
+    </TicketCard>
   )
 }
 

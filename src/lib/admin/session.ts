@@ -4,8 +4,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { getAdminClient } from '@/lib/supabase'
 import type { AdminAccount, AdminRole, AdminSessionInfo } from './types'
 
-const SESSION_DURATION_MS = 8 * 60 * 60 * 1000 // 8 hours
-const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+const SESSION_DURATION_MS = 365 * 24 * 60 * 60 * 1000 // 1 year — sessions persist until voluntary logout
 
 export interface AdminSessionRow {
   id: string
@@ -75,11 +74,6 @@ export async function validateAdminSession(sessionId: string): Promise<AdminSess
   const lastActive = new Date(data.last_active_at)
 
   if (now > expiresAt) {
-    await endAdminSession(sessionId, 'timeout')
-    return null
-  }
-
-  if (now.getTime() - lastActive.getTime() > INACTIVITY_TIMEOUT_MS) {
     await endAdminSession(sessionId, 'timeout')
     return null
   }

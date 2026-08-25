@@ -1,15 +1,15 @@
 import { OrderStatus } from '@/lib/pos/types'
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string; icon: string }> = {
-  pending:    { label: 'NEW',         color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', icon: '🆕' },
-  confirmed:  { label: 'CONFIRMED',   color: '#3b82f6', bg: 'rgba(59,130,246,0.15)',  icon: '✅' },
-  preparing:  { label: 'PREPARING',   color: '#eab308', bg: 'rgba(234,179,8,0.15)',   icon: '🔥' },
-  packing:    { label: 'PACKING',     color: '#f97316', bg: 'rgba(249,115,22,0.15)',  icon: '📦' },
-  ready:      { label: 'READY',       color: '#10b981', bg: 'rgba(16,185,129,0.15)',  icon: '✅' },
-  served:     { label: 'SERVED',      color: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   icon: '🍽️' },
-  completed:  { label: 'COMPLETED',   color: '#6b7280', bg: 'rgba(107,114,128,0.15)', icon: '✔️' },
-  cancelled:  { label: 'CANCELLED',   color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   icon: '❌' },
-  rejected:   { label: 'REJECTED',    color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   icon: '🚫' },
+  pending:    { label: 'NEW',         color: '#fbbf24', bg: 'rgba(251,191,36,0.15)', icon: 'N' },
+  confirmed:  { label: 'CONFIRMED',   color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  icon: 'C' },
+  preparing:  { label: 'PREPARING',   color: '#fbbf24', bg: 'rgba(251,191,36,0.15)',   icon: 'P' },
+  packing:    { label: 'PACKING',     color: '#a78bfa', bg: 'rgba(167,139,250,0.15)',  icon: 'P' },
+  ready:      { label: 'READY',       color: '#34d399', bg: 'rgba(52,211,153,0.15)',  icon: 'R' },
+  served:     { label: 'SERVED',      color: '#22d3ee', bg: 'rgba(34,211,238,0.15)',   icon: 'S' },
+  completed:  { label: 'COMPLETED',   color: '#94a3b8', bg: 'rgba(148,163,184,0.15)', icon: 'D' },
+  cancelled:  { label: 'CANCELLED',   color: '#f87171', bg: 'rgba(248,113,113,0.15)',   icon: 'X' },
+  rejected:   { label: 'REJECTED',    color: '#f87171', bg: 'rgba(248,113,113,0.15)',   icon: 'X' },
 }
 
 interface StatusBadgeProps {
