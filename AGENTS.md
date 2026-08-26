@@ -2791,3 +2791,36 @@ Finish the approved shared premium UI pass after the operational session/timer f
 - Commit `b665e2b` pushed to `main`.
 - No Vercel deployment or live browser probe was performed in this checkpoint.
 - The three owner XLSX files remain untouched and untracked.
+
+---
+
+## Session: SYNC-2 Phase 4 Readiness Evidence (2026-08-26) — documentation-only
+
+### Objective
+Record the owner-approved canonical movement definitions and the newly reported dashboard/stock-count consistency gaps. Phase 4 remains approved but inactive. No runtime implementation was authorized.
+
+### Owner-approved definitions
+- **Inbound / Received:** `purchase`, `return`, `transfer_in`
+- **Sold / Customer Usage:** `sale`, `sale_bottle`
+- **Internal Consumption:** `comp`, `staff`, negative `production`, `gas_usage`
+- **Waste / Loss:** `waste`, `breakage`, `spillage`, `expiry_loss`, `theft`, `stolen`, `donation`
+- **Adjustment:** explicit `adjustment` only
+- **Physical Count Variance:** `physical_count`, separate from generic Adjustment
+- **Total Outflow:** Sold + Internal Consumption + Waste/Loss
+
+### Locked business rules
+- Wastage remains separate from operational Used and is not double-counted.
+- Physical-count variance is not silently classified as generic Adjustment.
+- Physical location and `inventory_type` remain independent dimensions.
+- Current Stock Value is a current-balance metric; movement metrics are period-based ledger metrics.
+- Shared classification centralizes business meaning without requiring unrelated KPIs to display identical values.
+
+### Reported evidence for the Phase 4 gate
+- Stock counted, but main dashboard Stock Used remains zero.
+- Stock-count area filters lack `All Areas`; a Kitchen count shows the full catalogue instead of Kitchen-scoped items.
+- Forecast reports out-of-stock items while main dashboards show no corresponding attention state.
+
+### Stop state
+- `src/inventory/lib/movement-classification.ts` was **not** created.
+- No TypeScript consumer, test, SQL/RPC, UI, `/inv`, production data, or deployment changed.
+- Phase 4 is not active. Any semantic or architectural question outside the approved definitions must stop implementation and be reported.

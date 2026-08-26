@@ -204,6 +204,16 @@ Expected smallest implementation:
 
 Model recommendation: GPT-5.6 Luna Low. If an implementation question is not covered by the approved definitions, stop and report rather than inventing a business rule. Phase 4 must not activate automatically.
 
+### SYNC-2 Phase 4 Readiness Evidence (DOCUMENTATION-ONLY 2026-08-26)
+
+Owner-reported consistency gaps recorded for the approved Phase 4 implementation gate. No runtime code, production data, migration, configuration, or deployment changed:
+
+- Stock has been counted, but the main dashboard's Stock Used metric still displays zero.
+- Stock-count area filters do not expose an `All Areas` option. A Kitchen count displays the full product catalogue instead of only products belonging to the Kitchen area.
+- `/admin/operations/forecast` reports out-of-stock products while the main dashboards do not show the corresponding attention state.
+- These observations are evidence for the upcoming classification/scope audit only. They do not authorize a fix, a metric reinterpretation, or activation of Phase 4.
+- No-guessing gate: if the implementation encounters a semantic or architectural question not covered by the approved definitions, stop and report rather than inventing a rule.
+
 ### SYNC-1 Ship 1 — Completion→Deduction Intent Durability (COMPLETE 2026-08-25)
 
 - Fixed the audit's Critical finding: order completion committed terminally BEFORE the `order_deduction` job was enqueued; an enqueue failure was logged-and-ignored, silently losing the deduction intent forever ('completed' cannot be re-transitioned).
