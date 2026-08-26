@@ -2477,6 +2477,37 @@ Deploy the already verified U1-B menu transfer fix before touching data, prove a
 - Verification: 316/316 Vitest, inventory strict TypeScript, local and Vercel production builds (187 pages) green. Commits `30f40d1` and `1060ba2` pushed and deployed.
 - Next SYNC checkpoint is D (order convergence), approval-gated. The user requested a third priority but did not name it; stop for clarification rather than selecting one.
 
+---
+
+## Session: Full-System Audit Batch 1 Cutover (2026-08-26) - commits `8409ece`, `f53b8e9`
+
+### Objective
+Deploy and close C-01 through C-06 after the local implementation gate: public order proof security, atomic booking submission, staff-profile authority, station-scoped order deduction, atomic production completion, and durable booking reservation lifecycle jobs. Stop before Batch 2.
+
+### Deployment
+- Migrations 107-111 applied to production; local and remote history are synchronized.
+- Commit `8409ece` pushed to `main`. The first Vercel build exposed one cloud-only TypeScript narrowing error in booking submit; explicit cast fix `f53b8e9` passed root TypeScript and focused tests, was pushed, and deployed successfully.
+- Vercel Production is Ready and aliased to `https://the-boma-cafe.vercel.app`.
+- Oracle `boma-worker` pulled `8409ece`, rebuilt the 108.71 KB worker bundle, restarted under PM2, and was confirmed online. `f53b8e9` is web-route-only.
+- A fresh 32-byte `ORDER_PUBLIC_AUTH_SECRET` was configured as a Vercel Production Sensitive variable; it was never printed or committed.
+
+### Live verification
+- C-01: order creation returned a one-time raw tracking token; the row stored only its hash; reference-only tracking returned 401; token tracking returned the safe DTO; atomic cancellation committed `cancelled`.
+- C-02: a verified available Indoor slot submitted successfully; an identical retry returned the original booking/quote and left exactly one of each.
+- C-03: a real waiter PIN session could not replace its role or PIN hash; stored identity stayed unchanged.
+- C-04: unique mappings are `bar -> Main Bar` and `kitchen -> Kitchen`; a Kitchen-spoofed Bar line was authoritatively classified Bar and its durable deduction payload contained `station=bar` plus Main Bar's location ID.
+- C-05: migration 110 is live. Destructive production failure/concurrency injection remained local-only by design; focused tests proved zero-write failure, all-or-none success, idempotent retry, and one concurrent winner.
+- C-06: the real worker completed nonzero reserve and consume jobs with exact expected/processed counts, zero failures, one SALE per reservation, and final consumed reservation rows.
+
+### Verification and cleanup
+- 450/450 inventory tests; inventory/root TypeScript; worker build; full 187-page Next build; migration dry run; diff check; and focused failure/concurrency suites passed.
+- Worker remained online after the probes.
+- Final tagged residue: 0 admin accounts, 0 staff profiles, 0 bookings, 0 orders, 0 background jobs, 0 inventory transactions.
+- The three owner XLSX files remain untouched and untracked.
+
+### Stop state
+Batch 1 is `FIXED - VERIFIED`. Batch 2 remains inactive and must not start without explicit owner approval.
+
 ## Model Usage / Context Discipline
 
 ### 1. SUBAGENTS

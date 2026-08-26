@@ -308,9 +308,10 @@ Owner-reported consistency gaps recorded for the approved Phase 4 implementation
 
 - The documentation-only full-system audit mission was activated and Phase 1 is complete.
 - Report: `docs/BOMA_FULL_SYSTEM_AUDIT.md`; findings: 37 total (6 Critical, 18 High, 10 Medium, 3 Low).
-- Batch 1 C-01 through C-06 has completed its local implementation gate after owner activation. Migrations 107-111, application changes, and failure/concurrency tests remain uncommitted and undeployed.
-- Local evidence: 450/450 inventory tests; inventory/root TypeScript; worker bundle; linked schema lint with one pre-existing warning; migration dry-run listing exactly 107-111; diff check; and the full 187-page Next production build all passed.
-- Batch 1 is not `FIXED - VERIFIED` until the controlled migration/code/worker deployment, live failure/concurrency checks, cleanup, and rollback-readiness review are complete. Do not start Batch 2 automatically.
+- Batch 1 C-01 through C-06 is **FIXED - VERIFIED** after the owner-approved controlled cutover. Commits `8409ece` and `f53b8e9` are on `main`; migrations 107-111 are live; Vercel Production is Ready and aliased to `https://the-boma-cafe.vercel.app`; the Oracle worker was rebuilt/restarted and is online.
+- Local evidence: 450/450 inventory tests; inventory/root TypeScript; 108.71 KB worker bundle; linked schema lint with one pre-existing warning; migration dry-run listing exactly 107-111; diff check; focused failure/concurrency tests; and the full 187-page Next production build all passed.
+- Live evidence: token-only public order access/cancellation, atomic booking submit plus idempotent retry, rejected waiter role/PIN forgery, authoritative Bar/Main Bar station mapping and persisted deduction payload, and real worker reservation reserve/consume jobs with exact nonzero counts and one SALE per reservation all passed. C-05 destructive failure/concurrency injection remained local-only by design; its atomicity, zero-write failure, retry, and concurrent-winner cases passed locally and migration 110 is installed live.
+- Cleanup verified zero tagged probe admin accounts, staff profiles, bookings, orders, background jobs, and inventory transactions. No rollback was required. Batch 2 remains inactive and must not start automatically.
 
 ## Deferred queue (in order)
 
