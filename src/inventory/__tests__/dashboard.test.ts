@@ -11,7 +11,7 @@ vi.mock('../engine/reconciliation', () => ({
   getInventoryValue: vi.fn(async () => 1234),
 }))
 
-import { getDashboardSummary } from '../engine/dashboard'
+import { getAlerts, getDashboardSummary } from '../engine/dashboard'
 
 type Thenable = Record<string, ReturnType<typeof vi.fn>> & {
   then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => unknown
@@ -128,5 +128,34 @@ describe('getDashboardSummary counters (O6)', () => {
     expect(s.totalProducts).toBe(7)
     expect(s.inventoryValue).toBe(1234)
     expect(s.todayTransactions).toBe(0)
+  })
+})
+
+describe('getAlerts balance consistency', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('uses location cache balances and flags zero stock without a threshold', async () => {
+    setup({
+      ids: [
+        { id: 'zero', reorder_threshold: null },
+        { id: 'low', reorder_threshold: 5 },
+        { id: 'healthy', reorder_threshold: 5 },
+      ],
+      balances: [
+        { product_id: 'zero', balance: 0 },
+        { product_id: 'low', balance: 3 },
+        { product_id: 'healthy', balance: 9 },
+      ],
+    })
+
+    const alerts = await getAlerts('loc-1')
+
+    expect(alerts).toEqual([
+      expect.objectContaining({ productId: 'zero', type: 'out_of_stock', currentBalance: 0 }),
+      expect.objectContaining({ productId: 'low', type: 'low_stock', currentBalance: 3, threshold: 5 }),
+    ])
+    expect(mockClient.from).not.toHaveBeenCalledWith('inventory_transactions')
   })
 })

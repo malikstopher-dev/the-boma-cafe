@@ -36,30 +36,42 @@ export default function StockCountDetailPage() {
 
     let cancelled = false
 
-    async function fetchAllProducts() {
+    async function fetchAllProducts(locationId: string, countedItems: any[]) {
       const all: any[] = []
       let cursor: string | null = null
       do {
-        const url = `/api/inventory/products?page_size=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
-        const json = await (await fetch(url)).json()
+        const url = `/api/inventory/products?page_size=100&location_id=${encodeURIComponent(locationId)}&stocked_only=true${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
+        const response = await fetch(url)
+        const json = await response.json()
+        if (!response.ok || json.error) throw new Error(json.error?.message || 'Failed to load location products')
         const page = json.data ?? []
         all.push(...page)
         cursor = json.meta?.hasMore ? (json.meta?.cursor ?? null) : null
       } while (cursor)
-      return all
+
+      // Retain products already counted even if their current balance has since
+      // reached zero or the product was archived after the count was started.
+      const byId = new Map(all.map(product => [product.id, product]))
+      for (const item of countedItems) {
+        const product = item.inventory_products
+        if (product?.id && !byId.has(product.id)) byId.set(product.id, product)
+      }
+      return [...byId.values()]
     }
 
-    Promise.all([
-      fetch(`/api/inventory/stock-counts/${id}`).then(r => r.json()),
-      fetchAllProducts(),
-    ])
-      .then(([scJson, prodJson]) => {
-        if (cancelled) return
-        if (scJson.error) setError(scJson.error.message)
-        else setData(scJson.data)
-        setProducts(prodJson)
-      })
-      .catch(() => setError('Failed to load'))
+    async function load() {
+      const scResponse = await fetch(`/api/inventory/stock-counts/${id}`)
+      const scJson = await scResponse.json()
+      if (!scResponse.ok || scJson.error) throw new Error(scJson.error?.message || 'Failed to load stock count')
+      const stockCountData = scJson.data
+      const scopedProducts = await fetchAllProducts(stockCountData.stockCount.location_id, stockCountData.items ?? [])
+      if (cancelled) return
+      setData(stockCountData)
+      setProducts(scopedProducts)
+    }
+
+    load()
+      .catch(error => setError(error instanceof Error ? error.message : 'Failed to load'))
       .finally(() => { if (!cancelled) setIsLoading(false) })
 
     return () => { cancelled = true }

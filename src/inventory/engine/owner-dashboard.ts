@@ -805,7 +805,7 @@ export async function getOwnerDashboard(
   customTo?: string | null,
 ): Promise<OwnerDashboardData> {
   const range = getOwnerRange(period, customFrom, customTo)
-  const { data, error } = await getInventoryClient().rpc('owner_dashboard', {
+  const { data, error } = await getInventoryClient().rpc('owner_dashboard_consistent', {
     p_start: range.start,
     p_end: range.end,
     p_previous_start: range.previousStart,

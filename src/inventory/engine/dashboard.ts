@@ -150,22 +150,25 @@ export async function getAlerts(locationId: string, inventoryType?: InventoryTyp
     prodQuery = prodQuery.eq('inventory_type', inventoryType)
   }
 
-  const { data: products } = await prodQuery
+  const { data: products, error: productsError } = await prodQuery
+  if (productsError) {
+    throw new Error(`Failed to load stock alerts: ${productsError.message}`)
+  }
   if (!products || products.length === 0) return []
 
-  const productIds = products.map(p => p.id)
-
-  const { data: txns } = await supabase
-    .from('inventory_transactions')
-    .select('product_id, quantity')
+  const { data: balanceRows, error: balanceError } = await supabase
+    .from('inventory_product_balances')
+    .select('product_id, balance')
     .eq('location_id', locationId)
-    .in('product_id', productIds)
 
-  // Build per-product balance in memory (single pass over txns)
+  if (balanceError) {
+    throw new Error(`Failed to load stock balances: ${balanceError.message}`)
+  }
+
+  // Use the same cache source as the dashboard counters and Forecast page.
   const balanceMap = new Map<string, number>()
-  for (const t of (txns ?? [])) {
-    const prev = balanceMap.get(t.product_id) ?? 0
-    balanceMap.set(t.product_id, prev + Number(t.quantity))
+  for (const row of balanceRows ?? []) {
+    balanceMap.set(row.product_id, Number(row.balance))
   }
 
   for (const product of products as any[]) {
@@ -179,7 +182,7 @@ export async function getAlerts(locationId: string, inventoryType?: InventoryTyp
         currentBalance: balance,
         threshold: null,
       })
-    } else if ((product.reorder_threshold != null) && balance <= Number(product.reorder_threshold)) {
+    } else if (balance === 0 || (product.reorder_threshold != null && balance <= Number(product.reorder_threshold))) {
       alerts.push({
         productId: product.id,
         productName: product.name,

@@ -18,14 +18,32 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 500)
     const idsParam = searchParams.get('ids')
     const inventoryType = getInventoryTypeFilter(searchParams)
+    const stockedOnly = searchParams.get('stocked_only') === 'true'
+
+    if (stockedOnly && !locationId) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'location_id is required when stocked_only=true' } },
+        { status: 400 },
+      )
+    }
+
+    const productSelect = stockedOnly
+      ? '*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol)), inventory_product_balances!inner(product_id, location_id, balance)'
+      : '*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol))'
 
     let query = supabase
       .from('inventory_products')
-      .select('*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol))', { count: 'exact' })
+      .select(productSelect as any, { count: 'exact' })
 
     if (idsParam) {
       const ids = idsParam.split(',').map(s => s.trim()).filter(Boolean)
       if (ids.length > 0) query = query.in('id', ids)
+    }
+
+    if (stockedOnly && locationId) {
+      query = query
+        .eq('inventory_product_balances.location_id', locationId)
+        .gt('inventory_product_balances.balance', 0)
     }
 
     if (!showArchived) {
@@ -59,9 +77,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       )
     }
 
-    const products = (data ?? []) as InventoryProduct[]
+    const products = (data ?? []) as unknown as InventoryProduct[]
 
-    if (locationId && products.length > 0) {
+    if (locationId && products.length > 0 && !stockedOnly) {
       // Engine's getCurrentBalance: primary path is the inventory_get_balance
       // RPC (migration 094) reading the engine-maintained balance cache - the
       // same source every other display surface (forecast, reorder, gas,
