@@ -27,10 +27,10 @@
 - Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
 - SYNC-2 Phase 2 (weekly location truth + explicit weekly errors + Kitchen label clarity) — COMPLETE (2026-08-20; commit 7e29500)
 - SYNC-2 Phase 3 (canonical movement classification design) — COMPLETE (2026-08-20; documentation-only)
-- 316/316 Vitest passing; inventory strict TypeScript clean
+- 363/363 Vitest passing at the latest full-suite checkpoint; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
-- Premium Operations UI + persistent sessions — COMPLETE (2026-08-26, commit `b665e2b`; pushed, not deployed)
+- Premium Operations UI + persistent sessions — COMPLETE (2026-08-26, commit `b665e2b`; pushed; original checkpoint had no live browser probe)
 
 ## O1-D — Production Ledger Recovery (COMPLETE 2026-08-19)
 
@@ -209,10 +209,23 @@ Model recommendation: GPT-5.6 Luna Low. If an implementation question is not cov
 Owner-reported consistency gaps recorded for the approved Phase 4 implementation gate. No runtime code, production data, migration, configuration, or deployment changed:
 
 - Stock has been counted, but the main dashboard's Stock Used metric still displays zero.
-- Stock-count area filters do not expose an `All Areas` option. A Kitchen count displays the full product catalogue instead of only products belonging to the Kitchen area.
+- Owner reported that stock-count area filters did not expose an `All Areas` option and that a Kitchen count displayed the full product catalogue instead of only products belonging to the Kitchen area; current source reconciliation confirms the list now has `All Areas`, but detail still loads the full catalogue.
 - `/admin/operations/forecast` reports out-of-stock products while the main dashboards do not show the corresponding attention state.
 - These observations are evidence for the upcoming classification/scope audit only. They do not authorize a fix, a metric reinterpretation, or activation of Phase 4.
 - No-guessing gate: if the implementation encounters a semantic or architectural question not covered by the approved definitions, stop and report rather than inventing a rule.
+
+### SYNC-2 Phase 4 Readiness Reconciliation (DOCUMENTATION-ONLY 2026-08-26)
+
+- Repository checkpoint: `HEAD=origin/main=8901026`; no post-checkpoint runtime changes are uncommitted. The three owner XLSX files remain untouched and untracked.
+- Vercel production deployment `dpl_8PueCQ9AJmTFszQrCTi9wJQiBXfe` is Ready and aliased to `the-boma-cafe.vercel.app`; `vercel inspect` did not expose a source commit SHA, so deployment-to-commit mapping is not claimed.
+- The owner-reported gaps were traced without changing production:
+  - Physical counts correctly remain outside Stock Used under the approved definitions.
+  - `owner_dashboard()` uses all-period ledger rows for KPI/board movement, default-location ledger balances for alerts, while Forecast uses one resolved `main` location and the balance cache; their attention states are therefore not comparable by construction.
+  - Dashboard counters are cache-derived, but dashboard alerts remain ledger/threshold-derived.
+  - The stock-count list has `All Areas`; stock-count detail fetches all active products without filtering by the count location, explaining a full catalogue in a Kitchen count.
+  - Movement sets remain duplicated: owner/RPC Used includes waste, inbound omits `transfer_in`, weekly omits negative `production`, and stock-sheet treats physical/count/structural/unknown movements as generic adjustments.
+- No shared classifier exists; `src/inventory/lib/movement-classification.ts` remains intentionally absent.
+- Phase 4 remains **approved but not active**. No metric reinterpretation, dashboard scope change, stock-count product filter, runtime consumer update, migration, or deployment is authorized by this checkpoint.
 
 ### SYNC-1 Ship 1 — Completion→Deduction Intent Durability (COMPLETE 2026-08-25)
 

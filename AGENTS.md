@@ -2824,3 +2824,52 @@ Record the owner-approved canonical movement definitions and the newly reported 
 - `src/inventory/lib/movement-classification.ts` was **not** created.
 - No TypeScript consumer, test, SQL/RPC, UI, `/inv`, production data, or deployment changed.
 - Phase 4 is not active. Any semantic or architectural question outside the approved definitions must stop implementation and be reported.
+
+---
+
+## Session: Post-Phase-4 Readiness Reconciliation (2026-08-26)
+
+### Objective
+
+Reconcile the work after the last documented SYNC-2 Phase 4 readiness checkpoint, trace the owner-reported Stock Used / stock-count / forecast inconsistencies to current source code, and preserve the approval boundary. This was investigation and documentation only. No runtime fix, migration, production data change, or deployment was performed.
+
+### Repository state
+
+- `HEAD`, `origin/main`, and `origin/HEAD` are all `8901026` (`docs: record sync-2 phase 4 readiness`).
+- The working tree is clean except for the three documented untracked owner workbooks; no uncommitted runtime or migration work exists.
+- There is no commit after `8901026` and no repository evidence identifying a separate commit or branch named Ox Alpha. The relevant post-Phase-3 work already present in history is:
+  - `4e78519` — enqueue order deduction before terminal order completion.
+  - `512e754` — server-derived order stations, scoped station reads, atomic split compensation, and symmetric siblings.
+  - `b1be14d` — inventory mutation RBAC tiers and `inventory.final_approve`.
+  - `7c65e23` — realtime conversation/station scope columns and filters; migration 105.
+  - `fef0dff` — batched daily-stock display-UOM lookups; the stock-count list label changed from `All Locations` to `All Areas`.
+  - `6d9b35d` — waiter PIN session resolution, bar preparation transitions, and sticky waiter navigation.
+  - `b665e2b` — premium authentication/operations UI and persistent sessions.
+- Recent verified local checks remain: full inventory suite `363/363` at the realtime-scope ship, root and inventory TypeScript clean, and the premium UI production build generated 187 pages.
+
+### Deployment and schema evidence
+
+- Vercel deployment `dpl_8PueCQ9AJmTFszQrCTi9wJQiBXfe` is `READY`, targets Production, and is aliased to `the-boma-cafe.vercel.app`.
+- `vercel inspect` exposed no source commit SHA, so this record does not claim that the deployment contains `b665e2b` or `8901026` specifically. The premium UI checkpoint itself was pushed but had no live browser probe in its original verification.
+- The latest local migration is 105. The previous SYNC-1 Ship 4 record already verified migration 105 live in production; a fresh `npx supabase@latest migration list --linked` attempt was not usable because the CLI was unavailable locally and the `npx` fallback timed out during Supabase login-role initialization.
+
+### Verified source findings for the Phase 4 gate
+
+1. **Stock Used is not changed by physical counts.** `physical_count` is excluded from the current owner-dashboard used set and is not treated as an adjustment. That is consistent with the approved rule that physical-count variance remains separate. A count alone should therefore not increase Stock Used unless separate consumption movements exist.
+2. **The owner dashboard and forecast use different scopes and sources.** Migration 102's `owner_dashboard()` aggregates KPI and board movement from all current-period ledger rows, while its alerts use ledger-derived balances at the default location. The forecast page requests `location_id=main`, resolves that to one active location, and reads `inventory_product_balances` plus sale transactions for that location. This can produce a forecast out-of-stock result without a corresponding owner-dashboard alert.
+3. **Dashboard alert logic is narrower than dashboard counter logic.** `getDashboardSummary()` uses cache balances and counts a missing cache row as zero, matching the Products counter convention. `getAlerts()` still sums ledger rows and only emits zero-balance alerts when a reorder threshold exists. The combined dashboard RPC retains the corresponding ledger/default-location alert behavior.
+4. **Stock-count list filtering has `All Areas`, but count detail does not scope products.** `src/app/admin/operations/stock-counts/page.tsx` contains the `All Areas` option and filters count sessions by `location_id`. `src/app/admin/operations/stock-counts/[id]/page.tsx` fetches `/api/inventory/products?page_size=100` until exhaustion without filtering by the stock count's location, so a Kitchen count presents the full catalogue. The new-count form remains intentionally single-location because a physical count snapshots one location.
+5. **Movement classifications are duplicated and not canonical.**
+   - `owner-dashboard.ts` and migration 102 classify `purchase`/`return` as purchased, omitting approved inbound `transfer_in`.
+   - Their Used set includes waste/loss types, while the approved rule requires waste to remain separate from operational Used; `stolen` is included in Used but omitted from the waste set.
+   - `weekly.ts` includes waste/loss in Used, omits negative `production`, and includes `transfer_in` only in Delivered.
+   - `stock-sheet.ts` omits `transfer_in` from Received, handles production separately, and sends unknown/structural/count/transfer movements into generic adjustments, including `physical_count`.
+   - `forecasting.ts` and `reorder.ts` intentionally use sale-only demand for depletion/reorder projections; that is not the same metric as canonical Total Outflow.
+6. **No shared classifier exists.** `src/inventory/lib/movement-classification.ts` is absent. The expected Phase 4 implementation remains the smallest additive path, but it is not activated.
+
+### Stop state
+
+- No runtime code, test, migration, production data, configuration, or deployment changed during this reconciliation.
+- SYNC-2 Phase 4 remains approved but **not active**.
+- Do not reinterpret Stock Used, broaden alert scope, or add Kitchen product filtering without an approved implementation ship and corresponding parity tests.
+- Any semantic question not answered by the locked canonical definitions remains a stop point.
