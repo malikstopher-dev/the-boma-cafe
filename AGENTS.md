@@ -2765,3 +2765,29 @@ Autonomous run Ships 1–4 COMPLETE (max four per standing rule). Queue empty. A
 - Live-request ledger this session: ~60 (probes + 366×~5 load writes + verification) — one-time data load per owner directive.
 - Stock Sheet (/inv/stock) now shows prices/units/SKUs; RECEIVED column reflects +100 per item.
 
+---
+
+## Session: Premium Operations UI + Persistent Staff Sessions (2026-08-26) — commit b665e2b
+
+### Objective
+Finish the approved shared premium UI pass after the operational session/timer fixes: persistent admin/staff sessions, shared authentication shell, reusable operations tickets, waiter floor plan, and navy/violet/amber visual alignment. Preserve the three owner XLSX files as untracked exceptions.
+
+### Changes
+- Admin and staff sessions now use a one-year hard expiry and no inactivity timeout; explicit logout and hard expiry remain active. Cookie-only staff resolution in `src/lib/auth.ts` follows the same policy as middleware and `src/lib/staff/session.ts`.
+- `src/components/auth/PremiumAuthShell.tsx` and its CSS module provide a responsive split-panel login shell for `/admin/login` and `/staff/login`.
+- `src/components/pos/TicketCard.tsx` provides shared status-accented navy ticket styling. It is used by StationDisplay and the Admin Orders `OrderCard`.
+- `src/components/ops/FloorPlan.tsx` and its CSS module replace the waiter’s basic table button grid with an accessible responsive dining-room selector.
+- Admin design-system tokens now use navy surfaces, violet secondary accents, amber primary accents, and matching status colors.
+- Structural emoji icons were removed from the touched login, station, status, station-badge, and admin-order surfaces.
+- Existing bar timer behavior was fixed: setting preparation time on an already-preparing order no longer submits an invalid `preparing → preparing` transition.
+- Admin users viewing `/admin/bar` or `/admin/kitchen` now return to `/admin/dashboard`; staff users retain their station destinations.
+- Persisted UI guidance: `design-system/boma-operations/MASTER.md`.
+
+### Verification
+- Root `npx tsc --noEmit`: passed.
+- Waiter/bar regression test: 18/18 passed.
+- `git diff --check`: passed.
+- Final `npm run build`: passed after one transient Google Fonts fetch failure; Next.js compiled, TypeScript completed, and all 187 static pages generated.
+- Commit `b665e2b` pushed to `main`.
+- No Vercel deployment or live browser probe was performed in this checkpoint.
+- The three owner XLSX files remain untouched and untracked.

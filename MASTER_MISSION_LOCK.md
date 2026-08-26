@@ -30,6 +30,7 @@
 - 316/316 Vitest passing; inventory strict TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
+- Premium Operations UI + persistent sessions — COMPLETE (2026-08-26, commit `b665e2b`; pushed, not deployed)
 
 ## O1-D — Production Ledger Recovery (COMPLETE 2026-08-19)
 
@@ -276,6 +277,18 @@ Model recommendation: GPT-5.6 Luna Low. If an implementation question is not cov
 - Optional (future consolidation): `/inv` retirement (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
 - (O1-D ledger-warning banner — MOOT: ledger restored 2026-08-19, no longer applicable.)
 - (O2 — dashboard refresh — SUPERSEDED by the O1 stream per owner decision.)
+
+## Premium Operations UI Checkpoint (COMPLETE 2026-08-26)
+
+- Shared responsive premium login shell applied to `/admin/login` and `/staff/login`.
+- Reusable `TicketCard` applied to StationDisplay and `/admin/orders`.
+- Admin tokens aligned with the canonical navy/violet/amber operations palette; owner/POS surfaces retain their compatible dark palette.
+- Waiter table selection now uses the accessible responsive `FloorPlan` component.
+- Touched structural emoji icons replaced with stable text marks/labels.
+- Admin/staff sessions persist until explicit logout or one-year hard expiry; inactivity does not sign users out.
+- Bar preparation-time update no longer submits an identical status transition; admin station navigation returns to `/admin/dashboard`.
+- Verification: root TypeScript passed, targeted waiter/bar tests 18/18 passed, diff check passed, final Next production build passed with 187 static pages generated.
+- Commit `b665e2b` is pushed to `main`; no Vercel deployment or live browser probe was performed for this checkpoint.
 
 ## Architecture decisions (locked)
 
