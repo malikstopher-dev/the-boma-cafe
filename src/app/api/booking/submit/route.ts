@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({
         error: 'Validation failed',
-        details: parsed.error.flatten().fieldErrors,
+        details: (parsed as { error: { flatten(): { fieldErrors: Record<string, string[]> } } }).error.flatten().fieldErrors,
       }, { status: 400 })
     }
 
