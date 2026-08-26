@@ -3,7 +3,7 @@
 > Single source of current truth. AGENTS.md holds the historical record; this file is the lock.
 > Read this first at session start. Update this file (and AGENTS.md) at the end of every ship.
 
-## Current production state (2026-08-19)
+## Current production state (2026-08-26)
 
 - P1a–P1e (Supplier Workflow) — COMPLETE
 - F2 (Order → Inventory Deduction), F3 (Order Attribution) — COMPLETE
@@ -23,11 +23,12 @@
 - E4 (Event-attributed POs — POs link to a confirmed booking/event; receiving costs to the event's cost centre; precedence: explicit receive-time cost_centre_id → PO cost_centre_id → location default; migration 098 + engine + API + UI) — COMPLETE (2026-08-18, commit 381056f; migration 098)
 - E1A (Smart Product Import — best-effort parser: name-only rows import, priority price-column scan incl. BOTTLE PRICE, per-row create/update/skip, Undo Last Import, bulk edit on products list, Import Products dialog; migrations 099 + 100) — COMPLETE (2026-08-18, commit e960177; migrations 099 + 100)
 - O1-D (Production ledger recovery — 61 evidenced pre-wipe transactions restored with original IDs/timestamps; balance cache rebuilt from ledger `SUM(quantity)`, 32 rows, 0 parity mismatches; PO reconciliation 6/6; gas tracker, daily sheet, owner KPIs, realtime (61 `stock.moved` events) all verified) — COMPLETE (2026-08-19, data restored in production; docs-only commit)
-- Migrations 096–102 applied (local == remote, 000–102; 016a filename-skip benign)
+- Migrations 096–106 applied (local == remote, 000–106; 016a filename-skip benign)
 - Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
 - SYNC-2 Phase 2 (weekly location truth + explicit weekly errors + Kitchen label clarity) — COMPLETE (2026-08-20; commit 7e29500)
 - SYNC-2 Phase 3 (canonical movement classification design) — COMPLETE (2026-08-20; documentation-only)
-- 363/363 Vitest passing at the latest full-suite checkpoint; inventory strict TypeScript clean
+- SYNC-2 narrow dashboard/stock-count consistency remediation — COMPLETE (2026-08-26, commit `b4d46da`; migration 106; deployed and live-verified)
+- 382/382 Vitest passing at the latest full-suite checkpoint; inventory and root TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 - Premium Operations UI + persistent sessions — COMPLETE (2026-08-26, commit `b665e2b`; pushed; original checkpoint had no live browser probe)
@@ -226,6 +227,18 @@ Owner-reported consistency gaps recorded for the approved Phase 4 implementation
   - Movement sets remain duplicated: owner/RPC Used includes waste, inbound omits `transfer_in`, weekly omits negative `production`, and stock-sheet treats physical/count/structural/unknown movements as generic adjustments.
 - No shared classifier exists; `src/inventory/lib/movement-classification.ts` remains intentionally absent.
 - Phase 4 remains **approved but not active**. No metric reinterpretation, dashboard scope change, stock-count product filter, runtime consumer update, migration, or deployment is authorized by this checkpoint.
+
+### SYNC-2 Narrow Consistency Remediation (COMPLETE 2026-08-26)
+
+- This was a separately approved, narrow follow-up to the readiness evidence; it did not activate canonical movement classification or reinterpret Stock Used.
+- `src/inventory/engine/dashboard.ts:getAlerts()` now reads `inventory_product_balances`, matching dashboard counters, Products, Forecast, and Reorder. Missing/zero balances are treated as out of stock; positive balances at or below a threshold are low stock; query errors surface instead of becoming empty alerts.
+- `supabase/migrations/106_dashboard_alert_consistency.sql` adds service-role-only `inventory_stock_alerts()`, `combined_dashboard_consistent()`, and `owner_dashboard_consistent()` wrappers. Existing aggregate functions remain immutable; the wrappers replace only the inconsistent alert projection.
+- `/api/inventory/dashboard` and `getOwnerDashboard()` use the consistent wrappers, with the existing engine fallback retained for compatibility.
+- `/api/inventory/products?stocked_only=true&location_id=...` now returns only products with positive cached balance at that location. Stock-count detail loads the count's `location_id`, keeps already-counted products, and no longer presents the full catalogue for a Kitchen count.
+- Production migration 106 applied successfully. Direct and deployed API checks agree: Main Bar combined dashboard = 39 out-of-stock products and 39 alerts; Forecast = 39 attention rows; Owner Dashboard returns 4 stock alerts plus 3 existing operational alerts; Kitchen stocked-products endpoint returns 6 products; latest Kitchen count detail is location-scoped.
+- Physical-count semantics, Stock Used classification, Forecast sale-only demand, ledger authority, and balance-cache architecture were unchanged. `src/inventory/lib/movement-classification.ts` remains intentionally absent; canonical Phase 4 remains approved but not active.
+- Verification: 382/382 Vitest, inventory strict TypeScript, root TypeScript, local `next build` (187 pages), Vercel production build (187 pages), `git diff --check`, direct RPC checks, deployed API checks, and probe cleanup all passed.
+- Commit `b4d46da` was pushed to `main` and deployed to Vercel Production; deployment was Ready and aliased to `https://the-boma-cafe.vercel.app`.
 
 ### SYNC-1 Ship 1 — Completion→Deduction Intent Durability (COMPLETE 2026-08-25)
 

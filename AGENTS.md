@@ -2873,3 +2873,48 @@ Reconcile the work after the last documented SYNC-2 Phase 4 readiness checkpoint
 - SYNC-2 Phase 4 remains approved but **not active**.
 - Do not reinterpret Stock Used, broaden alert scope, or add Kitchen product filtering without an approved implementation ship and corresponding parity tests.
 - Any semantic question not answered by the locked canonical definitions remains a stop point.
+
+---
+
+## Session: SYNC-2 Narrow Dashboard/Stock-Count Consistency Remediation (2026-08-26) — commit b4d46da
+
+### Objective
+
+Fix the two verified scope/alert regressions without activating canonical movement classification: Forecast reported 39 Main Bar attention products while Dashboard alerts were empty, and Kitchen stock-count detail loaded the full catalogue instead of location-scoped products.
+
+### Implementation
+
+- `src/inventory/engine/dashboard.ts:getAlerts()` now reads `inventory_product_balances` at the requested location, matching Products counters, Forecast, and Reorder. Missing/zero balances are out of stock; positive balances at or below a threshold are low stock. Product and balance query errors now throw instead of silently becoming empty alerts.
+- `supabase/migrations/106_dashboard_alert_consistency.sql` adds service-role-only `inventory_stock_alerts()`, `combined_dashboard_consistent()`, and `owner_dashboard_consistent()` wrappers. Existing aggregate functions remain unchanged; wrappers replace only the alert projection.
+- `src/inventory/api/dashboard/route.ts` calls `combined_dashboard_consistent()` with the existing legacy engine fallback.
+- `src/inventory/engine/owner-dashboard.ts` calls `owner_dashboard_consistent()`.
+- `src/inventory/api/products/route.ts` supports `stocked_only=true`, requiring `location_id`, using an inner balance join and `balance > 0`.
+- `src/app/admin/operations/stock-counts/[id]/page.tsx` fetches the count location first, loads only stocked products for that location, and retains products already present in the count, including products whose balance later reaches zero or are archived.
+
+### Production evidence
+
+- Migration 106 was applied with `npx supabase@latest db push --linked`; local and remote migrations are through 106.
+- Direct RPC verification: `combined_dashboard_consistent()` returned `outOfStockCount=39` and 39 alerts for Main Bar; `owner_dashboard_consistent()` returned 4 stock alerts plus 3 existing operational alerts.
+- Deployed API verification using a temporary full-manager account: combined dashboard returned 39/39, Forecast returned 39 attention rows, the actual Kitchen location returned exactly 6 stocked products, and the latest Kitchen count detail retained the Kitchen location instead of loading all 416 products.
+- Probe account and audit rows were deleted; residue checks returned zero.
+
+### Preserved boundaries
+
+- Physical counts remain separate from Stock Used under the approved definitions.
+- No canonical movement classifier was created; `src/inventory/lib/movement-classification.ts` remains absent.
+- Forecast/reorder sale-only demand, ledger authority, balance-cache validation, realtime architecture, `/inv`, middleware, login routing, and the three owner XLSX files were untouched.
+
+### Verification and deployment
+
+- `npx vitest run src/inventory/ --testTimeout=20000`: 382/382 passed.
+- `npx tsc --noEmit -p src/inventory/tsconfig.json`: passed.
+- `npx tsc --noEmit`: passed.
+- `npm run build`: passed locally and on Vercel; 187 static pages generated.
+- `git diff --check`: passed.
+- Commit `b4d46da` pushed to `main`; Vercel Production deployment Ready and aliased to `https://the-boma-cafe.vercel.app`.
+
+### Stop state
+
+- The narrow consistency remediation is complete.
+- SYNC-2 Phase 4 canonical movement classification remains approved but not active.
+- Do not broaden Stock Used, add further metric classifications, retire `/inv`, or start another mission without owner approval.
