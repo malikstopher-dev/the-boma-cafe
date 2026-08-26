@@ -79,7 +79,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Booking ID required' }, { status: 400 })
     }
 
-    const ALLOWED_PATCH_FIELDS = ['name', 'phone', 'email', 'booking_date', 'booking_time', 'guests', 'notes', 'status']
+    if ('status' in body) {
+      return NextResponse.json(
+        { error: 'Booking status must be changed through /api/booking/status' },
+        { status: 400 },
+      )
+    }
+
+    const ALLOWED_PATCH_FIELDS = ['name', 'phone', 'email', 'booking_date', 'booking_time', 'guests', 'notes']
     const updates: Record<string, unknown> = {}
     for (const key of ALLOWED_PATCH_FIELDS) {
       if (key in body) {

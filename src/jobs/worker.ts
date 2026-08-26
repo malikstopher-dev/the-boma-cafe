@@ -106,7 +106,7 @@ async function executeJob(job: BackgroundJob): Promise<void> {
   let finalStatus: string
   let finalResult: Record<string, unknown> | null = null
   let finalError: string | null = null
-  let serializedError: { message: string; name: string; stack: string | null; retry_count: number; timestamp: string } | null = null
+  let serializedError: SerializedJobError | null = null
   let scheduledAt: string | null = null
   let newRetryCount = job.retry_count
 
@@ -170,6 +170,7 @@ async function executeJob(job: BackgroundJob): Promise<void> {
 
   if (finalStatus === 'completed') {
     statusUpdate.result = finalResult
+    statusUpdate.error = null
     statusUpdate.completed_at = new Date().toISOString()
   } else {
     // Persist the full structured error (message + name + stack + retry_count)
@@ -213,13 +214,16 @@ function sleep(ms: number): Promise<void> {
  * "[object Object]" or "undefined" — the worker's error column must always
  * carry a readable, actionable message.
  */
-function serializeError(err: unknown, retryCount: number): {
+type SerializedJobError = {
   message: string
   name: string
   stack: string | null
   retry_count: number
   timestamp: string
-} {
+  details?: Record<string, unknown>
+}
+
+export function serializeError(err: unknown, retryCount: number): SerializedJobError {
   let message: string
   let name: string
   let stack: string | null = null
@@ -241,11 +245,18 @@ function serializeError(err: unknown, retryCount: number): {
     name = 'Error'
   }
 
-  return {
+  const serialized: SerializedJobError = {
     message,
     name,
     stack,
     retry_count: retryCount,
     timestamp: new Date().toISOString(),
   }
+  if (err && typeof err === 'object' && 'details' in err) {
+    const details = (err as { details?: unknown }).details
+    if (details && typeof details === 'object' && !Array.isArray(details)) {
+      serialized.details = details as Record<string, unknown>
+    }
+  }
+  return serialized
 }

@@ -39,6 +39,7 @@ export default function CartButton() {
     deliveryAddress: '',
   })
   const [orderRef, setOrderRef] = useState('')
+  const [orderToken, setOrderToken] = useState('')
   const [pendingSync, setPendingSync] = useState(0)
   const lastSubmitRef = useRef(0)
   const nameRef = useRef<HTMLInputElement>(null)
@@ -145,7 +146,7 @@ export default function CartButton() {
     setModalTitle('')
   }, [])
 
-  const submitOrder = useCallback(async (): Promise<string> => {
+  const submitOrder = useCallback(async (): Promise<{ ref: string; token: string }> => {
     const now = Date.now()
     if (now - lastSubmitRef.current < SUBMISSION_COOLDOWN_MS) {
       throw new Error('Please wait before submitting again')
@@ -207,13 +208,17 @@ export default function CartButton() {
     } catch { /* ignore parse error */ }
 
     const order = data?.order ?? null
-    return order?.order_ref || ''
+    return {
+      ref: order?.order_ref || '',
+      token: typeof data?.tracking_token === 'string' ? data.tracking_token : '',
+    }
   }, [items, customerInfo])
 
   const resetCart = useCallback(() => {
     clearCart()
     closeCart()
     setOrderRef('')
+    setOrderToken('')
     setOrderError('')
     setFieldErrors({})
     setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
@@ -273,8 +278,9 @@ export default function CartButton() {
     setIsOrderSubmitting(true)
 
     try {
-      const ref = await submitOrder()
-      setOrderRef(ref)
+      const access = await submitOrder()
+      setOrderRef(access.ref)
+      setOrderToken(access.token)
 
       const cName = customerInfo?.name ?? ''
       const cPhone = customerInfo?.phone ?? ''
@@ -323,8 +329,9 @@ export default function CartButton() {
     setIsOrderSubmitting(true)
 
     try {
-      const ref = await submitOrder()
-      setOrderRef(ref)
+      const access = await submitOrder()
+      setOrderRef(access.ref)
+      setOrderToken(access.token)
 
       clearCart()
       setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
@@ -394,7 +401,7 @@ export default function CartButton() {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <a
-                    href={`/track-order?ref=${orderRef}`}
+                    href={`/track-order?ref=${encodeURIComponent(orderRef)}${orderToken ? `#token=${encodeURIComponent(orderToken)}` : ''}`}
                     style={{
                       display: 'block', padding: '0.85rem', borderRadius: '12px',
                       background: 'var(--warm)', color: '#fff', textDecoration: 'none',

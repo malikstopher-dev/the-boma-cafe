@@ -58,6 +58,7 @@ export interface InventoryLocation {
   description: string | null
   is_active: boolean
   deleted_at: string | null
+  order_station: 'kitchen' | 'bar' | null
   created_at: string
 }
 

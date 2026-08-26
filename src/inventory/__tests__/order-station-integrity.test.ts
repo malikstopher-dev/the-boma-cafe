@@ -263,6 +263,7 @@ vi.mock('@/lib/notifications/push', () => ({
 }))
 
 import { createOrder, splitAndCreateOrders, getSiblingOrders } from '@/lib/pos/orderService'
+import { hashOrderTrackingToken } from '@/lib/order-public-auth'
 import { GET } from '@/app/api/supabase/orders/route'
 
 const FOOD_ID = '11111111-1111-1111-1111-111111111111'
@@ -337,6 +338,14 @@ beforeEach(() => {
 })
 
 describe('server-side station derivation', () => {
+  it('stores only a tracking-token hash and returns the raw token separately', async () => {
+    const res = await createOrder(baseInput([{ menu_item_id: FOOD_ID, quantity: 1 }], 'tracking-proof'))
+    const payload = lastInsertPayload()
+    expect(res.trackingToken).toMatch(/^[A-Za-z0-9_-]{40,}$/)
+    expect(payload?.tracking_token_hash).toBe(hashOrderTrackingToken(res.trackingToken!))
+    expect(res.order).not.toHaveProperty('tracking_token_hash')
+  })
+
   it('client cannot spoof a food item onto the bar', async () => {
     const res = await createOrder(baseInput([{ menu_item_id: FOOD_ID, quantity: 1, station: 'bar' }]))
     expect(res.error).toBeNull()

@@ -304,6 +304,14 @@ Owner-reported consistency gaps recorded for the approved Phase 4 implementation
 - Probe admin accounts, audit rows, and banking rows were deleted. Merge log and rollback metadata remain intentionally preserved.
 - Commit `736ebc0` was pushed to `main`; Vercel Production deployment was Ready and aliased to `the-boma-cafe.vercel.app`.
 
+## Boma Full-System Functional Acceptance and Repair Audit - Phase 1 (COMPLETE 2026-08-26)
+
+- The documentation-only full-system audit mission was activated and Phase 1 is complete.
+- Report: `docs/BOMA_FULL_SYSTEM_AUDIT.md`; findings: 37 total (6 Critical, 18 High, 10 Medium, 3 Low).
+- Batch 1 C-01 through C-06 has completed its local implementation gate after owner activation. Migrations 107-111, application changes, and failure/concurrency tests remain uncommitted and undeployed.
+- Local evidence: 450/450 inventory tests; inventory/root TypeScript; worker bundle; linked schema lint with one pre-existing warning; migration dry-run listing exactly 107-111; diff check; and the full 187-page Next production build all passed.
+- Batch 1 is not `FIXED - VERIFIED` until the controlled migration/code/worker deployment, live failure/concurrency checks, cleanup, and rollback-readiness review are complete. Do not start Batch 2 automatically.
+
 ## Deferred queue (in order)
 
 - SYNC-1D onward — Unified Application Synchronization Program (approval-gated).

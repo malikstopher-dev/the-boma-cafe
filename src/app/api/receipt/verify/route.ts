@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
+import { checkRateLimit } from '@/lib/rate-limit'
+import {
+  createOrderAccessProof,
+  orderAccessCookieName,
+  ORDER_ACCESS_COOKIE_MAX_AGE,
+  verifyOrderPhone,
+} from '@/lib/order-public-auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    if (!await checkRateLimit(`receipt-verify:${ip}`)) {
+      return new Response(
+        `<!DOCTYPE html><html><body><script>alert('Too many attempts. Please wait and try again.');history.back()</script></body></html>`,
+        { status: 429, headers: { 'Content-Type': 'text/html' } }
+      )
+    }
+
     const formData = await request.formData()
     const ref = formData.get('ref') as string
     let phone = formData.get('phone') as string
@@ -12,12 +27,9 @@ export async function POST(request: NextRequest) {
     if (!ref || !phone) {
       return new Response(
         `<!DOCTYPE html><html><body><script>alert('Missing ref or phone');history.back()</script></body></html>`,
-        { headers: { 'Content-Type': 'text/html' } }
+        { status: 400, headers: { 'Content-Type': 'text/html' } }
       )
     }
-
-    phone = phone.trim().replace(/\s+/g, '')
-    const normalizedPhone = phone.startsWith('0') ? '+27' + phone.slice(1) : phone.startsWith('+27') ? phone : '+27' + phone.replace(/^27/, '')
 
     const supabase = getAdminClient()
     const { data, error } = await supabase
@@ -26,27 +38,32 @@ export async function POST(request: NextRequest) {
       .eq('order_ref', ref)
       .maybeSingle()
 
-    if (error || !data) {
+    if (error) {
       return new Response(
-        `<!DOCTYPE html><html><body><script>alert('Order not found');history.back()</script></body></html>`,
-        { headers: { 'Content-Type': 'text/html' } }
+        `<!DOCTYPE html><html><body><script>alert('Verification is temporarily unavailable');history.back()</script></body></html>`,
+        { status: 500, headers: { 'Content-Type': 'text/html' } }
       )
     }
 
-    const storedPhone = (data.phone || '').trim().replace(/\s+/g, '')
-    const normalizedStored = storedPhone.startsWith('0') ? '+27' + storedPhone.slice(1) : storedPhone.startsWith('+27') ? storedPhone : '+27' + storedPhone.replace(/^27/, '')
-
-    if (normalizedPhone !== normalizedStored) {
+    if (!data || !verifyOrderPhone(phone, data.phone || '')) {
       return new Response(
         `<!DOCTYPE html><html><body><script>alert('Phone number does not match this order');history.back()</script></body></html>`,
-        { headers: { 'Content-Type': 'text/html' } }
+        { status: 401, headers: { 'Content-Type': 'text/html' } }
       )
     }
 
     const redirectUrl = new URL(`/receipt/${ref}`, request.url)
-    redirectUrl.searchParams.set('verified', 'true')
-    return NextResponse.redirect(redirectUrl)
-  } catch {
+    const response = NextResponse.redirect(redirectUrl, 303)
+    response.cookies.set(orderAccessCookieName(ref), createOrderAccessProof(ref), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: ORDER_ACCESS_COOKIE_MAX_AGE,
+    })
+    return response
+  } catch (error) {
+    console.error('[receipt verification] failed:', error instanceof Error ? error.message : String(error))
     return new Response(
       `<!DOCTYPE html><html><body><script>alert('Verification failed');history.back()</script></body></html>`,
       { headers: { 'Content-Type': 'text/html' } }

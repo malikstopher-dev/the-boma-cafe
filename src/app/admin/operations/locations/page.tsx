@@ -17,6 +17,7 @@ type Location = {
   description: string | null
   is_active: boolean
   deleted_at: string | null
+  order_station: 'kitchen' | 'bar' | null
 }
 
 export default function LocationsPage() {
@@ -25,7 +26,7 @@ export default function LocationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showArchived, setShowArchived] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [form, setForm] = useState({ name: '', code: '', description: '' })
+  const [form, setForm] = useState({ name: '', code: '', description: '', order_station: '' })
   const [saving, setSaving] = useState(false)
 
   function load() {
@@ -54,7 +55,7 @@ export default function LocationsPage() {
       })
       if (res.ok) {
         setShowCreateForm(false)
-        setForm({ name: '', code: '', description: '' })
+        setForm({ name: '', code: '', description: '', order_station: '' })
         load()
       } else {
         const err = await res.json()
@@ -93,6 +94,13 @@ export default function LocationsPage() {
         <Badge variant={loc.is_active ? 'success' : 'default'}>{loc.is_active ? 'Active' : 'Archived'}</Badge>
       ),
     },
+    {
+      key: 'order_station',
+      header: 'Order Station',
+      cell: loc => loc.order_station
+        ? <Badge variant="info">{loc.order_station === 'bar' ? 'Bar' : 'Kitchen'}</Badge>
+        : <span style={{color:'#6B6358'}}>Not mapped</span>,
+    },
   ]
 
   return (
@@ -116,6 +124,11 @@ export default function LocationsPage() {
             <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Code * (e.g. MAIN)" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} />
             <input style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} placeholder="Description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+            <select style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:6,padding:'6px 12px',fontSize:14,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}} value={form.order_station} onChange={e => setForm(f => ({ ...f, order_station: e.target.value }))}>
+              <option value="">No order station</option>
+              <option value="kitchen">Kitchen orders</option>
+              <option value="bar">Bar orders</option>
+            </select>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleCreate} disabled={saving || !form.name.trim() || !form.code.trim()}>Create</Button>

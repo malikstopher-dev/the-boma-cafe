@@ -1,6 +1,5 @@
 import { getInventoryClient } from '../lib/db'
-import { createTransaction } from './ledger'
-import type { ProductionRun, ProductionRunDetail, ProductionRunItem, ProductionRunStatus, CreateTransactionInput } from './types'
+import type { ProductionRun, ProductionRunDetail, ProductionRunItem, ProductionRunStatus } from './types'
 
 export async function createProductionRun(data: {
   recipe_id: string
@@ -166,70 +165,22 @@ export async function completeProductionRun(
   completedBy?: string | null,
 ): Promise<ProductionRunDetail> {
   const supabase = getInventoryClient()
-  const run = await getProductionRun(id)
-  if (!run) throw new Error('Production run not found')
-  if (run.status === 'completed') throw new Error('Production run already completed')
-  if (run.status === 'cancelled') throw new Error('Production run is cancelled')
-
-  const completedQty = quantityCompleted ?? run.quantity_planned
-  const scale = completedQty / (run.quantity_planned || 1)
-
-  const failures: string[] = []
-
-  for (const item of run.items) {
-    if (item.transaction_id) continue
-
-    const baseQty = item.quantity * scale
-    const qty = item.direction === 'consumed'
-      ? -(baseQty * (1 + item.wastage_pct / 100))
-      : baseQty
-
-    try {
-      const txn = await createTransaction({
-        product_id: item.product_id,
-        location_id: run.location_id,
-        transaction_type: 'production',
-        quantity: qty,
-        cost_centre_id: run.cost_centre_id,
-        reason_type: 'PRODUCTION',
-        reason_notes: run.recipe_name ? `Production: ${run.recipe_name}` : 'Production run',
-        reference_type: 'production_run',
-        reference_id: run.id,
-        performed_by: completedBy ?? null,
-      } satisfies CreateTransactionInput)
-
-      await supabase
-        .from('inventory_production_run_items')
-        .update({ transaction_id: txn.id })
-        .eq('id', item.id)
-    } catch (error) {
-      failures.push(`${item.product_name ?? item.product_id}: ${error instanceof Error ? error.message : 'unknown error'}`)
-    }
+  if (quantityCompleted !== undefined && (!Number.isFinite(quantityCompleted) || quantityCompleted <= 0)) {
+    throw new Error('Completed quantity must be greater than zero')
   }
 
-  if (failures.length > 0) {
-    throw new Error(
-      `Production run completion partially failed (${failures.length} of ${run.items.length} items). ` +
-      `Completed items are recorded and will be skipped on retry. Failures: ${failures.join('; ')}`,
-    )
-  }
+  const { data, error } = await supabase.rpc('complete_production_run', {
+    p_run_id: id,
+    p_quantity_completed: quantityCompleted ?? null,
+    p_completed_by: completedBy ?? null,
+  })
 
-  const { data: updated } = await supabase
-    .from('inventory_production_runs')
-    .update({
-      status: 'completed',
-      quantity_completed: completedQty,
-      completed_by: completedBy ?? null,
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single()
+  if (error) throw new Error(error.message)
+  if (!data) throw new Error('Failed to complete production run')
 
-  if (!updated) throw new Error('Failed to complete production run')
-
-  return getProductionRun(id) as Promise<ProductionRunDetail>
+  const completed = await getProductionRun(id)
+  if (!completed) throw new Error('Production run not found after completion')
+  return completed
 }
 
 export async function cancelProductionRun(id: string, cancelledBy?: string | null): Promise<ProductionRun> {

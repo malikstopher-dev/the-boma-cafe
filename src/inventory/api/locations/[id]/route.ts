@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getInventoryClient } from '@/inventory/lib/db'
 import type { ApiResponse, InventoryLocation } from '@/inventory/engine/types'
 import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
+import { isOrderStation } from '@/inventory/lib/station-location'
 
 export async function GET(
   request: NextRequest,
@@ -69,7 +70,7 @@ export async function PATCH(
     const supabase = getInventoryClient()
     const body = await request.json()
 
-    const allowedFields = ['name', 'code', 'description']
+    const allowedFields = ['name', 'code', 'description', 'order_station']
 
     const updates: Record<string, unknown> = {}
     for (const field of allowedFields) {
@@ -88,6 +89,14 @@ export async function PATCH(
     if (updates.code && typeof updates.code === 'string') {
       updates.code = updates.code.trim().toUpperCase()
     }
+    if (updates.order_station === '') updates.order_station = null
+
+    if ('order_station' in updates && updates.order_station !== null && !isOrderStation(updates.order_station)) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Order station must be kitchen, bar, or null' } },
+        { status: 400 },
+      )
+    }
 
     const { data, error } = await supabase
       .from('inventory_locations')
@@ -105,7 +114,7 @@ export async function PATCH(
       }
       if (error.code === '23505') {
         return NextResponse.json(
-          { error: { code: 'CONFLICT', message: 'A location with this code already exists' } },
+          { error: { code: 'CONFLICT', message: 'A location with this code or order station mapping already exists' } },
           { status: 409 },
         )
       }
@@ -142,7 +151,7 @@ export async function DELETE(
     if (txCount && txCount > 0) {
       await supabase
         .from('inventory_locations')
-        .update({ is_active: false, deleted_at: new Date().toISOString() })
+        .update({ is_active: false, deleted_at: new Date().toISOString(), order_station: null })
         .eq('id', id)
 
       await supabase

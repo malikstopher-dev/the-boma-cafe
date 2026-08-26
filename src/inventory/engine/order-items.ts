@@ -1,6 +1,14 @@
 import { getInventoryClient } from '../lib/db'
 import { createTransaction } from './ledger'
 import type { OrderItem, OrderItemDetail, ParsedOrderItem } from './types'
+import { resolveOrderStationLocation } from '../lib/station-location'
+
+type OrderForDeduction = {
+  id: string
+  items_json: string | null
+  status: string
+  station: string | null
+}
 
 export function parseOrderItemsJson(itemsJson: string | null): ParsedOrderItem[] {
   if (!itemsJson) return []
@@ -22,14 +30,14 @@ export function parseOrderItemsJson(itemsJson: string | null): ParsedOrderItem[]
   }
 }
 
-export async function getOrder(orderId: string): Promise<{ id: string; items_json: string | null; status: string } | null> {
+export async function getOrder(orderId: string): Promise<OrderForDeduction | null> {
   const supabase = getInventoryClient()
   const { data } = await supabase
     .from('orders')
-    .select('id, items_json, status')
+    .select('id, items_json, status, station')
     .eq('id', orderId)
     .maybeSingle()
-  return data as { id: string; items_json: string | null; status: string } | null
+  return data as OrderForDeduction | null
 }
 
 interface MatchResult {
@@ -415,18 +423,10 @@ export async function listOrderItems(orderId: string): Promise<OrderItemDetail> 
 }
 
 export async function autoDeductCompletedOrder(orderId: string): Promise<{ deducted: number; skipped: number }> {
-  const supabase = getInventoryClient()
-
-  const { data: location } = await supabase
-    .from('inventory_locations')
-    .select('id')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  if (!location) return { deducted: 0, skipped: 0 }
+  const order = await getOrder(orderId)
+  if (!order) throw new Error(`Order not found: ${orderId}`)
+  const locationId = await resolveOrderStationLocation(order.station)
 
   await syncOrderItems(orderId)
-  return deductOrderItems(orderId, location.id)
+  return deductOrderItems(orderId, locationId)
 }

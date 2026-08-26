@@ -29,21 +29,23 @@ export async function createReservation(input: CreateReservationInput): Promise<
 
 export async function getReservation(id: string): Promise<InventoryReservation | null> {
   const supabase = getInventoryClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('inventory_reservations')
     .select('*')
     .eq('id', id)
     .maybeSingle()
+  if (error) throw new Error(`Failed to load reservation: ${error.message}`)
   return data as InventoryReservation | null
 }
 
 export async function getReservationsForBooking(bookingId: string): Promise<InventoryReservation[]> {
   const supabase = getInventoryClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('inventory_reservations')
     .select('*')
     .eq('booking_id', bookingId)
     .order('created_at', { ascending: true })
+  if (error) throw new Error(`Failed to load reservations: ${error.message}`)
   return (data ?? []) as InventoryReservation[]
 }
 
@@ -70,12 +72,13 @@ export async function getTotalReserved(productId: string, locationId: string): P
 export async function cancelReservation(id: string): Promise<InventoryReservation> {
   const supabase = getInventoryClient()
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('inventory_reservations')
     .select('status')
     .eq('id', id)
     .maybeSingle()
 
+  if (existingError) throw new Error(`Failed to load reservation: ${existingError.message}`)
   if (!existing) throw new Error(`Reservation not found: ${id}`)
   if (existing.status === 'consumed') throw new Error(`Cannot cancel a consumed reservation`)
   if (existing.status === 'cancelled') throw new Error(`Reservation is already cancelled`)
@@ -193,31 +196,53 @@ export async function consumeReservationsForBooking(bookingId: string): Promise<
 
   let consumed = 0
   for (const r of toConsume) {
-    try {
-      await consumeReservation(r.id)
-      consumed++
-    } catch {
-      continue
-    }
+    await consumeReservation(r.id)
+    consumed++
   }
   return consumed
 }
 
-export async function autoReserveForBooking(bookingId: string): Promise<InventoryReservation[]> {
+export type ReservationLifecycleAction = 'reserve' | 'cancel' | 'consume'
+
+export interface ReservationLifecycleResult {
+  action: ReservationLifecycleAction
+  booking_id: string
+  expected: number
+  processed: number
+  failed: number
+  failures: Array<{ reservation_id: string | null; message: string }>
+}
+
+export class ReservationLifecycleError extends Error {
+  readonly details: ReservationLifecycleResult
+
+  constructor(details: ReservationLifecycleResult) {
+    super(
+      `Reservation lifecycle ${details.action} incomplete for booking ${details.booking_id}: ` +
+      `${details.processed}/${details.expected} processed, ${details.failed} failed`,
+    )
+    this.name = 'ReservationLifecycleError'
+    this.details = details
+  }
+}
+
+async function getExpectedBookingReservations(bookingId: string): Promise<CreateReservationInput[]> {
   const supabase = getInventoryClient()
 
-  const { data: booking } = await supabase
+  const { data: booking, error: bookingError } = await supabase
     .from('bookings')
     .select('id, venue_area_id, adults, guests')
     .eq('id', bookingId)
     .single()
 
-  if (!booking) throw new Error(`Booking not found: ${bookingId}`)
+  if (bookingError || !booking) {
+    throw new Error(`Booking not found: ${bookingId}`)
+  }
 
   const headCount = booking.adults ?? booking.guests ?? 0
   if (headCount <= 0) return []
 
-  const { data: defaultLocation } = await supabase
+  const { data: defaultLocation, error: locationError } = await supabase
     .from('inventory_locations')
     .select('id')
     .eq('is_active', true)
@@ -225,55 +250,220 @@ export async function autoReserveForBooking(bookingId: string): Promise<Inventor
     .limit(1)
     .maybeSingle()
 
-  const locationId = defaultLocation?.id
-  if (!locationId) return []
+  if (locationError) throw new Error(`Failed to resolve reservation location: ${locationError.message}`)
+  if (!defaultLocation?.id) throw new Error('No active inventory location is available for reservations')
 
-  const { data: bookingQuote } = await supabase
+  const { data: bookingQuote, error: quoteError } = await supabase
     .from('bookings')
     .select('quote_id')
     .eq('id', bookingId)
     .maybeSingle()
 
-  const quoteId = bookingQuote?.quote_id
-  if (!quoteId) return []
+  if (quoteError) throw new Error(`Failed to load booking quote: ${quoteError.message}`)
+  if (!bookingQuote?.quote_id) return []
 
-  const { data: quoteItems } = await supabase
+  const { data: quoteItems, error: quoteItemsError } = await supabase
     .from('quote_items')
     .select('reference_id, quantity')
     .eq('item_type', 'drink_package')
-    .eq('quote_id', quoteId)
+    .eq('quote_id', bookingQuote.quote_id)
 
+  if (quoteItemsError) throw new Error(`Failed to load booking drink packages: ${quoteItemsError.message}`)
   if (!quoteItems || quoteItems.length === 0) return []
 
-  const created: InventoryReservation[] = []
+  const expected = new Map<string, CreateReservationInput>()
   for (const item of quoteItems) {
     const packageId = item.reference_id
     if (!packageId) continue
 
-    const { data: products } = await supabase
+    const { data: products, error: productsError } = await supabase
       .from('drink_package_products')
       .select('product_id, quantity_per_person')
       .eq('drink_package_id', packageId)
 
-    if (!products) continue
+    if (productsError) {
+      throw new Error(`Failed to load drink package ${packageId}: ${productsError.message}`)
+    }
 
-    for (const p of products) {
-      const totalQuantity = p.quantity_per_person * headCount
+    for (const product of products ?? []) {
+      const key = `${product.product_id}:${defaultLocation.id}`
+      const quantity = Number(product.quantity_per_person) * Number(headCount)
+      const existing = expected.get(key)
+      expected.set(key, {
+        booking_id: bookingId,
+        product_id: product.product_id,
+        location_id: defaultLocation.id,
+        quantity: (existing?.quantity ?? 0) + quantity,
+        notes: existing?.notes
+          ? `${existing.notes}; ${packageId}`
+          : `Auto-reserved from drink package ${packageId}`,
+      })
+    }
+  }
+
+  return [...expected.values()]
+}
+
+async function createOrReuseReservation(input: CreateReservationInput): Promise<InventoryReservation> {
+  try {
+    return await createReservation(input)
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('Reservation already exists')) throw error
+
+    const existing = (await getReservationsForBooking(input.booking_id)).find(
+      reservation => reservation.product_id === input.product_id && reservation.location_id === input.location_id,
+    )
+    if (!existing) throw error
+    if (existing.status === 'cancelled') {
+      throw new Error(`Reservation ${existing.id} is cancelled and cannot be recreated`)
+    }
+    return existing
+  }
+}
+
+function lifecycleResult(
+  bookingId: string,
+  action: ReservationLifecycleAction,
+  expected: number,
+  processed: number,
+  failures: ReservationLifecycleResult['failures'],
+): ReservationLifecycleResult {
+  return {
+    action,
+    booking_id: bookingId,
+    expected,
+    processed,
+    failed: failures.length,
+    failures,
+  }
+}
+
+function assertLifecycleStatus(
+  bookingId: string,
+  action: ReservationLifecycleAction,
+  status: string,
+): void {
+  const accepted: Record<ReservationLifecycleAction, string[]> = {
+    reserve: ['confirmed', 'in_progress', 'completed'],
+    cancel: ['cancelled', 'refunded'],
+    consume: ['completed'],
+  }
+  if (accepted[action].includes(status)) return
+
+  throw new ReservationLifecycleError(lifecycleResult(bookingId, action, 1, 0, [{
+    reservation_id: null,
+    message: `Booking status is ${status}; expected ${accepted[action].join(' or ')}`,
+  }]))
+}
+
+export async function processReservationLifecycle(
+  bookingId: string,
+  action: ReservationLifecycleAction,
+): Promise<ReservationLifecycleResult> {
+  const supabase = getInventoryClient()
+  const { data: booking, error: bookingError } = await supabase
+    .from('bookings')
+    .select('status')
+    .eq('id', bookingId)
+    .maybeSingle()
+
+  if (bookingError) throw new Error(`Failed to load booking status: ${bookingError.message}`)
+  if (!booking) throw new Error(`Booking not found: ${bookingId}`)
+  assertLifecycleStatus(bookingId, action, booking.status)
+
+  if (action === 'reserve') {
+    const expectedInputs = await getExpectedBookingReservations(bookingId)
+    const failures: ReservationLifecycleResult['failures'] = []
+    let processed = 0
+
+    for (const input of expectedInputs) {
       try {
-        const reservation = await createReservation({
-          booking_id: bookingId,
-          product_id: p.product_id,
-          location_id: locationId,
-          quantity: totalQuantity,
-          notes: `Auto-reserved from drink package ${packageId}`,
+        await createOrReuseReservation(input)
+        processed++
+      } catch (error) {
+        failures.push({
+          reservation_id: null,
+          message: error instanceof Error ? error.message : String(error),
         })
-        created.push(reservation)
-      } catch {
-        continue
+      }
+    }
+
+    const result = lifecycleResult(bookingId, action, expectedInputs.length, processed, failures)
+    if (failures.length > 0) throw new ReservationLifecycleError(result)
+    return result
+  }
+
+  let preparationFailures: ReservationLifecycleResult['failures'] = []
+  if (action === 'consume') {
+    const expectedInputs = await getExpectedBookingReservations(bookingId)
+    for (const input of expectedInputs) {
+      try {
+        await createOrReuseReservation(input)
+      } catch (error) {
+        preparationFailures.push({
+          reservation_id: null,
+          message: error instanceof Error ? error.message : String(error),
+        })
       }
     }
   }
 
+  const reservations = await getReservationsForBooking(bookingId)
+  const relevant = action === 'cancel'
+    ? reservations
+    : reservations.filter(reservation => reservation.status !== 'cancelled')
+  const failures: ReservationLifecycleResult['failures'] = [...preparationFailures]
+  let processed = 0
+
+  for (const reservation of relevant) {
+    try {
+      if (action === 'cancel') {
+        if (reservation.status === 'cancelled') {
+          processed++
+          continue
+        }
+        await cancelReservation(reservation.id)
+      } else {
+        if (reservation.status === 'consumed') {
+          processed++
+          continue
+        }
+        await consumeReservation(reservation.id)
+      }
+      processed++
+    } catch (error) {
+      const current = await getReservation(reservation.id)
+      const reachedTarget = action === 'cancel'
+        ? current?.status === 'cancelled'
+        : current?.status === 'consumed'
+      if (reachedTarget) {
+        processed++
+        continue
+      }
+      failures.push({
+        reservation_id: reservation.id,
+        message: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+  const result = lifecycleResult(
+    bookingId,
+    action,
+    relevant.length + preparationFailures.length,
+    processed,
+    failures,
+  )
+  if (failures.length > 0) throw new ReservationLifecycleError(result)
+  return result
+}
+
+export async function autoReserveForBooking(bookingId: string): Promise<InventoryReservation[]> {
+  const expected = await getExpectedBookingReservations(bookingId)
+  const created: InventoryReservation[] = []
+  for (const input of expected) {
+    created.push(await createOrReuseReservation(input))
+  }
   return created
 }
 

@@ -1,10 +1,12 @@
-import { autoDeductCompletedOrder, deductOrderItems, syncOrderItems } from '../../inventory/engine/order-items'
+import { deductOrderItems, syncOrderItems } from '../../inventory/engine/order-items'
+import { isOrderStation, type OrderStation } from '../../inventory/lib/station-location'
 import { logger } from '../utils/logger'
 import type { BackgroundJob } from '../types'
 
 export interface OrderDeductionPayload {
   order_id: string
-  location_id?: string
+  station: OrderStation
+  location_id: string
 }
 
 /**
@@ -18,6 +20,10 @@ export interface OrderDeductionPayload {
  *     internally when the RPC is unavailable)
  *
  * Idempotency / retry semantics:
+ *   - location_id is resolved from the order station before enqueue and is
+ *     immutable in the job payload, so retries cannot drift to another area.
+ *   - missing/invalid station or location is a hard handler failure and stays
+ *     visible through retry/dead_letter; it is never a successful zero result.
  *   - already-deducted orders return { deducted: 0, skipped: N } -> the job
  *     completes successfully; the enqueue idempotency key
  *     (order_deduction:{order_id}) prevents duplicate job rows.
@@ -30,6 +36,12 @@ export async function orderDeductionHandler(job: BackgroundJob): Promise<Record<
   if (!payload?.order_id) {
     throw new Error('order_deduction: order_id is required')
   }
+  if (!payload.location_id) {
+    throw new Error('order_deduction: location_id is required')
+  }
+  if (!isOrderStation(payload.station)) {
+    throw new Error('order_deduction: station must be kitchen or bar')
+  }
 
   logger.info('order deduction handler started', {
     job_id: job.id,
@@ -37,13 +49,8 @@ export async function orderDeductionHandler(job: BackgroundJob): Promise<Record<
     location_id: payload.location_id ?? null,
   })
 
-  let result: { deducted: number; skipped: number }
-  if (payload.location_id) {
-    await syncOrderItems(payload.order_id)
-    result = await deductOrderItems(payload.order_id, payload.location_id)
-  } else {
-    result = await autoDeductCompletedOrder(payload.order_id)
-  }
+  await syncOrderItems(payload.order_id)
+  const result = await deductOrderItems(payload.order_id, payload.location_id)
 
   logger.info('order deduction handler completed', {
     job_id: job.id,

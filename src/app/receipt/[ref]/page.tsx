@@ -3,10 +3,10 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getSession } from '@/lib/auth'
 import { cookies } from 'next/headers'
+import { orderAccessCookieName, verifyOrderAccessProof } from '@/lib/order-public-auth'
 
 interface Props {
   params: Promise<{ ref: string }>
-  searchParams: Promise<{ verified?: string }>
 }
 
 export const metadata: Metadata = {
@@ -157,16 +157,25 @@ function VerifyForm({ ref, error }: { ref: string; error?: string }) {
   )
 }
 
-export default async function ReceiptPage({ params, searchParams }: Props) {
+export default async function ReceiptPage({ params }: Props) {
   const { ref } = await params
-  const sp = await searchParams
 
   // Check admin/kitchen session
   const session = await getSession()
   const isAuthed = session?.role === 'admin' || session?.role === 'kitchen'
 
-  // If phone-verified via query param, allow limited access
-  const isVerified = sp.verified === 'true'
+  // Customer access is a short-lived, signed, HttpOnly proof created only by
+  // the phone verification endpoint. URL query parameters are never trusted.
+  let isVerified = false
+  if (!isAuthed) {
+    const cookieStore = await cookies()
+    const proof = cookieStore.get(orderAccessCookieName(ref))?.value
+    try {
+      isVerified = verifyOrderAccessProof(ref, proof)
+    } catch (error) {
+      console.error('[receipt] verification proof failed:', error instanceof Error ? error.message : String(error))
+    }
+  }
 
   if (!isAuthed && !isVerified) {
     return <VerifyForm ref={ref} />
@@ -175,7 +184,7 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
   const supabase = getAdminClient()
 
   const selectCols = isAuthed
-    ? '*'
+    ? 'order_ref, customer_name, order_type, table_number, items_json, total, created_at, delivery_address'
     : 'order_ref, customer_name, order_type, table_number, items_json, total, created_at'
 
   const { data, error } = await supabase

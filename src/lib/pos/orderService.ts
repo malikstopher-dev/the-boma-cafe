@@ -1,5 +1,6 @@
 import { getAdminClient } from '@/lib/supabase'
 import { getMenuItemsByIds, type DbMenuItem } from '@/lib/menu-prices'
+import { generateOrderTrackingToken, hashOrderTrackingToken } from '@/lib/order-public-auth'
 import type { EnrichedItem, OrderItemInput, OrderRecord, OrderStatus, Station, OrderEventType } from './types'
 
 const MIN_TOTAL = 1
@@ -277,17 +278,23 @@ export type CreateOrderResult = {
   order: OrderRecord | null
   duplicate: boolean
   error: string | null
+  trackingToken: string | null
+}
+
+function toOrderRecord(row: Record<string, unknown>): OrderRecord {
+  const { tracking_token_hash: _trackingHash, ...safe } = row
+  return safe as unknown as OrderRecord
 }
 
 export async function createOrder(
   input: CreateOrderInputType,
-  precomputed?: { enriched: EnrichedItem[]; total: number },
+  precomputed?: { enriched: EnrichedItem[]; total: number; trackingToken?: string },
 ): Promise<CreateOrderResult> {
   const idempotencyKey = input.idempotency_key || generateIdempotencyKey()
 
   // ── In-memory dedup (same request within 5s window) ────────
   if (isDuplicateSubmission(idempotencyKey)) {
-    return { order: null, duplicate: true, error: 'Duplicate submission detected — please wait' }
+    return { order: null, duplicate: true, error: 'Duplicate submission detected — please wait', trackingToken: null }
   }
 
   // ── DB idempotency check (column may be null, handle gracefully) ──
@@ -299,7 +306,7 @@ export async function createOrder(
       .maybeSingle()
 
     if (existing) {
-      return { order: existing as unknown as OrderRecord, duplicate: true, error: null }
+      return { order: toOrderRecord(existing as unknown as Record<string, unknown>), duplicate: true, error: null, trackingToken: null }
     }
   } catch {
     // Column may not exist yet (schema cache delay) — continue
@@ -325,14 +332,14 @@ export async function createOrder(
     }))
     const result = await enrichItems(parsedItems)
     if (result.error) {
-      return { order: null, duplicate: false, error: result.error }
+      return { order: null, duplicate: false, error: result.error, trackingToken: null }
     }
     enriched = result.enriched
     total = result.total
   }
 
   if (total < MIN_TOTAL || total > MAX_TOTAL) {
-    return { order: null, duplicate: false, error: 'Invalid total' }
+    return { order: null, duplicate: false, error: 'Invalid total', trackingToken: null }
   }
 
   const metadata: Record<string, any> = {}
@@ -341,6 +348,7 @@ export async function createOrder(
   }
   const items_json = JSON.stringify({ items: enriched, metadata })
   const order_ref = await generateOrderRef()
+  const trackingToken = precomputed?.trackingToken ?? generateOrderTrackingToken()
 
   const ORDER_TYPE_NORMALIZATIONS: Record<string, string> = {
     'dine-in': 'dine-in', 'dinein': 'dine-in', 'dine in': 'dine-in', 'dine_in': 'dine-in', 'dine': 'dine-in',
@@ -360,6 +368,7 @@ export async function createOrder(
     status: 'pending' as OrderStatus,
     order_ref,
     idempotency_key: idempotencyKey,
+    tracking_token_hash: hashOrderTrackingToken(trackingToken),
   }
 
   if (input.table_number) {
@@ -414,7 +423,12 @@ export async function createOrder(
         created_by: input.created_by ?? 'system',
         metadata: { order_ref: data.order_ref, total },
       })
-      return { order: data as unknown as OrderRecord, duplicate: false, error: null }
+      return {
+        order: toOrderRecord(data as unknown as Record<string, unknown>),
+        duplicate: false,
+        error: null,
+        trackingToken,
+      }
     }
 
     if (error) {
@@ -434,19 +448,24 @@ export async function createOrder(
             .eq('idempotency_key', idempotencyKey)
             .maybeSingle()
           if (dup) {
-            return { order: dup as unknown as OrderRecord, duplicate: true, error: null }
+            return {
+              order: toOrderRecord(dup as unknown as Record<string, unknown>),
+              duplicate: true,
+              error: null,
+              trackingToken: null,
+            }
           }
         } catch { /* ignore */ }
         continue
       }
 
       if (attempt === MAX_ATTEMPTS - 1) {
-        return { order: null, duplicate: false, error: error.message || 'Failed to create order' }
+        return { order: null, duplicate: false, error: error.message || 'Failed to create order', trackingToken: null }
       }
     }
   }
 
-  return { order: null, duplicate: false, error: 'Failed to create order after retries' }
+  return { order: null, duplicate: false, error: 'Failed to create order after retries', trackingToken: null }
 }
 
 export async function getSiblingOrders(orderId: string): Promise<OrderRecord[]> {
@@ -478,6 +497,7 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
   orders: OrderRecord[]
   duplicate: boolean
   error: string | null
+  trackingToken: string | null
 }> {
   const baseKey = input.idempotency_key || generateIdempotencyKey()
 
@@ -494,7 +514,7 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
   }))
   const { enriched, error: enrichError } = await enrichItems(parsedItems)
   if (enrichError) {
-    return { orders: [], duplicate: false, error: enrichError }
+    return { orders: [], duplicate: false, error: enrichError, trackingToken: null }
   }
 
   const kitchenItems = enriched.filter(i => i.station !== 'bar')
@@ -507,11 +527,12 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
     parts.push({ items: barItems, total: Math.round(barItems.reduce((s, i) => s + i.subtotal, 0) * 100) / 100 })
   }
   if (parts.length === 0) {
-    return { orders: [], duplicate: false, error: 'No items to order' }
+    return { orders: [], duplicate: false, error: 'No items to order', trackingToken: null }
   }
 
   const createdOrders: OrderRecord[] = []
   let firstId: string | null = null
+  const trackingToken = generateOrderTrackingToken()
 
   for (let idx = 0; idx < parts.length; idx++) {
     const part = parts[idx]!
@@ -522,12 +543,12 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
         idempotency_key: idx === 0 ? `${baseKey}-first` : `${baseKey}-second`,
         ...(idx > 0 && firstId ? { parent_order_id: firstId } : {}),
       },
-      { enriched: part.items, total: part.total },
+      { enriched: part.items, total: part.total, trackingToken },
     )
 
     if (res.error || !res.order) {
       if (idx === 0) {
-        return { orders: [], duplicate: res.duplicate, error: res.error ?? 'Failed to create order' }
+        return { orders: [], duplicate: res.duplicate, error: res.error ?? 'Failed to create order', trackingToken: null }
       }
 
       // ── Compensating rollback: supabase-js cannot wrap both inserts in one
@@ -559,6 +580,7 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
         orders: rollbackOk ? [] : createdOrders,
         duplicate: false,
         error: `First order created (${createdOrders[0]?.order_ref ?? ''}) but second failed${rollbackOk ? ' and was rolled back' : ' AND ROLLBACK FAILED — manual cleanup required'}: ${res.error}`,
+        trackingToken: null,
       }
     }
 
@@ -566,5 +588,5 @@ export async function splitAndCreateOrders(input: CreateOrderInputType): Promise
     if (idx === 0) firstId = res.order.id
   }
 
-  return { orders: createdOrders, duplicate: false, error: null }
+  return { orders: createdOrders, duplicate: false, error: null, trackingToken }
 }

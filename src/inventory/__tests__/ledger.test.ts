@@ -411,6 +411,42 @@ describe('ledger', () => {
       ).rejects.toThrow(InsufficientStockError)
     })
 
+    it('should validate negative production consumption against ledger stock', async () => {
+      mockClient.from.mockImplementation((table: string) => {
+        if (table === 'inventory_products') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({ maybeSingle: vi.fn(() => res({ id: 'prod-1' })) })),
+            })),
+          }
+        }
+        if (table === 'inventory_locations') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({ maybeSingle: vi.fn(() => res({ id: 'loc-1' })) })),
+              })),
+            })),
+          }
+        }
+        if (table === 'inventory_transactions') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({ eq: vi.fn(() => res([{ quantity: 5 }])) })),
+            })),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      await expect(createTransaction({
+        product_id: 'prod-1',
+        location_id: 'loc-1',
+        transaction_type: 'production',
+        quantity: -10,
+      })).rejects.toThrow(InsufficientStockError)
+    })
+
     it('should validate decreases against the LEDGER sum, not the balance cache (F2 rule)', async () => {
       // The cache (RPC) says 100, the ledger says 5: the F2/E1-4 rule is
       // "deduct only what the ledger actually has" - a sale of 10 MUST be

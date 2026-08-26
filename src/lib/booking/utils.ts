@@ -25,11 +25,11 @@ export function calculateTaxInclusive(subtotal: number, taxRate: number): number
 }
 
 export function getTodayFormatted(): string {
-  return new Date().toISOString().split('T')[0]
+  return new Date().toISOString().slice(0, 10)
 }
 
 export function getDateAfterDays(days: number): string {
   const date = new Date()
   date.setDate(date.getDate() + days)
-  return date.toISOString().split('T')[0]
+  return date.toISOString().slice(0, 10)
 }

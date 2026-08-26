@@ -103,7 +103,7 @@ beforeEach(() => {
   mockInserts = []
   mockUpdates = []
   fixtures = {
-    orders: { id: 'order-1', items_json: JSON.stringify([{ name: 'Margarita', quantity: 2, price: 95 }]), status: 'completed' },
+    orders: { id: 'order-1', items_json: JSON.stringify([{ name: 'Margarita', quantity: 2, price: 95 }]), status: 'completed', station: 'bar' },
     inventory_locations: { id: 'loc-1' },
     bar_items: null,
     inventory_products: { id: 'prod-1' },
@@ -277,8 +277,8 @@ describe('deductOrderItems engine fallback (recipe + direct lines)', () => {
 })
 
 describe('autoDeductCompletedOrder (completion hook path)', () => {
-  it('resolves the first active location, syncs and deducts via the RPC', async () => {
-    fixtures = { ...fixtures, orders: { id: 'order-1', items_json: '[]', status: 'completed' } }
+  it('resolves the order station mapping, syncs and deducts via the RPC', async () => {
+    fixtures = { ...fixtures, orders: { id: 'order-1', items_json: '[]', status: 'completed', station: 'bar' } }
     mockClient.rpc.mockResolvedValue({ data: { deducted: 1, skipped: 0, already_deducted: false }, error: null })
     const res = await autoDeductCompletedOrder('order-1')
     expect(res).toEqual({ deducted: 1, skipped: 0 })

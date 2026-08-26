@@ -7,6 +7,7 @@ import { validateOrder, sanitizeOrderInput } from '@/lib/pos/validateOrder'
 import { createOrder, splitAndCreateOrders, getSiblingOrders, logOrderEvent, getAlcoholItemNames } from '@/lib/pos/orderService'
 import type { OrderEventType } from '@/lib/pos/types'
 import { notifyOrderCreated, notifyOrderConfirmed, notifyOrderRejected, notifyOrderPreparing, notifyOrderReady } from '@/lib/notifications/push'
+import { resolveOrderStationLocation } from '@/inventory/lib/station-location'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,9 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'cancellation_reason',
   'estimated_prep_minutes', 'prep_started_at', 'estimated_ready_at', 'actual_ready_at',
 ])
+
+const STAFF_ORDER_COLUMNS = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason'
+const ADMIN_ORDER_COLUMNS = `${STAFF_ORDER_COLUMNS},delivery_address,phone,payment_confirmed_at,payment_confirmed_by,payment_method,actual_ready_at,staff_id`
 
 export async function GET(request: NextRequest) {
   const authError = await requireAuthenticated(request)
@@ -81,7 +85,7 @@ export async function GET(request: NextRequest) {
     }
     const { data: siblings, error: sibError } = await getAdminClient()
       .from('orders')
-      .select(isAdmin ? '*' : 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason')
+      .select(isAdmin ? ADMIN_ORDER_COLUMNS : STAFF_ORDER_COLUMNS)
       .or(`parent_order_id.eq.${groupId},id.eq.${groupId}`)
     if (sibError) return NextResponse.json({ error: sibError.message }, { status: 500 })
     return NextResponse.json({ orders: siblings })
@@ -99,20 +103,12 @@ export async function GET(request: NextRequest) {
   if (role === 'kitchen') station = 'kitchen'
   else if (role === 'bar') station = 'bar'
 
-  const full = isAdmin && searchParams.get('full') === '1'
-
   // PII-safe columns: phone and delivery_address are admin-only.
-  let baseColumns = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason'
-  if (isAdmin) {
-    baseColumns = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,delivery_address,requested_time,preparation_time_minutes,cancellation_reason,phone'
-  }
-  if (full) {
-    baseColumns = '*'
-  }
+  const baseColumns = isAdmin ? ADMIN_ORDER_COLUMNS : STAFF_ORDER_COLUMNS
 
   let query = getAdminClient()
     .from('orders')
-    .select(baseColumns, { count: (full || !station) ? 'exact' : 'estimated' })
+    .select(baseColumns, { count: !station ? 'exact' : 'estimated' })
 
   if (station === 'kitchen' || station === 'bar') {
     query = query.eq('station', station)
@@ -184,6 +180,7 @@ export async function POST(request: NextRequest) {
     let order: any = null
     let duplicate = false
     let error: string | null = null
+    let trackingToken: string | null = null
 
     let orders: any[] = []
     if (hasMixedStations) {
@@ -192,6 +189,7 @@ export async function POST(request: NextRequest) {
       order = result.orders[0] ?? null
       duplicate = result.duplicate
       error = result.error
+      trackingToken = result.trackingToken
       // Notify for each created order
       for (const o of result.orders) {
         if (o?.order_ref) {
@@ -206,6 +204,7 @@ export async function POST(request: NextRequest) {
       order = result.order
       duplicate = result.duplicate
       error = result.error
+      trackingToken = result.trackingToken
       if (order?.order_ref) {
         const r = await getRequestRole(request)
         const s = (order as any).source || 'online'
@@ -224,6 +223,7 @@ export async function POST(request: NextRequest) {
       order,
       orders,
       duplicate,
+      ...(trackingToken ? { tracking_token: trackingToken } : {}),
       ...(hasMixedStations ? { split: true } : {}),
     }, { status: duplicate ? 200 : 201 })
   } catch (err) {
@@ -329,6 +329,7 @@ export async function PATCH(request: NextRequest) {
     let currentStatus: string | null = null
     let currentOrderType: string | null = null
     let currentPaymentStatus: string | null = null
+    let currentStation: string | null = null
     let orderSource: string = 'online'
     let siblingPending = false
     let siblingStatus: { station: string; status: string }[] = []
@@ -336,7 +337,7 @@ export async function PATCH(request: NextRequest) {
     if (updateBody.status) {
       const { data: fetched, error: fetchError } = await getAdminClient()
         .from('orders')
-        .select('status, order_type, payment_status, source')
+        .select('status, order_type, payment_status, source, station')
         .eq('id', id)
         .single()
 
@@ -346,6 +347,7 @@ export async function PATCH(request: NextRequest) {
       currentStatus = fetched.status
       currentOrderType = fetched.order_type
       currentPaymentStatus = fetched.payment_status
+      currentStation = fetched.station
       orderSource = fetched.source || 'online'
 
       if (currentStatus !== null && ['completed', 'cancelled'].includes(currentStatus)) {
@@ -430,11 +432,16 @@ export async function PATCH(request: NextRequest) {
     // signal, never silent loss.
     if (updateBody.status === 'completed') {
       try {
+        const locationId = await resolveOrderStationLocation(currentStation)
         const { error: enqueueError } = await getAdminClient().rpc(
           'enqueue_background_job',
           {
             p_job_type: 'order_deduction',
-            p_payload: { order_id: id },
+            p_payload: {
+              order_id: id,
+              station: currentStation,
+              location_id: locationId,
+            },
             p_idempotency_key: `order_deduction:${id}`,
             p_max_retries: 3,
           },

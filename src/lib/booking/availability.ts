@@ -28,7 +28,8 @@ export async function getBlockedDates(
     query.gte('end_date', startDate)
   }
 
-  const { data } = await query
+  const { data, error } = await query
+  if (error) throw new Error(`Failed to read blocked dates: ${error.message}`)
   return (data || []) as BlockedDate[]
 }
 
@@ -36,12 +37,13 @@ export async function isDateBlocked(
   date: string,
   venueAreaId?: string
 ): Promise<boolean> {
-  const { data } = await (await getAdminClient())
+  const { data, error } = await (await getAdminClient())
     .from('blocked_dates')
     .select('id, venue_area_id')
     .lte('start_date', date)
     .gte('end_date', date)
 
+  if (error) throw new Error(`Failed to check blocked dates: ${error.message}`)
   if (!data || data.length === 0) return false
 
   const blocked = data as Array<{ id: string; venue_area_id: string | null }>
@@ -70,12 +72,16 @@ export async function getAvailableAreas(
     client.from('availability')
       .select('venue_area_id')
       .eq('booking_date', date)
-      .lte('start_time', endTime)
-      .gte('end_time', startTime)
-      .neq('status', 'cancelled'),
+      .lt('start_time', endTime)
+      .gt('end_time', startTime),
   ])
 
+  if (areasRes.error) throw new Error(`Failed to read venue areas: ${areasRes.error.message}`)
+  if (blockedRes.error) throw new Error(`Failed to read blocked dates: ${blockedRes.error.message}`)
+  if (bookedRes.error) throw new Error(`Failed to read availability: ${bookedRes.error.message}`)
+
   const blockedAreaIds = new Set((blockedRes.data || []).map(b => b.venue_area_id))
+  const globallyBlocked = blockedAreaIds.has(null)
   const bookedAreaIds = new Set((bookedRes.data || []).map(b => b.venue_area_id))
 
   const slots: AvailabilitySlot[] = (areasRes.data || []).map(area => ({
@@ -85,6 +91,7 @@ export async function getAvailableAreas(
     start_time: startTime,
     end_time: endTime,
     is_available:
+      !globallyBlocked &&
       !blockedAreaIds.has(area.id) &&
       !bookedAreaIds.has(area.id) &&
       guestCount >= area.capacity_min &&
@@ -109,12 +116,14 @@ export async function checkAvailability(
   const alternatives: AvailabilityResult['alternatives'] = []
 
   // 1. Check blocked dates
-  const { data: blockedDates } = await client
+  const { data: blockedDates, error: blockedError } = await client
     .from('blocked_dates')
-    .select('reason')
+    .select('reason, venue_area_id')
     .lte('start_date', date)
     .gte('end_date', date)
     .or(`venue_area_id.eq.${venueAreaId},venue_area_id.is.null`)
+
+  if (blockedError) throw new Error(`Failed to check blocked dates: ${blockedError.message}`)
 
   if (blockedDates && blockedDates.length > 0) {
     conflicts.push(`Venue area is blocked on this date`)
@@ -126,26 +135,30 @@ export async function checkAvailability(
     .select('id, guest_count')
     .eq('venue_area_id', venueAreaId)
     .eq('booking_date', date)
-    .lte('start_time', endTime)
-    .gte('end_time', startTime)
-    .neq('status', 'cancelled')
+    .lt('start_time', endTime)
+    .gt('end_time', startTime)
 
   if (excludeBookingId) {
     bookedQuery = bookedQuery.neq('booking_id', excludeBookingId)
   }
 
-  const { data: existingBookings } = await bookedQuery
+  const { data: existingBookings, error: bookingsError } = await bookedQuery
+
+  if (bookingsError) throw new Error(`Failed to check availability: ${bookingsError.message}`)
 
   if (existingBookings && existingBookings.length > 0) {
     conflicts.push(`Venue area is already booked during this time`)
   }
 
   // 3. Check capacity
-  const { data: venueArea } = await client
+  const { data: venueArea, error: venueError } = await client
     .from('venue_areas')
     .select('*')
     .eq('id', venueAreaId)
     .single()
+
+  if (venueError) throw new Error(`Failed to read venue area: ${venueError.message}`)
+  if (!venueArea) throw new Error('Venue area not found')
 
   if (venueArea) {
     if (guestCount < venueArea.capacity_min) {
@@ -157,26 +170,14 @@ export async function checkAvailability(
 
     // 4. Suggest alternatives if unavailable
     if (conflicts.length > 0) {
-      const { data: allAreas } = await client
-        .from('venue_areas')
-        .select('*')
-        .eq('is_active', true)
-        .neq('id', venueAreaId)
-        .order('sort_order')
-
-      for (const area of allAreas || []) {
-const blockedDatesData = (blockedDates || []) as Array<{ venue_area_id: string | null; reason: string | null }>
-    const areaBlocked = blockedDatesData.some(b =>
-      b.venue_area_id === null || b.venue_area_id === area.id
-    )
-        const areaBooked = existingBookings && existingBookings.length > 0
+      const areaSlots = await getAvailableAreas(date, startTime, endTime, guestCount)
+      for (const area of areaSlots) {
+        if (area.venue_area_id === venueAreaId) continue
         alternatives.push({
-          venue_area_id: area.id,
-          name: area.name,
+          venue_area_id: area.venue_area_id,
+          name: area.venue_area_name,
           capacity_max: area.capacity_max,
-          is_available: !areaBlocked && !areaBooked &&
-            guestCount >= area.capacity_min &&
-            guestCount <= area.capacity_max,
+          is_available: area.is_available,
         })
       }
     }
@@ -221,7 +222,7 @@ export async function recordAvailability(
 export async function releaseAvailability(bookingId: string): Promise<boolean> {
   const { error } = await (await getAdminClient())
     .from('availability')
-    .update({ status: 'cancelled' })
+    .delete()
     .eq('booking_id', bookingId)
   return !error
 }

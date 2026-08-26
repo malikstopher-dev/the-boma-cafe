@@ -117,16 +117,21 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     .maybeSingle()
   if (!location) throw new LocationNotFoundError(input.location_id)
 
-  if (isDecreaseType(input.transaction_type) && input.quantity >= 0) {
+  const requestedDecrease = isDecreaseType(input.transaction_type)
+    ? Math.abs(input.quantity)
+    : input.transaction_type === 'production' && input.quantity < 0
+      ? Math.abs(input.quantity)
+      : null
+
+  if (requestedDecrease !== null) {
     // Ledger-sum validation (F2 rule): the balance cache is a display mirror,
     // never the source of truth for the insufficient-stock check.
     const currentBalance = await ledgerSum(input.product_id, input.location_id)
-    const requested = Math.abs(input.quantity)
-    if (currentBalance < requested) {
+    if (currentBalance < requestedDecrease) {
       throw new InsufficientStockError(
         input.product_id,
         input.location_id,
-        requested,
+        requestedDecrease,
         currentBalance,
       )
     }

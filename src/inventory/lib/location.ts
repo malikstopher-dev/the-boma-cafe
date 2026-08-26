@@ -1,5 +1,8 @@
 import { getInventoryClient } from './db'
 
+export { resolveOrderStationLocation } from './station-location'
+export type { OrderStation } from './station-location'
+
 const ALIASES = new Set(['main', 'default'])
 
 export async function resolveLocationId(locationId?: string | null): Promise<string | null> {

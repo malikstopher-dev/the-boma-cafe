@@ -15,12 +15,16 @@ const authMocks = vi.hoisted(() => ({
   getRequestRole: vi.fn(),
 }))
 
+const locationMocks = vi.hoisted(() => ({
+  resolve: vi.fn(),
+}))
+
 const sbState = vi.hoisted(() => ({
   callLog: [] as string[],
   lastRpcArgs: null as unknown,
   rpcImpl: null as null | (() => Promise<unknown>),
   fetchOrder: {
-    data: { status: 'ready', order_type: 'dine-in', payment_status: 'paid', source: 'online' },
+    data: { status: 'ready', order_type: 'dine-in', payment_status: 'paid', source: 'online', station: 'kitchen' },
     error: null,
   },
   casResult: { data: { id: 'order-1' }, error: null },
@@ -35,6 +39,10 @@ vi.mock('@/lib/auth/requireRole', () => ({
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => true),
   checkRateLimitByWaiter: vi.fn(async () => true),
+}))
+
+vi.mock('@/inventory/lib/station-location', () => ({
+  resolveOrderStationLocation: locationMocks.resolve,
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -142,6 +150,7 @@ function resetScenario(currentStatus: string) {
     order_type: 'dine-in',
     payment_status: 'paid',
     source: 'online',
+    station: 'kitchen',
   }
   sbState.casResult = { data: { id: 'order-1' }, error: null }
 }
@@ -150,6 +159,7 @@ describe('order completion durability — deduction enqueued before terminal com
   beforeEach(() => {
     vi.clearAllMocks()
     authMocks.getRequestRole.mockResolvedValue('admin')
+    locationMocks.resolve.mockResolvedValue('location-kitchen')
     resetScenario('ready')
   })
 
@@ -172,6 +182,12 @@ describe('order completion durability — deduction enqueued before terminal com
     expect(args['p_job_type']).toBe('order_deduction')
     expect(args['p_idempotency_key']).toBe('order_deduction:order-1')
     expect(args['p_max_retries']).toBe(3)
+    expect(args['p_payload']).toEqual({
+      order_id: 'order-1',
+      station: 'kitchen',
+      location_id: 'location-kitchen',
+    })
+    expect(locationMocks.resolve).toHaveBeenCalledWith('kitchen')
   })
 
   it('enqueue RPC error → completion aborted with 503 and NO status update (intent not silently lost)', async () => {
@@ -198,6 +214,29 @@ describe('order completion durability — deduction enqueued before terminal com
     expect(res.status).toBe(503)
     expect(json.error).toBeTruthy()
     expect(sbState.callLog).not.toContain('UPDATE')
+  })
+
+  it('missing station mapping aborts completion before enqueue or status update', async () => {
+    locationMocks.resolve.mockRejectedValue(new Error('No active inventory location is mapped to order station "kitchen"'))
+
+    const res = await PATCH(patchReq({ status: 'completed' }))
+    expect(res.status).toBe(503)
+    expect(sbState.callLog.some(line => line.startsWith('RPC:'))).toBe(false)
+    expect(sbState.callLog).not.toContain('UPDATE')
+  })
+
+  it('bar completion persists the independently resolved Bar location in the job', async () => {
+    sbState.fetchOrder.data.station = 'bar'
+    locationMocks.resolve.mockResolvedValue('location-bar')
+
+    const res = await PATCH(patchReq({ status: 'completed' }))
+    expect(res.status).toBe(200)
+    expect(locationMocks.resolve).toHaveBeenCalledWith('bar')
+    expect((sbState.lastRpcArgs as Record<string, unknown>)['p_payload']).toEqual({
+      order_id: 'order-1',
+      station: 'bar',
+      location_id: 'location-bar',
+    })
   })
 
   it('non-completion transitions do not touch the enqueue RPC at all', async () => {

@@ -17,6 +17,7 @@ interface LocationDetail {
   is_active: boolean
   deleted_at: string | null
   productCount?: number
+  order_station: 'kitchen' | 'bar' | null
 }
 
 export default function LocationDetailPage() {
@@ -27,7 +28,7 @@ export default function LocationDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ name: '', code: '', description: '' })
+  const [form, setForm] = useState({ name: '', code: '', description: '', order_station: '' })
 
   useEffect(() => {
     const id = params?.id as string
@@ -45,6 +46,7 @@ export default function LocationDetailPage() {
             name: locJson.data.name || '',
             code: locJson.data.code || '',
             description: locJson.data.description || '',
+            order_station: locJson.data.order_station || '',
           })
         }
         setStockItems(stockJson.data || [])
@@ -121,6 +123,24 @@ export default function LocationDetailPage() {
                 </dd>
               </div>
             ))}
+            <div className="flex justify-between">
+              <dt style={{color:'#A09888'}}>Order Station</dt>
+              <dd className="font-medium text-right">
+                {editing ? (
+                  <select
+                    style={{background:'#2A261E',border:'1px solid #3A3428',borderRadius:4,padding:'4px 8px',fontSize:12,width:160,color:'#F0EBE3',fontFamily:'Inter, sans-serif'}}
+                    value={form.order_station}
+                    onChange={event => setForm(current => ({ ...current, order_station: event.target.value }))}
+                  >
+                    <option value="">Not mapped</option>
+                    <option value="kitchen">Kitchen orders</option>
+                    <option value="bar">Bar orders</option>
+                  </select>
+                ) : (
+                  location.order_station === 'bar' ? 'Bar orders' : location.order_station === 'kitchen' ? 'Kitchen orders' : 'Not mapped'
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
 

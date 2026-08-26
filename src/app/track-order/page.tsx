@@ -57,6 +57,7 @@ function elapsedMinutes(iso: string) {
 
 export default function TrackOrderPage() {
   const [ref, setRef] = useState('')
+  const [trackingToken, setTrackingToken] = useState('')
   const [result, setResult] = useState<TrackResult | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
   const [error, setError] = useState('')
@@ -65,6 +66,7 @@ export default function TrackOrderPage() {
   const [cancelling, setCancelling] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const activeRef = useRef('')
+  const activeTokenRef = useRef('')
 
   useEffect(() => {
     return () => { if (pollingRef.current) clearInterval(pollingRef.current) }
@@ -74,14 +76,17 @@ export default function TrackOrderPage() {
     if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null }
   }
 
-  const startPolling = (orderRef: string) => {
+  const startPolling = (orderRef: string, token: string) => {
     stopPolling()
     activeRef.current = orderRef
+    activeTokenRef.current = token
     pollingRef.current = setInterval(async () => {
       const cur = activeRef.current
       if (!cur) return
       try {
-        const res = await fetch(`/api/track-order?ref=${encodeURIComponent(cur)}`)
+        const res = await fetch(`/api/track-order?ref=${encodeURIComponent(cur)}`, {
+          headers: activeTokenRef.current ? { 'X-Order-Tracking-Token': activeTokenRef.current } : {},
+        })
         if (!res.ok) return
         const data: TrackResult = await res.json()
         setResult(data)
@@ -92,6 +97,31 @@ export default function TrackOrderPage() {
     }, 30000)
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const initialRef = params.get('ref')?.trim().toUpperCase() || ''
+    const initialToken = hash.get('token') || ''
+    if (!initialRef || !initialToken) return
+
+    setRef(initialRef)
+    setTrackingToken(initialToken)
+    setLoading(true)
+    fetch(`/api/track-order?ref=${encodeURIComponent(initialRef)}`, {
+      headers: { 'X-Order-Tracking-Token': initialToken },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Secure tracking link is invalid or expired')
+        const data: TrackResult = await response.json()
+        setResult(data)
+        setItems(parseItems(data.items_json))
+        setLastUpdated(new Date())
+        if (data.status !== 'completed' && data.status !== 'cancelled') startPolling(initialRef, initialToken)
+      })
+      .catch((loadError: unknown) => setError(loadError instanceof Error ? loadError.message : 'Unable to track order'))
+      .finally(() => setLoading(false))
+  }, [])
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmed = ref.trim()
@@ -99,21 +129,21 @@ export default function TrackOrderPage() {
     setLoading(true); setError(''); setResult(null); setItems([])
     stopPolling()
     try {
-      const res = await fetch(`/api/track-order?ref=${encodeURIComponent(trimmed)}`)
-      if (res.status === 404) {
-        setError('Order not found. Please check your order reference and try again.')
-        return
-      }
+      const res = await fetch(`/api/track-order?ref=${encodeURIComponent(trimmed)}`, {
+        headers: trackingToken ? { 'X-Order-Tracking-Token': trackingToken } : {},
+      })
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}))
-        setError(errData?.error || 'Something went wrong. Please try again.')
+        setError(res.status === 401
+          ? 'Use the secure tracking link provided when the order was placed. The reference alone cannot open an order.'
+          : (errData?.error || 'Something went wrong. Please try again.'))
         return
       }
       const data = await res.json()
       setResult(data)
       setItems(parseItems(data.items_json))
       setLastUpdated(new Date())
-      if (data.status !== 'completed' && data.status !== 'cancelled') startPolling(trimmed)
+      if (data.status !== 'completed' && data.status !== 'cancelled') startPolling(trimmed, trackingToken)
     } catch {
       setError('Unable to look up order. Please try again.')
     } finally {
@@ -130,7 +160,10 @@ export default function TrackOrderPage() {
     try {
       const res = await fetch('/api/track-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(trackingToken ? { 'X-Order-Tracking-Token': trackingToken } : {}),
+        },
         body: JSON.stringify({ ref: result.order_ref }),
       })
       if (res.ok) {
@@ -207,7 +240,7 @@ export default function TrackOrderPage() {
             Track Your Order
           </h1>
           <p style={{ color: '#78716c', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-            Enter your reference to see live status
+             Use the secure link provided when you placed your order
           </p>
         </div>
 
@@ -219,7 +252,10 @@ export default function TrackOrderPage() {
                 type="text"
                 placeholder="20260706-001"
                 value={ref}
-                onChange={e => setRef(e.target.value.toUpperCase())}
+                onChange={e => {
+                  setRef(e.target.value.toUpperCase())
+                  setTrackingToken('')
+                }}
                 style={{
                   width: '100%', padding: '0.9rem 1rem 0.9rem 2.6rem',
                   borderRadius: '14px', border: '2px solid #d6d3d1',

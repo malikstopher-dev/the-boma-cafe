@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const engineMocks = vi.hoisted(() => ({
-  autoDeduct: vi.fn(),
   sync: vi.fn(),
   deduct: vi.fn(),
 }))
 
 vi.mock('../../inventory/engine/order-items', () => ({
-  autoDeductCompletedOrder: engineMocks.autoDeduct,
   syncOrderItems: engineMocks.sync,
   deductOrderItems: engineMocks.deduct,
 }))
@@ -21,7 +19,7 @@ function makeJob(overrides: Partial<BackgroundJob> = {}): BackgroundJob {
     id: 'job-1',
     job_type: 'order_deduction',
     status: 'pending',
-    payload: { order_id: 'order-1' },
+    payload: { order_id: 'order-1', station: 'kitchen', location_id: 'loc-kitchen' },
     result: null,
     error: null,
     idempotency_key: 'order_deduction:order-1',
@@ -43,15 +41,14 @@ describe('orderDeductionHandler', () => {
     vi.clearAllMocks()
   })
 
-  it('deducts via autoDeductCompletedOrder with the order id and returns counts', async () => {
-    engineMocks.autoDeduct.mockResolvedValue({ deducted: 2, skipped: 0 })
+  it('syncs and deducts using the durable station location', async () => {
+    engineMocks.sync.mockResolvedValue({ order_id: 'order-1', status: 'completed', items: [] })
+    engineMocks.deduct.mockResolvedValue({ deducted: 2, skipped: 0 })
 
     const result = await orderDeductionHandler(makeJob())
 
-    expect(engineMocks.autoDeduct).toHaveBeenCalledTimes(1)
-    expect(engineMocks.autoDeduct).toHaveBeenCalledWith('order-1')
-    expect(engineMocks.sync).not.toHaveBeenCalled()
-    expect(engineMocks.deduct).not.toHaveBeenCalled()
+    expect(engineMocks.sync).toHaveBeenCalledWith('order-1')
+    expect(engineMocks.deduct).toHaveBeenCalledWith('order-1', 'loc-kitchen')
     expect(result).toEqual({ deducted: 2, skipped: 0 })
   })
 
@@ -59,10 +56,9 @@ describe('orderDeductionHandler', () => {
     engineMocks.sync.mockResolvedValue({ order_id: 'order-1', status: 'completed', items: [] })
     engineMocks.deduct.mockResolvedValue({ deducted: 1, skipped: 1 })
 
-    const job = makeJob({ payload: { order_id: 'order-1', location_id: 'loc-9' } })
+    const job = makeJob({ payload: { order_id: 'order-1', station: 'bar', location_id: 'loc-9' } })
     const result = await orderDeductionHandler(job)
 
-    expect(engineMocks.autoDeduct).not.toHaveBeenCalled()
     expect(engineMocks.sync).toHaveBeenCalledTimes(1)
     expect(engineMocks.sync).toHaveBeenCalledWith('order-1')
     expect(engineMocks.deduct).toHaveBeenCalledTimes(1)
@@ -71,7 +67,8 @@ describe('orderDeductionHandler', () => {
   })
 
   it('already-deducted orders (0 deducted, N skipped) complete successfully', async () => {
-    engineMocks.autoDeduct.mockResolvedValue({ deducted: 0, skipped: 2 })
+    engineMocks.sync.mockResolvedValue({ order_id: 'order-1', status: 'completed', items: [] })
+    engineMocks.deduct.mockResolvedValue({ deducted: 0, skipped: 2 })
 
     await expect(orderDeductionHandler(makeJob())).resolves.toEqual({ deducted: 0, skipped: 2 })
   })
@@ -79,11 +76,24 @@ describe('orderDeductionHandler', () => {
   it('throws when order_id is missing from the payload (worker retries/dead-letters)', async () => {
     const job = makeJob({ payload: {} })
     await expect(orderDeductionHandler(job)).rejects.toThrow('order_deduction: order_id is required')
-    expect(engineMocks.autoDeduct).not.toHaveBeenCalled()
+    expect(engineMocks.sync).not.toHaveBeenCalled()
+  })
+
+  it('throws when location_id is missing so the worker retries/dead-letters visibly', async () => {
+    const job = makeJob({ payload: { order_id: 'order-1', station: 'kitchen' } })
+    await expect(orderDeductionHandler(job)).rejects.toThrow('order_deduction: location_id is required')
+    expect(engineMocks.sync).not.toHaveBeenCalled()
+  })
+
+  it('throws when the durable station is invalid', async () => {
+    const job = makeJob({ payload: { order_id: 'order-1', station: 'expo', location_id: 'loc-1' } })
+    await expect(orderDeductionHandler(job)).rejects.toThrow('station must be kitchen or bar')
+    expect(engineMocks.sync).not.toHaveBeenCalled()
   })
 
   it('propagates engine failures (e.g. insufficient stock) for the worker to retry', async () => {
-    engineMocks.autoDeduct.mockRejectedValue(new Error('Insufficient stock for product X'))
+    engineMocks.sync.mockResolvedValue({ order_id: 'order-1', status: 'completed', items: [] })
+    engineMocks.deduct.mockRejectedValue(new Error('Insufficient stock for product X'))
 
     await expect(orderDeductionHandler(makeJob())).rejects.toThrow('Insufficient stock for product X')
   })

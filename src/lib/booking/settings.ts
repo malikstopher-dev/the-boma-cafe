@@ -77,11 +77,11 @@ export async function getBookingSettings(): Promise<BookingSettings> {
   }
 
   return {
-    deposit_percentage: parseFloat(settings['booking:deposit_percentage']) || DEFAULTS.deposit_percentage,
-    tax_rate: parseFloat(settings['booking:tax_rate']) || DEFAULTS.tax_rate,
-    quote_validity_days: parseInt(settings['booking:quote_validity_days']) || DEFAULTS.quote_validity_days,
-    min_advance_days: parseInt(settings['booking:min_advance_days']) || DEFAULTS.min_advance_days,
-    max_advance_days: parseInt(settings['booking:max_advance_days']) || DEFAULTS.max_advance_days,
+    deposit_percentage: parseFloat(settings['booking:deposit_percentage'] ?? '') || DEFAULTS.deposit_percentage,
+    tax_rate: parseFloat(settings['booking:tax_rate'] ?? '') || DEFAULTS.tax_rate,
+    quote_validity_days: parseInt(settings['booking:quote_validity_days'] ?? '') || DEFAULTS.quote_validity_days,
+    min_advance_days: parseInt(settings['booking:min_advance_days'] ?? '') || DEFAULTS.min_advance_days,
+    max_advance_days: parseInt(settings['booking:max_advance_days'] ?? '') || DEFAULTS.max_advance_days,
     enabled: settings['booking:enabled'] !== 'false',
     auto_confirm: settings['booking:auto_confirm'] !== 'false',
     payments_enabled: settings['booking:payments_enabled'] === 'true',

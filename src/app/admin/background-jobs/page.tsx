@@ -122,6 +122,27 @@ export default function AdminBackgroundJobs() {
       ),
     },
     {
+      key: 'result',
+      header: 'Outcome',
+      cell: job => {
+        const details = job.result ?? (
+          job.error?.details && typeof job.error.details === 'object'
+            ? job.error.details as Record<string, unknown>
+            : null
+        )
+        if (job.job_type !== 'reservation_lifecycle' || !details) {
+          const message = typeof job.error?.message === 'string' ? job.error.message : null
+          return message ? <span className="text-red-400 text-xs">{message}</span> : null
+        }
+        return (
+          <span className="text-xs">
+            {String(details.processed ?? 0)}/{String(details.expected ?? 0)} processed
+            {Number(details.failed ?? 0) > 0 ? `, ${String(details.failed)} failed` : ''}
+          </span>
+        )
+      },
+    },
+    {
       key: 'created_at',
       header: 'Created',
       cell: job => (

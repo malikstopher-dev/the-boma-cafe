@@ -3,6 +3,7 @@ import { getInventoryClient } from '@/inventory/lib/db'
 import { defaultCostCentreNameForLocation, findCostCentreIdByName } from '@/inventory/lib/cost-centre'
 import type { ApiResponse, InventoryLocation } from '@/inventory/engine/types'
 import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
+import { isOrderStation } from '@/inventory/lib/station-location'
 
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryLocation[]>>> {
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const body = await request.json()
 
     const { name, code, description } = body
+    const orderStation = body.order_station === '' ? null : (body.order_station ?? null)
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
@@ -72,6 +74,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!code || typeof code !== 'string' || code.trim().length === 0) {
       return NextResponse.json(
         { error: { code: 'VALIDATION_ERROR', message: 'Location code is required' } },
+        { status: 400 },
+      )
+    }
+
+    if (orderStation !== null && !isOrderStation(orderStation)) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Order station must be kitchen, bar, or null' } },
         { status: 400 },
       )
     }
@@ -99,8 +108,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .insert({
         name: name.trim(),
         code: code.trim().toUpperCase(),
-        description: description ?? null,
-        cost_centre_id: costCentreId,
+          description: description ?? null,
+          cost_centre_id: costCentreId,
+          order_station: orderStation,
       })
       .select()
       .single()
@@ -108,7 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (error) {
       if (error.code === '23505') {
         return NextResponse.json(
-          { error: { code: 'CONFLICT', message: 'A location with this code already exists' } },
+          { error: { code: 'CONFLICT', message: 'A location with this code or order station mapping already exists' } },
           { status: 409 },
         )
       }

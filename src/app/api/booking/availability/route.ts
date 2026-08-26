@@ -15,13 +15,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
   }
 
-  // If specific venue area requested, do detailed check
-  if (venueAreaId) {
-    const result = await checkAvailability(venueAreaId, date, startTime, endTime, guests)
-    return NextResponse.json(result)
-  }
+  try {
+    // If specific venue area requested, do detailed check
+    if (venueAreaId) {
+      const result = await checkAvailability(venueAreaId, date, startTime, endTime, guests)
+      return NextResponse.json(result)
+    }
 
-  // Otherwise list all available areas
-  const slots = await getAvailableAreas(date, startTime, endTime, guests)
-  return NextResponse.json({ slots })
+    // Otherwise list all available areas
+    const slots = await getAvailableAreas(date, startTime, endTime, guests)
+    return NextResponse.json({ slots })
+  } catch {
+    // Availability errors must never be represented as an empty/available
+    // business result. The caller can retry once the authoritative read works.
+    return NextResponse.json({ error: 'Availability is temporarily unavailable' }, { status: 503 })
+  }
 }
