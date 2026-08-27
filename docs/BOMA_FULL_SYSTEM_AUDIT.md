@@ -407,7 +407,7 @@ Live evidence: H-08 rejected an invalid movement and an oversized decrease with 
 
 ### Batch 3: Route-level RBAC and privacy
 
-Status: **IMPLEMENTED LOCALLY - AWAITING DEPLOYMENT APPROVAL (2026-08-27)**
+Status: **FIXED - VERIFIED (2026-08-27)**
 
 Scope:
 
@@ -417,7 +417,11 @@ Scope:
 4. Push subscription identity ownership.
 5. Public CMS settings allowlist and staff roster minimization.
 
-Local checkpoint: exact owner/full_manager permissions now replace generic Admin/Kitchen guards across the scoped routes. Pricing/settings/manual-job inputs are allowlisted; background-job reads return redacted DTOs and retry/cancel/enqueue actions are audited. Public CMS settings are allowlisted and recursively sanitized; the public staff list returns only an opaque selector, name, role, and PIN availability. Voice uploads now verify conversation membership, MIME, size, and WebM bytes before a server-generated private upload; message reads sign both new storage paths and historical public URLs. Push registration/unregistration derives ownership from the validated staff identity and migration 116 provides atomic owner-preserving RPCs. Focused tests plus the full 488-test suite, both TypeScript checks, the 187-page build, migration dry run, and linked lint passed. Migration 116 remains unapplied; no Batch 3 commit, push, deployment, live probe, production data mutation, or worker restart has occurred.
+Local checkpoint: exact owner/full_manager permissions now replace generic Admin/Kitchen guards across the scoped routes. Pricing/settings/manual-job inputs are allowlisted; background-job reads return redacted DTOs and retry/cancel/enqueue actions are audited. Public CMS settings are allowlisted and recursively sanitized; the public staff list returns only an opaque selector, name, role, and PIN availability. Voice uploads verify conversation membership, MIME, size, and WebM bytes before a server-generated private upload; message reads sign both new storage paths and historical public URLs. Push registration/unregistration derives ownership from the validated staff identity and migration 116 provides atomic owner-preserving RPCs. Focused tests plus the full 488-test suite, both TypeScript checks, the 187-page build, migration dry run, and linked lint passed.
+
+Production gate: runtime commit `16db1ad` was pushed and Vercel deployment `dpl_Cd6DgHjUnXTDvZmkRa9gJZbVXYr2` became Ready and was aliased to `https://the-boma-cafe.vercel.app`. Migrations 116-118 are live. The first bounded probe exposed historical schema drift in `push_subscriptions`: migration history claimed migration 019, but `device_type` was absent and `user_id` was UUID instead of the tracked TEXT contract. Migration 117 restored `device_type`; a direct random-UUID insert proved there was no owner foreign key; migration 118 safely cast existing UUID values to text and restored the application contract. The targeted rerun then passed.
+
+Live evidence: the public CMS payload contained no blocked operational keys; public staff rows contained exactly `id`, `name`, `role`, and `has_pin`; owner/full_manager CMS access returned 200 while manager/assistant_manager returned 403; manager background-job access returned 403; owner cancellation succeeded, returned a redacted DTO, and wrote exactly one audit event; unsupported manual PDF enqueue returned 400. Kitchen push registration derived `KITCHEN`/`kitchen` from the validated cookie, rejected a foreign supplied owner, unregistered atomically, and made no Firebase send. `staff-media` is private, limited to 10 MB and `audio/webm`; malformed WebM returned 415 before any object upload. All tagged accounts, sessions, audit rows, jobs, push rows, conversations, and memberships were removed; residue checks returned zero.
 
 ### Batch 4: Convergence, metrics, offline, and UX
 
@@ -520,6 +524,16 @@ These are marked `UNRESOLVED`, not assumed healthy.
 - Reverting the worker without reverting the lease/outbox callers would break the live fencing contract; forward repair is preferred.
 - Re-enabling legacy payment, deduction, receipt, import, or direct-ledger fallbacks would reintroduce the verified defects and is not a safe rollback.
 
+## 19. Batch 3 Five-Gate Closeout
+
+| Gate | Result |
+|---|---|
+| Mission scope | Only route-level RBAC/privacy, background-job boundaries, public DTO minimization, private voice media, push ownership, migrations 116-118, deployment, bounded probes, cleanup, and evidence documentation were performed |
+| Mission lock | Existing order, inventory, booking, worker, metric-classification, `/inv`, and unrelated UI behavior were not changed |
+| Evidence | 488/488 tests, focused 17/17 tests, both TypeScript checks, 187-page build, synchronized migrations through 118, live cross-role/privacy/job/push/media probes, and zero residue passed |
+| Repository state | Runtime commit is `16db1ad`; only the three protected owner XLSX files remain untracked |
+| Deployment state | Migrations 116-118 live; Vercel Production Ready and aliased; no Firebase/provider send, no voice object upload, and no Oracle worker restart |
+
 ## Stop Point
 
-Batch 1 and Batch 2 are complete and `FIXED - VERIFIED`. Batch 3 remains inactive. Do not activate Batch 3 or another mission without explicit owner approval.
+Batches 1, 2, and 3 are complete and `FIXED - VERIFIED`. Batch 4 remains inactive. Do not activate Batch 4 or another mission without explicit owner approval.

@@ -3006,11 +3006,11 @@ Implement and deploy H-08 through H-14 only: atomic inventory movements, fail-cl
 
 ---
 
-## Session: Full-System Audit Batch 3 Local Checkpoint (2026-08-27)
+## Session: Full-System Audit Batch 3 Cutover (2026-08-27)
 
 ### Objective
 
-Implement Batch 3 route-level RBAC and privacy locally, verify it, and stop before deployment approval.
+Implement and deploy Batch 3 route-level RBAC/privacy after explicit owner approval, verify it with a bounded free-tier-conscious production probe, clean all tagged data, and stop before Batch 4.
 
 ### Implementation
 
@@ -3032,9 +3032,25 @@ Implement Batch 3 route-level RBAC and privacy locally, verify it, and stop befo
 - `git diff --check` reported only line-ending notices.
 - The two Vercel Error deployments visible during the session were old Batch 1 attempts from 2026-08-26 failing on the already-fixed booking-submit Zod narrowing issue. The two newest production deployments are Ready and the canonical alias points to the latest Ready deployment.
 
+### Production cutover
+
+- Runtime commit `16db1ad` was pushed to `main`. Migration 116 applied successfully and local/remote history matched through 116.
+- Git integration built deployment `dpl_Cd6DgHjUnXTDvZmkRa9gJZbVXYr2`; it became Ready and was aliased to `https://the-boma-cafe.vercel.app`.
+- The first bounded live probe found production schema drift in `push_subscriptions`: `device_type` was absent despite migration 019 declaring it, and `user_id` was UUID instead of migration 019's TEXT contract. Migration 117 restored the missing column. A direct random-UUID insert proved no owner FK existed; migration 118 safely cast existing UUID values to text and restored the tracked/application contract. Both are live.
+- Resource discipline: no browser/page polling, Firebase send, provider notification, voice-object upload, broad table scan, or Oracle worker restart was used. Probes were exact route/RPC checks with tagged rows and immediate cleanup.
+
+### Live verification
+
+- Public CMS contained no blocked operational setting keys; public staff rows exposed exactly `id`, `name`, `role`, and `has_pin`.
+- Owner/full_manager CMS reads returned 200; manager/assistant_manager returned 403.
+- Manager background-job reads returned 403. Owner cancellation returned a redacted DTO and created exactly one audit event. Unsupported manual PDF enqueue returned 400. The future-scheduled probe job was cancelled before any worker claim.
+- Kitchen push registration rejected a foreign client owner, stored server-derived `KITCHEN`/`kitchen`, unregistered atomically, and sent no Firebase message.
+- `staff-media` is private with a 10 MB `audio/webm` allowlist. A membership-authorized malformed WebM returned 415 before Storage, so no object was created.
+- Tagged accounts, sessions, audit rows, background job, push token, conversation, and membership were removed; final residue checks returned zero.
+
 ### Stop state
 
-- Batch 3 is implemented and verified locally only.
-- Migration 116 is not applied. No Batch 3 commit, push, Vercel deployment, live production probe, production mutation, or Oracle worker restart occurred.
+- Batch 3 is `FIXED - VERIFIED`; migrations are synchronized through 118 and Vercel Production is Ready.
+- No rollback was required. The Oracle worker was not restarted because Batch 3 does not change its bundle or job handlers.
 - The three owner XLSX files remain untouched and untracked.
-- Await explicit owner approval before the controlled cutover.
+- Batch 4 remains inactive; do not start another mission without explicit owner approval.
