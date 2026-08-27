@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { ShoppingCart, Trash2 } from 'lucide-react'
 import { useCart } from '@/lib/cart'
 import { formatWhatsAppUrl, generateOrderMessage, BUSINESS_INFO } from '@/lib/whatsappConfig'
-import { enqueueOrder, syncPendingOrders } from '@/lib/offline-queue'
+import { enqueueOrder } from '@/lib/offline-queue'
 import type { OrderType } from '@/lib/pos/types'
 import styles from './CartButton.module.css'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
@@ -40,7 +40,7 @@ export default function CartButton() {
   })
   const [orderRef, setOrderRef] = useState('')
   const [orderToken, setOrderToken] = useState('')
-  const [pendingSync, setPendingSync] = useState(0)
+  const [queuedOrderId, setQueuedOrderId] = useState('')
   const lastSubmitRef = useRef(0)
   const nameRef = useRef<HTMLInputElement>(null)
   const phoneRef = useRef<HTMLInputElement>(null)
@@ -58,9 +58,6 @@ export default function CartButton() {
 
   useEffect(() => {
     setIsClient(true)
-    syncPendingOrders().then(r => {
-      if (r.synced > 0 || r.failed > 0) setPendingSync(r.synced)
-    })
   }, [])
 
   const validateForm = useCallback((): boolean => {
@@ -146,7 +143,7 @@ export default function CartButton() {
     setModalTitle('')
   }, [])
 
-  const submitOrder = useCallback(async (): Promise<{ ref: string; token: string }> => {
+  const submitOrder = useCallback(async (): Promise<{ ref: string; token: string; queuedId?: string }> => {
     const now = Date.now()
     if (now - lastSubmitRef.current < SUBMISSION_COOLDOWN_MS) {
       throw new Error('Please wait before submitting again')
@@ -166,6 +163,7 @@ export default function CartButton() {
       ...(item?.selectedAddOns && item.selectedAddOns.length > 0
         ? { selected_add_ons: item.selectedAddOns }
         : {}),
+      ...(item?.notes?.trim() ? { notes: item.notes.trim() } : {}),
     }))
 
     const cName = customerInfo?.name?.trim() || 'Guest'
@@ -182,23 +180,33 @@ export default function CartButton() {
       requested_time: cRequestedTime,
       idempotency_key: idempotencyKey,
       items: itemsPayload,
+      ...(customerInfo?.notes?.trim() ? { order_notes: customerInfo.notes.trim() } : {}),
       ...(cOrderType === 'dine-in' && cTableNumber ? { table_number: cTableNumber } : {}),
       ...(cOrderType === 'delivery' && cDeliveryAddress ? { delivery_address: cDeliveryAddress } : {}),
     }
 
-    const res = await fetch('/api/supabase/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    let res: Response
+    try {
+      res = await fetch('/api/supabase/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    } catch {
+      const queuedId = enqueueOrder(payload)
+      return { ref: '', token: '', queuedId }
+    }
 
     if (!res.ok) {
-      enqueueOrder(payload)
       let errorMsg = 'Failed to save order'
       try {
         const errorData = await res.json()
         errorMsg = errorData?.error || errorMsg
       } catch { /* ignore parse error */ }
+      if (res.status === 503) {
+        const queuedId = enqueueOrder(payload)
+        return { ref: '', token: '', queuedId }
+      }
       throw new Error(errorMsg)
     }
 
@@ -219,6 +227,7 @@ export default function CartButton() {
     closeCart()
     setOrderRef('')
     setOrderToken('')
+    setQueuedOrderId('')
     setOrderError('')
     setFieldErrors({})
     setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
@@ -281,6 +290,7 @@ export default function CartButton() {
       const access = await submitOrder()
       setOrderRef(access.ref)
       setOrderToken(access.token)
+      setQueuedOrderId(access.queuedId ?? '')
 
       const cName = customerInfo?.name ?? ''
       const cPhone = customerInfo?.phone ?? ''
@@ -332,6 +342,7 @@ export default function CartButton() {
       const access = await submitOrder()
       setOrderRef(access.ref)
       setOrderToken(access.token)
+      setQueuedOrderId(access.queuedId ?? '')
 
       clearCart()
       setCustomerInfo({ name: '', phone: '', requestedTime: '', notes: '', tableNumber: '', deliveryAddress: '' })
@@ -344,7 +355,7 @@ export default function CartButton() {
     }
   }
 
-  const showOrderSuccess = !!orderRef && items.length === 0
+  const showOrderSuccess = (!!orderRef || !!queuedOrderId) && items.length === 0
 
   // Hide on staff/admin/waiter pages (they have their own POS)
   if (pathname.startsWith('/staff') || pathname.startsWith('/admin') || pathname.startsWith('/waiter')) return null
@@ -391,16 +402,16 @@ export default function CartButton() {
                   ✓
                 </div>
                 <h3 style={{ color: 'var(--dark-brown)', marginBottom: '0.5rem', fontSize: '1.35rem' }}>
-                  Order Placed!
+                  {queuedOrderId ? 'Order Saved Offline' : 'Order Placed!'}
                 </h3>
                 <p style={{ fontFamily: 'monospace', fontSize: '1.4rem', fontWeight: 700, color: 'var(--warm)', marginBottom: '1rem' }}>
-                  {orderRef}
+                  {queuedOrderId ? `Pending ${queuedOrderId.slice(0, 8)}` : orderRef}
                 </p>
                 <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                  Save your order reference to track the status.
+                  {queuedOrderId ? 'Keep this browser open. The order will sync once the connection returns.' : 'Save your order reference to track the status.'}
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <a
+                  {!queuedOrderId && <a
                     href={`/track-order?ref=${encodeURIComponent(orderRef)}${orderToken ? `#token=${encodeURIComponent(orderToken)}` : ''}`}
                     style={{
                       display: 'block', padding: '0.85rem', borderRadius: '12px',
@@ -409,7 +420,7 @@ export default function CartButton() {
                     }}
                   >
                     Track Order
-                  </a>
+                  </a>}
                   <button
                     onClick={resetCart}
                     style={{

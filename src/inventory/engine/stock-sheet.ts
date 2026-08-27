@@ -4,6 +4,7 @@
 import { getInventoryClient } from '../lib/db'
 import { resolveLocationId } from '../lib/location'
 import type { InventoryType } from './types'
+import { movementAmounts } from '../lib/movement-classification'
 
 export interface StockSheetRow {
   productId: string
@@ -17,9 +18,12 @@ export interface StockSheetRow {
   reorderQuantity: number | null
   opening: number
   received: number
+  sold: number
+  internalConsumption: number
   used: number
   waste: number
   adjustments: number
+  physicalCountVariance: number
   closing: number
   unitCost: number
   value: number
@@ -28,9 +32,12 @@ export interface StockSheetRow {
 export interface StockSheetTotals {
   opening: number
   received: number
+  sold: number
+  internalConsumption: number
   used: number
   waste: number
   adjustments: number
+  physicalCountVariance: number
   closing: number
   value: number
 }
@@ -44,22 +51,17 @@ export interface StockSheetResult {
   locationName: string | null
 }
 
-const WASTE_TYPES = new Set(['waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'breakage'])
-const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff'])
-const PRODUCED_TYPES = new Set(['production'])
-const RECEIVED_TYPES = new Set(['purchase', 'return'])
-
-function bucket(qty: number, type: string): { received: number; used: number; waste: number; adjustments: number } {
-  const t = (type || '').toLowerCase()
-  const q = Number(qty) || 0
-  const abs = Math.abs(q)
-
-  if (RECEIVED_TYPES.has(t)) return { received: q > 0 ? q : 0, used: 0, waste: 0, adjustments: 0 }
-  if (WASTE_TYPES.has(t)) return { received: 0, used: 0, waste: q < 0 ? abs : 0, adjustments: 0 }
-  if (PRODUCED_TYPES.has(t)) return { received: q > 0 ? q : 0, used: q < 0 ? abs : 0, waste: 0, adjustments: 0 }
-  if (USED_TYPES.has(t)) return { received: 0, used: q < 0 ? abs : 0, waste: 0, adjustments: 0 }
-  // structural / count / transfer / conversion / opening / closing
-  return { received: 0, used: 0, waste: 0, adjustments: q }
+function bucket(qty: number, type: string): { received: number; sold: number; internalConsumption: number; used: number; waste: number; adjustments: number; physicalCountVariance: number } {
+  const amounts = movementAmounts(type, qty)
+  return {
+    received: amounts.inbound,
+    sold: amounts.sold,
+    internalConsumption: amounts.internalConsumption,
+    used: amounts.operationalUsed,
+    waste: amounts.wasteLoss,
+    adjustments: amounts.adjustment,
+    physicalCountVariance: amounts.physicalCountVariance,
+  }
 }
 
 export async function getStockSheet(
@@ -89,8 +91,8 @@ export async function getStockSheet(
     getInventoryClient().from('inventory_locations').select('id, name').eq('is_active', true),
   ])
 
-  if (openingRes.error || movementsRes.error) {
-    throw new Error(`Failed to aggregate stock movements: ${openingRes.error?.message ?? movementsRes.error?.message}`)
+  if (openingRes.error || movementsRes.error || locRes.error) {
+    throw new Error(`Failed to aggregate stock movements: ${openingRes.error?.message ?? movementsRes.error?.message ?? locRes.error?.message}`)
   }
 
   const openingAggs = (openingRes.data ?? []) as OpeningRow[]
@@ -119,10 +121,11 @@ export async function getStockSheet(
     reorderQuantity: number | null
   }>()
   if (productIds.size > 0) {
-    const { data: products } = await getInventoryClient()
+    const { data: products, error: productsError } = await getInventoryClient()
       .from('inventory_products')
       .select('id, name, sku, inventory_type, reorder_threshold, reorder_quantity, preferred_supplier_id, inventory_categories(name), inventory_suppliers(name), inventory_product_uoms(is_base, inventory_uoms(name))')
       .in('id', [...productIds])
+    if (productsError) throw new Error(`Failed to load stock-sheet products: ${productsError.message}`)
     for (const p of (products ?? []) as unknown as Array<{
       id: string
       name: string
@@ -151,7 +154,7 @@ export async function getStockSheet(
   }
 
   // Latest unit cost per product (most recent purchase price up to the end of the range)
-  const { data: latestCosts } = await getInventoryClient()
+  const { data: latestCosts, error: costsError } = await getInventoryClient()
     .from('inventory_transactions')
     .select('product_id, unit_cost, created_at')
     .eq('transaction_type', 'purchase')
@@ -159,16 +162,17 @@ export async function getStockSheet(
     .lt('created_at', endIso)
     .order('created_at', { ascending: false })
     .limit(2000)
+  if (costsError) throw new Error(`Failed to load stock-sheet costs: ${costsError.message}`)
   const costMap = new Map<string, number>()
   for (const c of (latestCosts ?? []) as unknown as Array<{ product_id: string; unit_cost: number | null }>) {
     if (!costMap.has(c.product_id)) costMap.set(c.product_id, Number(c.unit_cost) ?? 0)
   }
 
-  const agg = new Map<string, { opening: number; received: number; used: number; waste: number; adjustments: number }>()
+  const agg = new Map<string, { opening: number; received: number; sold: number; internalConsumption: number; used: number; waste: number; adjustments: number; physicalCountVariance: number }>()
   const ensure = (id: string) => {
     let row = agg.get(id)
     if (!row) {
-      row = { opening: openingMap.get(id) ?? 0, received: 0, used: 0, waste: 0, adjustments: 0 }
+      row = { opening: openingMap.get(id) ?? 0, received: 0, sold: 0, internalConsumption: 0, used: 0, waste: 0, adjustments: 0, physicalCountVariance: 0 }
       agg.set(id, row)
     }
     return row
@@ -184,16 +188,19 @@ export async function getStockSheet(
     const pos = bucket(Number(a.positive_qty) ?? 0, a.transaction_type)
     const neg = bucket(Number(a.negative_qty) ?? 0, a.transaction_type)
     row.received += pos.received + neg.received
+    row.sold += pos.sold + neg.sold
+    row.internalConsumption += pos.internalConsumption + neg.internalConsumption
     row.used += pos.used + neg.used
     row.waste += pos.waste + neg.waste
     row.adjustments += pos.adjustments + neg.adjustments
+    row.physicalCountVariance += pos.physicalCountVariance + neg.physicalCountVariance
   }
 
   const rows: StockSheetRow[] = []
   for (const [productId, v] of agg) {
     const meta = productMeta.get(productId)
     if (inventoryType && meta?.inventoryType !== inventoryType) continue
-    const closing = v.opening + v.received - v.used - v.waste + v.adjustments
+    const closing = v.opening + v.received - v.used - v.waste + v.adjustments + v.physicalCountVariance
     const unitCost = costMap.get(productId) ?? 0
     rows.push({
       productId,
@@ -207,9 +214,12 @@ export async function getStockSheet(
       reorderQuantity: meta?.reorderQuantity ?? null,
       opening: v.opening,
       received: v.received,
+      sold: v.sold,
+      internalConsumption: v.internalConsumption,
       used: v.used,
       waste: v.waste,
       adjustments: v.adjustments,
+      physicalCountVariance: v.physicalCountVariance,
       closing,
       unitCost,
       value: closing * unitCost,
@@ -222,13 +232,16 @@ export async function getStockSheet(
     (acc, r) => ({
       opening: acc.opening + r.opening,
       received: acc.received + r.received,
+      sold: acc.sold + r.sold,
+      internalConsumption: acc.internalConsumption + r.internalConsumption,
       used: acc.used + r.used,
       waste: acc.waste + r.waste,
       adjustments: acc.adjustments + r.adjustments,
+      physicalCountVariance: acc.physicalCountVariance + r.physicalCountVariance,
       closing: acc.closing + r.closing,
       value: acc.value + r.value,
     }),
-    { opening: 0, received: 0, used: 0, waste: 0, adjustments: 0, closing: 0, value: 0 },
+    { opening: 0, received: 0, sold: 0, internalConsumption: 0, used: 0, waste: 0, adjustments: 0, physicalCountVariance: 0, closing: 0, value: 0 },
   )
 
   const filteredRows = inventoryType ? rows.filter(r => r.inventoryType === inventoryType) : rows

@@ -38,24 +38,27 @@ export async function getDepletionForecast(
     productsQuery = productsQuery.eq('inventory_type', inventoryType)
   }
 
-  const { data: products } = await productsQuery
+  const { data: products, error: productsError } = await productsQuery
+  if (productsError) throw new Error(`Failed to load forecast products: ${productsError.message}`)
 
-  const { data: balances } = await supabase
+  const { data: balances, error: balancesError } = await supabase
     .from('inventory_product_balances')
     .select('product_id, balance')
     .eq('location_id', locationId)
+  if (balancesError) throw new Error(`Failed to load forecast balances: ${balancesError.message}`)
 
   const balanceMap = new Map<string, number>()
   for (const b of (balances ?? []) as { product_id: string; balance: number }[]) {
     balanceMap.set(b.product_id, Number(b.balance))
   }
 
-  const { data: saleTxns } = await supabase
+  const { data: saleTxns, error: salesError } = await supabase
     .from('inventory_transactions')
     .select('product_id, quantity')
     .in('transaction_type', SALE_TYPES)
     .eq('location_id', locationId)
     .gte('created_at', since)
+  if (salesError) throw new Error(`Failed to load forecast sales: ${salesError.message}`)
 
   const usageMap = new Map<string, number>()
   for (const t of (saleTxns ?? []) as { product_id: string; quantity: number }[]) {
@@ -63,10 +66,11 @@ export async function getDepletionForecast(
     usageMap.set(t.product_id, current + Math.abs(Number(t.quantity)))
   }
 
-  const { data: rules } = await supabase
+  const { data: rules, error: rulesError } = await supabase
     .from('inventory_reorder_rules')
     .select('product_id, min_level, lead_time_days')
     .eq('location_id', locationId)
+  if (rulesError) throw new Error(`Failed to load forecast rules: ${rulesError.message}`)
 
   const ruleMap = new Map<string, { minLevel: number; leadTimeDays: number }>()
   for (const r of (rules ?? []) as { product_id: string; min_level: number; lead_time_days: number }[]) {
@@ -156,7 +160,8 @@ export async function getConsumptionPattern(
     txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data: txns } = await txnQuery
+  const { data: txns, error } = await txnQuery
+  if (error) throw new Error(`Failed to load consumption patterns: ${error.message}`)
 
   const dayTotals = new Array<number>(7).fill(0)
   const hourlyTotals = new Array<number>(24).fill(0)

@@ -1,4 +1,5 @@
 import { getInventoryClient } from '../lib/db'
+import { movementAmounts } from '../lib/movement-classification'
 import { resolveLocationId } from '../lib/location'
 import { getAlerts } from './dashboard'
 
@@ -190,10 +191,6 @@ export interface RawTxn {
   inventory_type?: string | null
 }
 
-const PURCHASE_TYPES = new Set(['purchase', 'return'])
-const USED_TYPES = new Set(['sale', 'sale_bottle', 'comp', 'staff', 'production', 'waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'stolen', 'gas_usage', 'breakage'])
-const WASTE_TYPES = new Set(['waste', 'expiry_loss', 'spillage', 'theft', 'donation', 'breakage'])
-
 function typeGroup(t: string | null | undefined): StockGroup {
   const v = (t ?? '').toUpperCase()
   if (v === 'FOOD') return 'food'
@@ -218,17 +215,16 @@ export function summarizeTxnsByGroup(txns: RawTxn[]): Record<StockGroup, GroupTo
   }
 
   for (const t of txns) {
-    const type = (t.transaction_type || '').toLowerCase()
     const qty = Number(t.quantity) || 0
     const cost = Number(t.unit_cost) || 0
-    const val = Math.abs(qty) * cost
+    const amounts = movementAmounts(t.transaction_type, qty)
     const row = out[typeGroup(t.inventory_type)]
 
     if (row) {
-      if (PURCHASE_TYPES.has(type) && qty > 0) row.purchased += val
-      if (USED_TYPES.has(type) && qty < 0) row.used += val
-      if (WASTE_TYPES.has(type) && qty < 0) row.wastage += val
-      if (type === 'adjustment') row.adjustments += val
+      row.purchased += amounts.inbound * cost
+      row.used += amounts.operationalUsed * cost
+      row.wastage += amounts.wasteLoss * cost
+      row.adjustments += Math.abs(amounts.adjustment) * cost
     }
   }
 
@@ -242,15 +238,14 @@ export function summarizeTxns(txns: RawTxn[]): { purchased: number; used: number
   let adjustments = 0
 
   for (const t of txns) {
-    const type = (t.transaction_type || '').toLowerCase()
     const qty = Number(t.quantity) || 0
     const cost = Number(t.unit_cost) || 0
-    const val = Math.abs(qty) * cost
+    const amounts = movementAmounts(t.transaction_type, qty)
 
-    if (PURCHASE_TYPES.has(type) && qty > 0) purchased += val
-    if (USED_TYPES.has(type) && qty < 0) used += val
-    if (WASTE_TYPES.has(type) && qty < 0) wastage += val
-    if (type === 'adjustment') adjustments += val
+    purchased += amounts.inbound * cost
+    used += amounts.operationalUsed * cost
+    wastage += amounts.wasteLoss * cost
+    adjustments += Math.abs(amounts.adjustment) * cost
   }
 
   return { purchased, used, wastage, adjustments }
@@ -264,7 +259,7 @@ export async function fetchTxns(start: string, end: string): Promise<RawTxn[]> {
     .gte('created_at', start)
     .lt('created_at', end)
 
-  if (error) return []
+  if (error) throw new Error(`Failed to load owner-dashboard movements: ${error.message}`)
   return ((data ?? []) as unknown as any[]).map(t => ({
     quantity: t.quantity,
     unit_cost: t.unit_cost,
@@ -283,7 +278,7 @@ async function fetchTxnsByLocation(locationId: string, start: string, end: strin
     .gte('created_at', start)
     .lt('created_at', end)
 
-  if (error) return []
+  if (error) throw new Error(`Failed to load location movements: ${error.message}`)
   return ((data ?? []) as unknown as any[]).map(t => ({
     quantity: t.quantity,
     unit_cost: t.unit_cost,
@@ -663,7 +658,7 @@ export async function getOwnerDashboardLegacy(
     row.pct = totalValue > 0 ? Math.round((row.value / totalValue) * 1000) / 10 : 0
     const mv = await fetchTxnsByLocation(row.locationId, range.start, range.end)
     const sums = summarizeTxns(mv)
-    row.movement = sums.purchased - sums.used
+    row.movement = sums.purchased - sums.used - sums.wastage
   }
 
   const payables = await supplierPayables()
@@ -761,7 +756,7 @@ export async function getOwnerDashboardLegacy(
 }
 
 function isMissingOwnerDashboardRpc(error: { code?: string | null; message?: string | null }): boolean {
-  return error.code === 'PGRST202' || error.message?.includes('owner_dashboard') === true && error.message?.includes('schema cache') === true
+  return error.code === 'PGRST202' || error.message?.includes('owner_dashboard_canonical') === true && error.message?.includes('schema cache') === true
 }
 
 function normalizeLegacyAlertPresentation(payload: any): void {
@@ -805,7 +800,7 @@ export async function getOwnerDashboard(
   customTo?: string | null,
 ): Promise<OwnerDashboardData> {
   const range = getOwnerRange(period, customFrom, customTo)
-  const { data, error } = await getInventoryClient().rpc('owner_dashboard_consistent', {
+  const { data, error } = await getInventoryClient().rpc('owner_dashboard_canonical', {
     p_start: range.start,
     p_end: range.end,
     p_previous_start: range.previousStart,
@@ -851,12 +846,11 @@ async function buildMovement(range: OwnerRange): Promise<OwnerMovementPoint[]> {
   for (const t of txns) {
     const day = t.created_at.slice(0, 10)
     const entry = byDay.get(day) ?? { purchased: 0, used: 0 }
-    const type = (t.transaction_type || '').toLowerCase()
-    const qty = Math.abs(t.quantity)
+    const amounts = movementAmounts(t.transaction_type, t.quantity)
     const cost = Number(t.unit_cost) || 0
 
-    if (PURCHASE_TYPES.has(type) && t.quantity > 0) entry.purchased += qty * cost
-    if (USED_TYPES.has(type) && t.quantity < 0) entry.used += qty * cost
+    entry.purchased += amounts.inbound * cost
+    entry.used += amounts.operationalUsed * cost
     byDay.set(day, entry)
   }
 

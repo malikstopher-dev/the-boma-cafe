@@ -86,10 +86,9 @@ export async function DELETE(request: NextRequest) {
   const sessionToken = request.cookies.get('boma_staff_session')?.value
 
   if (sessionToken) {
+    const session = await validateSession(sessionToken).catch(() => null)
     await endSession(sessionToken, 'user_logout')
 
-    // Get staff ID for audit
-    const session = await validateSession(sessionToken).catch(() => null)
     if (session) {
       await logAuthAudit(session.staffId, 'auth.logout', {
         employee_id: session.employeeId,

@@ -1,5 +1,6 @@
 import { getInventoryClient } from '../lib/db'
 import { getReconciliation, getInventoryValue } from './reconciliation'
+import { movementAmounts, SOLD_TYPES } from '../lib/movement-classification'
 
 export interface DashboardSummary {
   inventoryValue: number
@@ -70,14 +71,17 @@ export async function getDashboardSummary(locationId: string, inventoryType?: In
     activeProductsQuery = activeProductsQuery.eq('inventory_type', inventoryType)
   }
 
-  const { count: totalProducts } = await productsQuery
+  const { count: totalProducts, error: countError } = await productsQuery
+  if (countError) throw new Error(`Failed to load dashboard product count: ${countError.message}`)
 
-  const { data: activeProducts } = await activeProductsQuery
+  const { data: activeProducts, error: productsError } = await activeProductsQuery
+  if (productsError) throw new Error(`Failed to load dashboard products: ${productsError.message}`)
 
-  const { data: balanceRows } = await supabase
+  const { data: balanceRows, error: balanceError } = await supabase
     .from('inventory_product_balances')
     .select('product_id, balance')
     .eq('location_id', locationId)
+  if (balanceError) throw new Error(`Failed to load dashboard balances: ${balanceError.message}`)
 
   const balanceByProduct = new Map<string, number>()
   for (const row of balanceRows ?? []) {
@@ -104,7 +108,8 @@ export async function getDashboardSummary(locationId: string, inventoryType?: In
     txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data: todayTxns } = await txnQuery
+  const { data: todayTxns, error: txnsError } = await txnQuery
+  if (txnsError) throw new Error(`Failed to load today's movements: ${txnsError.message}`)
 
   const todayTxnCount = todayTxns?.length ?? 0
 
@@ -112,12 +117,10 @@ export async function getDashboardSummary(locationId: string, inventoryType?: In
   let todaySales = 0
   let todayLoss = 0
   for (const t of todayTxns ?? []) {
-    const qty = Number(t.quantity)
-    if (t.transaction_type === 'purchase' && qty > 0) todayPurchases += qty
-    if (t.transaction_type === 'sale' && qty < 0) todaySales += Math.abs(qty)
-    if (['breakage', 'spillage', 'waste', 'theft'].includes(t.transaction_type) && qty < 0) {
-      todayLoss += Math.abs(qty)
-    }
+    const amounts = movementAmounts(t.transaction_type, Number(t.quantity))
+    todayPurchases += amounts.inbound
+    todaySales += amounts.sold
+    todayLoss += amounts.wasteLoss
   }
 
   const inventoryValue = await getInventoryValue(locationId)
@@ -211,17 +214,19 @@ export async function getRecentActivity(locationId: string, limit = 10, inventor
     txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data } = await txnQuery
+  const { data, error } = await txnQuery
     .order('created_at', { ascending: false })
     .limit(limit)
 
+  if (error) throw new Error(`Failed to load recent activity: ${error.message}`)
   if (!data) return []
 
   const productIds = [...new Set(data.map(t => t.product_id))]
-  const { data: products } = await supabase
+  const { data: products, error: productsError } = await supabase
     .from('inventory_products')
     .select('id, name')
     .in('id', productIds)
+  if (productsError) throw new Error(`Failed to load activity products: ${productsError.message}`)
 
   const productMap = new Map((products ?? []).map(p => [p.id, p.name]))
 
@@ -242,15 +247,16 @@ export async function getFastMovers(locationId: string, days = 30, limit = 10, i
     .from('inventory_transactions')
     .select('product_id, quantity, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
-    .eq('transaction_type', 'sale')
+    .in('transaction_type', [...SOLD_TYPES])
     .gte('created_at', since)
 
   if (inventoryType) {
     saleQuery = saleQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data } = await saleQuery
+  const { data, error } = await saleQuery
 
+  if (error) throw new Error(`Failed to load fast movers: ${error.message}`)
   if (!data) return []
 
   const sales = new Map<string, number>()
@@ -261,10 +267,13 @@ export async function getFastMovers(locationId: string, days = 30, limit = 10, i
   const sorted = [...sales.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit)
   const productIds = sorted.map(([id]) => id)
 
-  const { data: products } = await supabase
+  if (productIds.length === 0) return []
+
+  const { data: products, error: productsError } = await supabase
     .from('inventory_products')
     .select('id, name')
     .in('id', productIds)
+  if (productsError) throw new Error(`Failed to load fast-mover products: ${productsError.message}`)
 
   const productMap = new Map((products ?? []).map(p => [p.id, p.name]))
 
@@ -288,20 +297,22 @@ export async function getSlowMovers(locationId: string, days = 30, limit = 10, i
     prodQuery = prodQuery.eq('inventory_type', inventoryType)
   }
 
-  const { data: allProducts } = await prodQuery
+  const { data: allProducts, error: productsError } = await prodQuery
+  if (productsError) throw new Error(`Failed to load slow-mover products: ${productsError.message}`)
 
   let saleQuery = supabase
     .from('inventory_transactions')
     .select('product_id, quantity, inventory_products!inner(inventory_type)')
     .eq('location_id', locationId)
-    .eq('transaction_type', 'sale')
+    .in('transaction_type', [...SOLD_TYPES])
     .gte('created_at', since)
 
   if (inventoryType) {
     saleQuery = saleQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data: sales } = await saleQuery
+  const { data: sales, error: salesError } = await saleQuery
+  if (salesError) throw new Error(`Failed to load slow movers: ${salesError.message}`)
 
   const salesMap = new Map<string, number>()
   for (const t of sales ?? []) {
@@ -334,8 +345,9 @@ export async function getTodayTransactions(locationId: string, inventoryType?: I
     txnQuery = txnQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data } = await txnQuery
+  const { data, error } = await txnQuery
 
+  if (error) throw new Error(`Failed to load today's transactions: ${error.message}`)
   if (!data) return []
 
   const groups = new Map<string, { count: number; totalQty: number }>()

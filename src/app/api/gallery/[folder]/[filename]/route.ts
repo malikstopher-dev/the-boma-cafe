@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
+import { getAdminClient } from '@/lib/supabase';
+import { PUBLIC_MEDIA_BUCKET, removeStorageObjectOrQueue } from '@/lib/storage/media';
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ folder: string; filename: string }> }
 ) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'media.write')
   if (authError) return authError
 
   const { folder, filename: rawFilename } = await params;
@@ -30,21 +30,19 @@ export async function DELETE(
     return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
   }
 
-  const galleryDir = path.join(process.cwd(), 'public', 'gallery', folder);
-  const filePath = path.join(galleryDir, filename);
-
-  // Verify resolved path is within the gallery directory
-  if (!filePath.startsWith(galleryDir)) {
-    return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
-  }
-
   try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      return NextResponse.json({ success: true });
-    } else {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    const storagePath = `gallery/${folder}/${filename}`;
+    const { data, error } = await getAdminClient().storage
+      .from(PUBLIC_MEDIA_BUCKET)
+      .list(`gallery/${folder}`, { search: filename, limit: 10 });
+    if (error) throw error;
+    if (!(data || []).some(file => file.name === filename)) {
+      return NextResponse.json({ error: 'Stored file not found; bundled gallery assets are immutable' }, { status: 404 });
     }
+    if (!(await removeStorageObjectOrQueue(PUBLIC_MEDIA_BUCKET, storagePath))) {
+      return NextResponse.json({ error: 'Failed to delete or schedule cleanup' }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Delete error:', error);
     return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 });

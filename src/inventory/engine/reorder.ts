@@ -20,7 +20,8 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
     rulesQuery = rulesQuery.eq('inventory_products.inventory_type', inventoryType)
   }
 
-  const { data: rules } = await rulesQuery
+  const { data: rules, error: rulesError } = await rulesQuery
+  if (rulesError) throw new Error(`Failed to load reorder rules: ${rulesError.message}`)
 
   const ruleList = (rules ?? []) as any[]
 
@@ -29,22 +30,24 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
   for (const rule of ruleList) {
     const productId = rule.product_id
 
-    const { data: balanceData } = await supabase
+    const { data: balanceData, error: balanceError } = await supabase
       .from('inventory_product_balances')
       .select('balance')
       .eq('product_id', productId)
       .eq('location_id', locationId)
       .maybeSingle()
+    if (balanceError) throw new Error(`Failed to load reorder balance: ${balanceError.message}`)
 
     const currentStock = balanceData ? Number(balanceData.balance) : 0
 
-    const { data: saleTxns } = await supabase
+    const { data: saleTxns, error: salesError } = await supabase
       .from('inventory_transactions')
       .select('quantity')
       .eq('product_id', productId)
       .eq('location_id', locationId)
       .in('transaction_type', ['sale', 'sale_bottle'])
       .gte('created_at', since)
+    if (salesError) throw new Error(`Failed to load reorder sales: ${salesError.message}`)
 
     const totalSold = (saleTxns ?? []).reduce((s, t) => s + Math.abs(Number(t.quantity)), 0)
     const dailyUsage = days > 0 ? totalSold / days : 0
@@ -73,11 +76,12 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
     if (currentStock < targetLevel || urgency !== 'low') {
       let preferredSupplierName: string | null = null
       if (rule.preferred_supplier_id) {
-        const { data: supplier } = await supabase
+        const { data: supplier, error: supplierError } = await supabase
           .from('inventory_suppliers')
           .select('name')
           .eq('id', rule.preferred_supplier_id)
           .maybeSingle()
+        if (supplierError) throw new Error(`Failed to load preferred supplier: ${supplierError.message}`)
         preferredSupplierName = supplier?.name ?? null
       }
 
@@ -108,10 +112,11 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
   // (min_level 0, lead_time_days 3) so both views surface the same attention set.
   // Products WITH any rule (incl. auto_suggest=false) stay excluded — a
   // deliberate disable is honoured.
-  const { data: anyRules } = await supabase
+  const { data: anyRules, error: anyRulesError } = await supabase
     .from('inventory_reorder_rules')
     .select('product_id')
     .eq('location_id', locationId)
+  if (anyRulesError) throw new Error(`Failed to load product reorder coverage: ${anyRulesError.message}`)
   const ruledProductIds = new Set((anyRules ?? []).map((r: { product_id: string }) => r.product_id))
 
   let productsQuery = supabase
@@ -124,24 +129,27 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
     productsQuery = productsQuery.eq('inventory_type', inventoryType)
   }
 
-  const { data: products } = await productsQuery
+  const { data: products, error: productsError } = await productsQuery
+  if (productsError) throw new Error(`Failed to load reorder products: ${productsError.message}`)
 
-  const { data: balanceRows } = await supabase
+  const { data: balanceRows, error: balancesError } = await supabase
     .from('inventory_product_balances')
     .select('product_id, balance')
     .eq('location_id', locationId)
+  if (balancesError) throw new Error(`Failed to load reorder balances: ${balancesError.message}`)
 
   const balanceMap = new Map<string, number>()
   for (const b of (balanceRows ?? []) as { product_id: string; balance: number }[]) {
     balanceMap.set(b.product_id, Number(b.balance))
   }
 
-  const { data: saleRows } = await supabase
+  const { data: saleRows, error: saleRowsError } = await supabase
     .from('inventory_transactions')
     .select('product_id, quantity')
     .in('transaction_type', ['sale', 'sale_bottle'])
     .eq('location_id', locationId)
     .gte('created_at', since)
+  if (saleRowsError) throw new Error(`Failed to load reorder demand: ${saleRowsError.message}`)
 
   const usageMap = new Map<string, number>()
   for (const t of (saleRows ?? []) as { product_id: string; quantity: number }[]) {
@@ -199,11 +207,12 @@ export async function getSuggestions(locationId: string, inventoryType?: string)
 export async function getRules(locationId: string): Promise<ReorderRule[]> {
   const supabase = getInventoryClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('inventory_reorder_rules')
     .select('*, inventory_products!inner(id, name, sku)')
     .eq('location_id', locationId)
     .order('inventory_products(name)')
+  if (error) throw new Error(`Failed to load reorder rules: ${error.message}`)
 
   return (data ?? []).map((r: any) => ({
     id: r.id,
@@ -237,13 +246,13 @@ export async function upsertRule(rule: Partial<ReorderRule> & { product_id: stri
     updated_at: new Date().toISOString(),
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('inventory_reorder_rules')
     .upsert(payload, { onConflict: 'product_id, location_id' })
     .select()
     .single()
 
-  if (!data) throw new Error('Failed to save reorder rule')
+  if (error || !data) throw new Error(`Failed to save reorder rule: ${error?.message ?? 'No row returned'}`)
 
   return data as ReorderRule
 }

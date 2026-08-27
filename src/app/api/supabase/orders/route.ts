@@ -4,8 +4,7 @@ import { requireAuthenticated, requireAdmin, getRequestRole } from '@/lib/auth/r
 import { canTransition, requiresPaymentConfirmation, paymentRequiredForTransition } from '@/lib/order-state-machine'
 import { checkRateLimit, checkRateLimitByWaiter } from '@/lib/rate-limit'
 import { validateOrder, sanitizeOrderInput } from '@/lib/pos/validateOrder'
-import { createOrder, splitAndCreateOrders, getSiblingOrders, logOrderEvent, getAlcoholItemNames } from '@/lib/pos/orderService'
-import type { OrderEventType } from '@/lib/pos/types'
+import { createOrder, splitAndCreateOrders, getSiblingOrders, getAlcoholItemNames } from '@/lib/pos/orderService'
 import { notifyOrderCreated, notifyOrderConfirmed, notifyOrderRejected, notifyOrderPreparing, notifyOrderReady } from '@/lib/notifications/push'
 import { resolveOrderStationLocation } from '@/inventory/lib/station-location'
 
@@ -335,6 +334,7 @@ export async function PATCH(request: NextRequest) {
     let siblingStatus: { station: string; status: string }[] = []
 
     if (updateBody.status) {
+      updateBody.last_event_actor = role ?? 'admin'
       const { data: fetched, error: fetchError } = await getAdminClient()
         .from('orders')
         .select('status, order_type, payment_status, source, station')
@@ -474,23 +474,6 @@ export async function PATCH(request: NextRequest) {
 
     // ── Log event on status change ──
     if (updated && updateBody.status && currentStatus && currentStatus !== updateBody.status) {
-      const eventTypeMap: Record<string, OrderEventType> = {
-        confirmed: 'ORDER_CONFIRMED',
-        preparing: 'ORDER_PREPARING',
-        packing: 'ORDER_PACKING',
-        ready: 'ORDER_READY',
-        served: 'ORDER_COMPLETED',
-        completed: 'ORDER_COMPLETED',
-        cancelled: 'ORDER_CANCELLED',
-      }
-      logOrderEvent({
-        order_id: updated.id,
-        event_type: eventTypeMap[updateBody.status] || 'ORDER_CREATED',
-        from_status: currentStatus,
-        to_status: updateBody.status,
-        created_by: role ?? 'admin',
-      })
-
       // Fire-and-forget push notification
       const { data: orderForNotification } = await getAdminClient()
         .from('orders')

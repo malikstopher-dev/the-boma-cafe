@@ -1,7 +1,7 @@
 import { getAdminClient } from '@/lib/supabase'
 import { getMenuItemsByIds, type DbMenuItem } from '@/lib/menu-prices'
 import { generateOrderTrackingToken, hashOrderTrackingToken } from '@/lib/order-public-auth'
-import type { EnrichedItem, OrderItemInput, OrderRecord, OrderStatus, Station, OrderEventType } from './types'
+import type { EnrichedItem, OrderItemInput, OrderRecord, OrderStatus, Station } from './types'
 
 const MIN_TOTAL = 1
 const MAX_TOTAL = 99999
@@ -247,26 +247,6 @@ async function wait(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms))
 }
 
-export async function logOrderEvent(event: {
-  order_id: string
-  event_type: OrderEventType
-  from_status?: string
-  to_status?: string
-  created_by?: string
-  metadata?: Record<string, unknown>
-}): Promise<void> {
-  try {
-    await getAdminClient().from('order_events').insert([{
-      order_id: event.order_id,
-      event_type: event.event_type,
-      from_status: event.from_status ?? null,
-      to_status: event.to_status ?? null,
-      created_by: event.created_by ?? 'system',
-      metadata: event.metadata ?? {},
-    }])
-  } catch { /* non-critical — don't block the order */ }
-}
-
 export type CreateOrderInputType = {
   customer_name: string
   phone: string
@@ -378,6 +358,7 @@ export async function createOrder(
     order_ref,
     idempotency_key: idempotencyKey,
     tracking_token_hash: hashOrderTrackingToken(trackingToken),
+    last_event_actor: input.created_by ?? (input.waiter_name ? 'waiter' : 'customer'),
   }
 
   if (input.table_number) {
@@ -425,13 +406,6 @@ export async function createOrder(
       .single()
 
     if (!error && data) {
-      logOrderEvent({
-        order_id: data.id,
-        event_type: 'ORDER_CREATED',
-        to_status: 'pending',
-        created_by: input.created_by ?? 'system',
-        metadata: { order_ref: data.order_ref, total },
-      })
       return {
         order: toOrderRecord(data as unknown as Record<string, unknown>),
         duplicate: false,

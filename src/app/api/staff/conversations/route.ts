@@ -76,61 +76,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if a conversation with exactly these members already exists
-    const { data: existing } = await getAdminClient()
-      .from('staff_conversation_members')
-      .select('conversation_id')
-      .in('user_id', uniqueIds)
-
-    if (existing && existing.length > 0) {
-      const grouped = existing.reduce((acc: Record<string, number>, cm: any) => {
-        acc[cm.conversation_id] = (acc[cm.conversation_id] || 0) + 1
-        return acc
-      }, {})
-
-      for (const [convId, count] of Object.entries(grouped)) {
-        if (count === uniqueIds.length) {
-          const { data: members } = await getAdminClient()
-            .from('staff_conversation_members')
-            .select('user_id')
-            .eq('conversation_id', convId)
-
-          const existingIds = (members || []).map((m: any) => m.user_id).sort()
-          const requestedIds = [...uniqueIds].sort()
-          if (JSON.stringify(existingIds) === JSON.stringify(requestedIds)) {
-            const { data: conv } = await getAdminClient()
-              .from('staff_conversations')
-              .select('*')
-              .eq('id', convId)
-              .single()
-            return NextResponse.json(conv)
-          }
-        }
-      }
-    }
-
-    // Create new conversation
-    const isGroup = uniqueIds.length > 2
-    const { data: conv, error: convError } = await getAdminClient()
-      .from('staff_conversations')
-      .insert({ title: title || null, is_group: isGroup })
-      .select()
-      .single()
-
+    const { data: conv, error: convError } = await getAdminClient().rpc('create_staff_conversation', {
+      p_member_ids: uniqueIds,
+      p_title: title || null,
+    })
     if (convError) return NextResponse.json({ error: convError.message }, { status: 500 })
-
-    // Add members
-    const membersData = uniqueIds.map((uid: string) => ({
-      conversation_id: conv.id,
-      user_id: uid,
-    }))
-
-    const { error: memberError } = await getAdminClient()
-      .from('staff_conversation_members')
-      .insert(membersData)
-
-    if (memberError) return NextResponse.json({ error: memberError.message }, { status: 500 })
-
     return NextResponse.json(conv)
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })

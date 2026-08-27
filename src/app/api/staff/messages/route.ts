@@ -91,38 +91,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
     }
 
-    const { data, error } = await getAdminClient()
-      .from('staff_messages')
-      .insert({
-        conversation_id,
-        sender_id: senderId,
-        message: message || null,
-        message_type: message_type || 'text',
-        voice_url: voice_url || null,
-        voice_duration: voice_duration || null,
-      })
-      .select()
-      .single()
-
+    const { data, error } = await getAdminClient().rpc('send_staff_message', {
+      p_conversation_id: conversation_id,
+      p_sender_id: senderId,
+      p_sender_aliases: identity.aliases,
+      p_message: message || null,
+      p_message_type: message_type || 'text',
+      p_voice_url: voice_url || null,
+      p_voice_duration: voice_duration || null,
+      p_admin_override: identity.isAdmin,
+    })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    // Create notifications for other conversation members
-    const { data: memberRows } = await getAdminClient()
-      .from('staff_conversation_members')
-      .select('user_id')
-      .eq('conversation_id', conversation_id)
-      .neq('user_id', senderId)
-
-    if (memberRows) {
-      const notifications = memberRows.map((m: { user_id: string }) => ({
-        user_id: m.user_id,
-        type: 'new_message',
-        title: 'New Message',
-        message: message || '🎤 Voice message',
-        metadata: { conversation_id, sender_id: senderId },
-      }))
-      await getAdminClient().from('staff_notifications').insert(notifications)
-    }
 
     return NextResponse.json(await signVoiceMessage(data))
   } catch {

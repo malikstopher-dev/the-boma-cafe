@@ -23,24 +23,27 @@ async function getOpenPoStats() {
   const supabase = getInventoryClient()
   const today = new Date().toISOString().slice(0, 10)
 
-  const { count: openCount } = await supabase
+  const { count: openCount, error: openError } = await supabase
     .from('inventory_purchase_orders')
     .select('*', { count: 'exact', head: true })
     .in('status', ['ordered', 'partial'])
 
-  const { data: overdue } = await supabase
+  const { data: overdue, error: overdueError } = await supabase
     .from('inventory_purchase_orders')
     .select('id, supplier_id, expected_at, inventory_suppliers!inner(name)')
     .in('status', ['ordered', 'partial'])
     .lt('expected_at', today)
     .limit(5)
 
-  const { data: recentPos } = await supabase
+  const { data: recentPos, error: recentError } = await supabase
     .from('inventory_purchase_orders')
     .select('id, status, created_at, supplier_id, inventory_suppliers!inner(name)')
     .in('status', ['ordered', 'partial', 'received'])
     .order('created_at', { ascending: false })
     .limit(5)
+
+  const queryError = openError ?? overdueError ?? recentError
+  if (queryError) throw new Error(`Failed to load purchase-order dashboard data: ${queryError.message}`)
 
   return {
     openCount: openCount ?? 0,
@@ -121,7 +124,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
       case 'combined': {
         const supabase = getInventoryClient()
-        const rpcRes = await supabase.rpc('combined_dashboard_consistent', {
+        const rpcRes = await supabase.rpc('combined_dashboard_canonical', {
           p_location: locationId,
           p_days: days,
           p_inventory_type: inventoryType ?? null,
@@ -131,8 +134,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           return NextResponse.json({ data: rpcRes.data })
         }
 
-        // Fallback: RPC not yet applied to the DB (migration 106) — keep the
-        // old multi-query path so the page keeps working until then.
+        const missingRpc = rpcRes.error?.message.includes('combined_dashboard_canonical')
+          && rpcRes.error.message.includes('schema cache')
+        if (rpcRes.error && !missingRpc) {
+          throw new Error(`Failed to load combined dashboard: ${rpcRes.error.message}`)
+        }
+
+        // Bounded rollout fallback for an explicitly missing RPC only.
         const [summary, alerts, recent, fastMovers, slowMovers, value, today, poResult] = await Promise.all([
           getDashboardSummary(locationId, inventoryType),
           getAlerts(locationId, inventoryType),

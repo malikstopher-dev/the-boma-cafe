@@ -1,12 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getQueueLength, processQueue } from '@/lib/offline-queue'
+import { useState, useEffect, useCallback } from 'react'
+import { clearOrderQueue, dequeueOrder, getPendingOrders, processQueue, QUEUE_CHANGED_EVENT, retryOrder, type PendingOrder } from '@/lib/offline-queue'
 
 export default function ConnectionStatus() {
   const [online, setOnline] = useState(true)
-  const [pending, setPending] = useState(0)
+  const [orders, setOrders] = useState<PendingOrder[]>([])
   const [syncing, setSyncing] = useState(false)
+  const [queueError, setQueueError] = useState('')
+  const refreshQueue = useCallback(() => {
+    try {
+      setOrders(getPendingOrders())
+      setQueueError('')
+    } catch (error) {
+      setOrders([])
+      setQueueError(error instanceof Error ? error.message : 'Offline queue unavailable')
+    }
+  }, [])
 
   useEffect(() => {
     const handler = () => {
@@ -15,47 +25,55 @@ export default function ConnectionStatus() {
         setSyncing(true)
         processQueue().finally(() => {
           setSyncing(false)
-          setPending(getQueueLength())
+          refreshQueue()
         })
       }
     }
     window.addEventListener('online', handler)
-    window.addEventListener('offline', () => { setOnline(false); setPending(getQueueLength()) })
-    setOnline(navigator.onLine)
-    setPending(getQueueLength())
+    const offlineHandler = () => { setOnline(false); refreshQueue() }
+    window.addEventListener('offline', offlineHandler)
+    window.addEventListener('storage', refreshQueue)
+    window.addEventListener(QUEUE_CHANGED_EVENT, refreshQueue)
+    handler()
     return () => {
       window.removeEventListener('online', handler)
-      window.removeEventListener('offline', handler)
+      window.removeEventListener('offline', offlineHandler)
+      window.removeEventListener('storage', refreshQueue)
+      window.removeEventListener(QUEUE_CHANGED_EVENT, refreshQueue)
     }
-  }, [])
+  }, [refreshQueue])
 
-  // Auto-sync every 10s when online with pending items
-  useEffect(() => {
-    if (!online || pending === 0) return
-    const interval = setInterval(async () => {
-      setSyncing(true)
-      await processQueue()
-      setSyncing(false)
-      setPending(getQueueLength())
-    }, 10000)
-    return () => clearInterval(interval)
-  }, [online, pending])
-
-  if (online && pending === 0 && !syncing) return null
+  const pending = orders.filter(order => order.status === 'pending').length
+  const failed = orders.filter(order => order.status === 'failed')
+  if (online && orders.length === 0 && !syncing && !queueError) return null
 
   return (
     <div style={{
       position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 9999,
       padding: '0.5rem 1rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600,
-      display: 'flex', alignItems: 'center', gap: '0.5rem',
-      background: online ? (syncing ? '#f59e0b' : '#10b981') : '#ef4444',
-      color: online ? '#000' : '#fff',
+      display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: 420, flexWrap: 'wrap',
+      background: failed.length > 0 ? '#7f1d1d' : online ? (syncing ? '#f59e0b' : '#10b981') : '#ef4444',
+      color: failed.length > 0 || !online ? '#fff' : '#000',
       boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
     }}>
       <span style={{ width: 8, height: 8, borderRadius: '50%', background: online ? '#000' : '#fff', display: 'inline-block' }} />
       {!online && `OFFLINE (${pending} pending)`}
       {online && syncing && `SYNCING...`}
       {online && !syncing && pending > 0 && `${pending} pending`}
+      {failed.length > 0 && `${failed.length} need attention`}
+      {queueError && (
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
+          <span style={{ flex: 1 }}>{queueError}</span>
+          <button onClick={() => { clearOrderQueue(); refreshQueue() }}>Clear queue</button>
+        </span>
+      )}
+      {failed.map(order => (
+        <span key={order.idempotency_key} style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
+          <span style={{ flex: 1 }}>{order.last_error ?? 'Order needs review'}</span>
+          <button onClick={() => { retryOrder(order.idempotency_key); refreshQueue(); if (online) void processQueue().finally(refreshQueue) }}>Retry</button>
+          <button onClick={() => { dequeueOrder(order.idempotency_key); refreshQueue() }}>Discard</button>
+        </span>
+      ))}
     </div>
   )
 }

@@ -3,7 +3,7 @@
 > Single source of current truth. AGENTS.md holds the historical record; this file is the lock.
 > Read this first at session start. Update this file (and AGENTS.md) at the end of every ship.
 
-## Current production state (2026-08-26)
+## Current production state (2026-08-27)
 
 - P1a–P1e (Supplier Workflow) — COMPLETE
 - F2 (Order → Inventory Deduction), F3 (Order Attribution) — COMPLETE
@@ -23,12 +23,14 @@
 - E4 (Event-attributed POs — POs link to a confirmed booking/event; receiving costs to the event's cost centre; precedence: explicit receive-time cost_centre_id → PO cost_centre_id → location default; migration 098 + engine + API + UI) — COMPLETE (2026-08-18, commit 381056f; migration 098)
 - E1A (Smart Product Import — best-effort parser: name-only rows import, priority price-column scan incl. BOTTLE PRICE, per-row create/update/skip, Undo Last Import, bulk edit on products list, Import Products dialog; migrations 099 + 100) — COMPLETE (2026-08-18, commit e960177; migrations 099 + 100)
 - O1-D (Production ledger recovery — 61 evidenced pre-wipe transactions restored with original IDs/timestamps; balance cache rebuilt from ledger `SUM(quantity)`, 32 rows, 0 parity mismatches; PO reconciliation 6/6; gas tracker, daily sheet, owner KPIs, realtime (61 `stock.moved` events) all verified) — COMPLETE (2026-08-19, data restored in production; docs-only commit)
-- Migrations 096–106 applied (local == remote, 000–106; 016a filename-skip benign)
+- Migrations 096–118 applied (local == remote, 000–118; 016a filename-skip benign)
 - Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
 - SYNC-2 Phase 2 (weekly location truth + explicit weekly errors + Kitchen label clarity) — COMPLETE (2026-08-20; commit 7e29500)
 - SYNC-2 Phase 3 (canonical movement classification design) — COMPLETE (2026-08-20; documentation-only)
 - SYNC-2 narrow dashboard/stock-count consistency remediation — COMPLETE (2026-08-26, commit `b4d46da`; migration 106; deployed and live-verified)
-- 382/382 Vitest passing at the latest full-suite checkpoint; inventory and root TypeScript clean
+- Full-System Audit Batches 1–3 — FIXED, DEPLOYED, LIVE-VERIFIED
+- Full-System Audit Batch 4 — local implementation verified; migrations 119–121 and deployment are pending
+- 515/515 Vitest passing at the latest local Batch 4 checkpoint; inventory and root TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 - Premium Operations UI + persistent sessions — COMPLETE (2026-08-26, commit `b665e2b`; pushed; original checkpoint had no live browser probe)
@@ -66,6 +68,23 @@
 - **STANDING RULE (2026-08-16, owner directive):** Autonomous multi-ship runs must re-read MASTER_MISSION_LOCK.md before activating each subsequent ship. Never rely on the queue remembered from the previous ship. Max four ships per autonomous run; stop after the fourth ship even if more work is queued, and wait for owner permission.
 
 ## Active ship
+
+### Full-System Audit Batch 4 — LOCAL VERIFIED, DEPLOYMENT PENDING (2026-08-27)
+
+**Implemented locally:**
+
+- Canonical movement classification shared by TypeScript engines and SQL-backed dashboard wrappers. Inbound, Sold, Internal Consumption, Waste/Loss, Adjustment, Physical Count Variance, Operational Used, and Total Outflow remain distinct under the approved definitions.
+- Dashboard/report/forecast/reorder/payables/reconciliation reads now surface database errors instead of converting them to zero or empty business results.
+- Offline ordering now persists item/order notes, queues only transport/503 failures, distinguishes pending from permanent 4xx failures, verifies browser storage, and exposes retry/discard/clear controls globally.
+- Conversation creation and message + recipient-notification creation use transaction-bound service-role RPCs. Chat notifications are recipient-scoped; station boards are station-scoped; confirmed/rejected order signals are included.
+- Order event history is trigger-bound to order creation/status transactions; public cancellation no longer writes audit history separately. PIN cookie duration matches the one-year server session; logout validates identity before ending the session so the audit actor is retained.
+- Runtime filesystem uploads are replaced with Supabase Storage. Failed upload/delete compensation is retried through the new `storage_cleanup` worker job. The unused public `/api/waiters/active` route was removed.
+
+**Local verification:** 515/515 Vitest; inventory/root TypeScript; 105.83 KB worker bundle; migration 119–121 dry-run; linked schema lint with only two pre-existing warnings; `git diff --check`; full Next production build with 187 pages.
+
+**Deployment gate:** do not apply migrations 119–121, commit/push, deploy Vercel, restart Oracle, or run production probes until the owner explicitly approves the controlled cutover. Deployment order is migrations first, web deployment second, worker update/restart third, then bounded live verification and cleanup.
+
+## Prior active missions
 
 ### U1 — Vercel and Supabase Usage Audit (ACTIVE 2026-08-19)
 

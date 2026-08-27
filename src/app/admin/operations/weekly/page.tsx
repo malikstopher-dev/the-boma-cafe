@@ -80,7 +80,7 @@ export default function WeeklyView() {
   const exportCsv = () => {
     if (!weekData) return
     const rows = [
-      ['Inventory type', 'Delivered qty', 'Delivered value', 'Used qty', 'Used value'],
+      ['Inventory type', 'Delivered qty', 'Delivered value', 'Total outflow qty', 'Total outflow value'],
       ...weekData.rows.map(r => [r.inventoryType, qty(r.deliveredQty), r.deliveredValue, qty(r.usedQty), r.usedValue]),
     ]
     const blob = new Blob([`\uFEFF` + rows.map(r => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8' })
@@ -93,7 +93,7 @@ export default function WeeklyView() {
 
   return (
     <AdminPage
-      title="Weekly View — Delivered vs Sold"
+      title="Weekly View — Delivered vs Total Outflow"
       description={`${year} · Mon–Sun weeks · Supplies received vs stock consumed, per week.`}
       actions={<Button variant="secondary" size="md" onClick={exportCsv} disabled={!weekData}>Export CSV</Button>}
     >
@@ -128,7 +128,7 @@ export default function WeeklyView() {
               </h3>
               <div style={{ display: 'flex', gap: 14, fontSize: 12, color: '#A09888' }}>
                 <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#C8A04E', marginRight: 6 }} />Delivered</span>
-                <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#5A9EE6', marginRight: 6 }} />Used/Sold</span>
+                <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#5A9EE6', marginRight: 6 }} />Total Outflow</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 130 }}>
@@ -149,7 +149,7 @@ export default function WeeklyView() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 640 }}>
                 <thead>
                   <tr style={{ background: '#26211A' }}>
-                    {['Inventory Type', 'Delivered Qty', 'Delivered Value', 'Used Qty', 'Used Value', 'Net Value'].map(h => (
+                    {['Inventory Type', 'Delivered Qty', 'Delivered Value', 'Total Outflow Qty', 'Total Outflow Value', 'Net Value'].map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: h === 'Inventory Type' ? 'left' : 'right', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#A09888' }}>{h}</th>
                     ))}
                   </tr>

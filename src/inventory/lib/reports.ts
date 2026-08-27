@@ -1,5 +1,7 @@
 import { getInventoryClient } from './db'
 import type { InventoryType } from '@/inventory/engine/types'
+import { getStockSheet } from '@/inventory/engine/stock-sheet'
+import { WASTE_LOSS_TYPES } from '@/inventory/lib/movement-classification'
 
 function getClient() {
   return getInventoryClient()
@@ -13,69 +15,29 @@ export interface DailyStockReportRow {
   openingBalance: number
   purchases: number
   sales: number
+  internalConsumption: number
+  wasteLoss: number
   adjustments: number
+  physicalCountVariance: number
   closingBalance: number
 }
 
 export async function dailyStockReport(date: string, locationId: string, inventoryType?: InventoryType): Promise<DailyStockReportRow[]> {
-  const supabase = getClient()
-  const startOfDay = `${date}T00:00:00Z`
-  const endOfDay = `${date}T23:59:59Z`
-
-  let productQuery = supabase
-    .from('inventory_products')
-    .select('id, name, sku, inventory_categories(name)')
-    .eq('is_active', true)
-
-  if (inventoryType) productQuery = productQuery.eq('inventory_type', inventoryType)
-
-  const { data: products } = await productQuery.order('name')
-
-  if (!products) return []
-
-  const rows: DailyStockReportRow[] = []
-
-  for (const product of products) {
-    const { data: beforeTx } = await supabase
-      .from('inventory_transactions')
-      .select('quantity')
-      .eq('product_id', product.id)
-      .eq('location_id', locationId)
-      .lt('created_at', startOfDay)
-
-    const openingBalance = (beforeTx ?? []).reduce((s, r) => s + Number(r.quantity), 0)
-
-    const { data: dayTx } = await supabase
-      .from('inventory_transactions')
-      .select('quantity, transaction_type')
-      .eq('product_id', product.id)
-      .eq('location_id', locationId)
-      .gte('created_at', startOfDay)
-      .lte('created_at', endOfDay)
-
-    const todayTxns = dayTx ?? []
-    const purchases = todayTxns.filter(t => t.transaction_type === 'purchase').reduce((s, r) => s + Number(r.quantity), 0)
-    const sales = todayTxns.filter(t => t.transaction_type === 'sale' || t.transaction_type === 'sale_bottle').reduce((s, r) => s + Math.abs(Number(r.quantity)), 0)
-    const adjustments = todayTxns.filter(t => !['purchase', 'sale', 'sale_bottle'].includes(t.transaction_type)).reduce((s, r) => s + Number(r.quantity), 0)
-    const dayTotal = todayTxns.reduce((s, r) => s + Number(r.quantity), 0)
-    const closingBalance = openingBalance + dayTotal
-
-    if (openingBalance !== 0 || dayTotal !== 0) {
-      rows.push({
-        productId: product.id,
-        productName: product.name,
-        sku: product.sku,
-        category: (product as any).inventory_categories?.name ?? null,
-        openingBalance,
-        purchases,
-        sales,
-        adjustments,
-        closingBalance,
-      })
-    }
-  }
-
-  return rows
+  const sheet = await getStockSheet(date, date, locationId, inventoryType)
+  return sheet.rows.map(row => ({
+    productId: row.productId,
+    productName: row.productName,
+    sku: row.sku,
+    category: row.category,
+    openingBalance: row.opening,
+    purchases: row.received,
+    sales: row.sold,
+    internalConsumption: row.internalConsumption,
+    wasteLoss: row.waste,
+    adjustments: row.adjustments,
+    physicalCountVariance: row.physicalCountVariance,
+    closingBalance: row.closing,
+  }))
 }
 
 export interface VarianceReportRow {
@@ -90,11 +52,12 @@ export interface VarianceReportRow {
 export async function varianceReport(stockCountId: string): Promise<VarianceReportRow[]> {
   const supabase = getClient()
 
-  const { data: items } = await supabase
+  const { data: items, error } = await supabase
     .from('inventory_stock_count_items')
     .select('*, inventory_products!inner(id, name)')
     .eq('stock_count_id', stockCountId)
 
+  if (error) throw new Error(`Failed to load variance report: ${error.message}`)
   if (!items) return []
 
   return items.map((item: any) => {
@@ -125,13 +88,11 @@ export interface WasteReportRow {
 export async function wasteReport(from: string, to: string, locationId: string, inventoryType?: InventoryType): Promise<WasteReportRow[]> {
   const supabase = getClient()
 
-  const wasteTypes = ['waste', 'breakage', 'spillage', 'comp', 'expiry_loss']
-
   let query = supabase
     .from('inventory_transactions')
     .select('*, inventory_products!inner(id, name)')
     .eq('location_id', locationId)
-    .in('transaction_type', wasteTypes)
+    .in('transaction_type', [...WASTE_LOSS_TYPES])
     .gte('created_at', from)
     .lte('created_at', to)
 
@@ -139,7 +100,8 @@ export async function wasteReport(from: string, to: string, locationId: string, 
 
   const { data, error } = await query.order('created_at', { ascending: false })
 
-  if (error || !data) return []
+  if (error) throw new Error(`Failed to load waste report: ${error.message}`)
+  if (!data) return []
 
   return data.map((item: any) => ({
     transactionType: item.transaction_type,
@@ -174,7 +136,8 @@ export async function fastMovers(days: number, limit: number, locationId: string
 
   const { data, error } = await query
 
-  if (error || !data) return []
+  if (error) throw new Error(`Failed to load fast movers: ${error.message}`)
+  if (!data) return []
 
   const grouped = new Map<string, { name: string; total: number; count: number }>()
   for (const item of data as any[]) {
@@ -204,20 +167,22 @@ export async function slowMovers(days: number, limit: number, locationId: string
 
   if (inventoryType) productQuery = productQuery.eq('inventory_type', inventoryType)
 
-  const { data: products } = await productQuery
+  const { data: products, error: productsError } = await productQuery
 
+  if (productsError) throw new Error(`Failed to load slow-mover products: ${productsError.message}`)
   if (!products) return []
 
   const rows: FastSlowMoverRow[] = []
 
   for (const product of products) {
-    const { data: txns } = await supabase
+    const { data: txns, error: txnsError } = await supabase
       .from('inventory_transactions')
       .select('quantity')
       .eq('product_id', product.id)
       .eq('location_id', locationId)
       .in('transaction_type', ['sale', 'sale_bottle'])
       .gte('created_at', since)
+    if (txnsError) throw new Error(`Failed to load slow movers: ${txnsError.message}`)
 
     const totalQuantity = (txns ?? []).reduce((s, r) => s + Math.abs(Number(r.quantity)), 0)
     rows.push({
@@ -253,14 +218,15 @@ export async function valuationReport(locationId: string, inventoryType?: Invent
 
   if (inventoryType) balanceQuery = balanceQuery.eq('inventory_products.inventory_type', inventoryType)
 
-  const { data: balances } = await balanceQuery
+  const { data: balances, error: balancesError } = await balanceQuery
 
+  if (balancesError) throw new Error(`Failed to load valuation balances: ${balancesError.message}`)
   if (!balances) return []
 
   const rows: ValuationRow[] = []
 
   for (const bal of balances as any[]) {
-    const { data: lastPurchase } = await supabase
+    const { data: lastPurchase, error: costError } = await supabase
       .from('inventory_transactions')
       .select('unit_cost')
       .eq('product_id', bal.product_id)
@@ -270,6 +236,7 @@ export async function valuationReport(locationId: string, inventoryType?: Invent
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+    if (costError) throw new Error(`Failed to load valuation cost: ${costError.message}`)
 
     const unitCost = lastPurchase ? Number((lastPurchase as any).unit_cost) : null
     const balance = Number(bal.balance)

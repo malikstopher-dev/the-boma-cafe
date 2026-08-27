@@ -1,13 +1,14 @@
 import { startWorker, requestShutdown } from './worker'
 import { startScheduler, requestSchedulerShutdown } from './scheduler'
 import { registerHandler } from './registry'
-import { orderDeductionHandler, pdfGenerationHandler, reservationLifecycleHandler } from './handlers'
+import { orderDeductionHandler, pdfGenerationHandler, reservationLifecycleHandler, storageCleanupHandler } from './handlers'
 import { logger } from './utils/logger'
 
 async function main(): Promise<void> {
   registerHandler('pdf_generation', pdfGenerationHandler)
   registerHandler('order_deduction', orderDeductionHandler)
   registerHandler('reservation_lifecycle', reservationLifecycleHandler)
+  registerHandler('storage_cleanup', storageCleanupHandler)
 
   logger.info('background jobs worker starting', {
     node_version: process.version,

@@ -4,6 +4,7 @@ import { getAdminClient } from '@/lib/supabase'
 import type { StaffProfile } from './auth'
 
 const SESSION_DURATION_MS = 365 * 24 * 60 * 60 * 1000 // persist until voluntary logout
+export const STAFF_SESSION_MAX_AGE_SECONDS = 365 * 24 * 60 * 60
 
 export interface StaffSession {
   sessionId: string

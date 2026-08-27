@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import dynamic from 'next/dynamic';
 import Sidebar, { BottomNav } from '@/components/admin/Sidebar';
 import { ToastProvider } from '@/components/admin/design-system';
 import { useIncomingMessageNotifications, MessageToastContainer, type IncomingToast } from '@/components/chat/MessageNotifications';
 
-const ConnectionStatus = dynamic(() => import('@/components/ui/ConnectionStatus'), { ssr: false });
 
 // Pages that get full-width layout (no sidebar)
 const FULL_WIDTH_PAGES = ['/admin/orders', '/admin/kitchen', '/admin/bar'];
@@ -36,6 +34,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [pwConfirm, setPwConfirm] = useState('');
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMessage, setPwMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/staff/session')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.authenticated) setCurrentUserId(data.staff?.employee_id || data.staff?.id || '');
+      })
+      .catch(() => {});
+  }, []);
 
   const changePassword = async () => {
     setPwMessage(null);
@@ -164,7 +171,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <ToastProvider>
         <div style={{ minHeight: '100vh', background: '#0F1115', paddingTop: 60 }}>
           {children}
-        <ConnectionStatus />
         <MessageToastContainer toasts={toasts} onDismiss={dismissToast} onClick={handleToastClick} />
           <MessageToastContainer toasts={toasts} onDismiss={dismissToast} onClick={handleToastClick} />
 
@@ -371,7 +377,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile bottom nav */}
         <BottomNav onMoreClick={() => setSidebarOpen(true)} />
 
-        <ConnectionStatus />
 
         <style>{`
           @media (max-width: 768px) {

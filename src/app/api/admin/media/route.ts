@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
 import { requireAdminPermission } from '@/lib/auth/requireRole'
+import { removeStorageObjectOrQueue } from '@/lib/storage/media'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,15 +35,15 @@ export async function DELETE(request: NextRequest) {
     .eq('id', id)
     .single()
 
-  if (item) {
-    const parts = item.url.split('/boma-images/')
-    if (parts[1]) {
-      await client.storage.from('boma-images').remove([parts[1]])
-    }
-  }
-
   const { error } = await client.from('media').delete().eq('id', id)
   if (error) return NextResponse.json({ error: 'Failed to access media' }, { status: 500 })
+
+  if (item) {
+    const parts = item.url.split('/boma-images/')
+    if (parts[1] && !(await removeStorageObjectOrQueue('boma-images', parts[1]))) {
+      return NextResponse.json({ error: 'Media deleted, but storage cleanup could not be scheduled' }, { status: 500 })
+    }
+  }
 
   return NextResponse.json({ success: true })
 }

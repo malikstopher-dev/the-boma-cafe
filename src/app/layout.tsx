@@ -12,6 +12,7 @@ import { BUSINESS_INFO } from "@/lib/whatsappConfig";
 import MobileBottomBar from "@/components/ui/MobileBottomBar";
 import ScrollArrows from "@/components/ui/ScrollArrows";
 import { getAllSettings } from "@/lib/cms-supabase";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -187,6 +188,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ScrollToTopButton />
               <ScrollArrows />
               <CartButton />
+              <ConnectionStatus />
               <MobileBottomBar />
             </BookingProvider>
           </CartProvider>

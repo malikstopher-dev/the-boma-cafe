@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPin, verifyPinByStaffId } from '@/lib/staff/auth'
-import { createSession, generateDeviceFingerprint } from '@/lib/staff/session'
+import { createSession, generateDeviceFingerprint, STAFF_SESSION_MAX_AGE_SECONDS } from '@/lib/staff/session'
 import { logAuthAudit } from '@/lib/staff/audit'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 8 * 60 * 60, // 8 hours
+      maxAge: STAFF_SESSION_MAX_AGE_SECONDS,
     })
 
     // Also set the role cookie for middleware compatibility
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
-        maxAge: 8 * 60 * 60,
+        maxAge: STAFF_SESSION_MAX_AGE_SECONDS,
       })
     }
 

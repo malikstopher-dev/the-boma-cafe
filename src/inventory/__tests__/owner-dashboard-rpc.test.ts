@@ -30,7 +30,7 @@ describe('owner dashboard RPC reader', () => {
     const data = await getOwnerDashboard('custom', '2026-08-01', '2026-08-07')
 
     expect(mockRpc).toHaveBeenCalledTimes(1)
-    expect(mockRpc).toHaveBeenCalledWith('owner_dashboard_consistent', {
+    expect(mockRpc).toHaveBeenCalledWith('owner_dashboard_canonical', {
       p_start: '2026-08-01T00:00:00.000Z',
       p_end: '2026-08-08T00:00:00.000Z',
       p_previous_start: '2026-07-25T00:00:00.000Z',

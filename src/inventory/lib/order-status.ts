@@ -16,24 +16,30 @@ import { createLeadingDebouncer } from './realtime-debounce'
 
 /** Order status events the waiter PWA reacts to (E1-2). */
 export const ORDER_LIVE_EVENTS = [
+  'order.confirmed',
   'order.preparing',
   'order.ready',
   'order.completed',
   'order.cancelled',
+  'order.rejected',
 ] as const
 
 /** All order events board surfaces refetch on (E1-5): creates + status changes. */
 export const ORDER_BOARD_EVENTS = [
   'order.created',
+  'order.confirmed',
   'order.preparing',
   'order.ready',
   'order.completed',
   'order.cancelled',
+  'order.rejected',
 ] as const
 
 /** Contract mapping: realtime event -> order status shown to the waiter. */
 export function eventToOrderStatus(eventName: string): string | null {
   switch (eventName) {
+    case 'order.confirmed':
+      return 'confirmed'
     case 'order.preparing':
       return 'preparing'
     case 'order.ready':
@@ -45,6 +51,8 @@ export function eventToOrderStatus(eventName: string): string | null {
       return 'served'
     case 'order.cancelled':
       return 'cancelled'
+    case 'order.rejected':
+      return 'rejected'
     default:
       return null
   }

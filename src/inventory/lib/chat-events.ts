@@ -15,11 +15,13 @@
 
 import { createBrowserClient } from '@/lib/supabase'
 import { createLeadingDebouncer } from './realtime-debounce'
+import { buildLiveFilter } from './realtime-filter'
 
 /** Chat events the staff chat surfaces react to (E1-5). */
 export const CHAT_LIVE_EVENTS = [
   'chat.message',
 ] as const
+export const CHAT_NOTIFICATION_EVENTS = ['chat.notification'] as const
 
 const activeChannels = new Set<string>()
 
@@ -37,6 +39,8 @@ export interface SubscribeToChatEventsOptions {
   onChange?: () => void
   debounceMs?: number
   enabled?: boolean
+  events?: readonly string[]
+  scopeId?: string
   /** Injectable for tests. */
   getSupabase?: () => any
 }
@@ -48,6 +52,8 @@ export function subscribeToChatEvents(options: SubscribeToChatEventsOptions): Ch
     onChange,
     debounceMs = 2000,
     enabled = true,
+    events = CHAT_LIVE_EVENTS,
+    scopeId,
     getSupabase,
   } = options
 
@@ -80,7 +86,7 @@ export function subscribeToChatEvents(options: SubscribeToChatEventsOptions): Ch
           event: 'INSERT',
           schema: 'public',
           table: 'realtime_events',
-          filter: `event_name=in.(${CHAT_LIVE_EVENTS.join(',')})`,
+          filter: buildLiveFilter([...events], scopeId),
         },
         (payload: any) => {
           const messageId = (payload?.new?.entity_id as string | null) ?? null

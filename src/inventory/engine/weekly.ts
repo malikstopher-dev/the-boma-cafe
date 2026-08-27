@@ -2,6 +2,7 @@ import { getInventoryClient } from '../lib/db'
 import { resolveLocationId } from '../lib/location'
 import { weekNumber, weekRange, lastWeekOfYear } from '../lib/weeks'
 import type { InventoryType } from './types'
+import { movementAmounts } from '../lib/movement-classification'
 
 export interface WeeklyMovementRow {
   inventoryType: InventoryType | 'ALL'
@@ -21,12 +22,6 @@ export interface WeekSummary {
   usedQty: number
   usedValue: number
 }
-
-const DELIVERED_TYPES = ['purchase', 'return', 'transfer_in']
-const USED_TYPES = [
-  'sale', 'sale_bottle', 'comp', 'staff', 'breakage', 'spillage',
-  'waste', 'expiry_loss', 'theft', 'donation', 'gas_usage',
-]
 
 function iterable<T>(rows: T[] | null | undefined): T[] {
   return rows ?? []
@@ -64,11 +59,10 @@ export async function getWeeklyMovement(
   const totals: WeeklyMovementRow = { inventoryType: 'ALL', deliveredQty: 0, deliveredValue: 0, usedQty: 0, usedValue: 0 }
 
   for (const t of iterable(txns)) {
-    const type = String(t.transaction_type ?? '')
-    const isDelivered = DELIVERED_TYPES.includes(type)
-    const isUsed = USED_TYPES.includes(type)
-    if (!isDelivered && !isUsed) continue
-    const qty = isUsed ? Math.abs(Number(t.quantity) || 0) : Number(t.quantity) || 0
+    const amounts = movementAmounts(String(t.transaction_type ?? ''), Number(t.quantity))
+    const qty = amounts.inbound || amounts.totalOutflow
+    if (qty === 0) continue
+    const isDelivered = amounts.inbound > 0
     const value = Math.abs(qty * (Number(t.unit_cost) || 0))
 
     const invType = (t.inventory_products as unknown as { inventory_type?: string } | undefined)?.inventory_type ?? 'GENERAL'
@@ -126,17 +120,16 @@ export async function getYearlyWeekSummary(
   }
 
   for (const t of iterable(txns)) {
-    const type = String(t.transaction_type ?? '')
     const wk = weekNumber(new Date(t.created_at as string))
     const summary = weeks.get(wk)
     if (!summary) continue
-    const qty = Number(t.quantity) || 0
-    const value = Math.abs(qty * (Number(t.unit_cost) || 0))
-    if (DELIVERED_TYPES.includes(type)) {
-      summary.deliveredQty += qty
+    const amounts = movementAmounts(String(t.transaction_type ?? ''), Number(t.quantity))
+    const value = Math.abs((amounts.inbound || amounts.totalOutflow) * (Number(t.unit_cost) || 0))
+    if (amounts.inbound > 0) {
+      summary.deliveredQty += amounts.inbound
       summary.deliveredValue += value
-    } else if (USED_TYPES.includes(type)) {
-      summary.usedQty += Math.abs(qty)
+    } else if (amounts.totalOutflow > 0) {
+      summary.usedQty += amounts.totalOutflow
       summary.usedValue += value
     }
   }

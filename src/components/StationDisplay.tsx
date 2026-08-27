@@ -207,6 +207,7 @@ export default function StationDisplay({ station, title, icon, primaryColor, log
   useRealtimeRefresh({
     channel: `e1-station-${station}`,
     events: [...ORDER_BOARD_EVENTS],
+    scopeId: station,
     enabled: authed && !authExpired,
     onRefresh: () => { void loadOrders() },
     onReconnect: () => { void loadOrders() },

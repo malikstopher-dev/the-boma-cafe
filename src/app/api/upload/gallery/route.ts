@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
+import { uploadPublicImage } from '@/lib/storage/media';
 
 export const dynamic = 'force-dynamic'
 
 const VALID_FOLDERS = ['events', 'food', 'venue', 'people', 'promotions'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'media.write')
   if (authError) return authError
 
   try {
@@ -24,22 +24,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid folder' }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'gallery', folder);
-    
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
     }
 
-    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const filePath = path.join(uploadDir, fileName);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    
-    fs.writeFileSync(filePath, buffer);
+    const uploaded = await uploadPublicImage(file, `gallery/${folder}`);
 
     return NextResponse.json({ 
       success: true, 
-      url: `/gallery/${folder}/${fileName}`,
-      name: fileName 
+      url: uploaded.url,
+      name: uploaded.path.split('/').pop(),
+      storagePath: uploaded.path,
     });
   } catch (error) {
     console.error('Upload error:', error);

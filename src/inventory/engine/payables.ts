@@ -61,23 +61,25 @@ function round2(n: number): number {
 
 export async function getSupplierPayables(): Promise<SupplierPayResult> {
   const supabase = getInventoryClient()
-  try {
-    const { data: suppliers } = await supabase
+  const { data: suppliers, error: suppliersError } = await supabase
       .from('inventory_suppliers')
       .select('id, name, payment_term_type, payment_term_days')
       .eq('is_active', true)
       .order('name')
+    if (suppliersError) throw new Error(`Failed to load suppliers: ${suppliersError.message}`)
     const roster = (suppliers ?? []) as unknown as Array<{ id: string; name: string; payment_term_type: string | null; payment_term_days: number | null }>
 
     const week = getOwnerRange('this_week')
     const month = getOwnerRange('this_month')
 
-    const { data: invoices } = await supabase
+    const { data: invoices, error: invoicesError } = await supabase
       .from('inventory_supplier_invoices')
       .select('id, supplier_id, invoice_date, due_date, total_amount, status')
-    const { data: payments } = await supabase
+    const { data: payments, error: paymentsError } = await supabase
       .from('inventory_supplier_payments')
       .select('invoice_id, amount, paid_at')
+    if (invoicesError) throw new Error(`Failed to load supplier invoices: ${invoicesError.message}`)
+    if (paymentsError) throw new Error(`Failed to load supplier payments: ${paymentsError.message}`)
 
     const invRows = (invoices ?? []) as unknown as InvoiceRow[]
     const payRows = (payments ?? []) as unknown as PaymentRow[]
@@ -180,16 +182,12 @@ export async function getSupplierPayables(): Promise<SupplierPayResult> {
       })
     }
 
-    return {
+  return {
       rows,
       totalOutstanding: round2(totalOutstanding),
       weekTotal: round2(weekTotal),
       monthTotal: round2(monthTotal),
       enabled: true,
-    }
-  } catch {
-    // Tables don't exist — degrade gracefully
-    return { rows: [], totalOutstanding: 0, weekTotal: 0, monthTotal: 0, enabled: false }
   }
 }
 

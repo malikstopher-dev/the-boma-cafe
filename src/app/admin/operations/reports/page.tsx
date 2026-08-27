@@ -97,9 +97,12 @@ export default function ReportsPage() {
         return [
           { header: 'Product', value: r => r.productName, width: 28 },
           { header: 'Opening', value: r => r.openingBalance, width: 10 },
-          { header: 'Purchases', value: r => r.purchases, width: 10 },
-          { header: 'Sales', value: r => r.sales, width: 10 },
+          { header: 'Received', value: r => r.purchases, width: 10 },
+          { header: 'Sold', value: r => r.sales, width: 10 },
+          { header: 'Internal Use', value: r => r.internalConsumption, width: 12 },
+          { header: 'Waste / Loss', value: r => r.wasteLoss, width: 12 },
           { header: 'Adjustments', value: r => r.adjustments, width: 12 },
+          { header: 'Count Variance', value: r => r.physicalCountVariance, width: 12 },
           { header: 'Closing', value: r => r.closingBalance, width: 10 },
         ]
       case 'variance':
@@ -168,9 +171,12 @@ export default function ReportsPage() {
             <tr style={{borderBottom:'1px solid #3A3428',background:'#242018'}}>
               <th style={{textAlign:'left',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Product</th>
               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Opening</th>
-              <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Purchases</th>
-              <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Sales</th>
-              <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Adjustments</th>
+               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Received</th>
+               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Sold</th>
+               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Internal Use</th>
+               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Waste / Loss</th>
+               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Adjustments</th>
+               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Count Variance</th>
               <th style={{textAlign:'right',padding:'10px 16px',fontSize:11,fontWeight:600,color:'#6B6358',textTransform:'uppercase',letterSpacing:'0.04em'}}>Closing</th>
             </tr>
           </thead>
@@ -181,7 +187,10 @@ export default function ReportsPage() {
                 <td style={{padding:'12px 16px',textAlign:'right',color:'#F0EBE3'}}>{row.openingBalance.toFixed(2)}</td>
                 <td style={{padding:'12px 16px',textAlign:'right',color:'#4CAF50'}}>+{row.purchases.toFixed(2)}</td>
                 <td style={{padding:'12px 16px',textAlign:'right',color:'#E85454'}}>-{row.sales.toFixed(2)}</td>
+                <td style={{padding:'12px 16px',textAlign:'right',color:'#E85454'}}>-{row.internalConsumption.toFixed(2)}</td>
+                <td style={{padding:'12px 16px',textAlign:'right',color:'#E85454'}}>-{row.wasteLoss.toFixed(2)}</td>
                 <td style={{padding:'12px 16px',textAlign:'right',color:'#F0EBE3'}}>{row.adjustments > 0 ? '+' : ''}{row.adjustments.toFixed(2)}</td>
+                <td style={{padding:'12px 16px',textAlign:'right',color:'#F0EBE3'}}>{row.physicalCountVariance > 0 ? '+' : ''}{row.physicalCountVariance.toFixed(2)}</td>
                 <td style={{padding:'12px 16px',textAlign:'right',fontWeight:600,color:'#F0EBE3'}}>{row.closingBalance.toFixed(2)}</td>
               </tr>
             ))}

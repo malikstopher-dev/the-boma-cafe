@@ -28,7 +28,8 @@ export async function getReconciliation(
     productQuery = productQuery.eq('inventory_type', inventoryType)
   }
 
-  const { data: products } = await productQuery
+  const { data: products, error: productsError } = await productQuery
+  if (productsError) throw new Error(`Failed to load reconciliation products: ${productsError.message}`)
   if (!products || products.length === 0) return []
 
   const productIds = products.map(p => p.id)
@@ -40,7 +41,8 @@ export async function getReconciliation(
     .lte('created_at', asAt)
     .in('product_id', productIds)
 
-  const { data: allTxns } = await txnQuery
+  const { data: allTxns, error: txnsError } = await txnQuery
+  if (txnsError) throw new Error(`Failed to load reconciliation movements: ${txnsError.message}`)
   const txnMap = new Map<string, number>()
   const costMap = new Map<string, number | null>()
 
@@ -71,11 +73,12 @@ export async function getInventoryValue(locationId: string): Promise<number> {
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
-  const { data: txns } = await supabase
+  const { data: txns, error } = await supabase
     .from('inventory_transactions')
     .select('product_id, quantity, unit_cost')
     .eq('location_id', locationId)
     .gte('created_at', ninetyDaysAgo.toISOString())
+  if (error) throw new Error(`Failed to load inventory value: ${error.message}`)
 
   if (!txns || txns.length === 0) return 0
 

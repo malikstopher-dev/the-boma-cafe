@@ -3054,3 +3054,36 @@ Implement and deploy Batch 3 route-level RBAC/privacy after explicit owner appro
 - No rollback was required. The Oracle worker was not restarted because Batch 3 does not change its bundle or job handlers.
 - The three owner XLSX files remain untouched and untracked.
 - Batch 4 remains inactive; do not start another mission without explicit owner approval.
+
+---
+
+## Session: Full-System Audit Batch 4 Local Gate (2026-08-27)
+
+### Objective
+
+Implement the owner-approved Batch 4 findings locally, prove the complete change set, and stop at the controlled production cutover gate.
+
+### Implementation
+
+- Added canonical movement classification in `src/inventory/lib/movement-classification.ts` and migration 119. Inbound, Sold, Internal Consumption, Waste/Loss, Adjustment, Physical Count Variance, Operational Used, and Total Outflow remain separate under the approved rules. Weekly, stock-sheet, owner/dashboard, and report consumers now use those definitions.
+- Forecast, reorder, dashboard, payables, reconciliation, stock-sheet, and report read failures now surface errors rather than becoming plausible zero/empty business data.
+- Rebuilt the offline order queue with verified localStorage persistence, pending/failed states, transport-aware replay, explicit retry/discard/clear controls, and item/order note preservation. Only fetch failures and HTTP 503 queue from the live cart; permanent validation failures remain visible.
+- Migration 120 adds atomic conversation creation, atomic message + recipient-notification creation, recipient-scoped chat signals, complete confirmed/rejected station signals, and trigger-bound order event history. Station boards now subscribe by station. PIN cookie duration matches the one-year server session and logout records the actor before invalidation.
+- Migration 121 establishes durable public media upload constraints and a service-role cleanup enqueue RPC. CMS/gallery runtime filesystem writes were replaced with Supabase Storage. Upload metadata failures and delete storage failures use immediate compensation plus a registered `storage_cleanup` worker handler. The unused public `/api/waiters/active` route was removed.
+
+### Verification
+
+- Full inventory suite: 515/515 passed across 55 files.
+- Inventory strict TypeScript and root TypeScript passed.
+- Worker bundle built successfully at 105.83 KB.
+- Migration dry-run listed exactly 119–121; no migration was applied.
+- Linked schema lint reported only the two pre-existing unused-variable warnings in `consolidate_approved_supplier_duplicates` and `deduct_order_items_v2`.
+- `git diff --check` reported only line-ending notices.
+- Full local Next production build passed and generated all 187 pages.
+
+### Stop state
+
+- Batch 4 is locally implemented and verified, but not deployed.
+- No migration, production data/configuration, commit, push, Vercel deployment, live probe, or Oracle worker restart occurred.
+- Controlled cutover requires explicit owner approval: apply migrations 119–121, deploy web code, update/restart the worker, run bounded live tests, clean tagged residue, and verify migration/deployment/worker health.
+- The three owner XLSX files remain untouched and untracked.

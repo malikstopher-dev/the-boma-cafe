@@ -123,7 +123,7 @@ describe('order-status: waiter state updates from events (tests 1-4)', () => {
     const client = { channel: () => channel, removeChannel: vi.fn().mockResolvedValue('ok') }
     const sub = subscribeToOrderEvents({ channel: 'e1-test-filter', getSupabase: () => client })
     expect(captured.table).toBe('realtime_events')
-    expect(captured.filter).toBe('event_name=in.(order.preparing,order.ready,order.completed,order.cancelled)')
+    expect(captured.filter).toBe('event_name=in.(order.confirmed,order.preparing,order.ready,order.completed,order.cancelled,order.rejected)')
     sub.unsubscribe()
   })
 })

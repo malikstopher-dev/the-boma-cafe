@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { subscribeToChatEvents } from '@/inventory/lib/chat-events'
+import { CHAT_NOTIFICATION_EVENTS, subscribeToChatEvents } from '@/inventory/lib/chat-events'
 
 export function playMessageTone() {
   try {
@@ -131,6 +131,8 @@ export function useIncomingMessageNotifications(options: {
     // the message by id — payloads never carry message content (E1-5).
     const sub = subscribeToChatEvents({
       channel: `e1-incoming-${currentUserId}`,
+      events: CHAT_NOTIFICATION_EVENTS,
+      scopeId: currentUserId,
       onMessageId: (messageId) => {
         if (!messageId) return
         fetch(`/api/staff/messages?message_id=${encodeURIComponent(messageId)}`)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
 import { requireAdminPermission } from '@/lib/auth/requireRole'
 import { generateStoragePath, BUCKET } from '@/lib/storage'
+import { removeStorageObjectOrQueue } from '@/lib/storage/media'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +48,10 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (mediaError) return NextResponse.json({ error: 'Failed to save media record' }, { status: 500 })
+    if (mediaError) {
+      await removeStorageObjectOrQueue(BUCKET, storagePath)
+      return NextResponse.json({ error: 'Failed to save media record' }, { status: 500 })
+    }
 
     return NextResponse.json({ data: mediaData })
   } catch (err: any) {

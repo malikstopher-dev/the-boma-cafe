@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { requireAdminPermission } from '@/lib/auth/requireRole';
+import { uploadPublicImage } from '@/lib/storage/media';
 
 export const dynamic = 'force-dynamic'
 
 const VALID_UPLOAD_FOLDERS = ['misc', 'events', 'food', 'venue', 'people', 'promotions', 'menu', 'gallery', 'marketing'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminPermission(request, 'media.write')
@@ -33,32 +32,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', folder);
-    
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const timestamp = Date.now();
-    const ext = path.extname(file.name);
-    const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-    const fileName = `${timestamp}-${baseName}${ext}`;
-    const filePath = path.join(uploadDir, fileName);
-    
-    // Verify resolved path is within the upload directory
-    if (!filePath.startsWith(uploadDir)) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
-
-    const url = `/uploads/${folder}/${fileName}`;
+    const uploaded = await uploadPublicImage(file, `cms/${folder}`);
 
     return NextResponse.json({ 
       success: true, 
-      url,
-      fileName,
+      url: uploaded.url,
+      fileName: uploaded.path.split('/').pop(),
+      storagePath: uploaded.path,
       originalName: file.name
     });
   } catch (error) {

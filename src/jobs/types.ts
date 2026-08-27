@@ -4,6 +4,7 @@ export type JobType =
   | 'pdf_generation'
   | 'order_deduction'
   | 'reservation_lifecycle'
+  | 'storage_cleanup'
   | 'email_delivery'
   | 'invoice_generation'
   | 'receipt_generation'
