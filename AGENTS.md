@@ -2952,11 +2952,11 @@ Fix the two verified scope/alert regressions without activating canonical moveme
 
 ---
 
-## Session: Full-System Audit Batch 2 Local Gate (2026-08-27) — deployment pending
+## Session: Full-System Audit Batch 2 Cutover (2026-08-27) — commits `adaab9d`, `814638d`
 
 ### Objective
 
-Implement H-08 through H-14 only: atomic inventory movements, fail-closed stock counts, removal of non-atomic RPC downgrades, finance-safe supplier payments, worker/outbox fencing, and stable order-line reconciliation. Production cutover remains approval-gated.
+Implement and deploy H-08 through H-14 only: atomic inventory movements, fail-closed stock counts, removal of non-atomic RPC downgrades, finance-safe supplier payments, worker/outbox fencing, and stable order-line reconciliation.
 
 ### Implementation
 
@@ -2976,8 +2976,30 @@ Implement H-08 through H-14 only: atomic inventory movements, fail-closed stock 
 - `git diff --check` reported only line-ending notices.
 - Full Next production build compiled, typechecked, and generated all 187 pages.
 
+### Production cutover
+
+- Runtime commit `adaab9d` was pushed. Migrations 112-115 applied while `boma-worker` was stopped; local and remote history match through 115.
+- Git integration built `adaab9d` successfully and aliased it to `https://the-boma-cafe.vercel.app`. A clean-worktree CLI attempt created an isolated secretless project; it was removed after confirming the Git deployment was already Ready. The protected XLSX files were never uploaded.
+- Oracle pulled `adaab9d`, ran `npm ci`, built the 105.06 KB worker, restarted `boma-worker`, and saved PM2 state. It remains online.
+- The first live probe found one response-mapping defect: the database correctly rejected a conflicting supplier-payment idempotency key, but the route returned 500 instead of 400. Commit `814638d` added the mapping and regression test; focused tests and both TypeScript checks passed; its Vercel deployment is Ready and aliased.
+
+### Live verification
+
+- H-08: invalid and insufficient movements left zero partial ledger/audit/cache state; one valid movement committed all three with balance 5.
+- H-09: an invalid stock-count source was rejected and created zero stock-count rows.
+- H-10: PO receive returned 404 and import apply returned 500 from their authoritative RPC failures with no fallback writes; the old deduction RPC was denied.
+- H-11: manager finance read/write returned 403; full_manager read/write succeeded with server attribution. Retry returned the same payment, conflicting idempotency and overpayment returned 400, and concurrent R40 final payments produced one 201 and one 400. Exactly two payment rows totaled the R100 invoice and exactly two admin audit events existed.
+- H-12: two same-name source lines remained distinct; required unmatched lines blocked deduction with zero transaction rows.
+- H-13: the real Oracle scheduler detected the deliberately stale processing job, rotated its lease, moved it to dead_letter, and a stale final update affected zero rows.
+- H-14: repeated claims produced one logical outbox row; repeated provider keys produced one delivery-attempt row; after a simulated successful finish the outbox was no longer sendable. No provider call/email was made.
+
+### Verification and cleanup
+
+- Final migration list is synchronized through 115; Vercel Production is Ready; `/api/booking/config` returns 200; worker uptime/health is clean after restart.
+- All tagged product, transaction, balance, inventory/admin audit, account/session, supplier, invoice, payment, order/item, realtime, job, notification, and delivery-attempt probe rows were deleted. Final residue checks returned zero.
+- The three owner XLSX files remain untouched and untracked.
+
 ### Stop state
 
-- No Batch 2 migration was applied; no commit, push, Vercel deployment, Oracle worker restart, provider call, live probe, or production business-row mutation occurred.
-- The three owner XLSX files remain untouched and untracked.
-- Next action requires explicit owner approval: controlled migrations 112-115, commit/push, Vercel deploy, Oracle worker rebuild/restart, live H-08 through H-14 verification, cleanup, and final closeout.
+- Batch 2 H-08 through H-14 is `FIXED - VERIFIED`.
+- Batch 3 remains inactive. Do not start Batch 3 or another mission without explicit owner approval.

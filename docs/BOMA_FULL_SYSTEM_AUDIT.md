@@ -386,7 +386,7 @@ Production gate (2026-08-26): migrations 107-111 applied; commits `8409ece` and 
 
 ### Batch 2: Transaction and financial atomicity
 
-Status: **IMPLEMENTED - LOCAL GATE PASSED; PRODUCTION CUTOVER PENDING (2026-08-27)**
+Status: **FIXED - VERIFIED (2026-08-27)**
 
 Scope:
 
@@ -399,7 +399,11 @@ Scope:
 
 Local result (2026-08-27): migrations 112-115 are the exact pending set in the linked dry run. Migration 112 makes the central ledger write, inventory audit row, and balance-cache refresh one serialized transaction. Stock-count source reads now fail closed before creating a session/item or approving a false variance. PO receiving, import apply, and order deduction no longer downgrade RPC failures to non-atomic TypeScript loops. Migration 113 adds a locked, capped, idempotent supplier-payment RPC with dedicated admin attribution; supplier finance read/write is restricted to owner and full_manager. Migration 114 adds rotating worker lease tokens plus a unique logical notification outbox, retryable delivery-attempt record, and stable Resend idempotency keys. Migration 115 persists source line/type/item identity, preserves duplicate/customized lines, refuses arbitrary duplicate-name product matching, and blocks required unmatched lines before atomic deduction.
 
-Local evidence: 471/471 inventory tests passed, including focused fail-closed, concurrency-contract, finance-RBAC, duplicate-line, lease-fence, and outbox tests; inventory and root TypeScript passed; the worker bundle built at 105.06 KB; linked schema lint reported only the pre-existing `consolidate_approved_supplier_duplicates.v_rows` warning; `git diff --check` reported only line-ending notices; and the full Next production build compiled, typechecked, and generated all 187 pages. No migration, commit, push, Vercel deployment, worker restart, provider call, or production business-row mutation has occurred for Batch 2.
+Local evidence: 471/471 inventory tests passed, including focused fail-closed, concurrency-contract, finance-RBAC, duplicate-line, lease-fence, and outbox tests; inventory and root TypeScript passed; the worker bundle built at 105.06 KB; linked schema lint reported only the pre-existing `consolidate_approved_supplier_duplicates.v_rows` warning; `git diff --check` reported only line-ending notices; and the full Next production build compiled, typechecked, and generated all 187 pages.
+
+Production gate (2026-08-27): migrations 112-115 applied while the Oracle worker was stopped; local and remote migration history now match through 115. Commit `adaab9d` and the live-found payment-idempotency response fix `814638d` were pushed. Vercel Production built successfully, became Ready, and is aliased to `https://the-boma-cafe.vercel.app`. The Oracle worker pulled `adaab9d`, rebuilt the 105.06 KB bundle, restarted under PM2, saved its process list, and remained online. No provider email was sent during verification.
+
+Live evidence: H-08 rejected an invalid movement and an oversized decrease with zero ledger/audit/cache partial state, then committed one valid movement with matching ledger, audit, and balance cache. H-09 rejected an invalid stock-count source and created zero sessions. H-10 exposed PO/import RPC failures with no receipt or import fallback writes; the legacy deduction RPC was denied. H-11 denied manager finance access, allowed full_manager access, attributed payments to the server-resolved admin, returned the same row on retry, rejected conflicting idempotency and overpayment, and serialized two concurrent final payments to one 201 winner and one 400 loser with exactly two payment rows totaling the R100 invoice. H-12 preserved two same-name source lines and blocked required unmatched deduction with zero SALE rows. H-13's real scheduler rotated a stale lease to dead_letter and the old lease affected zero rows. H-14 produced one logical outbox row and one provider-attempt row; a sent row was no longer sendable. Final tagged residue was zero for products, transactions, payments, invoices, suppliers, orders, jobs, notifications, admin accounts, and probe audit/session rows.
 
 ### Batch 3: Route-level RBAC and privacy
 
@@ -498,6 +502,22 @@ These are marked `UNRESOLVED`, not assumed healthy.
 - A Vercel code rollback is operationally available, but reverting C-01/C-03 would reintroduce security defects and reverting C-02/C-04/C-06 must be coordinated with their live schema/job contracts.
 - A worker rollback must not occur while `reservation_lifecycle` jobs are pending because the previous registry cannot process that job type. Forward repair is the preferred response to any regression.
 
+## 18. Batch 2 Five-Gate Closeout
+
+| Gate | Result |
+|---|---|
+| Mission scope | Only H-08 through H-14, migrations 112-115, the controlled deployment, live probes, cleanup, and evidence documentation were performed |
+| Mission lock | Additive migration history and ledger/order authorities preserved; no Batch 3, metric-classification, `/inv` retirement, or unrelated redesign started |
+| Evidence | 471/471 tests, TypeScript, worker/Next builds, synchronized migrations, atomic/fail-closed probes, finance concurrency, order reconciliation, real scheduler reclaim, outbox uniqueness, and worker health passed |
+| Repository state | Runtime commits are `adaab9d` and `814638d`; only the three protected owner XLSX files remain untracked |
+| Deployment state | Migrations 112-115 live; Vercel Production Ready and aliased; Oracle worker online; zero tagged probe residue; no provider email sent |
+
+### Batch 2 rollback readiness
+
+- No rollback was required. Migrations 112-115 are additive or install replacement RPC contracts and remain in synchronized migration history.
+- Reverting the worker without reverting the lease/outbox callers would break the live fencing contract; forward repair is preferred.
+- Re-enabling legacy payment, deduction, receipt, import, or direct-ledger fallbacks would reintroduce the verified defects and is not a safe rollback.
+
 ## Stop Point
 
-Batch 1 is complete and `FIXED - VERIFIED`. Batch 2 has passed its local implementation gate but is not production-verified. **Do not commit, push, apply migrations 112-115, deploy Vercel, restart the Oracle worker, or run live probes without explicit owner approval.**
+Batch 1 and Batch 2 are complete and `FIXED - VERIFIED`. Batch 3 remains inactive. Do not activate Batch 3 or another mission without explicit owner approval.
