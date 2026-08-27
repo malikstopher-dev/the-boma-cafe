@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: result }, { status: result.already_recorded ? 200 : 201 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to record payment'
-    const status = /required|positive|not found|exceeds|not payable/i.test(message) ? 400 : 500
+    const status = /required|positive|not found|exceeds|not payable|idempotency/i.test(message) ? 400 : 500
     return NextResponse.json({ error: { message } }, { status })
   }
 }

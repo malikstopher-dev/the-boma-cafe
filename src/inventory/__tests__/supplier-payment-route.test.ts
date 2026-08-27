@@ -74,4 +74,13 @@ describe('supplier payment route', () => {
     expect(response.status).toBe(200)
     expect(mocks.audit).not.toHaveBeenCalled()
   })
+
+  it('maps a conflicting idempotency key to a client error', async () => {
+    mocks.record.mockRejectedValue(new Error('Idempotency key was already used for a different payment'))
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(400)
+    expect(mocks.audit).not.toHaveBeenCalled()
+  })
 })
