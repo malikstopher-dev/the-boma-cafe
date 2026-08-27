@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/auth/requireRole'
+import { requireAdminPermission } from '@/lib/auth/requireRole'
 import { generateStoragePath, BUCKET } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
@@ -9,7 +9,7 @@ const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|webp|gif|svg|mp4|webm|pdf)$/i
 const MAX_FILE_SIZE = 25 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'media.write')
   if (authError) return authError
 
   try {

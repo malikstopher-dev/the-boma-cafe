@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getCategories, saveCategory, deleteCategory, getMenuItems, saveMenuItem, deleteMenuItem } from '@/lib/cms-supabase';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   let categories: any[] | null = null;
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {
@@ -112,7 +112,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {

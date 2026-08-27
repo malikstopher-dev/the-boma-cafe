@@ -3,6 +3,74 @@ import { randomUUID } from 'crypto'
 
 const supabase = () => getAdminClient()
 
+export const PUBLIC_SITE_SETTING_KEYS = [
+  'homepage',
+  'about',
+  'experience',
+  'entertainment',
+  'venueHire',
+  'contact',
+  'promoBar',
+  'branding',
+  'seo',
+] as const
+
+const ADMIN_SITE_SETTING_KEYS = new Set<string>([
+  ...PUBLIC_SITE_SETTING_KEYS,
+  'booking:deposit_percentage',
+  'booking:tax_rate',
+  'booking:quote_validity_days',
+  'booking:min_advance_days',
+  'booking:max_advance_days',
+  'booking:enabled',
+  'booking:auto_confirm',
+  'booking:payments_enabled',
+  'booking:business_hours_start',
+  'booking:business_hours_end',
+  'booking:notification_emails',
+])
+
+export function isAllowedSiteSettingKey(key: string): boolean {
+  return ADMIN_SITE_SETTING_KEYS.has(key)
+}
+
+const PRIVATE_PUBLIC_SETTING_KEYS = new Set([
+  'notificationemails',
+  'adminemails',
+  'recipientemails',
+  'apikey',
+  'servicerolekey',
+  'password',
+  'secret',
+  'token',
+])
+
+function sanitizePublicSettingValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sanitizePublicSettingValue)
+  if (!value || typeof value !== 'object') return value
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, nestedValue] of Object.entries(value)) {
+    const normalized = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
+    if (PRIVATE_PUBLIC_SETTING_KEYS.has(normalized)) continue
+    sanitized[key] = sanitizePublicSettingValue(nestedValue)
+  }
+  return sanitized
+}
+
+export function toPublicSiteSettings(rows: Array<{ key: string; value: string }>): Record<string, unknown> {
+  const allowed = new Set<string>(PUBLIC_SITE_SETTING_KEYS)
+  const settings: Record<string, unknown> = {}
+  for (const row of rows) {
+    if (!allowed.has(row.key)) continue
+    try { settings[row.key] = sanitizePublicSettingValue(JSON.parse(row.value)) } catch { settings[row.key] = row.value }
+  }
+  return settings
+}
+
+function assertAllowedSettingKey(key: string): void {
+  if (!isAllowedSiteSettingKey(key)) throw new Error(`Unsupported site setting: ${key}`)
+}
+
 function mapRow(row: any, mapping: Record<string, string>): any {
   const result: any = {}
   for (const [from, to] of Object.entries(mapping)) {
@@ -48,6 +116,7 @@ export async function getAllSettings(): Promise<Record<string, any>> {
 export async function setMultipleSettings(settings: Record<string, any>): Promise<boolean> {
   const client = await supabase()
   for (const [key, value] of Object.entries(settings)) {
+    assertAllowedSettingKey(key)
     const { data: existing } = await client.from('site_settings').select('id').eq('key', key).maybeSingle()
     const payload = { key, value: JSON.stringify(value), updated_at: new Date().toISOString() }
     if (existing) {
@@ -68,6 +137,7 @@ export async function getSetting(key: string): Promise<any> {
 }
 
 export async function setSetting(key: string, value: any): Promise<boolean> {
+  assertAllowedSettingKey(key)
   const client = await supabase()
   const payload = { key, value: JSON.stringify(value), updated_at: new Date().toISOString() }
   const { data: existing } = await client.from('site_settings').select('id').eq('key', key).maybeSingle()
@@ -613,7 +683,7 @@ export async function deleteBarItem(id: string): Promise<boolean> {
 export async function getPublicCMSData(): Promise<any> {
   const client = await supabase()
   const [settingsRes, announcementRes, popupRes, eventsRes, promotionsRes, galleryRes, barCategoriesRes, barItemsRes] = await Promise.all([
-    client.from('site_settings').select('key, value'),
+    client.from('site_settings').select('key, value').in('key', [...PUBLIC_SITE_SETTING_KEYS]),
     client.from('announcement').select('*').limit(1).maybeSingle(),
     client.from('popup').select('*').limit(1).maybeSingle(),
     client.from('events').select('*').order('order_index').filter('visible', 'neq', false).limit(50),
@@ -623,12 +693,9 @@ export async function getPublicCMSData(): Promise<any> {
     client.from('bar_items').select('*').order('order_index').filter('is_available', 'eq', true).limit(200),
   ])
 
-  const settings: Record<string, any> = {}
-  if (settingsRes.data) {
-    for (const row of settingsRes.data) {
-      try { settings[row.key] = JSON.parse(row.value) } catch { settings[row.key] = row.value }
-    }
-  }
+  if (settingsRes.error) throw settingsRes.error
+
+  const settings = toPublicSiteSettings(settingsRes.data || [])
 
   return {
     settings,

@@ -26,16 +26,13 @@ type BackgroundJob = {
   id: string
   job_type: string
   status: string
-  payload: Record<string, unknown>
   result: Record<string, unknown> | null
   error: Record<string, unknown> | null
-  idempotency_key: string | null
   priority: number
   retry_count: number
   max_retries: number
   scheduled_at: string
   heartbeat_at: string | null
-  locked_by: string | null
   created_at: string
   started_at: string | null
   completed_at: string | null

@@ -13,6 +13,9 @@ export type AdminPermission =
   | 'pricing.write'
   | 'cms.write'
   | 'bar_menu.write'
+  | 'media.write'
+  | 'background_jobs.read'
+  | 'background_jobs.write'
   | 'inventory.config.write'
   | 'inventory.approve'
   | 'inventory.final_approve'
@@ -40,6 +43,9 @@ const ALL: AdminPermission[] = [
   'pricing.write',
   'cms.write',
   'bar_menu.write',
+  'media.write',
+  'background_jobs.read',
+  'background_jobs.write',
   'inventory.config.write',
   'inventory.approve',
   // Stock-count / daily-stock APPROVAL only — owner + full_manager (Ship 3,
@@ -65,8 +71,6 @@ const MANAGER: AdminPermission[] = [
   'view:settings',
   'waiter.write',
   'waiter.pin_reset',
-  'cms.write',
-  'bar_menu.write',
   'inventory.config.write',
   'inventory.approve',
 ]

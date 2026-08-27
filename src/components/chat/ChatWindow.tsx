@@ -164,17 +164,14 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
     setSending(true)
     setError(null)
     try {
-      // Upload voice file to Supabase Storage
       const fileName = `voice-${Date.now()}.webm`
+      const formData = new FormData()
+      formData.append('conversation_id', conversationId)
+      formData.append('file', blob, fileName)
 
       const uploadRes = await fetch('/api/staff/voice-upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          file_name: fileName,
-          file_type: 'audio/webm',
-        }),
+        body: formData,
       })
 
       if (!uploadRes.ok) {
@@ -183,19 +180,7 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
         return
       }
 
-      const { upload_url, public_url } = await uploadRes.json()
-
-      // Upload the actual file
-      const fileUploadRes = await fetch(upload_url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'audio/webm' },
-        body: blob,
-      })
-
-      if (!fileUploadRes.ok) {
-        setError('Failed to upload voice file')
-        return
-      }
+      const { storage_path } = await uploadRes.json()
 
       // Send message with voice URL
       const msgRes = await fetch('/api/staff/messages', {
@@ -205,7 +190,7 @@ export default function ChatWindow({ conversationId, currentUserId, currentUserN
           conversation_id: conversationId,
           sender_id: currentUserId,
           message_type: 'voice',
-          voice_url: public_url,
+          voice_url: storage_path,
           voice_duration: duration,
         }),
       })

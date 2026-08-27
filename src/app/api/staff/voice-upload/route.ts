@@ -1,61 +1,63 @@
-// POST /api/staff/voice-upload — Get signed upload URL for voice note
-// Body: { conversation_id: string, file_name: string, file_type: string }
-// Returns: { upload_url, public_url }
+// POST /api/staff/voice-upload — Validate and store a private voice note.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestRole } from '@/lib/auth/requireRole'
 import { getAdminClient } from '@/lib/supabase'
+import { resolveStaffIdentity } from '@/lib/staff/identity'
+import { isWebmVoice, MAX_VOICE_BYTES, STAFF_MEDIA_BUCKET, VOICE_CONTENT_TYPE } from '@/lib/staff/voice-media'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
-  const role = await getRequestRole(request)
-  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const identity = await resolveStaffIdentity(request)
+  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const body = await request.json()
-    const { conversation_id, file_name, file_type } = body
+    const formData = await request.formData()
+    const conversationId = formData.get('conversation_id')
+    const file = formData.get('file')
 
-    if (!conversation_id || !file_name) {
-      return NextResponse.json({ error: 'conversation_id and file_name required' }, { status: 400 })
+    if (typeof conversationId !== 'string' || !conversationId || !(file instanceof File)) {
+      return NextResponse.json({ error: 'conversation_id and file required' }, { status: 400 })
     }
 
-    // Sanitize file name
-    const safeName = file_name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const filePath = `voice-notes/${conversation_id}/${safeName}`
-
-    // Create signed upload URL using Supabase Storage
-    const { data, error } = await getAdminClient()
-      .storage
-      .from('staff-media')
-      .createSignedUploadUrl(filePath)
-
-    if (error) {
-      // If bucket doesn't exist, try to create it
-      const { error: createError } = await getAdminClient()
-        .storage
-        .createBucket('staff-media', { public: true })
-
-      if (createError && !createError.message?.includes('already exists')) {
-        return NextResponse.json({ error: 'Failed to create storage bucket' }, { status: 500 })
-      }
-
-      // Retry signed URL
-      const { data: retryData, error: retryError } = await getAdminClient()
-        .storage
-        .from('staff-media')
-        .createSignedUploadUrl(filePath)
-
-      if (retryError) {
-        return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 })
-      }
-
-      const publicUrl = getAdminClient().storage.from('staff-media').getPublicUrl(filePath).data.publicUrl
-      return NextResponse.json({ upload_url: retryData.signedUrl, public_url: publicUrl })
+    const { data: membership, error: membershipError } = await getAdminClient()
+      .from('staff_conversation_members')
+      .select('conversation_id')
+      .eq('conversation_id', conversationId)
+      .in('user_id', identity.aliases)
+      .maybeSingle()
+    if (membershipError) return NextResponse.json({ error: 'Could not verify conversation membership' }, { status: 500 })
+    if (!membership && !identity.isAdmin) {
+      return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
     }
 
-    const publicUrl = getAdminClient().storage.from('staff-media').getPublicUrl(filePath).data.publicUrl
-    return NextResponse.json({ upload_url: data.signedUrl, public_url: publicUrl })
+    if (file.size <= 0 || file.size > MAX_VOICE_BYTES) {
+      return NextResponse.json({ error: 'Voice note must be between 1 byte and 10MB' }, { status: 413 })
+    }
+    if (file.type !== VOICE_CONTENT_TYPE) {
+      return NextResponse.json({ error: 'Only WebM voice notes are allowed' }, { status: 415 })
+    }
+
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    if (!isWebmVoice(bytes)) {
+      return NextResponse.json({ error: 'Voice note content is not valid WebM' }, { status: 415 })
+    }
+
+    const filePath = `voice-notes/${conversationId}/${crypto.randomUUID()}.webm`
+    const bucket = getAdminClient().storage.from(STAFF_MEDIA_BUCKET)
+    const { error: uploadError } = await bucket.upload(filePath, bytes, {
+      contentType: VOICE_CONTENT_TYPE,
+      upsert: false,
+    })
+    if (uploadError) return NextResponse.json({ error: 'Failed to upload voice note' }, { status: 500 })
+
+    const { data: signed, error: signError } = await bucket.createSignedUrl(filePath, 60 * 60)
+    if (signError || !signed?.signedUrl) {
+      await bucket.remove([filePath])
+      return NextResponse.json({ error: 'Failed to secure voice note' }, { status: 500 })
+    }
+
+    return NextResponse.json({ storage_path: filePath, voice_url: signed.signedUrl })
   } catch (error) {
     console.error('[Voice Upload] Error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })

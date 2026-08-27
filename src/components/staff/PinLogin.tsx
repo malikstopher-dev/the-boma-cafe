@@ -6,12 +6,10 @@ import { posTokens as t } from '@/components/pos/DesignSystem'
 
 interface StaffMember {
   id: string
-  employee_id: string
+  employee_id?: string
   name: string
   role: string
   has_pin: boolean
-  on_duty: boolean
-  online: boolean
 }
 
 interface PinLoginProps {
@@ -52,7 +50,7 @@ export default function PinLogin({ role, title = 'Sign In', icon = '👤', onSuc
 
   const handleStaffSelect = (member: StaffMember) => {
     setSelectedStaff(member)
-    setEmployeeId(member.employee_id || '')
+    setEmployeeId('')
     setError(null)
     setShowKeypad(true)
   }
@@ -71,7 +69,8 @@ export default function PinLogin({ role, title = 'Sign In', icon = '👤', onSuc
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employee_id: selectedStaff?.employee_id || employeeId,
+          staff_id: selectedStaff?.id,
+          employee_id: selectedStaff ? undefined : employeeId,
           pin: enteredPin,
           device_name: navigator.userAgent.includes('Mobile') ? 'Mobile Device' : 'Web Browser',
         }),
@@ -203,15 +202,6 @@ export default function PinLogin({ role, title = 'Sign In', icon = '👤', onSuc
                   {member.role === 'waiter' ? '👤' : member.role === 'kitchen' ? '👨‍🍳' : member.role === 'bar' ? '🍸' : '👤'}
                 </span>
                 <span style={{ fontSize: 14, fontWeight: t.typography.fontWeight.semibold }}>{member.name}</span>
-                <span style={{ fontSize: 11, color: t.colors.text.dim, fontFamily: t.typography.fontFamilyMono }}>
-                  {member.employee_id || 'No ID'}
-                </span>
-                {!member.has_pin && (
-                  <span style={{ fontSize: 10, color: '#EF4444' }}>No PIN set</span>
-                )}
-                {member.online && (
-                  <span style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
-                )}
               </button>
             ))}
           </div>

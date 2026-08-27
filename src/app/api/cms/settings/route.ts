@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getAllSettings, setMultipleSettings } from '@/lib/cms-supabase';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { getAllSettings, setMultipleSettings, isAllowedSiteSettingKey } from '@/lib/cms-supabase';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   try {
@@ -19,11 +19,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   try {
     const settings = await request.json();
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings) || !Object.keys(settings).every(isAllowedSiteSettingKey)) {
+      return NextResponse.json({ error: 'Unsupported settings field' }, { status: 400 });
+    }
     await setMultipleSettings(settings);
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, message: 'Settings saved successfully' });

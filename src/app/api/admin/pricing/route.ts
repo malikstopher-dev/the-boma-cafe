@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/auth/requireRole'
+import { requireAdminPermission } from '@/lib/auth/requireRole'
 
 export const dynamic = 'force-dynamic'
 
 // GET: fetch pricing data for admin editor
 export async function GET(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'pricing.write')
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
 // PATCH: update a single price field
 export async function PATCH(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'pricing.write')
   if (authError) return authError
 
   try {
@@ -74,9 +74,29 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const allowedEntities = ['venue_areas', 'food_packages', 'drink_packages', 'addons']
-    if (!allowedEntities.includes(entity_type)) {
+    const allowedFields: Record<string, string[]> = {
+      venue_areas: ['base_price_weekday', 'base_price_weekend', 'minimum_spend', 'hourly_rate_weekday', 'hourly_rate_weekend', 'capacity_min', 'capacity_max'],
+      food_packages: ['per_person_weekday', 'per_person_weekend', 'child_price_weekday', 'child_price_weekend', 'min_guests'],
+      drink_packages: ['amount_weekday', 'amount_weekend', 'min_guests', 'pricing_model'],
+      addons: ['amount_weekday', 'amount_weekend', 'pricing_model', 'max_quantity'],
+    }
+    const entityFields = allowedFields[entity_type]
+    if (!entityFields) {
       return NextResponse.json({ error: 'Invalid entity type' }, { status: 400 })
+    }
+    if (!entityFields.includes(field)) {
+      return NextResponse.json({ error: 'Invalid pricing field' }, { status: 400 })
+    }
+
+    const allowedModels = entity_type === 'drink_packages'
+      ? ['per_person', 'flat_rate', 'consumption']
+      : ['flat_fee', 'per_person', 'per_hour']
+    if (field === 'pricing_model') {
+      if (typeof value !== 'string' || !allowedModels.includes(value)) {
+        return NextResponse.json({ error: 'Invalid pricing model' }, { status: 400 })
+      }
+    } else if (typeof value !== 'number' && (typeof value !== 'string' || value.trim() === '' || !Number.isFinite(Number(value)))) {
+      return NextResponse.json({ error: 'Pricing value must be numeric' }, { status: 400 })
     }
 
     const { error } = await (await getAdminClient())

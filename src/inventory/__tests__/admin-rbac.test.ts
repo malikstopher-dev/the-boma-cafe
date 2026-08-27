@@ -44,12 +44,14 @@ const fail = (message: string) => ({ data: null, error: { message } })
 const ALL_PERMISSIONS = [
   'view:owner_dashboard', 'view:reports', 'view:staff_management', 'view:settings',
   'view:accounts', 'waiter.write', 'waiter.pin_reset', 'settings.write', 'pricing.write',
-  'cms.write', 'bar_menu.write', 'inventory.config.write', 'inventory.approve',
+  'cms.write', 'bar_menu.write', 'media.write', 'background_jobs.read', 'background_jobs.write',
+  'inventory.config.write', 'inventory.approve', 'inventory.final_approve',
   'inventory.destructive', 'accounts.write', 'accounts.delete', 'accounts.change_role',
-  'security.settings', 'security.sessions',
+  'security.settings', 'security.sessions', 'supplier.bank.read', 'supplier.bank.write',
+  'supplier.bank.delete', 'supplier.finance.read', 'supplier.finance.write',
 ] as const
 
-const OWNER_ONLY = ['accounts.delete', 'accounts.change_role', 'security.settings', 'security.sessions']
+const OWNER_ONLY = ['accounts.delete', 'accounts.change_role', 'security.settings', 'security.sessions', 'supplier.bank.delete']
 
 describe('permissions matrix', () => {
   it('owner has every permission', () => {
@@ -72,8 +74,7 @@ describe('permissions matrix', () => {
   it('manager has exactly the operational set', () => {
     const expected = [
       'view:reports', 'view:staff_management', 'view:settings', 'waiter.write',
-      'waiter.pin_reset', 'cms.write', 'bar_menu.write', 'inventory.config.write',
-      'inventory.approve',
+      'waiter.pin_reset', 'inventory.config.write', 'inventory.approve',
     ]
     for (const p of ALL_PERMISSIONS) expect(can('manager', p)).toBe(expected.includes(p))
   })

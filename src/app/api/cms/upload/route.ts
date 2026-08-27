@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +10,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'media.write')
   if (authError) return authError
   try {
     const formData = await request.formData();

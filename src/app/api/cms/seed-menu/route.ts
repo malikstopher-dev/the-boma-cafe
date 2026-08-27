@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { requireAdmin } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 import { getAdminClient } from '@/lib/supabase';
 import { defaultCategories, defaultMenuItems } from '@/data/defaultData';
 import { randomUUID } from 'crypto';
@@ -72,7 +72,7 @@ async function seedDefaultData() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {

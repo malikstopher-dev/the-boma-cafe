@@ -407,7 +407,7 @@ Live evidence: H-08 rejected an invalid movement and an oversized decrease with 
 
 ### Batch 3: Route-level RBAC and privacy
 
-Status: **NOT STARTED**
+Status: **IMPLEMENTED LOCALLY - AWAITING DEPLOYMENT APPROVAL (2026-08-27)**
 
 Scope:
 
@@ -416,6 +416,8 @@ Scope:
 3. Voice-upload membership/private storage.
 4. Push subscription identity ownership.
 5. Public CMS settings allowlist and staff roster minimization.
+
+Local checkpoint: exact owner/full_manager permissions now replace generic Admin/Kitchen guards across the scoped routes. Pricing/settings/manual-job inputs are allowlisted; background-job reads return redacted DTOs and retry/cancel/enqueue actions are audited. Public CMS settings are allowlisted and recursively sanitized; the public staff list returns only an opaque selector, name, role, and PIN availability. Voice uploads now verify conversation membership, MIME, size, and WebM bytes before a server-generated private upload; message reads sign both new storage paths and historical public URLs. Push registration/unregistration derives ownership from the validated staff identity and migration 116 provides atomic owner-preserving RPCs. Focused tests plus the full 488-test suite, both TypeScript checks, the 187-page build, migration dry run, and linked lint passed. Migration 116 remains unapplied; no Batch 3 commit, push, deployment, live probe, production data mutation, or worker restart has occurred.
 
 ### Batch 4: Convergence, metrics, offline, and UX
 

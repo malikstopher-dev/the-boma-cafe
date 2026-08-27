@@ -3,7 +3,7 @@
 // Returns: { success, staff: { id, name, role, employee_id } }
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyPin, getStaffByEmployeeId } from '@/lib/staff/auth'
+import { verifyPin, verifyPinByStaffId } from '@/lib/staff/auth'
 import { createSession, generateDeviceFingerprint } from '@/lib/staff/session'
 import { logAuthAudit } from '@/lib/staff/audit'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -18,18 +18,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { employee_id, pin, device_name } = body
+    const { employee_id, staff_id, pin, device_name } = body
 
-    if (!employee_id || !pin) {
-      return NextResponse.json({ error: 'Employee ID and PIN are required' }, { status: 400 })
+    if ((!employee_id && !staff_id) || !pin) {
+      return NextResponse.json({ error: 'Staff selector and PIN are required' }, { status: 400 })
     }
 
-    // Rate limit per employee ID
-    if (!await checkRateLimit(`pin-login:${employee_id}`, 10)) {
+    const loginSelector = typeof staff_id === 'string' && staff_id ? `staff:${staff_id}` : `employee:${employee_id}`
+    if (!await checkRateLimit(`pin-login:${loginSelector}`, 10)) {
       return NextResponse.json({ error: 'Too many attempts for this employee. Try again later.' }, { status: 429 })
     }
 
-    const result = await verifyPin(employee_id, pin)
+    const result = typeof staff_id === 'string' && staff_id
+      ? await verifyPinByStaffId(staff_id, pin)
+      : await verifyPin(employee_id, pin)
 
     if (!result.success || !result.profile) {
       return NextResponse.json({ error: result.error || 'Invalid credentials' }, { status: 401 })

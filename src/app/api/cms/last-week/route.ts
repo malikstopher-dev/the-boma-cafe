@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLastWeekHighlight, saveLastWeekHighlight } from '@/lib/cms-supabase';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {

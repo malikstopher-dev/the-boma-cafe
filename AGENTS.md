@@ -3003,3 +3003,38 @@ Implement and deploy H-08 through H-14 only: atomic inventory movements, fail-cl
 
 - Batch 2 H-08 through H-14 is `FIXED - VERIFIED`.
 - Batch 3 remains inactive. Do not start Batch 3 or another mission without explicit owner approval.
+
+---
+
+## Session: Full-System Audit Batch 3 Local Checkpoint (2026-08-27)
+
+### Objective
+
+Implement Batch 3 route-level RBAC and privacy locally, verify it, and stop before deployment approval.
+
+### Implementation
+
+- CMS/settings/pricing/media/background-job routes now use explicit permission keys. Owner and full_manager retain access; manager, assistant_manager, Kitchen, Bar, Waiter, anonymous, and unresolved identities are denied. Manager's old `cms.write`/`bar_menu.write` grants were removed, and matching Sidebar entries are permission-filtered.
+- Pricing entity fields and models, site-setting keys, and manually enqueued background-job types/payloads are allowlisted. Generic manual PDF jobs are rejected in favor of domain-specific routes.
+- Background-job list/detail DTOs omit payload, idempotency key, worker identity, lease token, and raw error/result detail. Enqueue, retry, and cancel actions are attributed through `admin_audit_log`.
+- Public CMS settings query only approved public sections and recursively strips operational email/secret/token-style nested keys. Public staff login returns only `id`, `name`, `role`, and `has_pin`; selected PIN login uses the opaque profile ID while manual employee-ID login remains supported.
+- Migration 116 makes `staff-media` private, constrains it to WebM voice files, and adds service-role-only atomic push registration/unregistration RPCs. Voice uploads require conversation membership, size/MIME/WebM-byte validation, a server-generated path, and signed reads; historical public staff-media URLs are converted to paths and signed on read.
+- Push registration/unregistration derives owner and role from validated server identity. Client `user_id` is ignored for authority and a foreign supplied ID or token owner returns 403; the UI no longer reads/sends localStorage identity.
+
+### Verification
+
+- Focused Batch 3 tests: 17/17 passed.
+- Full inventory suite: 488/488 passed across 53 files.
+- Inventory strict TypeScript and root TypeScript passed.
+- Local Next production build passed and generated all 187 pages.
+- Linked migration dry run listed only `116_route_privacy_controls.sql`.
+- Linked schema lint reported only the pre-existing unused-variable warnings in `consolidate_approved_supplier_duplicates` and `deduct_order_items_v2`.
+- `git diff --check` reported only line-ending notices.
+- The two Vercel Error deployments visible during the session were old Batch 1 attempts from 2026-08-26 failing on the already-fixed booking-submit Zod narrowing issue. The two newest production deployments are Ready and the canonical alias points to the latest Ready deployment.
+
+### Stop state
+
+- Batch 3 is implemented and verified locally only.
+- Migration 116 is not applied. No Batch 3 commit, push, Vercel deployment, live production probe, production mutation, or Oracle worker restart occurred.
+- The three owner XLSX files remain untouched and untracked.
+- Await explicit owner approval before the controlled cutover.

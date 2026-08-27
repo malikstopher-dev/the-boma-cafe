@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getAllSettings, setMultipleSettings, getSetting, setSetting } from '@/lib/cms-supabase';
-import { requireAdminOrKitchen } from '@/lib/auth/requireRole';
+import { getAllSettings, setMultipleSettings, isAllowedSiteSettingKey, setSetting } from '@/lib/cms-supabase';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   try {
@@ -19,11 +19,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   try {
     const body = await request.json();
+    if (!body || typeof body !== 'object' || Array.isArray(body) || !Object.keys(body).every(isAllowedSiteSettingKey)) {
+      return NextResponse.json({ error: 'Unsupported settings field' }, { status: 400 });
+    }
     
     const success = await setMultipleSettings(body);
     
@@ -40,15 +43,15 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const authError = await requireAdminOrKitchen(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   try {
     const body = await request.json();
     const { key, value } = body;
     
-    if (!key) {
-      return NextResponse.json({ error: 'Key is required' }, { status: 400 });
+    if (!key || !isAllowedSiteSettingKey(key)) {
+      return NextResponse.json({ error: 'Valid key is required' }, { status: 400 });
     }
     
     const success = await setSetting(key, value);

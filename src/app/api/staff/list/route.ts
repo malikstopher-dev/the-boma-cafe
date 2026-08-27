@@ -1,23 +1,25 @@
 // GET /api/staff/list — List staff members for login screen
-// Returns: { staff: [{ id, employee_id, name, role, has_pin, on_duty }] }
+// Public login DTO: opaque selector plus display name/role only.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
+import { PUBLIC_STAFF_LOGIN_ROLES, toPublicStaffLoginDto } from '@/lib/staff/public-login'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const role = searchParams.get('role')
+  if (role && !PUBLIC_STAFF_LOGIN_ROLES.includes(role as typeof PUBLIC_STAFF_LOGIN_ROLES[number])) {
+    return NextResponse.json({ error: 'Invalid staff role' }, { status: 400 })
+  }
 
   let query = getAdminClient()
     .from('staff_profiles')
-    .select('id, user_id, employee_id, name, role, pin_hash, on_duty, online')
+    .select('id, name, role, pin_hash')
+    .in('role', role ? [role] : [...PUBLIC_STAFF_LOGIN_ROLES])
+    .not('pin_hash', 'is', null)
     .order('name')
-
-  if (role) {
-    query = query.eq('role', role)
-  }
 
   const { data, error } = await query
 
@@ -25,16 +27,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to load staff' }, { status: 500 })
   }
 
-  const staff = (data || []).map(s => ({
-    id: s.id,
-    user_id: s.user_id,
-    employee_id: s.employee_id,
-    name: s.name,
-    role: s.role,
-    has_pin: !!s.pin_hash,
-    on_duty: s.on_duty,
-    online: s.online,
-  }))
+  const staff = (data || []).map(toPublicStaffLoginDto)
 
   return NextResponse.json({ staff })
 }

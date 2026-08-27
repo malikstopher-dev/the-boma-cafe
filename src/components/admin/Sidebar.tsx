@@ -78,7 +78,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Owner Dashboard', icon: <Landmark size={18} />, href: '/dashboard', permission: 'view:owner_dashboard' },
       { label: 'Dashboard', icon: <LayoutDashboard size={18} />, href: '/admin/dashboard' },
-      { label: 'Background Jobs', icon: <Zap size={18} />, href: '/admin/background-jobs' },
+      { label: 'Background Jobs', icon: <Zap size={18} />, href: '/admin/background-jobs', permission: 'background_jobs.read' },
     ],
   },
   {
@@ -160,35 +160,35 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Bookings', icon: <Calendar size={18} />, href: '/admin/bookings' },
       { label: 'Quotes', icon: <FileText size={18} />, href: '/admin/quotes' },
-      { label: 'Pricing', icon: <DollarSign size={18} />, href: '/admin/pricing' },
-      { label: 'Availability', icon: <CalendarDays size={18} />, href: '/admin/availability' },
+      { label: 'Pricing', icon: <DollarSign size={18} />, href: '/admin/pricing', permission: 'pricing.write' },
+      { label: 'Availability', icon: <CalendarDays size={18} />, href: '/admin/availability', permission: 'settings.write' },
     ],
   },
   {
     label: 'Menu',
     items: [
-      { label: 'Menu Items', icon: <UtensilsCrossed size={18} />, href: '/admin/menu' },
-      { label: 'Categories', icon: <FolderOpen size={18} />, href: '/admin/categories' },
-      { label: 'Bar Menu', icon: <Beer size={18} />, href: '/admin/bar-menu' },
+      { label: 'Menu Items', icon: <UtensilsCrossed size={18} />, href: '/admin/menu', permission: 'cms.write' },
+      { label: 'Categories', icon: <FolderOpen size={18} />, href: '/admin/categories', permission: 'cms.write' },
+      { label: 'Bar Menu', icon: <Beer size={18} />, href: '/admin/bar-menu', permission: 'bar_menu.write' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { label: 'Site Settings', icon: <Settings size={18} />, href: '/admin/site-settings', permission: 'view:settings' },
-      { label: 'Events', icon: <PartyPopper size={18} />, href: '/admin/events' },
-      { label: 'Promotions', icon: <Gift size={18} />, href: '/admin/promotions' },
-      { label: 'Gallery', icon: <Image size={18} />, href: '/admin/gallery' },
-      { label: 'Media Library', icon: <Film size={18} />, href: '/admin/media' },
-      { label: 'Popup', icon: <Megaphone size={18} />, href: '/admin/popup' },
-      { label: 'Announcement', icon: <Megaphone size={18} />, href: '/admin/announcement' },
+      { label: 'Site Settings', icon: <Settings size={18} />, href: '/admin/site-settings', permission: 'settings.write' },
+      { label: 'Events', icon: <PartyPopper size={18} />, href: '/admin/events', permission: 'cms.write' },
+      { label: 'Promotions', icon: <Gift size={18} />, href: '/admin/promotions', permission: 'cms.write' },
+      { label: 'Gallery', icon: <Image size={18} />, href: '/admin/gallery', permission: 'cms.write' },
+      { label: 'Media Library', icon: <Film size={18} />, href: '/admin/media', permission: 'media.write' },
+      { label: 'Popup', icon: <Megaphone size={18} />, href: '/admin/popup', permission: 'cms.write' },
+      { label: 'Announcement', icon: <Megaphone size={18} />, href: '/admin/announcement', permission: 'cms.write' },
     ],
   },
   {
     label: 'People',
     items: [
       { label: 'Messages', icon: <MessageCircle size={18} />, href: '/admin/messages' },
-      { label: 'Inquiries', icon: <Mail size={18} />, href: '/admin/inquiries' },
+      { label: 'Inquiries', icon: <Mail size={18} />, href: '/admin/inquiries', permission: 'cms.write' },
       { label: 'Waiters', icon: <Users size={18} />, href: '/admin/waiters', permission: 'view:staff_management' },
       { label: 'Admin Accounts', icon: <UserCog size={18} />, href: '/admin/accounts', permission: 'view:accounts' },
     ],

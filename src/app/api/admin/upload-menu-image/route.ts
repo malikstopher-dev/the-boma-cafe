@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/auth/requireRole'
+import { requireAdminPermission } from '@/lib/auth/requireRole'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +10,7 @@ const BUCKET = 'menu-images'
 const MODULES = ['food', 'drinks', 'categories', 'promotions', 'events', 'gallery'] as const
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'media.write')
   if (authError) return authError
 
   try {

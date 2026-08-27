@@ -11,13 +11,6 @@ export default function FcmRegistration() {
 
     console.log('FCM mounted')
 
-    let userId = localStorage.getItem('boma_staff_user_id')
-    if (!userId) {
-      console.log('FCM: no user_id in localStorage — skipping')
-      return
-    }
-    console.log('FCM: userId found')
-
     // Don't block rendering — fire-and-forget
     ;(async () => {
       try {
@@ -66,7 +59,7 @@ export default function FcmRegistration() {
           await fetch('/api/push/unregister', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fcm_token: existingToken, user_id: userId }),
+            body: JSON.stringify({ fcm_token: existingToken }),
           }).catch((e) => { console.log('FCM: unregister failed', e) })
         }
 
@@ -80,7 +73,6 @@ export default function FcmRegistration() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fcm_token: currentToken,
-            user_id: userId,
             device_type: deviceType,
             app_version: '1.0.0',
           }),

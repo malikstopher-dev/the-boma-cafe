@@ -76,6 +76,17 @@ export async function getStaffById(id: string): Promise<StaffProfile | null> {
 export async function verifyPin(employeeId: string, pin: string): Promise<{ success: boolean; profile?: StaffProfile; error?: string }> {
   const profile = await getStaffByEmployeeId(employeeId)
 
+  return verifyProfilePin(profile, pin)
+}
+
+export async function verifyPinByStaffId(staffId: string, pin: string): Promise<{ success: boolean; profile?: StaffProfile; error?: string }> {
+  const profile = await getStaffById(staffId)
+
+  return verifyProfilePin(profile, pin)
+}
+
+async function verifyProfilePin(profile: StaffProfile | null, pin: string): Promise<{ success: boolean; profile?: StaffProfile; error?: string }> {
+
   if (!profile) {
     return { success: false, error: 'Employee not found' }
   }

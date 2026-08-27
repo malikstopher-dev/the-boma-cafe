@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { requireAdmin } from '@/lib/auth/requireRole';
+import { requireAdminPermission } from '@/lib/auth/requireRole';
 import { getAdminClient } from '@/lib/supabase';
 import { barCategories } from '@/app/bar-menu/barMenuData';
 import { randomUUID } from 'crypto';
@@ -83,7 +83,7 @@ async function seedBarData() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'bar_menu.write')
   if (authError) return authError
 
   try {

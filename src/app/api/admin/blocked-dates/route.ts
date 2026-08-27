@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/auth/requireRole'
+import { requireAdminPermission } from '@/lib/auth/requireRole'
 import { blockedDateSchema } from '@/lib/booking/validation'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   try {
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'settings.write')
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
 import { resolveStaffIdentity } from '@/lib/staff/identity'
+import { signVoiceMessage } from '@/lib/staff/voice-media'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     if (!member && !identity.isAdmin) {
       return NextResponse.json({ error: 'Not a member of this conversation' }, { status: 403 })
     }
-    return NextResponse.json(msg)
+    return NextResponse.json(await signVoiceMessage(msg))
   }
 
   if (!conversationId) {
@@ -63,7 +64,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json((data || []).reverse())
+  const messages = await Promise.all((data || []).reverse().map(message => signVoiceMessage(message)))
+  return NextResponse.json(messages)
 }
 
 export async function POST(request: NextRequest) {
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest) {
       await getAdminClient().from('staff_notifications').insert(notifications)
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(await signVoiceMessage(data))
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/auth/requireRole'
+import { requireAdminPermission } from '@/lib/auth/requireRole'
 import { uploadFile, deleteFile, generateStoragePath, getAssetUrl, VALID_MODULES, ALLOWED_MIME_TYPES } from '@/lib/storage'
 import { randomUUID } from 'crypto'
 
@@ -22,7 +22,7 @@ function snakeToCamel(obj: any): any {
 }
 
 export async function GET(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   const { searchParams } = new URL(request.url)
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {
@@ -353,7 +353,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  const authError = await requireAdminPermission(request, 'cms.write')
   if (authError) return authError
 
   try {
