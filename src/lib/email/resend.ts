@@ -29,7 +29,18 @@ export interface EmailPayload {
   attachments?: EmailAttachment[]
 }
 
-export async function sendEmail(payload: EmailPayload): Promise<boolean> {
+export interface EmailSendOptions {
+  idempotencyKey?: string
+}
+
+export interface EmailSendResult {
+  providerId: string | null
+}
+
+export async function sendEmailWithResult(
+  payload: EmailPayload,
+  options: EmailSendOptions = {},
+): Promise<EmailSendResult> {
   const apiKey = process.env.RESEND_API_KEY
   const fromAddress = formatFromAddress(getEmailConfig().defaultSender)
 
@@ -41,7 +52,7 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   }
 
   const client = getResend()!
-  const { error } = await client.emails.send({
+  const { data, error } = await client.emails.send({
     from: fromAddress,
     to: payload.to,
     subject: payload.subject,
@@ -53,13 +64,18 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       content: a.content,
       contentType: a.contentType,
     })),
-  })
+  }, { idempotencyKey: options.idempotencyKey })
   if (error) {
     const msg = typeof error === 'object' && error !== null && 'message' in error
       ? String((error as any).message)
       : JSON.stringify(error)
     throw new Error(`Resend API error: ${msg}`)
   }
+  return { providerId: data?.id ?? null }
+}
+
+export async function sendEmail(payload: EmailPayload): Promise<boolean> {
+  await sendEmailWithResult(payload)
   return true
 }
 
@@ -71,7 +87,10 @@ export interface MultiEmailPayload {
   attachments?: EmailAttachment[]
 }
 
-export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<boolean> {
+export async function sendEmailToMultipleWithResult(
+  payload: MultiEmailPayload,
+  options: EmailSendOptions = {},
+): Promise<{ providerIds: Array<string | null> }> {
   const apiKey = process.env.RESEND_API_KEY
   const fromAddress = formatFromAddress(getEmailConfig().defaultSender)
 
@@ -87,8 +106,12 @@ export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<b
 
   const client = getResend()!
   const failures: string[] = []
-  for (const to of payload.recipients) {
-    const { error } = await client.emails.send({
+  const providerIds: Array<string | null> = []
+  for (const [index, to] of payload.recipients.entries()) {
+    const idempotencyKey = options.idempotencyKey
+      ? `${options.idempotencyKey}:${index}`
+      : undefined
+    const { data, error } = await client.emails.send({
       from: fromAddress,
       to,
       subject: payload.subject,
@@ -100,17 +123,24 @@ export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<b
         content: a.content,
         contentType: a.contentType,
       })),
-    })
+    }, { idempotencyKey })
     if (error) {
       const msg = typeof error === 'object' && error !== null && 'message' in error
         ? String((error as any).message)
         : JSON.stringify(error)
       failures.push(`${to}: ${msg}`)
+    } else {
+      providerIds.push(data?.id ?? null)
     }
   }
 
   if (failures.length > 0) {
     throw new Error(`Resend errors for ${failures.length}/${payload.recipients.length} recipient(s): ${failures.join(' | ')}`)
   }
+  return { providerIds }
+}
+
+export async function sendEmailToMultiple(payload: MultiEmailPayload): Promise<boolean> {
+  await sendEmailToMultipleWithResult(payload)
   return true
 }

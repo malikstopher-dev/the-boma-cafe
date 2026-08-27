@@ -1,5 +1,4 @@
 import { getInventoryClient } from '../lib/db'
-import { createTransaction } from './ledger'
 import type { OrderItem, OrderItemDetail, ParsedOrderItem } from './types'
 import { resolveOrderStationLocation } from '../lib/station-location'
 
@@ -17,11 +16,21 @@ export function parseOrderItemsJson(itemsJson: string | null): ParsedOrderItem[]
     const items = Array.isArray(parsed) ? parsed : parsed?.items
     if (!Array.isArray(items)) return []
     return items
-      .map((i: Record<string, unknown>) => ({
+      .map((i: Record<string, unknown>, index: number) => ({
+        source_line_id: String(i.source_line_id ?? `legacy:${index}`),
+        source_type: (i.source_type === 'bar_item' || i.source_type === 'menu_item'
+          ? i.source_type
+          : 'legacy') as ParsedOrderItem['source_type'],
+        source_item_id: i.source_item_id ? String(i.source_item_id) : null,
+        inventory_required: i.inventory_required === true,
         name: String(i.name ?? '').trim(),
         quantity: Number(i.quantity) || 1,
         unit_price: Number(i.price) || 0,
-        selected_size: i.selected_size ? String(i.selected_size) : null,
+        selected_size: typeof i.selected_size === 'string'
+          ? i.selected_size
+          : i.selected_size && typeof i.selected_size === 'object' && 'name' in i.selected_size
+            ? String((i.selected_size as { name: unknown }).name)
+            : null,
         notes: i.notes ? String(i.notes) : null,
       }))
       .filter(i => i.name.length > 0)
@@ -32,11 +41,12 @@ export function parseOrderItemsJson(itemsJson: string | null): ParsedOrderItem[]
 
 export async function getOrder(orderId: string): Promise<OrderForDeduction | null> {
   const supabase = getInventoryClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('orders')
     .select('id, items_json, status, station')
     .eq('id', orderId)
     .maybeSingle()
+  if (error) throw new Error(`Failed to load order: ${error.message}`)
   return data as OrderForDeduction | null
 }
 
@@ -46,47 +56,68 @@ interface MatchResult {
   base_quantity: number | null
 }
 
-async function matchItemToProduct(itemName: string, quantity: number): Promise<MatchResult> {
+async function findUniqueProductByName(name: string): Promise<string | null> {
+  const { data, error } = await getInventoryClient()
+    .from('inventory_products')
+    .select('id')
+    .ilike('name', name)
+    .limit(2)
+
+  if (error) throw new Error(`Failed to match inventory product: ${error.message}`)
+  return data?.length === 1 ? data[0]!.id : null
+}
+
+async function matchItemToProduct(item: ParsedOrderItem): Promise<MatchResult> {
   const supabase = getInventoryClient()
 
-  const { data: barItem } = await supabase
-    .from('bar_items')
-    .select('id, name, bar_item_inventory_links!inner(inventory_product_id, pour_size_ml)')
-    .ilike('name', itemName)
-    .limit(1)
-    .maybeSingle()
+  if (item.source_type === 'bar_item' && item.source_item_id) {
+    const { data: exactBarItem, error } = await supabase
+      .from('bar_items')
+      .select('id, bar_item_inventory_links(inventory_product_id, pour_size_ml)')
+      .eq('id', item.source_item_id)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to resolve bar inventory link: ${error.message}`)
+    const exactLink = exactBarItem?.bar_item_inventory_links?.[0]
+    if (exactLink) {
+      return computeBaseQuantity({
+        product_id: exactLink.inventory_product_id,
+        pour_size_ml: Number(exactLink.pour_size_ml),
+        quantity: item.quantity,
+      })
+    }
+  }
 
+  const { data: barItem, error: barError } = item.source_type === 'menu_item'
+    ? { data: null, error: null }
+    : await supabase
+      .from('bar_items')
+      .select('id, name, bar_item_inventory_links!inner(inventory_product_id, pour_size_ml)')
+      .ilike('name', item.name)
+      .limit(1)
+      .maybeSingle()
+
+  if (barError) throw new Error(`Failed to match bar order item: ${barError.message}`)
   const link = barItem?.bar_item_inventory_links?.[0]
 
   if (barItem && link) {
     return computeBaseQuantity({
       product_id: link.inventory_product_id,
       pour_size_ml: Number(link.pour_size_ml),
-      quantity,
+      quantity: item.quantity,
     })
   }
 
   if (barItem) {
-    const { data: product } = await supabase
-      .from('inventory_products')
-      .select('id')
-      .ilike('name', itemName)
-      .limit(1)
-      .maybeSingle()
-    return product
-      ? computeBaseQuantity({ product_id: product.id, pour_size_ml: null, quantity })
+    const productId = await findUniqueProductByName(item.name)
+    return productId
+      ? computeBaseQuantity({ product_id: productId, pour_size_ml: null, quantity: item.quantity })
       : { product_id: null, pour_size_ml: null, base_quantity: null }
   }
 
-  const { data: productByName } = await supabase
-    .from('inventory_products')
-    .select('id')
-    .ilike('name', itemName)
-    .limit(1)
-    .maybeSingle()
+  const productId = await findUniqueProductByName(item.name)
 
-  return productByName
-    ? computeBaseQuantity({ product_id: productByName.id, pour_size_ml: null, quantity })
+  return productId
+    ? computeBaseQuantity({ product_id: productId, pour_size_ml: null, quantity: item.quantity })
     : { product_id: null, pour_size_ml: null, base_quantity: null }
 }
 
@@ -102,22 +133,26 @@ async function computeBaseQuantity(input: {
     return { product_id, pour_size_ml, base_quantity: quantity }
   }
 
-  const { data: baseUom } = await supabase
+  const { data: baseUom, error: baseUomError } = await supabase
     .from('inventory_product_uoms')
     .select('uom_id')
     .eq('product_id', product_id)
     .eq('is_base', true)
-    .single()
+    .maybeSingle()
+
+  if (baseUomError) throw new Error(`Failed to load product base UOM: ${baseUomError.message}`)
 
   if (!baseUom) {
     return { product_id, pour_size_ml, base_quantity: quantity }
   }
 
-  const { data: uom } = await supabase
+  const { data: uom, error: uomError } = await supabase
     .from('inventory_uoms')
     .select('name')
     .eq('id', baseUom.uom_id)
     .maybeSingle()
+
+  if (uomError) throw new Error(`Failed to load base UOM: ${uomError.message}`)
 
   const baseUomName = (uom?.name ?? '').toLowerCase()
   if (['litre', 'liter', 'litres', 'liters', 'l', 'lt'].includes(baseUomName)) {
@@ -136,7 +171,7 @@ async function computeBaseQuantity(input: {
 async function resolveRecipeForItem(itemName: string): Promise<string | null> {
   const supabase = getInventoryClient()
 
-  const { data: byOutput } = await supabase
+  const { data: byOutput, error: outputError } = await supabase
     .from('inventory_recipe_outputs')
     .select('recipe_id, inventory_recipes!inner(created_at)')
     .eq('inventory_recipes.is_active', true)
@@ -145,9 +180,11 @@ async function resolveRecipeForItem(itemName: string): Promise<string | null> {
     .limit(1)
     .maybeSingle()
 
+  if (outputError) throw new Error(`Failed to resolve recipe output: ${outputError.message}`)
+
   if (byOutput?.recipe_id) return byOutput.recipe_id as string
 
-  const { data: byName } = await supabase
+  const { data: byName, error: recipeError } = await supabase
     .from('inventory_recipes')
     .select('id')
     .eq('is_active', true)
@@ -155,6 +192,8 @@ async function resolveRecipeForItem(itemName: string): Promise<string | null> {
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  if (recipeError) throw new Error(`Failed to resolve recipe: ${recipeError.message}`)
 
   return byName?.id ?? null
 }
@@ -168,21 +207,43 @@ export async function syncOrderItems(orderId: string): Promise<OrderItemDetail> 
   const parsed = parseOrderItemsJson(order.items_json)
 
   for (const item of parsed) {
-    const match = await matchItemToProduct(item.name, item.quantity)
+    const match = await matchItemToProduct(item)
     const recipeId = await resolveRecipeForItem(item.name)
+    const reconciliationStatus = match.product_id
+      ? 'matched'
+      : item.inventory_required
+        ? 'requires_mapping'
+        : 'not_required'
 
-    const existing = await supabase
+    let existing = await supabase
       .from('order_items')
       .select('id, transaction_id')
       .eq('order_id', orderId)
-      .eq('item_name', item.name)
+      .eq('source_line_id', item.source_line_id)
       .maybeSingle()
+
+    // One-time bridge for rows normalized before source_line_id existed.
+    if (!existing.data && item.source_type === 'legacy') {
+      existing = await supabase
+        .from('order_items')
+        .select('id, transaction_id')
+        .eq('order_id', orderId)
+        .eq('item_name', item.name)
+        .like('source_line_id', 'legacy-existing:%')
+        .limit(1)
+        .maybeSingle()
+    }
 
     if (existing.data) {
       if (existing.data.transaction_id) continue
-      await supabase
+      const { error } = await supabase
         .from('order_items')
         .update({
+          source_line_id: item.source_line_id,
+          source_type: item.source_type,
+          source_item_id: item.source_item_id,
+          inventory_required: item.inventory_required,
+          reconciliation_status: reconciliationStatus,
           quantity: item.quantity,
           unit_price: item.unit_price,
           selected_size: item.selected_size,
@@ -194,9 +255,15 @@ export async function syncOrderItems(orderId: string): Promise<OrderItemDetail> 
           matched_at: match.product_id ? new Date().toISOString() : null,
         })
         .eq('id', existing.data.id)
+      if (error) throw new Error(`Failed to update normalized order line: ${error.message}`)
     } else {
-      await supabase.from('order_items').insert({
+      const { error } = await supabase.from('order_items').insert({
         order_id: orderId,
+        source_line_id: item.source_line_id,
+        source_type: item.source_type,
+        source_item_id: item.source_item_id,
+        inventory_required: item.inventory_required,
+        reconciliation_status: reconciliationStatus,
         item_name: item.name,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -208,29 +275,16 @@ export async function syncOrderItems(orderId: string): Promise<OrderItemDetail> 
         recipe_id: recipeId,
         matched_at: match.product_id ? new Date().toISOString() : null,
       })
+      if (error) throw new Error(`Failed to normalize order line: ${error.message}`)
     }
   }
 
   return listOrderItems(orderId)
 }
 
-interface PendingLine {
-  id: string
-  product_id: string | null
-  base_quantity: number | null
-  item_name: string
-  quantity: number
-  transaction_id: string | null
-  recipe_id: string | null
-}
-
 /**
- * F2 atomic deduction. Primary path: the deduct_order_items RPC performs the
- * whole deduction in ONE database transaction (order locked, status must be
- * completed, per-ingredient ledger rows, balance cache, audit; any failure
- * rolls back everything). Falls back to the legacy per-line engine loop when
- * the RPC is unavailable (migration not yet applied) — the fallback is
- * retry-safe but not atomic (matches the receive/import fallback pattern).
+ * The v2 RPC is the only deduction path. It first blocks required unmatched
+ * lines, then invokes the existing atomic deduction transaction.
  */
 export async function deductOrderItems(orderId: string, locationId: string): Promise<{ deducted: number; skipped: number }> {
   const supabase = getInventoryClient()
@@ -241,167 +295,20 @@ export async function deductOrderItems(orderId: string, locationId: string): Pro
     throw new Error(`Only completed orders can be deducted (status: ${order.status})`)
   }
 
-  const { data, error } = await supabase.rpc('deduct_order_items', {
+  const { data, error } = await supabase.rpc('deduct_order_items_v2', {
     p_order_id: orderId,
     p_location_id: locationId,
   })
 
-  if (!error && data) {
-    const result = data as { deducted?: number | null; skipped?: number | null; already_deducted?: boolean | null }
-    return {
-      deducted: Number(result.deducted ?? 0),
-      skipped: Number(result.skipped ?? 0),
-    }
+  if (error || !data) {
+    throw new Error(`Order deduction failed atomically: ${error?.message ?? 'no result returned'}`)
   }
 
-  return deductOrderItemsEngine(orderId, locationId)
-}
-
-async function deductOrderItemsEngine(orderId: string, locationId: string): Promise<{ deducted: number; skipped: number }> {
-  const supabase = getInventoryClient()
-
-  const { data: rows } = await supabase
-    .from('order_items')
-    .select('id, product_id, base_quantity, item_name, transaction_id, quantity, recipe_id')
-    .eq('order_id', orderId)
-    .is('transaction_id', null)
-    .is('deducted_at', null)
-
-  const lines = (rows ?? []) as PendingLine[]
-  const pending = lines.filter((l: PendingLine) => l.product_id !== null)
-
-  let deducted = 0
-  let skipped = lines.length - pending.length
-  const failures: string[] = []
-
-  for (const line of pending) {
-    if (line.recipe_id) {
-      try {
-        const lineDeducted = await deductRecipeLine(line, locationId, orderId)
-        if (lineDeducted) deducted++
-      } catch (error) {
-        failures.push(`${line.item_name}: ${error instanceof Error ? error.message : 'unknown error'}`)
-      }
-      continue
-    }
-
-    if (!line.base_quantity || line.base_quantity <= 0) {
-      skipped++
-      continue
-    }
-
-    try {
-      const transaction = await createTransaction({
-        product_id: line.product_id as string,
-        location_id: locationId,
-        transaction_type: 'sale',
-        quantity: line.base_quantity,
-        reason_type: 'SALE',
-        reference_type: 'pos_order',
-        reference_id: orderId,
-        order_id: orderId,
-        order_line_id: line.id,
-        recipe_id: null,
-        notes: `Auto-deducted order item: ${line.item_name} (x${line.quantity})`,
-      })
-
-      await supabase
-        .from('order_items')
-        .update({
-          transaction_id: transaction.id,
-          deducted_at: new Date().toISOString(),
-        })
-        .eq('id', line.id)
-
-      deducted++
-    } catch (error) {
-      failures.push(`${line.item_name}: ${error instanceof Error ? error.message : 'unknown error'}`)
-    }
+  const result = data as { deducted?: number | null; skipped?: number | null; already_deducted?: boolean | null }
+  return {
+    deducted: Number(result.deducted ?? 0),
+    skipped: Number(result.skipped ?? 0),
   }
-
-  if (failures.length > 0) {
-    throw new Error(
-      `Order deduction partially failed (${failures.length} of ${pending.length} lines). ` +
-      `Completed lines are recorded and will be skipped on retry. Failures: ${failures.join('; ')}`,
-    )
-  }
-
-  return { deducted, skipped }
-}
-
-async function deductRecipeLine(line: PendingLine, locationId: string, orderId: string): Promise<boolean> {
-  const supabase = getInventoryClient()
-
-  const { data: recipe } = await supabase
-    .from('inventory_recipes')
-    .select('yield_quantity')
-    .eq('id', line.recipe_id)
-    .maybeSingle()
-
-  if (!recipe) throw new Error(`Recipe ${line.recipe_id} not found`)
-
-  const { data: ingredients, error: ingredientsError } = await supabase
-    .from('inventory_recipe_ingredients')
-    .select('product_id, quantity, wastage_pct')
-    .eq('recipe_id', line.recipe_id)
-
-  if (ingredientsError) {
-    throw new Error(`Failed to load ingredients for recipe ${line.recipe_id}: ${ingredientsError.message}`)
-  }
-
-  const ingredientList = (ingredients ?? []) as Array<{ product_id: string; quantity: number | null; wastage_pct: number | null }>
-
-  const productIds = [...new Set(ingredientList.map(i => i.product_id))]
-  const productNames = new Map<string, string>()
-  if (productIds.length > 0) {
-    const { data: products } = await supabase
-      .from('inventory_products')
-      .select('id, name')
-      .in('id', productIds)
-    for (const p of (products ?? []) as Array<{ id: string; name: string }>) {
-      productNames.set(p.id, p.name)
-    }
-  }
-
-  const yieldQty = Number(recipe.yield_quantity ?? 1)
-  const scale = line.quantity / (yieldQty > 0 ? yieldQty : 1)
-
-  // Retry safety: ingredient rows a previous engine run already created for
-  // this line are skipped (they reference the line id on the ledger)
-  const { data: existing } = await supabase
-    .from('inventory_transactions')
-    .select('product_id')
-    .eq('reference_type', 'pos_order')
-    .eq('reference_id', line.id)
-
-  const existingProducts = new Set((existing ?? []).map((t: { product_id: string }) => t.product_id))
-
-  for (const ing of ingredientList) {
-    if (existingProducts.has(ing.product_id)) continue
-
-    const needed = Number(ing.quantity) * scale * (1 + Number(ing.wastage_pct ?? 0) / 100)
-
-    await createTransaction({
-      product_id: ing.product_id,
-      location_id: locationId,
-      transaction_type: 'sale',
-      quantity: needed,
-      reason_type: 'SALE',
-      reference_type: 'pos_order',
-      reference_id: line.id,
-      order_id: orderId,
-      order_line_id: line.id,
-      recipe_id: line.recipe_id,
-      notes: `Auto-deducted recipe ingredient: ${productNames.get(ing.product_id) ?? ing.product_id} for ${line.item_name} (x${line.quantity})`,
-    })
-  }
-
-  await supabase
-    .from('order_items')
-    .update({ deducted_at: new Date().toISOString() })
-    .eq('id', line.id)
-
-  return true
 }
 
 export async function listOrderItems(orderId: string): Promise<OrderItemDetail> {
@@ -409,11 +316,12 @@ export async function listOrderItems(orderId: string): Promise<OrderItemDetail> 
   const order = await getOrder(orderId)
   if (!order) throw new Error(`Order not found: ${orderId}`)
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('order_items')
     .select('*, inventory_products(id, name, sku)')
     .eq('order_id', orderId)
     .order('created_at', { ascending: true })
+  if (error) throw new Error(`Failed to list normalized order items: ${error.message}`)
 
   return {
     order_id: orderId,

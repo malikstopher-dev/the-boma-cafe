@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError } from '../lib/errors'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockClient = {
   from: vi.fn(),
@@ -7,798 +6,156 @@ const mockClient = {
 }
 
 vi.mock('../lib/db', () => ({
-  getInventoryClient: vi.fn(() => mockClient),
+  getInventoryClient: () => mockClient,
 }))
 
 import { createTransaction, getBalance, getBalanceAtTime } from '../engine/ledger'
+import {
+  InsufficientStockError,
+  LocationNotFoundError,
+  MissingCostCentreError,
+  ProductNotFoundError,
+} from '../lib/errors'
 
-function eq2Return(promise: Promise<unknown>) {
-  return vi.fn(() => ({
-    eq: vi.fn(() => promise),
-  }))
+const transaction = {
+  id: 'txn-1',
+  product_id: 'product-1',
+  location_id: 'location-1',
+  transaction_type: 'purchase',
+  quantity: 10,
+  unit_cost: 25,
+  reference_type: null,
+  reference_id: null,
+  performed_by: null,
+  notes: null,
+  import_batch_id: null,
+  created_at: '2026-08-26T10:00:00.000Z',
+  cost_centre_id: 'cost-centre-1',
+  reason_type: null,
+  reason_notes: null,
+  manager_note: null,
+  note_author: null,
+  order_id: null,
+  order_line_id: null,
+  recipe_id: null,
 }
 
-function selectReturn(promise: Promise<unknown>) {
-  return vi.fn(() => ({
-    eq: eq2Return(promise),
-  }))
+function makeHistoryChain(result: { data: Array<{ quantity: number | string | null }> | null; error: unknown }) {
+  const chain: Record<string, unknown> = {}
+  for (const method of ['select', 'eq', 'lte']) {
+    chain[method] = vi.fn(() => chain)
+  }
+  chain.then = (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve)
+  return chain
 }
 
-function lteReturn(promise: Promise<unknown>) {
-  return vi.fn(() => promise)
-}
-
-function res<T>(data: T): Promise<{ data: T; error: null }> {
-  return Promise.resolve({ data, error: null })
-}
-
-function err(msg: string): Promise<{ data: null; error: { message: string } }> {
-  return Promise.resolve({ data: null, error: { message: msg } })
-}
-
-describe('ledger', () => {
+describe('ledger atomic transaction contract', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('getBalance', () => {
-    it('should return summed balance from RPC', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 13 })),
-      })
+  it('creates a movement through exactly one atomic RPC call', async () => {
+    mockClient.rpc.mockResolvedValue({ data: transaction, error: null })
 
-      const balance = await getBalance('prod-1', 'loc-1')
-      expect(balance).toBe(13)
+    const result = await createTransaction({
+      product_id: 'product-1',
+      location_id: 'location-1',
+      transaction_type: 'purchase',
+      quantity: 10,
+      unit_cost: 25,
+      cost_centre_id: 'cost-centre-1',
+      order_id: 'order-1',
+      order_line_id: 'line-1',
+      recipe_id: 'recipe-1',
     })
 
-    it('should return the bare scalar balance PostgREST returns for scalar RPCs', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res(13)),
-      })
-
-      const balance = await getBalance('prod-1', 'loc-1')
-      expect(balance).toBe(13)
-    })
-
-    it('should return 0 from fallback when RPC fails and no transactions', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => err('RPC not found')),
-      })
-      mockClient.from.mockReturnValue({
-        select: selectReturn(res([])),
-      })
-
-      const balance = await getBalance('prod-1', 'loc-1')
-      expect(balance).toBe(0)
-    })
-
-    it('should sum from fallback when RPC fails and transactions exist', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => err('RPC not found')),
-      })
-      mockClient.from.mockReturnValue({
-        select: selectReturn(res([{ quantity: 10 }, { quantity: 5 }])),
-      })
-
-      const balance = await getBalance('prod-1', 'loc-1')
-      expect(balance).toBe(15)
-    })
-  })
-
-  describe('getBalanceAtTime', () => {
-    it('should return sum of transactions up to the timestamp', async () => {
-      mockClient.from.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              lte: lteReturn(res([{ quantity: 10 }, { quantity: 5 }])),
-            })),
-          })),
-        })),
-      })
-
-      const balance = await getBalanceAtTime('prod-1', 'loc-1', '2026-07-29T00:00:00Z')
-      expect(balance).toBe(15)
-    })
-
-    it('should return 0 when no transactions', async () => {
-      mockClient.from.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              lte: lteReturn(res([])),
-            })),
-          })),
-        })),
-      })
-
-      const balance = await getBalanceAtTime('prod-1', 'loc-1', '2026-07-29T00:00:00Z')
-      expect(balance).toBe(0)
-    })
-  })
-
-  describe('createTransaction', () => {
-    it('should create a purchase transaction', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 100 })),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => res([{ quantity: 10 }])),
-              })),
-            })),
-            insert: vi.fn(() => ({
-              select: vi.fn(() => ({
-                single: vi.fn(() => res({
-                  id: 'tx-1',
-                  product_id: 'prod-1',
-                  location_id: 'loc-1',
-                  transaction_type: 'purchase',
-                  quantity: 10,
-                  unit_cost: 50,
-                  reference_type: null,
-                  reference_id: null,
-                  performed_by: null,
-                  notes: null,
-                  import_batch_id: null,
-                  created_at: '2026-07-29T00:00:00Z',
-                })),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      const tx = await createTransaction({
-        product_id: 'prod-1',
-        location_id: 'loc-1',
+    expect(result).toEqual(transaction)
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1)
+    expect(mockClient.rpc).toHaveBeenCalledWith('create_inventory_transaction', {
+      p_input: expect.objectContaining({
+        product_id: 'product-1',
+        location_id: 'location-1',
         transaction_type: 'purchase',
         quantity: 10,
-        unit_cost: 50,
-      })
-      expect(tx.id).toBe('tx-1')
-      expect(tx.quantity).toBe(10)
-      expect(tx.unit_cost).toBe(50)
+        unit_cost: 25,
+        cost_centre_id: 'cost-centre-1',
+        order_id: 'order-1',
+        order_line_id: 'line-1',
+        recipe_id: 'recipe-1',
+      }),
     })
+    expect(mockClient.from).not.toHaveBeenCalled()
+  })
 
-    it('should attach the product latest cost when unit_cost is omitted', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 100 })),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn((cols: string) => {
-              if (cols === 'unit_cost') {
-                return {
-                  eq: vi.fn(() => ({
-                    not: vi.fn(() => ({
-                      order: vi.fn(() => ({
-                        limit: vi.fn(() => ({
-                          maybeSingle: vi.fn(() => res({ unit_cost: 120 })),
-                        })),
-                      })),
-                    })),
-                  })),
-                }
-              }
-              return {
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => res([{ quantity: 3 }])),
-                })),
-              }
-            }),
-            insert: vi.fn(() => ({
-              select: vi.fn(() => ({
-                single: vi.fn(() => res({
-                  id: 'tx-2',
-                  product_id: 'prod-1',
-                  location_id: 'loc-1',
-                  transaction_type: 'adjustment',
-                  quantity: -3,
-                  unit_cost: 120,
-                  reference_type: null,
-                  reference_id: null,
-                  performed_by: null,
-                  notes: null,
-                  import_batch_id: null,
-                  created_at: '2026-08-15T00:00:00Z',
-                })),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
+  it.each([
+    ['Product not found: product-1', ProductNotFoundError],
+    ['Location not found: location-1', LocationNotFoundError],
+    ['No cost centre could be determined for location location-1', MissingCostCentreError],
+    ['Insufficient stock for product product-1 at location location-1', InsufficientStockError],
+  ])('maps RPC error %s to the typed domain error', async (message, ErrorType) => {
+    mockClient.rpc.mockResolvedValue({ data: null, error: { message } })
 
-      const tx = await createTransaction({
-        product_id: 'prod-1',
-        location_id: 'loc-1',
-        transaction_type: 'adjustment',
-        quantity: -3,
-      })
-      expect(tx.id).toBe('tx-2')
-      expect(tx.quantity).toBe(-3)
-      expect(tx.unit_cost).toBe(120)
+    await expect(createTransaction({
+      product_id: 'product-1',
+      location_id: 'location-1',
+      transaction_type: 'sale',
+      quantity: 1,
+    })).rejects.toThrow(ErrorType)
+  })
+
+  it('fails closed when the atomic RPC returns no transaction', async () => {
+    mockClient.rpc.mockResolvedValue({ data: null, error: null })
+
+    await expect(createTransaction({
+      product_id: 'product-1',
+      location_id: 'location-1',
+      transaction_type: 'purchase',
+      quantity: 1,
+    })).rejects.toThrow('Failed to create transaction atomically: No transaction returned')
+  })
+
+  it('reads the current display balance from the balance RPC', async () => {
+    mockClient.rpc.mockReturnValue({
+      single: vi.fn().mockResolvedValue({ data: '12.5', error: null }),
     })
+    await expect(getBalance('product-1', 'location-1')).resolves.toBe(12.5)
+  })
 
-    it('should throw MissingCostCentreError when the location has no cost centre', async () => {
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: null })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: null })),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      await expect(
-        createTransaction({
-          product_id: 'prod-1',
-          location_id: 'loc-1',
-          transaction_type: 'purchase',
-          quantity: 10,
-        }),
-      ).rejects.toThrow(MissingCostCentreError)
+  it('falls back to the ledger sum when the display-balance RPC is unavailable', async () => {
+    mockClient.rpc.mockReturnValue({
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'missing function' } }),
     })
+    mockClient.from.mockReturnValue(makeHistoryChain({
+      data: [{ quantity: '4.5' }, { quantity: -1 }, { quantity: null }],
+      error: null,
+    }))
 
-    it('should throw ProductNotFoundError for non-existent product', async () => {
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res(null)),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
+    await expect(getBalance('product-1', 'location-1')).resolves.toBe(3.5)
+  })
 
-      await expect(
-        createTransaction({
-          product_id: 'prod-nonexistent',
-          location_id: 'loc-1',
-          transaction_type: 'purchase',
-          quantity: 10,
-        }),
-      ).rejects.toThrow(ProductNotFoundError)
-    })
+  it('sums historical movements at the supplied timestamp', async () => {
+    mockClient.from.mockReturnValue(makeHistoryChain({
+      data: [{ quantity: 10 }, { quantity: '-2.5' }],
+      error: null,
+    }))
 
-    it('should throw LocationNotFoundError for inactive location', async () => {
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res(null)),
-                })),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
+    await expect(getBalanceAtTime(
+      'product-1',
+      'location-1',
+      '2026-08-26T12:00:00.000Z',
+    )).resolves.toBe(7.5)
+  })
 
-      await expect(
-        createTransaction({
-          product_id: 'prod-1',
-          location_id: 'loc-inactive',
-          transaction_type: 'purchase',
-          quantity: 10,
-        }),
-      ).rejects.toThrow(LocationNotFoundError)
-    })
+  it('fails closed when a historical movement read fails', async () => {
+    mockClient.from.mockReturnValue(makeHistoryChain({
+      data: null,
+      error: { message: 'database unavailable' },
+    }))
 
-    it('should throw InsufficientStockError for sale exceeding balance', async () => {
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => err('RPC skip')),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => res([{ quantity: 5 }])),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      await expect(
-        createTransaction({
-          product_id: 'prod-1',
-          location_id: 'loc-1',
-          transaction_type: 'sale',
-          quantity: 10,
-        }),
-      ).rejects.toThrow(InsufficientStockError)
-    })
-
-    it('should validate negative production consumption against ledger stock', async () => {
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({ maybeSingle: vi.fn(() => res({ id: 'prod-1' })) })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({ maybeSingle: vi.fn(() => res({ id: 'loc-1' })) })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({ eq: vi.fn(() => res([{ quantity: 5 }])) })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      await expect(createTransaction({
-        product_id: 'prod-1',
-        location_id: 'loc-1',
-        transaction_type: 'production',
-        quantity: -10,
-      })).rejects.toThrow(InsufficientStockError)
-    })
-
-    it('should validate decreases against the LEDGER sum, not the balance cache (F2 rule)', async () => {
-      // The cache (RPC) says 100, the ledger says 5: the F2/E1-4 rule is
-      // "deduct only what the ledger actually has" - a sale of 10 MUST be
-      // rejected even though the cache-backed RPC reports a high balance.
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 100 })),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => res([{ quantity: 5 }])),
-              })),
-            })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      await expect(
-        createTransaction({
-          product_id: 'prod-1',
-          location_id: 'loc-1',
-          transaction_type: 'sale',
-          quantity: 10,
-        }),
-      ).rejects.toThrow(InsufficientStockError)
-    })
-
-    it('should refresh the balance cache with the ledger sum, never the stale pre-write cache value', async () => {
-      let upsertPayload: Record<string, unknown> | null = null
-      // The cache-backed RPC reports 7 (pre-write value); the ledger has
-      // 5 existing rows + the 1 just inserted = 6. The cache must be
-      // refreshed with 6, not the stale 7.
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 7 })),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn((cols: string) => {
-              if (cols === 'unit_cost') {
-                return {
-                  eq: vi.fn(() => ({
-                    not: vi.fn(() => ({
-                      order: vi.fn(() => ({
-                        limit: vi.fn(() => ({
-                          maybeSingle: vi.fn(() => res(null)),
-                        })),
-                      })),
-                    })),
-                  })),
-                }
-              }
-              return {
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => res([{ quantity: 5 }, { quantity: 1 }])),
-                })),
-              }
-            }),
-            insert: vi.fn(() => ({
-              select: vi.fn(() => ({
-                single: vi.fn(() => res({
-                  id: 'tx-refresh',
-                  product_id: 'prod-1',
-                  location_id: 'loc-1',
-                  transaction_type: 'sale',
-                  quantity: -1,
-                  unit_cost: null,
-                  reference_type: null,
-                  reference_id: null,
-                  performed_by: null,
-                  notes: null,
-                  import_batch_id: null,
-                  created_at: '2026-08-15T00:00:00Z',
-                })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_product_balances') {
-          return {
-            upsert: vi.fn((p: Record<string, unknown>) => {
-              upsertPayload = p
-              return Promise.resolve({ data: null, error: null })
-            }),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      await createTransaction({
-        product_id: 'prod-1',
-        location_id: 'loc-1',
-        transaction_type: 'sale',
-        quantity: 1,
-      })
-      expect(upsertPayload).toMatchObject({ balance: 6 })
-    })
-
-    it('should persist F3 order attribution on the ledger row and audit entry', async () => {
-      let insertPayload: Record<string, unknown> | null = null
-      let auditChanges: Record<string, unknown> | null = null
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 100 })),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn((cols: string) => {
-              if (cols === 'unit_cost') {
-                return {
-                  eq: vi.fn(() => ({
-                    not: vi.fn(() => ({
-                      order: vi.fn(() => ({
-                        limit: vi.fn(() => ({
-                          maybeSingle: vi.fn(() => res(null)),
-                        })),
-                      })),
-                    })),
-                  })),
-                }
-              }
-              return {
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => res([{ quantity: 1 }])),
-                })),
-              }
-            }),
-            insert: vi.fn((p: Record<string, unknown>) => {
-              insertPayload = p
-              return {
-                select: vi.fn(() => ({
-                  single: vi.fn(() => res({
-                    id: 'tx-att',
-                    product_id: 'prod-1',
-                    location_id: 'loc-1',
-                    transaction_type: 'sale',
-                    quantity: -1,
-                    unit_cost: null,
-                    reference_type: 'pos_order',
-                    reference_id: 'oi-9',
-                    performed_by: null,
-                    notes: null,
-                    import_batch_id: null,
-                    created_at: '2026-08-15T00:00:00Z',
-                  })),
-                })),
-              }
-            }),
-          }
-        }
-        if (table === 'inventory_audit_log') {
-          return {
-            insert: vi.fn((p: Record<string, unknown>) => {
-              auditChanges = (p.changes ?? null) as Record<string, unknown> | null
-              return { select: vi.fn(() => ({ single: vi.fn(() => res({ id: 'aud-1' })) })) }
-            }),
-          }
-        }
-        if (table === 'inventory_product_balances') {
-          return {
-            upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      const tx = await createTransaction({
-        product_id: 'prod-1',
-        location_id: 'loc-1',
-        transaction_type: 'sale',
-        quantity: 1,
-        reference_type: 'pos_order',
-        reference_id: 'oi-9',
-        order_id: 'order-9',
-        order_line_id: 'oi-9',
-        recipe_id: 'rec-9',
-      })
-      expect(tx.id).toBe('tx-att')
-      expect(insertPayload).toMatchObject({
-        order_id: 'order-9',
-        order_line_id: 'oi-9',
-        recipe_id: 'rec-9',
-      })
-      expect(auditChanges).toMatchObject({
-        order_id: 'order-9',
-        order_line_id: 'oi-9',
-        recipe_id: 'rec-9',
-      })
-    })
-
-    it('should leave order attribution null when not provided', async () => {
-      let insertPayload: Record<string, unknown> | null = null
-      mockClient.rpc.mockReturnValue({
-        single: vi.fn(() => res({ balance: 100 })),
-      })
-      mockClient.from.mockImplementation((table: string) => {
-        if (table === 'inventory_products') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(() => res({ id: 'prod-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_locations') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-                })),
-                maybeSingle: vi.fn(() => res({ id: 'loc-1', cost_centre_id: 'cc-1' })),
-              })),
-            })),
-          }
-        }
-        if (table === 'inventory_transactions') {
-          return {
-            select: vi.fn((cols: string) => {
-              if (cols === 'unit_cost') {
-                return {
-                  eq: vi.fn(() => ({
-                    not: vi.fn(() => ({
-                      order: vi.fn(() => ({
-                        limit: vi.fn(() => ({
-                          maybeSingle: vi.fn(() => res(null)),
-                        })),
-                      })),
-                    })),
-                  })),
-                }
-              }
-              return {
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => res([])),
-                })),
-              }
-            }),
-            insert: vi.fn((p: Record<string, unknown>) => {
-              insertPayload = p
-              return {
-                select: vi.fn(() => ({
-                  single: vi.fn(() => res({
-                    id: 'tx-plain',
-                    product_id: 'prod-1',
-                    location_id: 'loc-1',
-                    transaction_type: 'purchase',
-                    quantity: 10,
-                    unit_cost: null,
-                    reference_type: null,
-                    reference_id: null,
-                    performed_by: null,
-                    notes: null,
-                    import_batch_id: null,
-                    created_at: '2026-08-15T00:00:00Z',
-                  })),
-                })),
-              }
-            }),
-          }
-        }
-        if (table === 'inventory_audit_log') {
-          return {
-            insert: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn(() => res({ id: 'aud-1' })) })) })),
-          }
-        }
-        if (table === 'inventory_product_balances') {
-          return {
-            upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          }
-        }
-        return { select: vi.fn() }
-      })
-
-      await createTransaction({
-        product_id: 'prod-1',
-        location_id: 'loc-1',
-        transaction_type: 'purchase',
-        quantity: 10,
-      })
-      expect(insertPayload).toMatchObject({
-        order_id: null,
-        order_line_id: null,
-        recipe_id: null,
-      })
-    })
+    await expect(getBalanceAtTime(
+      'product-1',
+      'location-1',
+      '2026-08-26T12:00:00.000Z',
+    )).rejects.toThrow('Failed to read historical balance: database unavailable')
   })
 })

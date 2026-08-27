@@ -52,21 +52,6 @@ function makeRequest(decisions: unknown[] = DECISIONS): NextRequest {
   })
 }
 
-function mockBatchStatus(status: string | null) {
-  mockClient.from.mockImplementation((table: string) => {
-    if (table === 'inventory_imports') {
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn(() => res(status ? { status } : null)),
-          })),
-        })),
-      }
-    }
-    return { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn() }
-  })
-}
-
 describe('import apply route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -79,39 +64,26 @@ describe('import apply route', () => {
     })
   })
 
-  it('rejects a rolled_back batch via the status guard and never calls the engine', async () => {
-    mockClient.rpc.mockResolvedValue(err('Import batch batch-1 is rolled back and cannot be re-applied'))
-    mockBatchStatus('rolled_back')
+  it('rejects a rolled_back batch from the atomic RPC and never calls the engine', async () => {
+    mockClient.rpc.mockReturnValue(err('Import batch batch-1 is rolled back and cannot be re-applied'))
 
     const response = await POST(makeRequest(), { params: Promise.resolve({ id: BATCH_ID }) })
 
     expect(response.status).toBe(409)
     const body = await response.json()
-    expect(body.error.code).toBe('CONFLICT')
+    expect(body.error.code).toBe('IMPORT_APPLY_FAILED')
     expect(body.error.message).toContain('rolled back and cannot be re-applied')
     expect(mockApply).not.toHaveBeenCalled()
   })
 
-  it('fails closed (500) when the status check cannot be read', async () => {
-    mockClient.rpc.mockResolvedValue(err('RPC unavailable'))
-    mockClient.from.mockImplementation((table: string) => {
-      if (table === 'inventory_imports') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() => err('network down')),
-            })),
-          })),
-        }
-      }
-      return { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn() }
-    })
+  it('fails closed (500) when the atomic RPC cannot run', async () => {
+    mockClient.rpc.mockReturnValue(err('RPC unavailable'))
 
     const response = await POST(makeRequest(), { params: Promise.resolve({ id: BATCH_ID }) })
 
     expect(response.status).toBe(500)
     const body = await response.json()
-    expect(body.error.code).toBe('INTERNAL_ERROR')
+    expect(body.error.code).toBe('IMPORT_APPLY_FAILED')
     expect(mockApply).not.toHaveBeenCalled()
   })
 
@@ -154,16 +126,14 @@ describe('import apply route', () => {
     expect(mockApply).not.toHaveBeenCalled()
   })
 
-  it('falls back to the engine when the RPC is unavailable and the batch is not rolled back', async () => {
-    mockClient.rpc.mockResolvedValue(err('Could not find the function public.apply_import_batch'))
-    mockBatchStatus('pending')
+  it('does not fall back to the engine when the RPC is unavailable', async () => {
+    mockClient.rpc.mockReturnValue(err('Could not find the function public.apply_import_batch'))
 
     const response = await POST(makeRequest(), { params: Promise.resolve({ id: BATCH_ID }) })
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(500)
     const body = await response.json()
-    expect(body.data.importBatchId).toBe(BATCH_ID)
-    expect(mockApply).toHaveBeenCalledTimes(1)
-    expect(mockApply).toHaveBeenCalledWith(BATCH_ID, DECISIONS, 'admin-1')
+    expect(body.error.code).toBe('IMPORT_APPLY_FAILED')
+    expect(mockApply).not.toHaveBeenCalled()
   })
 })

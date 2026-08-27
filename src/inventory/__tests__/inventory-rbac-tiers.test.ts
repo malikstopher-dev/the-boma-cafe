@@ -73,6 +73,8 @@ import { POST as wastePost } from '@/app/api/inventory/waste/route'
 import { POST as supplierPost } from '@/app/api/inventory/suppliers/route'
 import { POST as transactionPost } from '@/app/api/inventory/transactions/route'
 import { POST as bulkPost } from '@/app/api/inventory/products/bulk/route'
+import { POST as supplierPaymentPost } from '@/app/api/inventory/supplier-payments/route'
+import { GET as payablesGet } from '@/app/api/inventory/payables/route'
 import { can } from '@/lib/admin/permissions'
 
 const UUID = '123e4567-e89b-12d3-a456-426614174000'
@@ -97,6 +99,15 @@ beforeEach(() => {
 })
 
 describe('permission map distribution (unit)', () => {
+  it('supplier finance is limited to owner and full_manager', () => {
+    for (const permission of ['supplier.finance.read', 'supplier.finance.write'] as const) {
+      expect(can('owner', permission)).toBe(true)
+      expect(can('full_manager', permission)).toBe(true)
+      expect(can('manager', permission)).toBe(false)
+      expect(can('assistant_manager', permission)).toBe(false)
+    }
+  })
+
   it('final_approve is owner+full_manager only', () => {
     expect(can('owner', 'inventory.final_approve')).toBe(true)
     expect(can('full_manager', 'inventory.final_approve')).toBe(true)
@@ -139,6 +150,37 @@ describe('Tier B — inventory.config.write', () => {
     setRole(null)
     const res = await supplierPost(req('/api/inventory/suppliers', 'POST', { name: 's' }))
     expect(res.status).toBe(401)
+  })
+})
+
+describe('supplier finance permissions', () => {
+  it.each(['manager', 'assistant_manager'])('%s cannot read supplier payables', async (role) => {
+    setRole(role)
+    const response = await payablesGet(req('/api/inventory/payables', 'GET'))
+    expect(response.status).toBe(403)
+  })
+
+  it.each(['manager', 'assistant_manager'])('%s cannot record supplier payments', async (role) => {
+    setRole(role)
+    const response = await supplierPaymentPost(req('/api/inventory/supplier-payments', 'POST', {
+      invoiceId: UUID,
+      amount: 100,
+      paidAt: '2026-08-26T12:00:00.000Z',
+      idempotencyKey: 'payment-1',
+    }))
+    expect(response.status).toBe(403)
+  })
+
+  it.each(['owner', 'full_manager'])('%s passes the supplier payment gate', async (role) => {
+    setRole(role)
+    const response = await supplierPaymentPost(req('/api/inventory/supplier-payments', 'POST', {
+      invoiceId: UUID,
+      amount: 100,
+      paidAt: '2026-08-26T12:00:00.000Z',
+      idempotencyKey: 'payment-1',
+    }))
+    expect(response.status).not.toBe(401)
+    expect(response.status).not.toBe(403)
   })
 })
 

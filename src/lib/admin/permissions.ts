@@ -25,6 +25,8 @@ export type AdminPermission =
   | 'supplier.bank.read'
   | 'supplier.bank.write'
   | 'supplier.bank.delete'
+  | 'supplier.finance.read'
+  | 'supplier.finance.write'
 
 const ALL: AdminPermission[] = [
   'view:owner_dashboard',
@@ -52,6 +54,8 @@ const ALL: AdminPermission[] = [
   'supplier.bank.read',
   'supplier.bank.write',
   'supplier.bank.delete',
+  'supplier.finance.read',
+  'supplier.finance.write',
 ]
 
 // Manager: operational administration, no user/security/system config.

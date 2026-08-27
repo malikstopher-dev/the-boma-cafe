@@ -233,59 +233,28 @@ export async function recordSupplierPayment(input: {
   amount: number
   paidAt: string
   recordedBy?: string | null
-}): Promise<{ id: string; status: string }> {
+  method?: string | null
+  reference?: string | null
+  notes?: string | null
+  idempotencyKey?: string | null
+}): Promise<{ id: string; invoice_id: string; status: string; already_recorded?: boolean }> {
   const supabase = getInventoryClient()
   if (!(input.amount > 0)) throw new Error('Payment amount must be positive')
 
-  let invoiceId: string | null = input.invoiceId ?? null
-  if (!invoiceId) {
-    if (!input.supplierId) throw new Error('Either invoiceId or supplierId is required')
-    const { data: open } = await supabase
-      .from('inventory_supplier_invoices')
-      .select('id')
-      .eq('supplier_id', input.supplierId)
-      .in('status', ['pending', 'partial', 'overdue'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (!open) throw new Error('This supplier has no open invoices to pay against')
-    invoiceId = (open as unknown as { id: string }).id
+  const { data, error } = await supabase.rpc('record_supplier_payment', {
+    p_invoice_id: input.invoiceId ?? null,
+    p_supplier_id: input.supplierId ?? null,
+    p_amount: input.amount,
+    p_paid_at: input.paidAt,
+    p_recorded_by_admin_id: input.recordedBy ?? null,
+    p_method: input.method ?? 'EFT',
+    p_reference: input.reference ?? null,
+    p_notes: input.notes ?? null,
+    p_idempotency_key: input.idempotencyKey ?? null,
+  })
+
+  if (error || !data) {
+    throw new Error(error?.message ?? 'Failed to record payment atomically: no result returned')
   }
-
-  const { data: invoice } = await supabase
-    .from('inventory_supplier_invoices')
-    .select('id, total_amount, status')
-    .eq('id', invoiceId)
-    .maybeSingle()
-  if (!invoice) throw new Error('Invoice not found')
-  const total = Number((invoice as unknown as { total_amount: number }).total_amount) || 0
-
-  const { data: existing } = await supabase
-    .from('inventory_supplier_payments')
-    .select('amount')
-    .eq('invoice_id', invoiceId)
-  const alreadyPaid = (existing ?? []).reduce((s: number, r: unknown) => s + (Number((r as { amount: number }).amount) || 0), 0)
-  const newStatus = alreadyPaid + input.amount >= total - 0.004 ? 'paid' : 'partial'
-
-  const { data: payment, error } = await supabase
-    .from('inventory_supplier_payments')
-    .insert({
-      invoice_id: invoiceId,
-      amount: input.amount,
-      paid_at: input.paidAt,
-      created_by: input.recordedBy ?? null,
-    })
-    .select('id')
-    .single()
-  if (error) throw new Error(`Failed to record payment: ${error.message}`)
-  const id = (payment as { id?: string } | null)?.id
-  if (!id) throw new Error('Failed to record payment: no id returned')
-
-  await supabase.from('inventory_supplier_invoices').update({ status: newStatus }).eq('id', invoiceId)
-  await writeAuditLog('inventory_supplier_payments', id, 'created', {
-    invoice_id: invoiceId,
-    amount: input.amount,
-    paid_at: input.paidAt,
-  }, input.recordedBy ?? null)
-  return { id, status: newStatus }
+  return data as { id: string; invoice_id: string; status: string; already_recorded?: boolean }
 }

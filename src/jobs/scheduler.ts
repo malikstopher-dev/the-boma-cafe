@@ -36,7 +36,7 @@ async function checkStuckJobs(): Promise<void> {
 
   const { data: stuckJobs, error } = await client
     .from('background_jobs')
-    .select('id, retry_count, max_retries, heartbeat_at, status')
+    .select('id, job_type, retry_count, max_retries, heartbeat_at, status, lease_token')
     .eq('status', 'processing')
     .lt('heartbeat_at', cutoff)
 
@@ -61,7 +61,15 @@ async function checkStuckJobs(): Promise<void> {
   }
 }
 
-async function resolveStuckJob(job: any): Promise<void> {
+export async function resolveStuckJob(job: {
+  id: string
+  job_type?: string
+  retry_count: number | null
+  max_retries: number | null
+  heartbeat_at: string | null
+  status: string
+  lease_token: string
+}): Promise<void> {
   const client = getAdminClient()
 
   const newRetryCount = (job.retry_count || 0) + 1
@@ -73,7 +81,7 @@ async function resolveStuckJob(job: any): Promise<void> {
   if (newRetryCount < effectiveMax) {
     const nextRun = calculateScheduledAt(newRetryCount)
 
-    const { error: updateError } = await client
+    const { data: updatedRows, error: updateError } = await client
       .from('background_jobs')
       .update({
         status: 'pending',
@@ -81,6 +89,7 @@ async function resolveStuckJob(job: any): Promise<void> {
         scheduled_at: nextRun.toISOString(),
         heartbeat_at: new Date().toISOString(),
         locked_by: null,
+        lease_token: crypto.randomUUID(),
         started_at: null,
         error: {
           message: 'Job stuck in processing state — reset by scheduler',
@@ -91,11 +100,13 @@ async function resolveStuckJob(job: any): Promise<void> {
       })
       .eq('id', job.id)
       .eq('status', 'processing')
+      .eq('lease_token', job.lease_token)
+      .select('id')
 
-    if (updateError) {
+    if (updateError || !updatedRows || updatedRows.length === 0) {
       logger.error('failed to reset stuck job', {
         job_id: job.id,
-        error: updateError.message,
+        error: updateError?.message ?? 'lease changed before scheduler update',
       })
       return
     }
@@ -107,13 +118,14 @@ async function resolveStuckJob(job: any): Promise<void> {
       scheduled_at: nextRun.toISOString(),
     })
   } else {
-    const { error: updateError } = await client
+    const { data: updatedRows, error: updateError } = await client
       .from('background_jobs')
       .update({
         status: 'dead_letter',
         completed_at: new Date().toISOString(),
         heartbeat_at: new Date().toISOString(),
         locked_by: null,
+        lease_token: crypto.randomUUID(),
         started_at: null,
         error: {
           message: 'Job stuck in processing state after max retries — moved to dead_letter',
@@ -123,11 +135,13 @@ async function resolveStuckJob(job: any): Promise<void> {
       })
       .eq('id', job.id)
       .eq('status', 'processing')
+      .eq('lease_token', job.lease_token)
+      .select('id')
 
-    if (updateError) {
+    if (updateError || !updatedRows || updatedRows.length === 0) {
       logger.error('failed to dead_letter stuck job', {
         job_id: job.id,
-        error: updateError.message,
+        error: updateError?.message ?? 'lease changed before scheduler update',
       })
       return
     }

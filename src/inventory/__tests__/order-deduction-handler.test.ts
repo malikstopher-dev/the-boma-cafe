@@ -33,6 +33,7 @@ function makeJob(overrides: Partial<BackgroundJob> = {}): BackgroundJob {
     started_at: null,
     completed_at: null,
     ...overrides,
+    lease_token: overrides.lease_token ?? 'lease-1',
   }
 }
 

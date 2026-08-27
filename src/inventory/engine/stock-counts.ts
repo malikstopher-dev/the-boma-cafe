@@ -16,23 +16,33 @@ export async function createStockCount(
 ): Promise<CreateStockCountResult> {
   const supabase = getInventoryClient()
 
-  const { data: location } = await supabase
+  const { data: location, error: locationError } = await supabase
     .from('inventory_locations')
     .select('id')
     .eq('id', locationId)
     .eq('is_active', true)
     .maybeSingle()
 
+  if (locationError) throw new Error(`Failed to validate stock count location: ${locationError.message}`)
   if (!location) throw new Error(`Location not found or inactive: ${locationId}`)
 
-  const { data: maxTx } = await supabase
+  const { data: maxTx, error: snapshotError } = await supabase
     .from('inventory_transactions')
     .select('id')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
+  if (snapshotError) throw new Error(`Failed to establish stock count snapshot: ${snapshotError.message}`)
   const snapshotTxBefore: string | null = maxTx?.id ?? null
+
+  const { count: productCount, error: countError } = await supabase
+    .from('inventory_product_balances')
+    .select('*', { count: 'exact', head: true })
+    .eq('location_id', locationId)
+    .gt('balance', 0)
+
+  if (countError) throw new Error(`Failed to count stocked products: ${countError.message}`)
 
   const { data, error } = await supabase
     .from('inventory_stock_counts')
@@ -48,12 +58,6 @@ export async function createStockCount(
 
   if (error) throw new Error(`Failed to create stock count: ${error.message}`)
 
-  const { count: productCount } = await supabase
-    .from('inventory_product_balances')
-    .select('*', { count: 'exact', head: true })
-    .eq('location_id', locationId)
-    .gt('balance', 0)
-
   await writeAuditLog('inventory_stock_counts', data.id, 'created', { location_id: locationId }, performedBy ?? null)
 
   return { stockCount: data as InventoryStockCount, productCount: productCount ?? 0 }
@@ -67,47 +71,47 @@ export async function saveCountItem(
 ): Promise<InventoryStockCountItem> {
   const supabase = getInventoryClient()
 
-  const { data: session } = await supabase
+  const { data: session, error: sessionError } = await supabase
     .from('inventory_stock_counts')
     .select('id, status, location_id, snapshot_tx_before')
     .eq('id', stockCountId)
     .maybeSingle()
 
+  if (sessionError) throw new Error(`Failed to load stock count: ${sessionError.message}`)
   if (!session) throw new Error(`Stock count not found: ${stockCountId}`)
   if (session.status !== 'in_progress') throw new Error(`Stock count is ${session.status}, not in_progress`)
 
   let expectedQuantity: number | null = null
   if (session.snapshot_tx_before) {
-    const { data: txData } = await supabase
+    const { data: txData, error: snapshotError } = await supabase
       .from('inventory_transactions')
       .select('created_at')
       .eq('id', session.snapshot_tx_before)
       .maybeSingle()
 
-    if (txData) {
-      const balance = await getBalanceAtTime(productId, session.location_id, txData.created_at)
-      expectedQuantity = balance
-    }
+    if (snapshotError) throw new Error(`Failed to load stock count snapshot transaction: ${snapshotError.message}`)
+    if (!txData) throw new Error(`Stock count snapshot transaction not found: ${session.snapshot_tx_before}`)
+    expectedQuantity = await getBalanceAtTime(productId, session.location_id, txData.created_at)
   }
 
   if (expectedQuantity === null) {
     expectedQuantity = 0
   }
 
-    const { data, error } = await supabase
-      .from('inventory_stock_count_items')
-      .upsert(
-        {
-          stock_count_id: stockCountId,
-          product_id: productId,
-          physical_quantity: physicalQuantity,
-          expected_quantity: expectedQuantity,
-          variance_reason: varianceReason ?? null,
-        },
-        { onConflict: 'stock_count_id,product_id' },
-      )
-      .select()
-      .single()
+  const { data, error } = await supabase
+    .from('inventory_stock_count_items')
+    .upsert(
+      {
+        stock_count_id: stockCountId,
+        product_id: productId,
+        physical_quantity: physicalQuantity,
+        expected_quantity: expectedQuantity,
+        variance_reason: varianceReason ?? null,
+      },
+      { onConflict: 'stock_count_id,product_id' },
+    )
+    .select()
+    .single()
 
   if (error) throw new Error(`Failed to save count item: ${error.message}`)
 
@@ -117,19 +121,22 @@ export async function saveCountItem(
 export async function getStockCount(id: string): Promise<{ stockCount: InventoryStockCount; items: InventoryStockCountItem[] } | null> {
   const supabase = getInventoryClient()
 
-  const { data: stockCount } = await supabase
+  const { data: stockCount, error: stockCountError } = await supabase
     .from('inventory_stock_counts')
     .select('*')
     .eq('id', id)
     .maybeSingle()
 
+  if (stockCountError) throw new Error(`Failed to load stock count: ${stockCountError.message}`)
   if (!stockCount) return null
 
-  const { data: items } = await supabase
+  const { data: items, error: itemsError } = await supabase
     .from('inventory_stock_count_items')
     .select('*, inventory_products(id, name, sku)')
     .eq('stock_count_id', id)
     .order('id', { ascending: true })
+
+  if (itemsError) throw new Error(`Failed to load stock count items: ${itemsError.message}`)
 
   return {
     stockCount: stockCount as InventoryStockCount,
@@ -161,8 +168,6 @@ export async function submitStockCount(id: string, performedBy?: string | null):
   const session = await getStockCount(id)
   if (!session) throw new Error(`Stock count not found: ${id}`)
   if (session.stockCount.status !== 'in_progress') throw new Error(`Stock count is ${session.stockCount.status}, cannot submit`)
-
-  await supabase.rpc('inventory_submit_stock_count', { p_stock_count_id: id })
 
   const { data, error } = await supabase
     .from('inventory_stock_counts')
@@ -281,12 +286,14 @@ export async function approveStockCount(id: string, approvedBy: string | null = 
       }
     }
 
-    const { data: maxTx } = await supabase
+    const { data: maxTx, error: snapshotError } = await supabase
       .from('inventory_transactions')
       .select('id')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+
+    if (snapshotError) throw new Error(`Failed to establish approved stock count snapshot: ${snapshotError.message}`)
 
     const { data, error } = await supabase
       .from('inventory_stock_counts')

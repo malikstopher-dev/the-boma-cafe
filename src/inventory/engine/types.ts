@@ -574,6 +574,10 @@ export interface ChecklistItem {
 }
 
 export interface ParsedOrderItem {
+  source_line_id: string
+  source_type: 'menu_item' | 'bar_item' | 'legacy'
+  source_item_id: string | null
+  inventory_required: boolean
   name: string
   quantity: number
   unit_price: number
@@ -585,6 +589,11 @@ export interface OrderItem {
   id: string
   order_id: string
   item_name: string
+  source_line_id: string
+  source_type: 'menu_item' | 'bar_item' | 'legacy' | null
+  source_item_id: string | null
+  inventory_required: boolean
+  reconciliation_status: 'matched' | 'not_required' | 'requires_mapping'
   quantity: number
   unit_price: number
   selected_size: string | null

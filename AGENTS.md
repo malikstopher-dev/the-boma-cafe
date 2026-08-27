@@ -2949,3 +2949,35 @@ Fix the two verified scope/alert regressions without activating canonical moveme
 - The narrow consistency remediation is complete.
 - SYNC-2 Phase 4 canonical movement classification remains approved but not active.
 - Do not broaden Stock Used, add further metric classifications, retire `/inv`, or start another mission without owner approval.
+
+---
+
+## Session: Full-System Audit Batch 2 Local Gate (2026-08-27) — deployment pending
+
+### Objective
+
+Implement H-08 through H-14 only: atomic inventory movements, fail-closed stock counts, removal of non-atomic RPC downgrades, finance-safe supplier payments, worker/outbox fencing, and stable order-line reconciliation. Production cutover remains approval-gated.
+
+### Implementation
+
+- Migration 112 adds service-role-only `create_inventory_transaction(JSONB)`, serializing each product/location and atomically committing ledger, inventory audit, and balance cache. `createTransaction()` has no direct-write fallback.
+- Stock-count location/snapshot/product/item/history reads now throw on database errors. Product counting occurs before session creation, so a source-read failure creates no stock-count row.
+- PO receiving, import apply, and order deduction now surface RPC failures instead of invoking legacy TypeScript write loops.
+- Migration 113 adds supplier-payment idempotency and `created_by_admin_id`, plus a locked/capped `record_supplier_payment` RPC. `supplier.finance.read/write` are owner/full_manager-only; manager and assistant_manager are denied.
+- Migration 114 adds worker lease tokens to claims, heartbeats, scheduler recovery, and final writes. Notification outbox rows have a unique new-write key, retryable delivery attempts, and deterministic Resend idempotency keys.
+- Migration 115 persists source line/type/item identity and reconciliation state, replaces name uniqueness with `(order_id, source_line_id)`, refuses arbitrary duplicate-name inventory matching, and blocks required unmatched lines before deduction.
+
+### Local verification
+
+- 471/471 inventory Vitest tests passed, including focused fail-closed, finance-RBAC/idempotency, duplicate-line, lease-race, and outbox tests.
+- Inventory strict TypeScript and root TypeScript passed.
+- Worker bundle built successfully at 105.06 KB.
+- Linked migration dry-run listed exactly 112-115. Linked schema lint reported only the pre-existing `consolidate_approved_supplier_duplicates.v_rows` warning.
+- `git diff --check` reported only line-ending notices.
+- Full Next production build compiled, typechecked, and generated all 187 pages.
+
+### Stop state
+
+- No Batch 2 migration was applied; no commit, push, Vercel deployment, Oracle worker restart, provider call, live probe, or production business-row mutation occurred.
+- The three owner XLSX files remain untouched and untracked.
+- Next action requires explicit owner approval: controlled migrations 112-115, commit/push, Vercel deploy, Oracle worker rebuild/restart, live H-08 through H-14 verification, cleanup, and final closeout.

@@ -27,6 +27,7 @@ export interface BackgroundJob {
   scheduled_at: string
   heartbeat_at: string | null
   locked_by: string | null
+  lease_token: string
   created_at: string
   started_at: string | null
   completed_at: string | null

@@ -29,6 +29,7 @@ function makeJob(payload: Record<string, unknown> = { booking_id: 'booking-1', a
     scheduled_at: now,
     heartbeat_at: null,
     locked_by: null,
+    lease_token: 'lease-1',
     created_at: now,
     started_at: null,
     completed_at: null,

@@ -21,6 +21,8 @@ export type InventoryPermission =
   | 'inventory.approve'
   | 'inventory.final_approve'
   | 'inventory.destructive'
+  | 'supplier.finance.read'
+  | 'supplier.finance.write'
 
 export async function requireInventoryPermission(
   request: NextRequest,

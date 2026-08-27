@@ -386,7 +386,7 @@ Production gate (2026-08-26): migrations 107-111 applied; commits `8409ece` and 
 
 ### Batch 2: Transaction and financial atomicity
 
-Status: **NOT STARTED**
+Status: **IMPLEMENTED - LOCAL GATE PASSED; PRODUCTION CUTOVER PENDING (2026-08-27)**
 
 Scope:
 
@@ -396,6 +396,10 @@ Scope:
 4. Atomic capped supplier payments plus finance permission.
 5. Worker lease fencing and outbox uniqueness/provider idempotency.
 6. Stable order line identity and unmatched-line reconciliation.
+
+Local result (2026-08-27): migrations 112-115 are the exact pending set in the linked dry run. Migration 112 makes the central ledger write, inventory audit row, and balance-cache refresh one serialized transaction. Stock-count source reads now fail closed before creating a session/item or approving a false variance. PO receiving, import apply, and order deduction no longer downgrade RPC failures to non-atomic TypeScript loops. Migration 113 adds a locked, capped, idempotent supplier-payment RPC with dedicated admin attribution; supplier finance read/write is restricted to owner and full_manager. Migration 114 adds rotating worker lease tokens plus a unique logical notification outbox, retryable delivery-attempt record, and stable Resend idempotency keys. Migration 115 persists source line/type/item identity, preserves duplicate/customized lines, refuses arbitrary duplicate-name product matching, and blocks required unmatched lines before atomic deduction.
+
+Local evidence: 471/471 inventory tests passed, including focused fail-closed, concurrency-contract, finance-RBAC, duplicate-line, lease-fence, and outbox tests; inventory and root TypeScript passed; the worker bundle built at 105.06 KB; linked schema lint reported only the pre-existing `consolidate_approved_supplier_duplicates.v_rows` warning; `git diff --check` reported only line-ending notices; and the full Next production build compiled, typechecked, and generated all 187 pages. No migration, commit, push, Vercel deployment, worker restart, provider call, or production business-row mutation has occurred for Batch 2.
 
 ### Batch 3: Route-level RBAC and privacy
 
@@ -496,4 +500,4 @@ These are marked `UNRESOLVED`, not assumed healthy.
 
 ## Stop Point
 
-Batch 1 is complete and `FIXED - VERIFIED`. **Batch 2 remains inactive and must not start without explicit owner approval.**
+Batch 1 is complete and `FIXED - VERIFIED`. Batch 2 has passed its local implementation gate but is not production-verified. **Do not commit, push, apply migrations 112-115, deploy Vercel, restart the Oracle worker, or run live probes without explicit owner approval.**

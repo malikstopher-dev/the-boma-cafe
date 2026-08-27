@@ -39,6 +39,7 @@ function chainFor(table: string) {
   c.eq = () => c
   c.is = () => c
   c.ilike = () => c
+  c.like = () => c
   c.limit = () => c
   c.in = () => { usedIn = true; return c }
   const getResult = () => {
@@ -106,7 +107,7 @@ beforeEach(() => {
     orders: { id: 'order-1', items_json: JSON.stringify([{ name: 'Margarita', quantity: 2, price: 95 }]), status: 'completed', station: 'bar' },
     inventory_locations: { id: 'loc-1' },
     bar_items: null,
-    inventory_products: { id: 'prod-1' },
+    inventory_products: [{ id: 'prod-1' }],
     inventory_recipe_outputs: { recipe_id: 'rec-1', inventory_recipes: { created_at: '2026-01-01T00:00:00Z' } },
     inventory_recipes: { id: 'rec-1', yield_quantity: 1 },
     inventory_recipe_ingredients: ingredientsFixture,
@@ -153,6 +154,57 @@ describe('syncOrderItems recipe resolution (F2)', () => {
     expect(upd.payload.recipe_id).toBe('rec-1')
     expect(mockInserts).toHaveLength(0)
   })
+
+  it('keeps duplicate display names as distinct stable source lines', async () => {
+    fixtures = {
+      ...fixtures,
+      orders: {
+        id: 'order-1',
+        status: 'completed',
+        station: 'bar',
+        items_json: JSON.stringify([
+          { name: 'Margarita', quantity: 1, selected_size: 'single', source_line_id: 'line-a', source_type: 'bar_item', source_item_id: '11111111-1111-4111-8111-111111111111', inventory_required: true },
+          { name: 'Margarita', quantity: 1, selected_size: 'double', source_line_id: 'line-b', source_type: 'bar_item', source_item_id: '11111111-1111-4111-8111-111111111111', inventory_required: true },
+        ]),
+      },
+    }
+
+    await syncOrderItems('order-1')
+
+    const lines = mockInserts.filter(i => i.table === 'order_items').map(i => i.payload)
+    expect(lines).toHaveLength(2)
+    expect(lines.map(line => line.source_line_id)).toEqual(['line-a', 'line-b'])
+    expect(lines.map(line => line.selected_size)).toEqual(['single', 'double'])
+    expect(lines.every(line => line.reconciliation_status === 'matched')).toBe(true)
+  })
+
+  it('does not choose an arbitrary product when duplicate names exist', async () => {
+    fixtures = {
+      ...fixtures,
+      inventory_products: [{ id: 'product-a' }, { id: 'product-b' }],
+      inventory_recipe_outputs: null,
+      inventory_recipes: null,
+      orders: {
+        id: 'order-1',
+        status: 'completed',
+        station: 'bar',
+        items_json: JSON.stringify([{
+          name: 'Lager',
+          quantity: 1,
+          source_line_id: 'line-a',
+          source_type: 'bar_item',
+          source_item_id: '11111111-1111-4111-8111-111111111111',
+          inventory_required: true,
+        }]),
+      },
+    }
+
+    await syncOrderItems('order-1')
+
+    const line = mockInserts.find(i => i.table === 'order_items')!.payload
+    expect(line.product_id).toBeNull()
+    expect(line.reconciliation_status).toBe('requires_mapping')
+  })
 })
 
 describe('deductOrderItems — atomic RPC first (F2)', () => {
@@ -160,7 +212,7 @@ describe('deductOrderItems — atomic RPC first (F2)', () => {
     mockClient.rpc.mockResolvedValue({ data: { deducted: 3, skipped: 1, already_deducted: false }, error: null })
     const res = await deductOrderItems('order-1', 'loc-1')
     expect(res).toEqual({ deducted: 3, skipped: 1 })
-    expect(mockClient.rpc).toHaveBeenCalledWith('deduct_order_items', { p_order_id: 'order-1', p_location_id: 'loc-1' })
+    expect(mockClient.rpc).toHaveBeenCalledWith('deduct_order_items_v2', { p_order_id: 'order-1', p_location_id: 'loc-1' })
     expect(mockCreateTransaction).not.toHaveBeenCalled()
   })
 
@@ -176,103 +228,25 @@ describe('deductOrderItems — atomic RPC first (F2)', () => {
     expect(mockClient.rpc).not.toHaveBeenCalled()
   })
 
-  it('falls back to the engine loop when the RPC is unavailable', async () => {
+  it('fails closed when the atomic RPC is unavailable', async () => {
     mockClient.rpc.mockResolvedValue({ data: null, error: { message: 'function not found' } })
-    fixtures = { ...fixtures, order_items: [recipeLine(), directLine()] }
-    const res = await deductOrderItems('order-1', 'loc-1')
-    expect(res).toEqual({ deducted: 2, skipped: 0 })
-  })
-})
-
-describe('deductOrderItems engine fallback (recipe + direct lines)', () => {
-  beforeEach(() => {
-    mockClient.rpc.mockResolvedValue({ data: null, error: { message: 'function not found' } })
-  })
-
-  it('deducts one SALE ledger row per recipe ingredient, scaled by servings', async () => {
-    fixtures = { ...fixtures, order_items: [recipeLine(), directLine()] }
-    await deductOrderItems('order-1', 'loc-1')
-
-    expect(mockCreateTransaction).toHaveBeenCalledTimes(3)
-    const calls = mockCreateTransaction.mock.calls.map((c: unknown[]) => c[0] as Record<string, unknown>)
-
-    // Margarita x2, yield 1, wastage 10% on Tequila: 0.5*2*1.1 = 1.1 ; 0.3*2 = 0.6
-    // (positive quantities; createTransaction negates + checks stock)
-    expect(calls[0]).toMatchObject({
-      product_id: 'ing-a',
-      transaction_type: 'sale',
-      quantity: 1.1,
-      reason_type: 'SALE',
-      reference_type: 'pos_order',
-      reference_id: 'oi-1',
-      order_id: 'order-1',
-      order_line_id: 'oi-1',
-      recipe_id: 'rec-1',
-    })
-    expect(calls[0]?.notes).toContain('Tequila')
-    expect(calls[1]).toMatchObject({
-      product_id: 'ing-b',
-      quantity: 0.6,
-      reference_id: 'oi-1',
-      order_id: 'order-1',
-      order_line_id: 'oi-1',
-      recipe_id: 'rec-1',
-    })
-    // Direct line keeps the existing behaviour: order-id reference
-    expect(calls[2]).toMatchObject({
-      product_id: 'prod-2',
-      quantity: 0.33,
-      reference_id: 'order-1',
-      order_id: 'order-1',
-      order_line_id: 'oi-2',
-      recipe_id: null,
-    })
-
-    const updates = mockUpdates.filter(u => u.table === 'order_items')
-    expect(updates).toHaveLength(2)
-    const recipeUpdate = updates.find(u => u.payload.deducted_at && !u.payload.transaction_id)
-    const directUpdate = updates.find(u => u.payload.transaction_id)
-    expect(recipeUpdate?.payload.deducted_at).toBeTruthy()
-    expect(directUpdate?.payload.transaction_id).toBe('txn-1')
-  })
-
-  it('skips ingredients already deducted by a prior engine run (retry safety)', async () => {
-    fixtures = {
-      ...fixtures,
-      inventory_transactions: [{ product_id: 'ing-a' }],
-      order_items: [recipeLine()],
-    }
-    await deductOrderItems('order-1', 'loc-1')
-    expect(mockCreateTransaction).toHaveBeenCalledTimes(1)
-    const call = mockCreateTransaction.mock.calls[0]?.[0] as Record<string, unknown>
-    expect(call.product_id).toBe('ing-b')
-    const updates = mockUpdates.filter(u => u.table === 'order_items')
-    expect(updates).toHaveLength(1)
-    expect(updates[0]?.payload.deducted_at).toBeTruthy()
-  })
-
-  it('keeps an incomplete recipe line unmarked and throws on insufficient stock', async () => {
-    fixtures = { ...fixtures, order_items: [recipeLine(), directLine()] }
-    mockCreateTransaction
-      .mockResolvedValueOnce({ id: 'txn-1' })
-      .mockRejectedValueOnce(new Error('Insufficient stock for product ing-b at location loc-1: requested 0.6, available 0.5'))
-      .mockResolvedValueOnce({ id: 'txn-2' })
-
-    await expect(deductOrderItems('order-1', 'loc-1')).rejects.toThrow(/partially failed/)
-
-    expect(mockCreateTransaction).toHaveBeenCalledTimes(3)
-    const updates = mockUpdates.filter(u => u.table === 'order_items')
-    // recipe line never marked; direct line completed and marked
-    const recipeUpdate = updates.find(u => u.payload.deducted_at && !u.payload.transaction_id)
-    expect(recipeUpdate).toBeUndefined()
-    expect(updates.some(u => u.payload.transaction_id === 'txn-2')).toBe(true)
-  })
-
-  it('skips matched lines without a usable base quantity', async () => {
-    fixtures = { ...fixtures, order_items: [directLine({ base_quantity: null })] }
-    const res = await deductOrderItems('order-1', 'loc-1')
-    expect(res).toEqual({ deducted: 0, skipped: 1 })
+    await expect(deductOrderItems('order-1', 'loc-1')).rejects.toThrow(
+      'Order deduction failed atomically: function not found',
+    )
     expect(mockCreateTransaction).not.toHaveBeenCalled()
+  })
+
+  it('surfaces required unmatched lines and performs no fallback writes', async () => {
+    mockClient.rpc.mockResolvedValue({
+      data: null,
+      error: { message: 'Order item reconciliation required before deduction: Lager [line-a]' },
+    })
+
+    await expect(deductOrderItems('order-1', 'loc-1')).rejects.toThrow(
+      'Order item reconciliation required before deduction: Lager [line-a]',
+    )
+    expect(mockCreateTransaction).not.toHaveBeenCalled()
+    expect(mockUpdates.filter(update => update.table === 'order_items')).toHaveLength(0)
   })
 })
 
@@ -282,6 +256,6 @@ describe('autoDeductCompletedOrder (completion hook path)', () => {
     mockClient.rpc.mockResolvedValue({ data: { deducted: 1, skipped: 0, already_deducted: false }, error: null })
     const res = await autoDeductCompletedOrder('order-1')
     expect(res).toEqual({ deducted: 1, skipped: 0 })
-    expect(mockClient.rpc).toHaveBeenCalledWith('deduct_order_items', { p_order_id: 'order-1', p_location_id: 'loc-1' })
+    expect(mockClient.rpc).toHaveBeenCalledWith('deduct_order_items_v2', { p_order_id: 'order-1', p_location_id: 'loc-1' })
   })
 })

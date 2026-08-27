@@ -22,6 +22,10 @@ export interface OrderItemInput {
 }
 
 export interface EnrichedItem {
+  source_line_id: string
+  source_type: 'menu_item' | 'bar_item'
+  source_item_id: string
+  inventory_required: boolean
   menu_item_id: string
   name: string
   price: number

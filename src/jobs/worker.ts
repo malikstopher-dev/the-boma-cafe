@@ -58,14 +58,16 @@ async function processNextJob(): Promise<void> {
   await executeJob(job)
 }
 
-async function executeJob(job: BackgroundJob): Promise<void> {
+export async function executeJob(job: BackgroundJob): Promise<void> {
   const client = getAdminClient()
+  const leaseToken = crypto.randomUUID()
 
   const lockUpdate = {
     status: 'processing',
     started_at: new Date().toISOString(),
     heartbeat_at: new Date().toISOString(),
     locked_by: `${HOSTNAME}:${process.pid}`,
+    lease_token: leaseToken,
   }
 
   // Optimistic lock: only this UPDATE can flip a row from pending → processing.
@@ -77,7 +79,7 @@ async function executeJob(job: BackgroundJob): Promise<void> {
     .update(lockUpdate)
     .eq('id', job.id)
     .eq('status', 'pending')
-    .select('id')
+    .select('id, lease_token')
 
   if (lockError) {
     logger.error('lock job failed', { job_id: job.id, error: lockError.message })
@@ -94,10 +96,19 @@ async function executeJob(job: BackgroundJob): Promise<void> {
 
   const heartbeatTimer = setInterval(async () => {
     try {
-      await client
+      const { data: heartbeatRows, error: heartbeatError } = await client
         .from('background_jobs')
         .update({ heartbeat_at: new Date().toISOString() })
         .eq('id', job.id)
+        .eq('status', 'processing')
+        .eq('lease_token', leaseToken)
+        .select('id')
+      if (heartbeatError || !heartbeatRows || heartbeatRows.length === 0) {
+        logger.warn('heartbeat lease lost', {
+          job_id: job.id,
+          error: heartbeatError?.message ?? null,
+        })
+      }
     } catch (err) {
       logger.warn('heartbeat failed', { job_id: job.id, error: String(err) })
     }
@@ -117,7 +128,7 @@ async function executeJob(job: BackgroundJob): Promise<void> {
     }
 
     const startTime = Date.now()
-    finalResult = await handler(job)
+    finalResult = await handler({ ...job, lease_token: leaseToken })
     const durationMs = Date.now() - startTime
 
     logger.info('handler completed', {
@@ -190,16 +201,24 @@ async function executeJob(job: BackgroundJob): Promise<void> {
     }
   }
 
-  const { error: updateError } = await client
+  const { data: updatedRows, error: updateError } = await client
     .from('background_jobs')
     .update(statusUpdate)
     .eq('id', job.id)
+    .eq('status', 'processing')
+    .eq('lease_token', leaseToken)
+    .select('id')
 
   if (updateError) {
     logger.error('status update failed', {
       job_id: job.id,
       status: finalStatus,
       error: updateError.message,
+    })
+  } else if (!updatedRows || updatedRows.length === 0) {
+    logger.warn('stale worker final update rejected by lease fence', {
+      job_id: job.id,
+      attempted_status: finalStatus,
     })
   }
 }

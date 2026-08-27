@@ -45,6 +45,7 @@ export default function PayablesPage() {
   const [paySupplier, setPaySupplier] = useState<PayableRow | null>(null)
   const [payAmount, setPayAmount] = useState('')
   const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [paymentKey, setPaymentKey] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -86,7 +87,7 @@ export default function PayablesPage() {
       const res = await fetch('/api/inventory/supplier-payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ supplierId: paySupplier.supplierId, amount, paidAt: new Date(`${payDate}T12:00:00`).toISOString() }),
+        body: JSON.stringify({ supplierId: paySupplier.supplierId, amount, paidAt: new Date(`${payDate}T12:00:00`).toISOString(), idempotencyKey: paymentKey }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error?.message ?? 'Payment failed')
@@ -147,7 +148,7 @@ export default function PayablesPage() {
     {
       key: 'action', header: '', align: 'right',
       render: r => r.outstanding > 0.004 ? (
-        <Button variant="ghost" onClick={() => { setPaySupplier(r); setPayAmount(''); setPayOpen(true) }}>Record payment</Button>
+        <Button variant="ghost" onClick={() => { setPaySupplier(r); setPayAmount(''); setPaymentKey(crypto.randomUUID()); setPayOpen(true) }}>Record payment</Button>
       ) : null,
     },
   ]

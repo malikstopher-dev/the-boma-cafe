@@ -14,6 +14,7 @@ interface BarDbItem {
   glass_price: number | null
   shot_price: number | null
   price: number | null
+  has_inventory: boolean | null
 }
 
 /**
@@ -47,7 +48,7 @@ async function getBarItemsByIds(ids: string[]): Promise<Map<string, BarDbItem>> 
   try {
     const { data, error } = await getAdminClient()
       .from('bar_items')
-      .select('id, name, single_price, bottle, glass_price, shot_price, price')
+      .select('id, name, single_price, bottle, glass_price, shot_price, price, has_inventory')
       .in('id', ids)
     if (!error && data) {
       for (const item of data) result.set(item.id, item)
@@ -144,6 +145,10 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
       const linePrice = itemPrice
       const subtotal = linePrice * item.quantity
       enriched.push({
+        source_line_id: crypto.randomUUID(),
+        source_type: 'bar_item',
+        source_item_id: barRow.id,
+        inventory_required: barRow.has_inventory === true,
         menu_item_id: barRow.id,
         name: barRow.name,
         price: linePrice,
@@ -180,6 +185,10 @@ async function enrichItems(items: OrderItemInput[]): Promise<{
     const linePrice = itemPrice + addOnTotal
     const subtotal = linePrice * item.quantity
     enriched.push({
+      source_line_id: crypto.randomUUID(),
+      source_type: 'menu_item',
+      source_item_id: menuRow.id,
+      inventory_required: false,
       menu_item_id: menuRow.id,
       name: menuRow.name,
       price: linePrice,
