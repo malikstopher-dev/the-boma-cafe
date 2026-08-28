@@ -3,6 +3,20 @@
 ## Project
 The Boma Cafe — Next.js booking + quotation system on Vercel Hobby. Supabase for data + storage. Resend for email. `@react-pdf/renderer` for PDF generation.
 
+## Current State (2026-08-27)
+
+- **Batch 4 = FIXED - VERIFIED.** All four audit batches (1-4) are complete and deployed.
+- **Migrations through 121** are applied and synchronized (local == remote, 000-121).
+- **No active runtime mission.** No runtime work without explicit owner activation.
+- **Completed work stays closed** absent proven regression.
+- `/dashboard` = canonical Owner Dashboard. `/inv` = separate operational inventory toolkit. Both active, not merged.
+- Three owner XLSX files remain protected and untracked.
+- **Preserve:** ledger authority, balance-cache architecture, RBAC, realtime architecture, booking/order architecture, supplier banking security, canonical movement semantics.
+- Worker deployed on Oracle VM (`boma-worker`), PM2, online, bundle 105.83 KB.
+- 515/515 Vitest passing; inventory and root TypeScript clean.
+- Client handover: `docs/BOMA_CLIENT_HANDOVER.md` + `docs/BOMA_QUICK_START.md` created.
+- Vercel Production Ready at `https://the-boma-cafe.vercel.app`.
+
 ## Problem Solved
 Booking submit endpoint timed out on Vercel Hobby (10s limit) because PDF generation (`@react-pdf/renderer`) + email sending (Resend) ran inline during the HTTP request.
 

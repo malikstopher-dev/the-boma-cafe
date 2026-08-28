@@ -29,6 +29,7 @@
 - SYNC-2 Phase 3 (canonical movement classification design) — COMPLETE (2026-08-20; documentation-only)
 - SYNC-2 narrow dashboard/stock-count consistency remediation — COMPLETE (2026-08-26, commit `b4d46da`; migration 106; deployed and live-verified)
 - Full-System Audit Batches 1–4 — FIXED, DEPLOYED, LIVE-VERIFIED
+- Documentation / Client Handover — COMPLETE (2026-08-27; BOMA_CLIENT_HANDOVER.md + BOMA_QUICK_START.md created; engineering history preserved)
 - 515/515 Vitest passing at the latest local Batch 4 checkpoint; inventory and root TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
@@ -360,6 +361,18 @@ Owner-reported consistency gaps recorded for the approved Phase 4 implementation
 - Verification: root TypeScript passed, targeted waiter/bar tests 18/18 passed, diff check passed, final Next production build passed with 187 static pages generated.
 - Commit `b665e2b` is pushed to `main`; no Vercel deployment or live browser probe was performed for this checkpoint.
 
+## Documentation / Client Handover Checkpoint (COMPLETE 2026-08-27)
+
+- Client handover manual created: `docs/BOMA_CLIENT_HANDOVER.md` — full operations manual covering all roles, all features, workflows, troubleshooting
+- Quick start guide created: `docs/BOMA_QUICK_START.md` — 10-minute staff introduction
+- `docs/BOMA_FULL_SYSTEM_AUDIT.md` updated: Batch 4 status changed from `NOT STARTED` to `FIXED - VERIFIED (2026-08-27)` with full evidence summary
+- `AGENTS.md` updated with concise current-state summary for future coding agents
+- No runtime code, no migrations, no production mutations, no application deployment
+- All client documentation verified against current source before writing
+- No secrets, PINs, tokens, keys, passwords, customer PII, or supplier bank details in any new documentation
+- Three protected owner XLSX files remain untouched and untracked
+- All engineering/history documentation preserved (architecture, audits, proposals, baselines, mission history)
+
 ## Architecture decisions (locked)
 
 - Transaction ledger is the single truth; balance cache is read-only; never bypass ledger/audit/validation.
@@ -376,7 +389,7 @@ Owner-reported consistency gaps recorded for the approved Phase 4 implementation
 
 ## Current owner decisions
 
-- `/dashboard` is the permanent canonical Owner Dashboard; `/inv` stays intact until a future retirement ship (6 INV-ONLY capabilities + 5 dashboard links must be ported first).
+- `/dashboard` is the canonical Owner Dashboard; `/inv` is the separate operational inventory toolkit. They are not merged, not retired, and not redesigned. Both remain active.
 - O1 stream COMPLETE (Phases 1–3B); O4, O5, O6, E2, E1, E3, E4, E1A COMPLETE — autonomous run ended (max 4 ships reached), queue empty (above).
 - O1-D recovery COMPLETE (2026-08-19): restore was executed per owner-approved sequence with rollback manifest preserved; no further recovery work queued; remaining unrecoverable amounts (~R73,800 purchases + additional consumption) accepted as documented loss.
 - Event purchasing (E4): POs optionally link to a confirmed booking; the event's cost centre governs receiving unless overridden at receive time; booking picker shows confirmed/in_progress/completed only.

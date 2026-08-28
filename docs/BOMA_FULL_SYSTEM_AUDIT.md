@@ -425,7 +425,7 @@ Live evidence: the public CMS payload contained no blocked operational keys; pub
 
 ### Batch 4: Convergence, metrics, offline, and UX
 
-Status: **NOT STARTED**
+Status: **FIXED - VERIFIED (2026-08-27)**
 
 Scope:
 
@@ -435,6 +435,16 @@ Scope:
 4. Repair offline queue semantics and operator recovery.
 5. Align PIN cookie persistence, logout audit, note persistence, and upload storage.
 6. Run desktop/laptop/tablet/mobile and multi-client reconnect acceptance.
+
+Local result (2026-08-27): migration 119 adds canonical movement classification in `src/inventory/lib/movement-classification.ts` and the `inventory_movement_class()` SQL RPC. Owner-approved canonical definitions (Inbound, Sold, Internal Consumption, Waste/Loss, Adjustment, Physical Count Variance, Total Outflow) are now the single source of truth across all consumers. Forecast, reorder, dashboard, payables, reconciliation, stock-sheet, and report read failures now surface errors instead of becoming plausible zero/empty business data. The offline order queue was rebuilt with verified localStorage persistence, pending/failed states, transport-aware replay, and explicit retry/discard/clear controls. Migration 120 adds atomic conversation creation, atomic message + recipient-notification creation, recipient-scoped chat signals, complete confirmed/rejected station signals, and trigger-bound order event history. Station boards now subscribe by station. Migration 121 establishes durable public media upload constraints and a service-role cleanup enqueue RPC; CMS/gallery runtime filesystem writes were replaced with Supabase Storage; upload metadata failures and delete storage failures use immediate compensation plus a registered `storage_cleanup` worker handler.
+
+Local evidence: 515/515 inventory tests passed across 55 files; inventory strict TypeScript and root TypeScript passed; worker bundle built at 105.83 KB; migration dry-run listed exactly 119-121; linked schema lint reported only the two pre-existing unused-variable warnings; `git diff --check` reported only line-ending notices; full Next production build compiled, typechecked, and generated all 187 pages.
+
+Production gate (2026-08-27): migrations 119-121 applied successfully; local and remote history match through 121. Runtime commit `df8471c` (`fix: converge operational data flows`) was pushed to `main`. Git-integrated Vercel deployment became Ready and was aliased to `https://the-boma-cafe.vercel.app`. Oracle worker pulled `df847c`, rebuilt the 105.83 KB worker, restarted under PM2, saved PM2 state, and remained online.
+
+Live evidence: canonical dashboard metrics returned correct classifications; atomic conversation creation returned one conversation; atomic message send created exactly one recipient notification; `chat.message` was conversation-scoped and `chat.notification` recipient-scoped; a tagged Bar order produced transaction-bound `ORDER_CREATED`, `ORDER_CONFIRMED`, and `ORDER_REJECTED` history plus station-scoped create/confirmed/rejected realtime events; authenticated CMS and gallery uploads returned durable Supabase Storage paths; gallery listing found the uploaded object and gallery deletion removed it; a real `storage_cleanup` job was processed by the Oracle worker to `completed`, and its target object was removed; public `/api/booking/config` returned 200. Final tagged residue was zero for admin accounts/audit, orders, conversations, messages, notifications, scoped realtime signals, background jobs, and Storage objects.
+
+The three owner XLSX files remain untouched and untracked. No rollback was required.
 
 ## 14. Acceptance Test Catalog
 
@@ -536,4 +546,4 @@ These are marked `UNRESOLVED`, not assumed healthy.
 
 ## Stop Point
 
-Batches 1, 2, and 3 are complete and `FIXED - VERIFIED`. Batch 4 remains inactive. Do not activate Batch 4 or another mission without explicit owner approval.
+Batches 1, 2, 3, and 4 are complete and `FIXED - VERIFIED`. There is no active runtime mission. Do not start another mission without explicit owner approval.
