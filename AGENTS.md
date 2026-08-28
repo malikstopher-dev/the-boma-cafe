@@ -3087,3 +3087,30 @@ Implement the owner-approved Batch 4 findings locally, prove the complete change
 - No migration, production data/configuration, commit, push, Vercel deployment, live probe, or Oracle worker restart occurred.
 - Controlled cutover requires explicit owner approval: apply migrations 119–121, deploy web code, update/restart the worker, run bounded live tests, clean tagged residue, and verify migration/deployment/worker health.
 - The three owner XLSX files remain untouched and untracked.
+
+---
+
+## Session: Full-System Audit Batch 4 Cutover (2026-08-27)
+
+### Production cutover
+
+- Owner approved the controlled cutover. Migrations 119–121 applied successfully; local and remote history match through 121.
+- Runtime commit `df8471c` (`fix: converge operational data flows`) was pushed to `main`.
+- Git-integrated Vercel deployment `dpl_EYHo5s5YXn3wNTchUMjgbjHWusb4` became Ready and was aliased to `https://the-boma-cafe.vercel.app`.
+- Oracle pulled `df8471c`, ran `npm ci`, built the 105.83 KB worker, restarted `boma-worker`, saved PM2 state, and remained online.
+
+### Live verification
+
+- `inventory_movement_class`, `owner_dashboard_canonical`, and `combined_dashboard_canonical` returned the expected canonical class and complete DTOs.
+- Repeated atomic conversation creation returned one conversation. Atomic message send created exactly one recipient notification; `chat.message` was conversation-scoped and `chat.notification` recipient-scoped.
+- A tagged Bar order produced transaction-bound `ORDER_CREATED`, `ORDER_CONFIRMED`, and `ORDER_REJECTED` history plus station-scoped create/confirmed/rejected realtime events.
+- Authenticated CMS and gallery uploads returned durable Supabase Storage paths. Gallery listing found the uploaded object and gallery deletion removed it.
+- A real `storage_cleanup` job was processed by the Oracle worker to `completed`, and its target object was removed.
+- Public `/api/booking/config` returned 200.
+
+### Cleanup and stop state
+
+- Final tagged residue was zero for admin accounts/audit, orders, conversations, messages, notifications, scoped realtime signals, background jobs, and Storage objects.
+- Batch 4 is `FIXED - VERIFIED`; migrations are synchronized through 121, Vercel Production is Ready, and the Oracle worker is online on `df8471c`.
+- No rollback was required. The three owner XLSX files remain untouched and untracked.
+- No active mission remains; stop until explicit owner direction.
