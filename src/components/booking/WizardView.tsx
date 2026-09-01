@@ -183,7 +183,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function calcEndTime(startTime: string, durationHours: number): string {
-  const [h, m] = startTime.split(':').map(Number)
+  const [h = 0, m = 0] = startTime.split(':').map(Number)
   const totalMin = h * 60 + m + durationHours * 60
   const endH = Math.floor(totalMin / 60) % 24
   const endM = Math.round(totalMin % 60)
@@ -684,10 +684,14 @@ export default function WizardView(props: WizardViewProps) {
                     color: '#fff',
                     border: 'none',
                     flex: isNarrow ? 1 : undefined,
+                    opacity: step === 0 && !wizard.booking_type_id ? 0.5 : 1,
+                    cursor: step === 0 && !wizard.booking_type_id ? 'not-allowed' : 'pointer',
                   }}
-                  disabled={step === 2 && availability && wizard.venue_area_id
-                    ? !availability.slots.find((s: any) => s.venue_area_id === wizard.venue_area_id)?.is_available
-                    : false}
+                  disabled={step === 0
+                    ? !wizard.booking_type_id
+                    : step === 2 && availability && wizard.venue_area_id
+                      ? !availability.slots.find((s: any) => s.venue_area_id === wizard.venue_area_id)?.is_available
+                      : false}
                 >
                   Continue &rarr;
                 </button>

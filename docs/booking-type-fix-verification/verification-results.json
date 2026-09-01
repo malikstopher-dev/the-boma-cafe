@@ -1,0 +1,356 @@
+{
+  "mission": "BOOK-2 — Booking Type Selector Contract Fix",
+  "status": "local_verified_safe_submission_boundary",
+  "baseUrl": "http://localhost:3000",
+  "routeTrace": [
+    "/",
+    "/book-event"
+  ],
+  "checks": {
+    "bookingTypeCount": 12,
+    "initialContinueDisabled": true,
+    "selectedType": "Table Reservation",
+    "continueEnabledAfterSelection": true,
+    "requiredValidationVisible": true,
+    "selectedArea": "Indoor",
+    "addOnSelected": true,
+    "calculationResponseCount": 3,
+    "quotation": {
+      "total": 6660,
+      "depositAmount": 1998,
+      "balanceAmount": 4662,
+      "lineItemTypes": [
+        "venue_area",
+        "food_package",
+        "drink_package",
+        "addon"
+      ]
+    },
+    "quotationIncludesSelections": true,
+    "summary": {
+      "hasBookingType": true,
+      "hasVenue": true,
+      "hasFood": true,
+      "hasDrinks": true,
+      "hasTotal": true,
+      "hasConfirmButton": true
+    },
+    "backPreservedName": true,
+    "forwardReturnedToSummary": true,
+    "submitRequests": 0,
+    "configErrorVisible": true,
+    "retryVisible": true,
+    "retryRequestedConfigAgain": true,
+    "configErrorRequestCount": 2,
+    "mobileTypeCount": 12,
+    "mobileContinueDisabled": true,
+    "mobileNoHorizontalOverflow": true
+  },
+  "screenshots": [
+    "01-booking-types-populated.png",
+    "02-booking-type-selected.png",
+    "03-required-validation.png",
+    "04-later-wizard-step.png",
+    "05-booking-summary.png",
+    "06-safe-submission-boundary.png",
+    "07-config-error-retry.png",
+    "08-mobile-booking-types.png"
+  ],
+  "network": [
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/config",
+      "status": 200,
+      "body": "{\"booking_types\":[{\"id\":\"c246d5d3-bdf5-479c-b27f-67b53d176256\",\"name\":\"Table Reservation\",\"slug\":\"table-reservation\",\"description\":\"Book a table for dining\",\"icon\":\"🍽️\",\"min_guests\":1,\"max_guests\":20,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":1},{\"id\":\"b5205995-c4f6-4656-b946-b45bd0c9e168\",\"name\":\"Birthday Party\",\"slug\":\"birthday\",\"description\":\"Celebrate your special day\",\"icon\":\"🎂\",\"min_guests\":5,\"max_guests\":200,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":2},{\"id\":\"06e4fdb8-e6f8-4c40-ab36-4de67bcd9b33\",\"name\":\"Wedding\",\"slug\":\"wedding\",\"description\":\"Your perfect wedding day\",\"icon\":\"💍\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":3},{\"id\":\"8fab1aae-0a13-49b3-b225-9ba2a2017fe3\",\"name\":\"Bridal Shower\",\"slug\":\"bridal-shower\",\"description\":\"Celebrate the bride-to-be\",\"icon\":\"👰\",\"min_guests\":10,\"max_guests\":100,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":4},{\"id\":\"5a30c572-cb1e-4cb8-b4b5-247f753a8468\",\"name\":\"Baby Shower\",\"slug\":\"baby-shower\",\"description\":\"Welcome the new arrival\",\"icon\":\"👶\",\"min_guests\":10,\"max_guests\":80,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":5},{\"id\":\"33f8f475-0e31-4e67-809b-9be6845e6442\",\"name\":\"Corporate Event\",\"slug\":\"corporate\",\"description\":\"Business meetings and functions\",\"icon\":\"💼\",\"min_guests\":5,\"max_guests\":300,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":6},{\"id\":\"743d4482-a7f3-42da-9d35-96fd940644c4\",\"name\":\"Graduation\",\"slug\":\"graduation\",\"description\":\"Celebrate academic achievement\",\"icon\":\"🎓\",\"min_guests\":10,\"max_guests\":150,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":7},{\"id\":\"7283d334-527b-4a9b-b06f-8c19bbe69011\",\"name\":\"Venue Hire\",\"slug\":\"venue-hire\",\"description\":\"Exclusive use of our venue\",\"icon\":\"🏟️\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":8},{\"id\":\"11d105f9-5dcc-46ef-a938-283b0daeb490\",\"name\":\"Conference\",\"slug\":\"conference\",\"description\":\"Full-day conference events\",\"icon\":\"📊\",\"min_guests\":10,\"max_guests\":200,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":9},{\"id\":\"721f829c-751d-4f25-93c2-f3a2170cebd8\",\"name\":\"Catering\",\"slug\":\"catering\",\"description\":\"Food and beverage catering\",\"icon\":\"🥘\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":10},{\"id\":\"bed3fc30-521d-4144-89a2-0402bdd18dcc\",\"name\":\"Live Entertainment\",\"slug\":\"live-entertainment\",\"description\":\"Music and performance events\",\"icon\":\"🎵\",\"min_guests\":10,\"max_guests\":300,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":11},{\"id\":\"08fd7e7b-ba2b-43fd-a651-2fd9633b8138\",\"name\":\"Private Dining\",\"slug\":\"private-dining\",\"description\":\"Exclusive dining experience\",\"icon\":\"🌙\",\"min_guests\":2,\"max_guests\":30,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":12}],\"venues\":[{\"id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"name\":\"The Boma Café Main\",\"slug\":\"the-boma-cafe-main\",\"description\":\"Main restaurant and event space at The Boma Café Sandton\",\"is_active\":true}],\"venue_areas\":[{\"id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"name\":\"Indoor\",\"description\":\"Air-conditioned indoor dining area with rustic charm\",\"capacity_min\":2,\"capacity_max\":80,\"venue_id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"is_active\":true,\"sort_order\":1},{\"id\":\"f29e045f-1783-4091-90f7-b12a111e2d84\",\"name\":\"Outdoor\",\"description\":\"Open-air thatched roof area with firepits\",\"capacity_min\":2,\"capacity_max\":150,\"venue_id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"is_active\":true,\"sort_order\":2},{\"id\":\"1929dfc5-c873-42b2-80d8-d592f3285287\",\"name\":\"VIP Section\",\"description\":\"Exclusive VIP area with premium service\",\"capacity_min\":2,\"capacity_max\":40,\"venue_id\":\"c2122598-7f63-4791-95de-464a…"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/config",
+      "status": 200,
+      "body": "{\"booking_types\":[{\"id\":\"c246d5d3-bdf5-479c-b27f-67b53d176256\",\"name\":\"Table Reservation\",\"slug\":\"table-reservation\",\"description\":\"Book a table for dining\",\"icon\":\"🍽️\",\"min_guests\":1,\"max_guests\":20,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":1},{\"id\":\"b5205995-c4f6-4656-b946-b45bd0c9e168\",\"name\":\"Birthday Party\",\"slug\":\"birthday\",\"description\":\"Celebrate your special day\",\"icon\":\"🎂\",\"min_guests\":5,\"max_guests\":200,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":2},{\"id\":\"06e4fdb8-e6f8-4c40-ab36-4de67bcd9b33\",\"name\":\"Wedding\",\"slug\":\"wedding\",\"description\":\"Your perfect wedding day\",\"icon\":\"💍\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":3},{\"id\":\"8fab1aae-0a13-49b3-b225-9ba2a2017fe3\",\"name\":\"Bridal Shower\",\"slug\":\"bridal-shower\",\"description\":\"Celebrate the bride-to-be\",\"icon\":\"👰\",\"min_guests\":10,\"max_guests\":100,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":4},{\"id\":\"5a30c572-cb1e-4cb8-b4b5-247f753a8468\",\"name\":\"Baby Shower\",\"slug\":\"baby-shower\",\"description\":\"Welcome the new arrival\",\"icon\":\"👶\",\"min_guests\":10,\"max_guests\":80,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":5},{\"id\":\"33f8f475-0e31-4e67-809b-9be6845e6442\",\"name\":\"Corporate Event\",\"slug\":\"corporate\",\"description\":\"Business meetings and functions\",\"icon\":\"💼\",\"min_guests\":5,\"max_guests\":300,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":6},{\"id\":\"743d4482-a7f3-42da-9d35-96fd940644c4\",\"name\":\"Graduation\",\"slug\":\"graduation\",\"description\":\"Celebrate academic achievement\",\"icon\":\"🎓\",\"min_guests\":10,\"max_guests\":150,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":7},{\"id\":\"7283d334-527b-4a9b-b06f-8c19bbe69011\",\"name\":\"Venue Hire\",\"slug\":\"venue-hire\",\"description\":\"Exclusive use of our venue\",\"icon\":\"🏟️\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":8},{\"id\":\"11d105f9-5dcc-46ef-a938-283b0daeb490\",\"name\":\"Conference\",\"slug\":\"conference\",\"description\":\"Full-day conference events\",\"icon\":\"📊\",\"min_guests\":10,\"max_guests\":200,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":9},{\"id\":\"721f829c-751d-4f25-93c2-f3a2170cebd8\",\"name\":\"Catering\",\"slug\":\"catering\",\"description\":\"Food and beverage catering\",\"icon\":\"🥘\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":10},{\"id\":\"bed3fc30-521d-4144-89a2-0402bdd18dcc\",\"name\":\"Live Entertainment\",\"slug\":\"live-entertainment\",\"description\":\"Music and performance events\",\"icon\":\"🎵\",\"min_guests\":10,\"max_guests\":300,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":11},{\"id\":\"08fd7e7b-ba2b-43fd-a651-2fd9633b8138\",\"name\":\"Private Dining\",\"slug\":\"private-dining\",\"description\":\"Exclusive dining experience\",\"icon\":\"🌙\",\"min_guests\":2,\"max_guests\":30,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":12}],\"venues\":[{\"id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"name\":\"The Boma Café Main\",\"slug\":\"the-boma-cafe-main\",\"description\":\"Main restaurant and event space at The Boma Café Sandton\",\"is_active\":true}],\"venue_areas\":[{\"id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"name\":\"Indoor\",\"description\":\"Air-conditioned indoor dining area with rustic charm\",\"capacity_min\":2,\"capacity_max\":80,\"venue_id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"is_active\":true,\"sort_order\":1},{\"id\":\"f29e045f-1783-4091-90f7-b12a111e2d84\",\"name\":\"Outdoor\",\"description\":\"Open-air thatched roof area with firepits\",\"capacity_min\":2,\"capacity_max\":150,\"venue_id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"is_active\":true,\"sort_order\":2},{\"id\":\"1929dfc5-c873-42b2-80d8-d592f3285287\",\"name\":\"VIP Section\",\"description\":\"Exclusive VIP area with premium service\",\"capacity_min\":2,\"capacity_max\":40,\"venue_id\":\"c2122598-7f63-4791-95de-464a…"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/availability?date=2026-10-15&start_time=12%3A00&end_time=15%3A00&guests=2",
+      "status": 200,
+      "body": "{\"slots\":[{\"venue_area_id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"venue_area_name\":\"Indoor\",\"date\":\"2026-10-15\",\"start_time\":\"12:00\",\"end_time\":\"15:00\",\"is_available\":true,\"guest_count\":2,\"capacity_max\":80},{\"venue_area_id\":\"f29e045f-1783-4091-90f7-b12a111e2d84\",\"venue_area_name\":\"Outdoor\",\"date\":\"2026-10-15\",\"start_time\":\"12:00\",\"end_time\":\"15:00\",\"is_available\":true,\"guest_count\":2,\"capacity_max\":150},{\"venue_area_id\":\"1929dfc5-c873-42b2-80d8-d592f3285287\",\"venue_area_name\":\"VIP Section\",\"date\":\"2026-10-15\",\"start_time\":\"12:00\",\"end_time\":\"15:00\",\"is_available\":true,\"guest_count\":2,\"capacity_max\":40},{\"venue_area_id\":\"28d82f5e-f783-45a9-9b63-4e2cb63fbd90\",\"venue_area_name\":\"Private Room\",\"date\":\"2026-10-15\",\"start_time\":\"12:00\",\"end_time\":\"15:00\",\"is_available\":true,\"guest_count\":2,\"capacity_max\":30},{\"venue_area_id\":\"54e48a72-1880-48c1-ad33-244f3436ff0d\",\"venue_area_name\":\"Entire Venue\",\"date\":\"2026-10-15\",\"start_time\":\"12:00\",\"end_time\":\"15:00\",\"is_available\":false,\"guest_count\":2,\"capacity_max\":500}]}"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/availability?date=2026-10-15&start_time=12%3A00&end_time=15%3A00&guests=2&venue_area_id=975f9134-4793-4e02-b044-7a1396bad44e",
+      "status": 200,
+      "body": "{\"is_available\":true,\"conflicts\":[],\"alternatives\":[]}"
+    },
+    {
+      "page": "main",
+      "method": "POST",
+      "url": "http://localhost:3000/api/booking/calculate",
+      "status": 200,
+      "body": "{\"line_items\":[{\"label\":\"Venue: Indoor\",\"description\":\"Air-conditioned indoor dining area with rustic charm\",\"item_type\":\"venue_area\",\"reference_id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"quantity\":1,\"unit_price\":2500,\"total\":2500,\"sort_order\":1}],\"subtotal\":2500,\"tax_rate\":0,\"tax_amount\":0,\"total\":2500,\"deposit_percentage\":30,\"deposit_amount\":750,\"balance_amount\":1750}"
+    },
+    {
+      "page": "main",
+      "method": "POST",
+      "url": "http://localhost:3000/api/booking/calculate",
+      "status": 200,
+      "body": "{\"line_items\":[{\"label\":\"Venue: Indoor\",\"description\":\"Air-conditioned indoor dining area with rustic charm\",\"item_type\":\"venue_area\",\"reference_id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"quantity\":1,\"unit_price\":2500,\"total\":2500,\"sort_order\":1},{\"label\":\"Food Package: Bronze (2 adults × R 250)\",\"description\":\"Classic starter package with selected starters, mains, and desserts\",\"item_type\":\"food_package\",\"reference_id\":\"51f8a1bb-b393-47b8-9390-b88f802c8419\",\"quantity\":2,\"unit_price\":250,\"total\":500,\"sort_order\":2},{\"label\":\"Drinks: Soft Drinks (2 guests × R 80)\",\"description\":\"Unlimited soft drinks, juices, and water\",\"item_type\":\"drink_package\",\"reference_id\":\"b65eb8ab-2141-4b04-9004-1c6783564bc4\",\"quantity\":2,\"unit_price\":80,\"total\":160,\"sort_order\":3}],\"subtotal\":3160,\"tax_rate\":0,\"tax_amount\":0,\"total\":3160,\"deposit_percentage\":30,\"deposit_amount\":948,\"balance_amount\":2212}"
+    },
+    {
+      "page": "main",
+      "method": "POST",
+      "url": "http://localhost:3000/api/booking/calculate",
+      "status": 200,
+      "body": "{\"line_items\":[{\"label\":\"Venue: Indoor\",\"description\":\"Air-conditioned indoor dining area with rustic charm\",\"item_type\":\"venue_area\",\"reference_id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"quantity\":1,\"unit_price\":2500,\"total\":2500,\"sort_order\":1},{\"label\":\"Food Package: Bronze (2 adults × R 250)\",\"description\":\"Classic starter package with selected starters, mains, and desserts\",\"item_type\":\"food_package\",\"reference_id\":\"51f8a1bb-b393-47b8-9390-b88f802c8419\",\"quantity\":2,\"unit_price\":250,\"total\":500,\"sort_order\":2},{\"label\":\"Drinks: Soft Drinks (2 guests × R 80)\",\"description\":\"Unlimited soft drinks, juices, and water\",\"item_type\":\"drink_package\",\"reference_id\":\"b65eb8ab-2141-4b04-9004-1c6783564bc4\",\"quantity\":2,\"unit_price\":80,\"total\":160,\"sort_order\":3},{\"label\":\"DJ × 1\",\"description\":\"Professional DJ with sound system\",\"item_type\":\"addon\",\"reference_id\":\"3c875fed-c2f8-4fef-8885-36fceb25dbc8\",\"quantity\":1,\"unit_price\":3500,\"total\":3500,\"sort_order\":4}],\"subtotal\":6660,\"tax_rate\":0,\"tax_amount\":0,\"total\":6660,\"deposit_percentage\":30,\"deposit_amount\":1998,\"balance_amount\":4662}"
+    },
+    {
+      "page": "config-error",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/config",
+      "status": 500,
+      "body": "{\"error\":\"Failed to load booking configuration\"}"
+    },
+    {
+      "page": "config-error",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/config",
+      "status": 500,
+      "body": "{\"error\":\"Failed to load booking configuration\"}"
+    },
+    {
+      "page": "mobile",
+      "method": "GET",
+      "url": "http://localhost:3000/api/booking/config",
+      "status": 200,
+      "body": "{\"booking_types\":[{\"id\":\"c246d5d3-bdf5-479c-b27f-67b53d176256\",\"name\":\"Table Reservation\",\"slug\":\"table-reservation\",\"description\":\"Book a table for dining\",\"icon\":\"🍽️\",\"min_guests\":1,\"max_guests\":20,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":1},{\"id\":\"b5205995-c4f6-4656-b946-b45bd0c9e168\",\"name\":\"Birthday Party\",\"slug\":\"birthday\",\"description\":\"Celebrate your special day\",\"icon\":\"🎂\",\"min_guests\":5,\"max_guests\":200,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":2},{\"id\":\"06e4fdb8-e6f8-4c40-ab36-4de67bcd9b33\",\"name\":\"Wedding\",\"slug\":\"wedding\",\"description\":\"Your perfect wedding day\",\"icon\":\"💍\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":3},{\"id\":\"8fab1aae-0a13-49b3-b225-9ba2a2017fe3\",\"name\":\"Bridal Shower\",\"slug\":\"bridal-shower\",\"description\":\"Celebrate the bride-to-be\",\"icon\":\"👰\",\"min_guests\":10,\"max_guests\":100,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":4},{\"id\":\"5a30c572-cb1e-4cb8-b4b5-247f753a8468\",\"name\":\"Baby Shower\",\"slug\":\"baby-shower\",\"description\":\"Welcome the new arrival\",\"icon\":\"👶\",\"min_guests\":10,\"max_guests\":80,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":5},{\"id\":\"33f8f475-0e31-4e67-809b-9be6845e6442\",\"name\":\"Corporate Event\",\"slug\":\"corporate\",\"description\":\"Business meetings and functions\",\"icon\":\"💼\",\"min_guests\":5,\"max_guests\":300,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":6},{\"id\":\"743d4482-a7f3-42da-9d35-96fd940644c4\",\"name\":\"Graduation\",\"slug\":\"graduation\",\"description\":\"Celebrate academic achievement\",\"icon\":\"🎓\",\"min_guests\":10,\"max_guests\":150,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":7},{\"id\":\"7283d334-527b-4a9b-b06f-8c19bbe69011\",\"name\":\"Venue Hire\",\"slug\":\"venue-hire\",\"description\":\"Exclusive use of our venue\",\"icon\":\"🏟️\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":8},{\"id\":\"11d105f9-5dcc-46ef-a938-283b0daeb490\",\"name\":\"Conference\",\"slug\":\"conference\",\"description\":\"Full-day conference events\",\"icon\":\"📊\",\"min_guests\":10,\"max_guests\":200,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":9},{\"id\":\"721f829c-751d-4f25-93c2-f3a2170cebd8\",\"name\":\"Catering\",\"slug\":\"catering\",\"description\":\"Food and beverage catering\",\"icon\":\"🥘\",\"min_guests\":20,\"max_guests\":500,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":10},{\"id\":\"bed3fc30-521d-4144-89a2-0402bdd18dcc\",\"name\":\"Live Entertainment\",\"slug\":\"live-entertainment\",\"description\":\"Music and performance events\",\"icon\":\"🎵\",\"min_guests\":10,\"max_guests\":300,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":11},{\"id\":\"08fd7e7b-ba2b-43fd-a651-2fd9633b8138\",\"name\":\"Private Dining\",\"slug\":\"private-dining\",\"description\":\"Exclusive dining experience\",\"icon\":\"🌙\",\"min_guests\":2,\"max_guests\":30,\"min_duration_hours\":1,\"max_duration_hours\":12,\"is_active\":true,\"sort_order\":12}],\"venues\":[{\"id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"name\":\"The Boma Café Main\",\"slug\":\"the-boma-cafe-main\",\"description\":\"Main restaurant and event space at The Boma Café Sandton\",\"is_active\":true}],\"venue_areas\":[{\"id\":\"975f9134-4793-4e02-b044-7a1396bad44e\",\"name\":\"Indoor\",\"description\":\"Air-conditioned indoor dining area with rustic charm\",\"capacity_min\":2,\"capacity_max\":80,\"venue_id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"is_active\":true,\"sort_order\":1},{\"id\":\"f29e045f-1783-4091-90f7-b12a111e2d84\",\"name\":\"Outdoor\",\"description\":\"Open-air thatched roof area with firepits\",\"capacity_min\":2,\"capacity_max\":150,\"venue_id\":\"c2122598-7f63-4791-95de-464ac8409399\",\"is_active\":true,\"sort_order\":2},{\"id\":\"1929dfc5-c873-42b2-80d8-d592f3285287\",\"name\":\"VIP Section\",\"description\":\"Exclusive VIP area with premium service\",\"capacity_min\":2,\"capacity_max\":40,\"venue_id\":\"c2122598-7f63-4791-95de-464a…"
+    }
+  ],
+  "console": [
+    {
+      "page": "main",
+      "type": "error",
+      "text": "Loading the script 'https://www.clarity.ms/tag/xid2ylu7y2' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+    },
+    {
+      "page": "main",
+      "type": "info",
+      "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+    },
+    {
+      "page": "main",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[HMR] connected"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "main",
+      "type": "warn",
+      "text": "Image with src \"/popup1.png\" is using quality \"90\" which is not configured in images.qualities [75]. Please update your config to [75, 90].\nRead more: https://nextjs.org/docs/messages/next-image-unconfigured-qualities"
+    },
+    {
+      "page": "main",
+      "type": "warn",
+      "text": "Image with src \"/breakfast-buffet.jpeg\" is using quality \"90\" which is not configured in images.qualities [75]. Please update your config to [75, 90].\nRead more: https://nextjs.org/docs/messages/next-image-unconfigured-qualities"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] done in 4030ms"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] done in 663ms"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] done in 330ms"
+    },
+    {
+      "page": "main",
+      "type": "warn",
+      "text": "Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior=\"smooth\"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] done in 261ms"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] done in 125ms"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "main",
+      "type": "log",
+      "text": "[Fast Refresh] done in 324ms"
+    },
+    {
+      "page": "config-error",
+      "type": "error",
+      "text": "Loading the script 'https://www.clarity.ms/tag/xid2ylu7y2' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+    },
+    {
+      "page": "config-error",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "page": "config-error",
+      "type": "log",
+      "text": "[HMR] connected"
+    },
+    {
+      "page": "config-error",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "page": "config-error",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "config-error",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "page": "config-error",
+      "type": "log",
+      "text": "[Fast Refresh] done in 286ms"
+    },
+    {
+      "page": "mobile",
+      "type": "error",
+      "text": "Loading the script 'https://www.clarity.ms/tag/xid2ylu7y2' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+    },
+    {
+      "page": "mobile",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "page": "mobile",
+      "type": "log",
+      "text": "[HMR] connected"
+    },
+    {
+      "page": "mobile",
+      "type": "log",
+      "text": "[Fast Refresh] rebuilding"
+    },
+    {
+      "page": "mobile",
+      "type": "log",
+      "text": "[Fast Refresh] done in 133ms"
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "https://www.clarity.ms/tag/xid2ylu7y2",
+      "error": "unknown"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/menu/public/homepage",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/cms/public",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/cms/public",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/cms/public",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "page": "main",
+      "method": "GET",
+      "url": "http://localhost:3000/api/cms/public",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "page": "mobile",
+      "method": "GET",
+      "url": "https://www.clarity.ms/tag/xid2ylu7y2",
+      "error": "unknown"
+    }
+  ],
+  "safeSubmissionBoundary": {
+    "reached": true,
+    "submitted": false,
+    "reason": "Submission creates a production booking/quote/job and the live worker sends customer and admin emails."
+  },
+  "automatedVerification": {
+    "focusedBookingTests": "8/8 passed",
+    "fullTestSuite": "573/573 passed across 60 files",
+    "inventoryStrictTypeScript": "passed",
+    "rootTypeScript": "passed",
+    "productionBuild": "passed; 187 static pages generated",
+    "gitDiffCheck": "passed with line-ending notices only"
+  },
+  "localConfigCounts": {
+    "bookingTypes": 12,
+    "venues": 1,
+    "venueAreas": 5,
+    "foodPackages": 4,
+    "drinkPackages": 5,
+    "addonCategories": 6,
+    "addons": 22
+  },
+  "completedAt": "2026-09-01T19:08:43.959Z"
+}

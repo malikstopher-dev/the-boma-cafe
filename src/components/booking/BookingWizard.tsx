@@ -55,11 +55,25 @@ const INITIAL_STATE: WizardState = {
 }
 
 function calcEndTime(startTime: string, durationHours: number): string {
-  const [h, m] = startTime.split(':').map(Number)
+  const [h = 0, m = 0] = startTime.split(':').map(Number)
   const totalMin = h * 60 + m + durationHours * 60
   const endH = Math.floor(totalMin / 60) % 24
   const endM = Math.round(totalMin % 60)
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+}
+
+export async function loadBookingConfig(fetcher: typeof fetch = fetch) {
+  const response = await fetcher('/api/booking/config')
+  if (!response.ok) {
+    throw new Error('Failed to load booking configuration')
+  }
+
+  const data = await response.json()
+  if (!Array.isArray(data.booking_types) || data.booking_types.length === 0) {
+    throw new Error('Failed to load booking configuration')
+  }
+
+  return data
 }
 
 export default function BookingWizard() {
@@ -79,18 +93,27 @@ export default function BookingWizard() {
   const [availLoading, setAvailLoading] = useState(false)
   const [isNarrow, setIsNarrow] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/booking/config')
-      .then(r => r.json())
-      .then(data => {
-        setConfig(data)
-        if (!data.settings?.enabled || data.settings.enabled === 'false') {
-          setConfigError('Online booking is currently disabled')
-        }
-      })
-      .catch(() => setConfigError('Failed to load booking configuration'))
-      .finally(() => setConfigLoading(false))
+  const fetchConfig = useCallback(async () => {
+    setConfigLoading(true)
+    setConfigError('')
+    setConfig(null)
+
+    try {
+      const data = await loadBookingConfig()
+      setConfig(data)
+      if (!data.settings?.enabled || data.settings.enabled === 'false') {
+        setConfigError('Online booking is currently disabled')
+      }
+    } catch {
+      setConfigError('Failed to load booking configuration')
+    } finally {
+      setConfigLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void fetchConfig()
+  }, [fetchConfig])
 
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 860px)')
@@ -256,7 +279,12 @@ export default function BookingWizard() {
   }
 
   if (configError) {
-    return <ErrorView message={configError} />
+    return (
+      <ErrorView
+        message={configError}
+        onRetry={configError === 'Failed to load booking configuration' ? fetchConfig : undefined}
+      />
+    )
   }
 
   if (submitted && submitResult) {
