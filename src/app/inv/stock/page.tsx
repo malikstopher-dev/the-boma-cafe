@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { HyperFormula } from 'hyperformula'
 import { C, PageTitle, Card, Button, Select, formatMoney, formatQty } from '../kit'
 import { weekRange, lastWeekOfYear, currentWeekNumber } from '@/inventory/lib/weeks'
+import AddStockWorkspace from '@/inventory-v2/components/AddStockWorkspace'
+import { isLegacyAddStockRollback } from '@/inventory-v2/lib/add-stock'
 
 // ---------------------------------------------------------------------------
 // The Stock Sheet is a spreadsheet: a live cell grid where formulas evaluate
@@ -139,6 +141,8 @@ export default function StockSheetPage() {
   const [q, setQ] = useState('')
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [addStockOpen, setAddStockOpen] = useState(false)
+  const [legacyAddStock, setLegacyAddStock] = useState(false)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const gridAnchor = useRef<HTMLDivElement | null>(null)
   const saveQueue = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -147,6 +151,10 @@ export default function StockSheetPage() {
 
   const flash = (msg: string) => { setSaved(msg); window.setTimeout(() => setSaved(''), 2600) }
   const typeForTab: Record<TabId, string> = { bar: 'BEVERAGE', kitchen: 'FOOD' }
+
+  useEffect(() => {
+    setLegacyAddStock(isLegacyAddStockRollback(window.location.search))
+  }, [])
 
   // ---------------------------- columns (A..) ----------------------------
 
@@ -252,7 +260,7 @@ export default function StockSheetPage() {
       const [sheetRes, storeRes, prodRes, dailyRes, catRes, supRes, uomRes, sheetsRes] = await Promise.all([
         fetch(`/api/inventory/stock-sheet?${sheetParams.toString()}`),
         storeParams ? fetch(`/api/inventory/stock-sheet?${storeParams.toString()}`) : null,
-        fetch('/api/inventory/products?page_size=500'),
+        fetch('/api/inventory/products?page_size=500&include_balance=false'),
         fetch(`/api/inventory/daily-stock?location_id=${main}&date=${today}`),
         fetch('/api/inventory/categories'),
         fetch('/api/inventory/suppliers?page_size=100'),
@@ -537,7 +545,12 @@ export default function StockSheetPage() {
     if (delta === 0) return
     const res = await fetch('/api/inventory/transactions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        // Existing spreadsheet cells are canonical base-quantity entries.
+        // New Add Stock receipts use the guided product-linked UOM contract.
+        'x-boma-stock-entry-mode': 'legacy-spreadsheet',
+      },
       body: JSON.stringify({
         product_id: row.productId,
         location_id: loc,
@@ -1045,7 +1058,10 @@ export default function StockSheetPage() {
         subtitle="Excel-style spreadsheet — click any cell and type. Formulas evaluate live (=SUM, =F5*N5), Enter moves down, Tab moves right. RECEIVED / WASTE / COUNTED post straight to the ledger."
         right={
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Button variant="success" onClick={() => addNewRow(true)}>+ ADD STOCK</Button>
+            <Button
+              variant="success"
+              onClick={() => legacyAddStock ? addNewRow(true) : setAddStockOpen(true)}
+            >+ ADD STOCK</Button>
             <Button variant="ghost" onClick={doExport} disabled={rows.length === 0}>Export CSV</Button>
             <Button variant="ghost" onClick={() => void load()} disabled={loading}>⟳ Refresh</Button>
           </div>
@@ -1286,11 +1302,13 @@ export default function StockSheetPage() {
               <tr>
                 <td className="gutter">1</td>
                 <td colSpan={dataCols.length + 1} style={{ padding: 18, color: '#8A7A5C', fontSize: 12.5, background: '#14100B' }}>
-                  {q.trim() ? `No items match “${q.trim()}”.` : 'No stock rows for this week yet. Click <b>+ ADD STOCK</b> to start typing items.'}
+                  {q.trim() ? `No items match “${q.trim()}”.` : (
+                    <>No stock rows for this week yet. Use <b>+ ADD STOCK</b> to receive an existing item, or manage catalog data in <Link href="/admin/operations/products" style={{ color: C.gold }}>Item Master</Link>.</>
+                  )}
                 </td>
               </tr>
             )}
-            {!loading && rows.length > 0 && (
+            {!loading && rows.length > 0 && legacyAddStock && (
               <tr>
                 <td className="gutter">{rows.length + 1}</td>
                 <td colSpan={dataCols.length + 1} style={{ background: '#14100B', padding: 0, borderTop: `1px dashed ${C.border}` }}>
@@ -1309,6 +1327,15 @@ export default function StockSheetPage() {
       </datalist>
 
       {loading && <p style={{ fontSize: 12, color: C.textMuted, marginTop: 10 }}>Loading the ledger…</p>}
+
+      <AddStockWorkspace
+        open={addStockOpen}
+        onClose={() => setAddStockOpen(false)}
+        onReceived={(transaction) => {
+          flash(`Stock added · movement ${transaction.id.slice(0, 8)}`)
+          void load()
+        }}
+      />
     </div>
   )
 }

@@ -11,9 +11,11 @@ vi.mock('../lib/db', () => ({
 
 import { createTransaction, getBalance, getBalanceAtTime } from '../engine/ledger'
 import {
+  InactiveProductError,
   InsufficientStockError,
   LocationNotFoundError,
   MissingCostCentreError,
+  ProductUomNotLinkedError,
   ProductNotFoundError,
 } from '../lib/errors'
 
@@ -67,6 +69,12 @@ describe('ledger atomic transaction contract', () => {
       order_id: 'order-1',
       order_line_id: 'line-1',
       recipe_id: 'recipe-1',
+      entry_source: 'direct_receipt',
+      source_uom_id: 'uom-case',
+      source_unit_cost: 240,
+      require_active_product: true,
+      admin_actor_id: 'admin-1',
+      admin_actor_name: 'Ms Zelda',
     })
 
     expect(result).toEqual(transaction)
@@ -82,6 +90,12 @@ describe('ledger atomic transaction contract', () => {
         order_id: 'order-1',
         order_line_id: 'line-1',
         recipe_id: 'recipe-1',
+        entry_source: 'direct_receipt',
+        source_uom_id: 'uom-case',
+        source_unit_cost: 240,
+        require_active_product: true,
+        admin_actor_id: 'admin-1',
+        admin_actor_name: 'Ms Zelda',
       }),
     })
     expect(mockClient.from).not.toHaveBeenCalled()
@@ -89,6 +103,8 @@ describe('ledger atomic transaction contract', () => {
 
   it.each([
     ['Product not found: product-1', ProductNotFoundError],
+    ['Product is not active: product-1', InactiveProductError],
+    ['UOM uom-case is not linked to product product-1', ProductUomNotLinkedError],
     ['Location not found: location-1', LocationNotFoundError],
     ['No cost centre could be determined for location location-1', MissingCostCentreError],
     ['Insufficient stock for product product-1 at location location-1', InsufficientStockError],

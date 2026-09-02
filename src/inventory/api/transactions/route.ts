@@ -4,8 +4,16 @@ import { createTransaction } from '@/inventory/engine/ledger'
 import { getInventoryTypeFilter } from '@/inventory/lib/api-utils'
 import { resolveLocationId } from '@/inventory/lib/location'
 import { requireInventoryPermission } from '@/inventory/lib/require-inventory-permission'
+import { getAdminContext } from '@/lib/admin/context'
 import type { ApiResponse, InventoryTransaction, CreateTransactionInput } from '@/inventory/engine/types'
-import { InsufficientStockError, ProductNotFoundError, LocationNotFoundError, MissingCostCentreError, InvalidCostCentreError } from '@/inventory/lib/errors'
+import {
+  InsufficientStockError,
+  ProductNotFoundError,
+  LocationNotFoundError,
+  MissingCostCentreError,
+  InvalidCostCentreError,
+  ValidationError,
+} from '@/inventory/lib/errors'
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryTransaction[]>>> {
   try {
@@ -78,7 +86,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   if (denied) return denied
 
   try {
-    const body = (await request.json()) as CreateTransactionInput
+    const rawBody = await request.json() as unknown
+    if (!rawBody || typeof rawBody !== 'object' || Array.isArray(rawBody)) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'A transaction object is required' } },
+        { status: 400 },
+      )
+    }
+    const body = rawBody as CreateTransactionInput & { uom_id?: unknown }
+    const admin = await getAdminContext(request)
+    if (!admin) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authenticated admin identity required' } },
+        { status: 401 },
+      )
+    }
 
     if (!body.product_id || !body.location_id) {
       return NextResponse.json(
@@ -94,9 +116,40 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    if (!body.quantity || body.quantity === 0) {
+    const quantity = Number(body.quantity)
+    if (!Number.isFinite(quantity) || quantity === 0) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'quantity must be a non-zero number' } },
+        { error: { code: 'VALIDATION_ERROR', message: 'Quantity must be a finite non-zero number' } },
+        { status: 400 },
+      )
+    }
+    if (body.transaction_type === 'purchase' && quantity <= 0) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Quantity must be greater than zero for a direct receipt' } },
+        { status: 400 },
+      )
+    }
+
+    const requestedUomId = body.uom_id
+    if (requestedUomId !== undefined && (typeof requestedUomId !== 'string' || requestedUomId.trim() === '')) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'A valid UOM is required' } },
+        { status: 400 },
+      )
+    }
+    const legacyBaseReceipt = request.headers.get('x-boma-stock-entry-mode') === 'legacy-spreadsheet'
+    if (body.transaction_type === 'purchase' && requestedUomId === undefined && !legacyBaseReceipt) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'A valid product-linked UOM is required' } },
+        { status: 400 },
+      )
+    }
+
+    const rawUnitCost = (body as unknown as Record<string, unknown>).unit_cost
+    const requestedCost = rawUnitCost == null || rawUnitCost === '' ? null : Number(rawUnitCost)
+    if (requestedCost !== null && (!Number.isFinite(requestedCost) || requestedCost < 0)) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Unit cost must be a finite non-negative number' } },
         { status: 400 },
       )
     }
@@ -111,7 +164,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    const tx = await createTransaction({ ...body, location_id: resolvedLocationId })
+    const isDirectReceipt = body.transaction_type === 'purchase'
+    const tx = await createTransaction({
+      ...body,
+      location_id: resolvedLocationId,
+      quantity,
+      unit_cost: isDirectReceipt ? null : requestedCost,
+      source_unit_cost: isDirectReceipt ? requestedCost : null,
+      source_uom_id: isDirectReceipt && typeof requestedUomId === 'string' ? requestedUomId : null,
+      entry_source: isDirectReceipt ? 'direct_receipt' : null,
+      require_active_product: true,
+      cost_centre_id: isDirectReceipt ? null : body.cost_centre_id ?? null,
+      // Management identity is always derived from the validated session.
+      performed_by: null,
+      note_author: admin.displayName,
+      admin_actor_id: admin.adminId,
+      admin_actor_name: admin.displayName,
+    })
     return NextResponse.json({ data: tx }, { status: 201 })
   } catch (error) {
     if (error instanceof InsufficientStockError) {
@@ -134,6 +203,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             message: 'A cost centre is required for this stock movement. Assign a cost centre to the location, or pass one explicitly.',
           },
         },
+        { status: 400 },
+      )
+    }
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: error.message } },
         { status: 400 },
       )
     }

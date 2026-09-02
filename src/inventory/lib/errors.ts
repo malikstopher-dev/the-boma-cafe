@@ -61,6 +61,28 @@ export class ValidationError extends Error {
   }
 }
 
+export class InactiveProductError extends ValidationError {
+  public readonly productId: string
+
+  constructor(productId: string) {
+    super(`Product is not active: ${productId}`, { productId })
+    this.name = 'InactiveProductError'
+    this.productId = productId
+  }
+}
+
+export class ProductUomNotLinkedError extends ValidationError {
+  public readonly productId: string
+  public readonly uomId: string
+
+  constructor(productId: string, uomId: string) {
+    super(`UOM ${uomId} is not linked to product ${productId}`, { productId, uomId })
+    this.name = 'ProductUomNotLinkedError'
+    this.productId = productId
+    this.uomId = uomId
+  }
+}
+
 export class WasteValidationError extends Error {
   constructor(message: string) {
     super(message)

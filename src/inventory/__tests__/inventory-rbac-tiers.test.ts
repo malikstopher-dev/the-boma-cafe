@@ -202,6 +202,17 @@ describe('Tier C — inventory.approve', () => {
     const res = await transactionPost(req('/api/inventory/transactions', 'POST', { product_id: 'p', location_id: 'l', transaction_type: 'sale', quantity: 1 }))
     expect(res.status).toBe(403)
   })
+
+  it('manager passes the transaction mutation gate with server-resolved identity', async () => {
+    setRole('manager')
+    const res = await transactionPost(req('/api/inventory/transactions', 'POST', {
+      product_id: 'p',
+      location_id: 'l',
+      transaction_type: 'adjustment',
+      quantity: 1,
+    }))
+    expect([401, 403]).not.toContain(res.status)
+  })
 })
 
 describe("Tier F — inventory.final_approve (owner decision: approvals = owner+full only)", () => {

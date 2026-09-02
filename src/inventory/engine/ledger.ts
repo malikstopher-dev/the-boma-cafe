@@ -1,10 +1,13 @@
 import type { CreateTransactionInput, InventoryTransaction } from './types'
 import {
+  InactiveProductError,
   InsufficientStockError,
   ProductNotFoundError,
   LocationNotFoundError,
   MissingCostCentreError,
   InvalidCostCentreError,
+  ProductUomNotLinkedError,
+  ValidationError,
 } from '../lib/errors'
 import { getInventoryClient } from '../lib/db'
 
@@ -94,12 +97,21 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       order_id: input.order_id ?? null,
       order_line_id: input.order_line_id ?? null,
       recipe_id: input.recipe_id ?? null,
+      entry_source: input.entry_source ?? null,
+      source_uom_id: input.source_uom_id ?? null,
+      source_unit_cost: input.source_unit_cost ?? null,
+      require_active_product: input.require_active_product ?? false,
+      admin_actor_id: input.admin_actor_id ?? null,
+      admin_actor_name: input.admin_actor_name ?? null,
     },
   })
 
   if (error || !data) {
     const message = error?.message ?? 'No transaction returned'
     if (message.startsWith('Product not found:')) throw new ProductNotFoundError(input.product_id)
+    if (message.startsWith('Product is not active:')) throw new InactiveProductError(input.product_id)
+    const uomMatch = message.match(/^UOM (.+) is not linked to product (.+)$/)
+    if (uomMatch?.[1] && uomMatch[2]) throw new ProductUomNotLinkedError(uomMatch[2], uomMatch[1])
     if (message.startsWith('Location not found:')) throw new LocationNotFoundError(input.location_id)
     if (message.startsWith('No cost centre could be determined')) throw new MissingCostCentreError(input.location_id)
     if (message.startsWith('Cost centre ') && message.includes('does not exist or is not active')) {
@@ -113,6 +125,15 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
         Number(values?.[1] ?? Math.abs(input.quantity)),
         Number(values?.[2] ?? 0),
       )
+    }
+    if (
+      message.startsWith('Direct receipt')
+      || message.startsWith('Quantity must be')
+      || message.startsWith('Unit cost must be')
+      || message.startsWith('Admin actor is required')
+      || message.startsWith('Admin actor not found or inactive:')
+    ) {
+      throw new ValidationError(message)
     }
     throw new Error(`Failed to create transaction atomically: ${message}`)
   }

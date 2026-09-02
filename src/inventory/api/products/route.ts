@@ -12,13 +12,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('category_id')
     const search = searchParams.get('search')
-    const locationId = await resolveLocationId(searchParams.get('location_id'))
+    const includeBalance = searchParams.get('include_balance') !== 'false'
+    const stockedOnly = searchParams.get('stocked_only') === 'true'
+    const locationId = includeBalance || stockedOnly
+      ? await resolveLocationId(searchParams.get('location_id'))
+      : null
     const showArchived = searchParams.get('show_archived') === 'true'
     const cursor = searchParams.get('cursor')
     const pageSize = Math.min(Number(searchParams.get('page_size')) || 50, 500)
     const idsParam = searchParams.get('ids')
     const inventoryType = getInventoryTypeFilter(searchParams)
-    const stockedOnly = searchParams.get('stocked_only') === 'true'
 
     if (stockedOnly && !locationId) {
       return NextResponse.json(
@@ -28,8 +31,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 
     const productSelect = stockedOnly
-      ? '*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol)), inventory_product_balances!inner(product_id, location_id, balance)'
-      : '*, inventory_product_uoms(is_base, is_display, conversion_factor, inventory_uoms(name, symbol))'
+      ? '*, inventory_product_uoms(id, product_id, uom_id, is_base, is_display, conversion_factor, created_at, inventory_uoms(name, symbol)), inventory_product_balances!inner(product_id, location_id, balance)'
+      : '*, inventory_product_uoms(id, product_id, uom_id, is_base, is_display, conversion_factor, created_at, inventory_uoms(name, symbol))'
 
     let query = supabase
       .from('inventory_products')

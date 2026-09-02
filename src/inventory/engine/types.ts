@@ -138,6 +138,15 @@ export interface InventoryTransaction {
   order_id: string | null
   order_line_id: string | null
   recipe_id: string | null
+  /** Direct-receipt input preserved alongside canonical base-unit values. */
+  entry_source: 'direct_receipt' | null
+  source_quantity: number | null
+  source_uom_id: string | null
+  source_conversion_factor: number | null
+  source_unit_cost: number | null
+  /** Immutable management identity snapshot for admin-originated movements. */
+  admin_actor_id: string | null
+  admin_actor_name: string | null
   created_at: string
 }
 
@@ -205,6 +214,8 @@ export interface InventoryAuditLogEntry {
   action: 'created' | 'updated' | 'archived' | 'restored' | 'hard_deleted'
   changes: Json | null
   performed_by: string | null
+  admin_actor_id: string | null
+  admin_actor_name: string | null
   created_at: string
 }
 
@@ -441,6 +452,16 @@ export interface CreateTransactionInput {
   order_id?: string | null
   order_line_id?: string | null
   recipe_id?: string | null
+  /** Operational UOM input. The atomic RPC validates the product link and
+   * converts the source quantity to the canonical base-unit quantity. */
+  source_uom_id?: string | null
+  source_unit_cost?: number | null
+  entry_source?: 'direct_receipt' | null
+  require_active_product?: boolean
+  /** Server-derived management actor. API routes must never accept these
+   * values from request bodies or identity headers. */
+  admin_actor_id?: string | null
+  admin_actor_name?: string | null
 }
 
 export interface WasteSummaryRow {

@@ -1,0 +1,93 @@
+{
+  "checkedAt": "2026-09-02T08:38:47.325Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "productionMutationCount": 0,
+  "interceptedTransactionAttempts": 2,
+  "checks": [
+    {
+      "name": "single normal Add Stock action",
+      "pass": true,
+      "detail": "found 1"
+    },
+    {
+      "name": "legacy footer hidden in normal mode",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "required receipt controls rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "keyboard-searchable selectors completed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "explicit confirmation step rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "success state rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "one canonical movement posted",
+      "pass": true,
+      "detail": "posted 1"
+    },
+    {
+      "name": "no product creation request",
+      "pass": true,
+      "detail": "product POSTs 0"
+    },
+    {
+      "name": "receipt payload carries existing item and linked UOM",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "network failure stays in-page without false success",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "tablet workspace has no horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile workspace has no horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "empty state routes to Item Master",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "rollback query invokes the old row workflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "rollback mode exposes the legacy footer action",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "all transaction attempts remained intercepted",
+      "pass": true,
+      "detail": "intercepted 2"
+    },
+    {
+      "name": "no accidental item creation across all states",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
