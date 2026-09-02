@@ -3128,3 +3128,43 @@ Implement the owner-approved Batch 4 findings locally, prove the complete change
 - Batch 4 is `FIXED - VERIFIED`; migrations are synchronized through 121, Vercel Production is Ready, and the Oracle worker is online on `df8471c`.
 - No rollback was required. The three owner XLSX files remain untouched and untracked.
 - No active mission remains; stop until explicit owner direction.
+
+---
+
+## Session: INV-4B Guided Add Stock Cutover (2026-09-02)
+
+### Objective
+
+Replace the ambiguous stock-sheet add-row action with a guided existing-item direct-receipt workflow, preserve an explicit legacy rollback path, verify the complete contract locally and in bounded browsers, deploy migration/runtime changes, run one disposable production receipt, clean all probe residue, and stop.
+
+### Implementation
+
+- Default `/inv/stock` now has one guided `+ ADD STOCK` action. `/inv/stock?add-stock=legacy` retains the prior `addNewRow(true)` behavior; normal mode hides the legacy `+ Click to Add Item` footer.
+- The guided workspace supplies searchable item/location/UOM controls, required validation, quantity and unit-cost conversion previews, review confirmation, success/retry/error/loading/empty states, responsive desktop/tablet/mobile layouts, and an Item Master route for creating catalogue items separately.
+- The transaction route requires `inventory.approve`, validates active product/location/UOM links, resolves the management actor from `boma_admin_session`, ignores client actor/cost-centre claims, and sends canonical `purchase` movements only to `create_inventory_transaction(JSONB)`.
+- Migration 122 adds source quantity/UOM/conversion/cost and server-derived admin attribution to guided receipts while retaining atomic ledger, inventory audit, balance-cache, and `stock.moved` behavior.
+- Reference loading supports `include_balance=false` without breaking `stocked_only=true`; product UOM projections include the conversion and display fields required by the workspace.
+- Final UI corrections raised the modal above fixed site chrome (`z-index: 20000`) and set explicit readable title/section/success-heading colors.
+
+### Verification
+
+- Focused INV-4B tests: 75/75; existing Inventory V2 tests: 50/50; full inventory suite: 562/562.
+- Inventory strict TypeScript and root TypeScript passed. The optimized Next production build passed and generated 187 pages.
+- The pre-cutover linked migration dry run listed only migration 122. Linked schema lint returned only the two documented pre-existing unused-variable warnings.
+- Bounded browser acceptance passed 17/17 across desktop, tablet, mobile, empty/error/success, and legacy rollback states. Both transaction attempts were intercepted and no product-creation request occurred.
+
+### Production Cutover
+
+- Migration 122 applied successfully; local and remote migration history match through 122.
+- Runtime commit `90d3d0f` (`feat: add guided stock receipt workflow`) was pushed to `main`.
+- Vercel deployment `dpl_5baYi3WckaQc73RLGacT31n1ccC7` became Ready and was aliased to `https://the-boma-cafe.vercel.app`.
+- One disposable live receipt returned HTTP 201: source quantity `2` with conversion `12` became canonical quantity `24`; source unit cost `120` became base unit cost `10`; entry source was `direct_receipt`.
+- Forged body/header actor and cost-centre values were ignored. Ledger and inventory audit stored `INV4B Live Probe`; the authoritative location cost centre was retained; balance cache became `24`; exactly one `stock.moved` realtime signal was emitted.
+- Deployed mobile verification confirmed z-index `20000`, readable `rgb(248, 250, 252)` headings, no horizontal overflow, one Add Stock action, and no normal-mode legacy footer. Final deployed evidence is `docs/inventory-v2-add-stock-verification/11-production-mobile.png`.
+
+### Cleanup and Stop State
+
+- The disposable transaction, balance, audit, realtime signal, product/UOM link, admin account, and session were removed. Tagged residue checks returned zero.
+- The pre-existing localhost server on port 3100 was proven reachable and intentionally left running; it was not restarted or terminated.
+- The protected `src/app/inv/stock/page.tsx` `loadLocations()` hunk, `vitest.config.ts` change, three owner XLSX files, and unrelated untracked documentation/V2 work were not staged or modified by the closeout.
+- INV-4B is `FIXED, DEPLOYED, LIVE-VERIFIED`. No active mission remains; stop until explicit owner direction.

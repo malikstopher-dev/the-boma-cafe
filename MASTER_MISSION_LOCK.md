@@ -3,7 +3,7 @@
 > Single source of current truth. AGENTS.md holds the historical record; this file is the lock.
 > Read this first at session start. Update this file (and AGENTS.md) at the end of every ship.
 
-## Current production state (2026-08-27)
+## Current production state (2026-09-02)
 
 - P1a–P1e (Supplier Workflow) — COMPLETE
 - F2 (Order → Inventory Deduction), F3 (Order Attribution) — COMPLETE
@@ -23,14 +23,15 @@
 - E4 (Event-attributed POs — POs link to a confirmed booking/event; receiving costs to the event's cost centre; precedence: explicit receive-time cost_centre_id → PO cost_centre_id → location default; migration 098 + engine + API + UI) — COMPLETE (2026-08-18, commit 381056f; migration 098)
 - E1A (Smart Product Import — best-effort parser: name-only rows import, priority price-column scan incl. BOTTLE PRICE, per-row create/update/skip, Undo Last Import, bulk edit on products list, Import Products dialog; migrations 099 + 100) — COMPLETE (2026-08-18, commit e960177; migrations 099 + 100)
 - O1-D (Production ledger recovery — 61 evidenced pre-wipe transactions restored with original IDs/timestamps; balance cache rebuilt from ledger `SUM(quantity)`, 32 rows, 0 parity mismatches; PO reconciliation 6/6; gas tracker, daily sheet, owner KPIs, realtime (61 `stock.moved` events) all verified) — COMPLETE (2026-08-19, data restored in production; docs-only commit)
-- Migrations 096–121 applied (local == remote, 000–121; 016a filename-skip benign)
+- Migrations 096–122 applied (local == remote, 000–122; 016a filename-skip benign)
 - Supplier Data Integrity + Banking Details — COMPLETE (2026-08-19; migrations 103–104, commit 736ebc0)
 - SYNC-2 Phase 2 (weekly location truth + explicit weekly errors + Kitchen label clarity) — COMPLETE (2026-08-20; commit 7e29500)
 - SYNC-2 Phase 3 (canonical movement classification design) — COMPLETE (2026-08-20; documentation-only)
 - SYNC-2 narrow dashboard/stock-count consistency remediation — COMPLETE (2026-08-26, commit `b4d46da`; migration 106; deployed and live-verified)
 - Full-System Audit Batches 1–4 — FIXED, DEPLOYED, LIVE-VERIFIED
 - Documentation / Client Handover — COMPLETE (2026-08-27; BOMA_CLIENT_HANDOVER.md + BOMA_QUICK_START.md created; engineering history preserved)
-- 515/515 Vitest passing at the latest local Batch 4 checkpoint; inventory and root TypeScript clean
+- INV-4B (Guided Add Stock direct-receipt workflow) — FIXED, DEPLOYED, LIVE-VERIFIED (2026-09-02; commit `90d3d0f`; migration 122)
+- 562/562 inventory Vitest and 50/50 Inventory V2 tests passing at the latest INV-4B checkpoint; inventory and root TypeScript clean
 - Worker deployed on Oracle VM, PM2 `boma-worker`, online
 - `/dashboard` = canonical Owner Dashboard (blue executive layout frozen)
 - Premium Operations UI + persistent sessions — COMPLETE (2026-08-26, commit `b665e2b`; pushed; original checkpoint had no live browser probe)
@@ -69,24 +70,24 @@
 
 ## Current stop
 
-### Full-System Audit Batch 4 — FIXED, DEPLOYED, LIVE-VERIFIED (2026-08-27)
+### INV-4B — Guided Add Stock — FIXED, DEPLOYED, LIVE-VERIFIED (2026-09-02)
 
 **Implemented:**
 
-- Canonical movement classification shared by TypeScript engines and SQL-backed dashboard wrappers. Inbound, Sold, Internal Consumption, Waste/Loss, Adjustment, Physical Count Variance, Operational Used, and Total Outflow remain distinct under the approved definitions.
-- Dashboard/report/forecast/reorder/payables/reconciliation reads now surface database errors instead of converting them to zero or empty business results.
-- Offline ordering now persists item/order notes, queues only transport/503 failures, distinguishes pending from permanent 4xx failures, verifies browser storage, and exposes retry/discard/clear controls globally.
-- Conversation creation and message + recipient-notification creation use transaction-bound service-role RPCs. Chat notifications are recipient-scoped; station boards are station-scoped; confirmed/rejected order signals are included.
-- Order event history is trigger-bound to order creation/status transactions; public cancellation no longer writes audit history separately. PIN cookie duration matches the one-year server session; logout validates identity before ending the session so the audit actor is retained.
-- Runtime filesystem uploads are replaced with Supabase Storage. Failed upload/delete compensation is retried through the new `storage_cleanup` worker job. The unused public `/api/waiters/active` route was removed.
+- Default `/inv/stock` now exposes one guided `+ ADD STOCK` direct-receipt workspace for an existing item. The controlled rollback `/inv/stock?add-stock=legacy` preserves the previous blank spreadsheet-row workflow.
+- The workspace provides searchable item/location/UOM selection, validation, canonical conversion and cost previews, explicit review, retry/success/error/loading/empty states, responsive desktop/tablet/mobile layouts, and Item Master navigation.
+- `POST /api/inventory/transactions` requires `inventory.approve`, derives the management actor from the validated admin session, ignores forged actor and cost-centre inputs, and writes canonical `purchase` movements only through `create_inventory_transaction(JSONB)`.
+- Migration 122 preserves source quantity/UOM/conversion/cost alongside canonical base values and adds server-derived admin attribution without weakening ledger, audit, balance-cache, RBAC, or realtime rules.
 
-**Verification:** 515/515 Vitest; inventory/root TypeScript; 105.83 KB worker bundle; migration 119–121 dry-run; linked schema lint with only two pre-existing warnings; `git diff --check`; full Next production build with 187 pages.
+**Verification:** focused INV-4B 75/75; Inventory V2 50/50; full inventory 562/562; inventory/root TypeScript; linked migration dry run listing only 122 before cutover; linked schema lint with only the two pre-existing unused-variable warnings; full Next production build with 187 pages; bounded browser acceptance 17/17 with both transaction attempts intercepted and zero product-creation requests.
 
-**Production cutover:** migrations 119–121 applied and synchronized; runtime commit `df8471c` pushed; Vercel deployment `dpl_EYHo5s5YXn3wNTchUMjgbjHWusb4` Ready and aliased to production; Oracle worker updated to `df8471c`, rebuilt at 105.83 KB, restarted, saved, and online.
+**Production cutover:** migration 122 applied and synchronized through 122; runtime commit `90d3d0f` pushed to `main`; Vercel deployment `dpl_5baYi3WckaQc73RLGacT31n1ccC7` Ready and aliased to `https://the-boma-cafe.vercel.app`. The worker bundle was unaffected and the existing localhost server was intentionally not restarted.
 
-**Live proof:** canonical movement and both canonical dashboard RPCs returned complete results; conversation creation converged; message + recipient notification committed atomically; chat signals were conversation/recipient scoped; order create/confirmed/rejected history and station signals were complete; deployed CMS/gallery uploads used Supabase Storage; gallery list/delete worked; the real Oracle worker completed a `storage_cleanup` job and removed its target; public booking config remained healthy. Final tagged residue was zero across accounts, audit, orders, conversations, messages, notifications, realtime signals, jobs, and Storage.
+**Live proof:** a disposable receipt committed source quantity `2` at conversion `12` as canonical quantity `24`, and source cost `120` as base cost `10`; forged actor/cost-centre values were ignored; ledger and audit stored the server-derived actor; the location cost centre remained authoritative; balance cache became `24`; exactly one `stock.moved` signal was emitted. Deployed mobile checks confirmed z-index `20000`, readable headings, no horizontal overflow, one Add Stock action, and no normal-mode legacy footer.
 
-**Stop:** no active implementation mission. Do not start another batch or mission without explicit owner approval.
+**Cleanup:** the disposable movement, balance, audit, realtime signal, product/UOM link, account, and session were removed; tagged residue was zero. Evidence is in `docs/inventory-v2-add-stock-verification/`.
+
+**Stop:** INV-4B is closed. No active implementation mission remains; do not start INV-4A, BOOK-2, another inventory workflow, or any unrelated mission without explicit owner approval.
 
 ## Prior active missions
 
