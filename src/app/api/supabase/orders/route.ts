@@ -14,13 +14,16 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'customer_name', 'phone', 'order_type', 'requested_time', 'status',
   'items_json', 'table_number', 'delivery_address',
   'payment_status', 'payment_confirmed_at', 'payment_confirmed_by',
-  'waiter_name', 'payment_method', 'preparation_time_minutes',
+  'waiter_name', 'preparation_time_minutes',
   'cancellation_reason',
   'estimated_prep_minutes', 'prep_started_at', 'estimated_ready_at', 'actual_ready_at',
 ])
 
 const STAFF_ORDER_COLUMNS = 'id,order_ref,customer_name,status,created_at,items_json,order_type,payment_status,table_number,waiter_name,total,station,source,estimated_prep_minutes,estimated_ready_at,prep_started_at,parent_order_id,requested_time,preparation_time_minutes,cancellation_reason'
-const ADMIN_ORDER_COLUMNS = `${STAFF_ORDER_COLUMNS},delivery_address,phone,payment_confirmed_at,payment_confirmed_by,payment_method,actual_ready_at,staff_id`
+// NOTE: orders has no payment_method column (it exists only on the payments
+// table, migration 034). Batch 1's explicit column list inherited it from the
+// PATCH allowlist and broke every admin-role GET with a 500. (Gate A fix.)
+const ADMIN_ORDER_COLUMNS = `${STAFF_ORDER_COLUMNS},delivery_address,phone,payment_confirmed_at,payment_confirmed_by,actual_ready_at,staff_id`
 
 export async function GET(request: NextRequest) {
   const authError = await requireAuthenticated(request)

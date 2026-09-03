@@ -44,6 +44,8 @@ export interface RecordWasteInput {
   reason_notes?: string | null
   cost_centre_id?: string | null
   performed_by?: string | null
+  admin_actor_id?: string | null
+  admin_actor_name?: string | null
 }
 
 export async function recordWaste(input: RecordWasteInput): Promise<InventoryTransaction> {
@@ -69,6 +71,8 @@ export async function recordWaste(input: RecordWasteInput): Promise<InventoryTra
     cost_centre_id: input.cost_centre_id ?? null,
     performed_by: input.performed_by ?? null,
     reference_type: 'manual',
+    admin_actor_id: input.admin_actor_id ?? null,
+    admin_actor_name: input.admin_actor_name ?? null,
   })
 }
 

@@ -63,7 +63,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       reason_type: body.reason_type ?? null,
       reason_notes: body.reason_notes ?? null,
       cost_centre_id: body.cost_centre_id ?? null,
-      performed_by: body.performed_by ?? admin?.displayName ?? null,
+      // performed_by is a UUID (staff_profiles.id) in the schema; an admin
+      // displayName is NOT a valid value (NULLIF(...)::UUID cast fails).
+      // Management identity flows through the dedicated admin_actor fields.
+      performed_by: body.performed_by ?? null,
+      admin_actor_id: admin?.adminId ?? null,
+      admin_actor_name: admin?.displayName ?? null,
     })
     if (admin) {
       await logAdminAction({ adminId: admin.adminId, adminName: admin.displayName, adminRole: admin.role, action: 'inventory.waste_record', targetType: 'inventory_transactions', targetId: tx.id, after: { transaction_type: body.transaction_type, quantity: Number(body.quantity) }, ipAddress: request.headers.get('x-forwarded-for') || null, userAgent: request.headers.get('user-agent') || null, sessionId: admin.sessionId })
