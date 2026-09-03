@@ -277,6 +277,9 @@ export default function StockSheetPage() {
       const supJson = await supRes.json()
       const uomJson = await uomRes.json()
       const sheetsJson = await sheetsRes.json()
+      if (!dailyRes.ok || dailyJson.error) {
+        throw new Error(dailyJson.error?.message ?? `Daily stock request failed (${dailyRes.status})`)
+      }
       if (sheetsJson.error) throw new Error(sheetsJson.error.message)
 
       setCategories(flattenCategories((catJson.data ?? []) as CategoryApiRow[]))
@@ -481,7 +484,8 @@ export default function StockSheetPage() {
   // ---------------------------- server calls ----------------------------
 
   const saveCounted = async (productId: string, counted: number | null) => {
-    if (!sessionId || counted == null) return
+    if (!sessionId) throw new Error('Daily stock session is unavailable. Refresh the sheet and try again.')
+    if (counted == null) return
     const res = await fetch(`/api/inventory/daily-stock/${sessionId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -602,6 +606,7 @@ export default function StockSheetPage() {
     if (!rows[i]) return
     const row = rows[i]
     const value = rawValue.trim()
+    setError('')
 
     if (key === 'received' || key === 'waste' || key === 'counted' || key === 'price') {
       if (value === '') {
@@ -629,7 +634,7 @@ export default function StockSheetPage() {
           setRows(prev => prev.map((r, idx) => idx === i ? { ...r, received: numeric } : r))
           flash(`+ ${formatQty(numeric - (fresh?.received ?? 0))} received`)
         } catch (e) {
-          flash(e instanceof Error ? e.message : 'Could not post received')
+          setError(e instanceof Error ? e.message : 'Could not post received')
           deleteRaws(i, key)
         }
         return
@@ -642,20 +647,21 @@ export default function StockSheetPage() {
           setRows(prev => prev.map((r, idx) => idx === i ? { ...r, waste: numeric } : r))
           flash(`- ${formatQty(numeric - (fresh?.waste ?? 0))} waste logged`)
         } catch (e) {
-          flash(e instanceof Error ? e.message : 'Could not post waste')
+          setError(e instanceof Error ? e.message : 'Could not post waste')
           deleteRaws(i, key)
         }
         return
       }
       if (key === 'counted') {
+        const previousCounted = row.counted
         try {
           const productId = row.productId || (await ensureProduct(i))
           setRows(prev => prev.map((r, idx) => (r.productId === productId ? { ...r, counted: numeric } : r)))
-          void removeCounted(productId).catch(() => undefined)
           await saveCounted(productId, numeric)
           flash(`Counted ${formatQty(numeric)}`)
         } catch (e) {
-          flash(e instanceof Error ? e.message : 'Could not save count')
+          setRows(prev => prev.map((r, idx) => idx === i ? { ...r, counted: previousCounted } : r))
+          setError(e instanceof Error ? e.message : 'Could not save count')
           deleteRaws(i, key)
         }
         return

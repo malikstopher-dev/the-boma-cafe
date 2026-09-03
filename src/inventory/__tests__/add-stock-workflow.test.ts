@@ -126,6 +126,15 @@ describe('INV-4B Add Stock workflow helpers', () => {
     expect(fetcher).toHaveBeenCalledWith('/api/inventory/products/product-1?location_id=loc-1')
   })
 
+  it.each([
+    { data: product },
+    { data: { ...product, current_balance: null } },
+    { data: { ...product, current_balance: 'not-a-number' } },
+  ])('rejects a product response without an authoritative balance', async body => {
+    const fetcher = vi.fn(async () => response(body))
+    await expect(loadAddStockProduct('product-1', 'loc-1', fetcher)).rejects.toThrow('current balance is unavailable')
+  })
+
   it('posts exactly one purchase movement and never creates a product', async () => {
     const fetcher = vi.fn(async (_url: string, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body)) as Record<string, unknown>

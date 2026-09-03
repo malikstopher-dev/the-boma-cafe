@@ -79,14 +79,18 @@ export default function AddStockWorkspace({ open, onClose, onReceived }: AddStoc
   const selectedLocation = locations.find(location => location.id === locationId) ?? null
   const uoms = linkedUoms(selectedProduct)
   const selectedUom = uoms.find(link => link.uom_id === uomId) ?? null
-  const currentBaseBalance = Number(productDetail?.current_balance ?? 0)
+  const currentBaseBalance = productDetail?.current_balance == null
+    ? null
+    : Number(productDetail.current_balance)
+  const balanceAvailable = currentBaseBalance !== null && Number.isFinite(currentBaseBalance)
   const currentSourceBalance = selectedUom
+    && balanceAvailable
     ? currentBaseBalance / Number(selectedUom.conversion_factor)
-    : currentBaseBalance
+    : null
   const parsedQuantity = Number(quantity)
   const parsedCost = parseOptionalCost(unitCost)
   let preview: AddStockPreview | null = null
-  if (selectedUom && Number.isFinite(parsedQuantity) && parsedQuantity > 0 && !Number.isNaN(parsedCost)) {
+  if (selectedUom && balanceAvailable && Number.isFinite(parsedQuantity) && parsedQuantity > 0 && !Number.isNaN(parsedCost)) {
     try {
       preview = calculateAddStockPreview(
         currentBaseBalance,
@@ -523,14 +527,14 @@ export default function AddStockWorkspace({ open, onClose, onReceived }: AddStoc
                     <dl className={styles.facts}>
                       <div className={styles.fact}><dt>SKU</dt><dd>{selectedProduct.sku || 'Not assigned'}</dd></div>
                       <div className={styles.fact}><dt>Location</dt><dd>{selectedLocation.name}</dd></div>
-                      <div className={styles.fact}><dt>Current stock</dt><dd>{formatQuantity(preview?.currentSourceBalance ?? currentSourceBalance)} {selectedUom ? uomLabel(selectedUom) : 'base units'}</dd></div>
+                      <div className={styles.fact}><dt>Current stock</dt><dd>{currentSourceBalance === null ? 'Balance unavailable' : `${formatQuantity(preview?.currentSourceBalance ?? currentSourceBalance)} ${selectedUom ? uomLabel(selectedUom) : 'base units'}`}</dd></div>
                       <div className={styles.fact}><dt>Receiving</dt><dd>{preview ? `+${formatQuantity(preview.sourceQuantity)} ${uomLabel(selectedUom)}` : 'Enter quantity'}</dd></div>
                       <div className={styles.fact}><dt>Base conversion</dt><dd>{selectedUom ? `1 ${uomLabel(selectedUom)} = ${formatQuantity(Number(selectedUom.conversion_factor))} base` : 'Select UOM'}</dd></div>
                     </dl>
                     <div className={styles.movement}>
                       <span className={styles.movementLabel}>Projected on hand</span>
                       <strong>{preview ? formatQuantity(preview.projectedSourceBalance) : '—'} {selectedUom ? uomLabel(selectedUom) : ''}</strong>
-                      <small>{preview ? `${formatQuantity(preview.currentBaseBalance)} → ${formatQuantity(preview.projectedBaseBalance)} canonical base units` : 'Waiting for a valid quantity'}</small>
+                      <small>{preview ? `${formatQuantity(preview.currentBaseBalance)} → ${formatQuantity(preview.projectedBaseBalance)} canonical base units` : balanceAvailable ? 'Waiting for a valid quantity' : 'Current balance is unavailable'}</small>
                     </div>
                   </>
                 )}

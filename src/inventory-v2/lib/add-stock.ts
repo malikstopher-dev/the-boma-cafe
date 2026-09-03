@@ -88,6 +88,10 @@ export async function loadAddStockProduct(
   )
   const body = await readJson<InventoryProduct>(response, 'Could not load the item balance')
   if (!body.data) throw new Error('Item details were not returned')
+  const currentBalance = body.data.current_balance
+  if (currentBalance == null || !Number.isFinite(Number(currentBalance))) {
+    throw new Error('The current balance is unavailable')
+  }
   return body.data
 }
 
