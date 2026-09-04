@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ['./src/inventory/__tests__/setup.ts'],
-    include: ['src/inventory/**/*.test.ts'],
+    include: ['src/inventory/**/*.test.ts', 'src/inventory-v2/**/*.test.ts'],
     environment: 'node',
   },
   resolve: {

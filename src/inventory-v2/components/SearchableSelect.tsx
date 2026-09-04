@@ -17,6 +17,9 @@ interface SearchableSelectProps {
   required?: boolean
   disabled?: boolean
   error?: string
+  /** When set, an extra pinned row is rendered that calls onChange with this value. */
+  allowCreate?: boolean
+  createLabel?: string
 }
 
 export default function SearchableSelect({
@@ -28,6 +31,8 @@ export default function SearchableSelect({
   required,
   disabled,
   error,
+  allowCreate,
+  createLabel = 'Create new',
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -242,7 +247,7 @@ export default function SearchableSelect({
             margin: 0,
           }}
         >
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && !allowCreate ? (
             <li
               style={{
                 padding: '8px 10px',
@@ -254,30 +259,49 @@ export default function SearchableSelect({
               No options found
             </li>
           ) : (
-            filtered.map((opt, idx) => (
-              <li
-                key={opt.value}
-                role="option"
-                aria-selected={opt.value === value}
-                onClick={() => selectOption(opt.value)}
-                onMouseEnter={() => setHighlightIndex(idx)}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: 6,
-                  fontSize: 13,
-                  color: '#F8FAFC',
-                  cursor: 'pointer',
-                  background: idx === highlightIndex
-                    ? 'rgba(251,191,36,0.12)'
-                    : opt.value === value
-                      ? 'rgba(251,191,36,0.06)'
-                      : 'transparent',
-                  transition: 'background 0.1s ease',
-                }}
-              >
-                {opt.label}
-              </li>
-            ))
+            <>
+              {filtered.map((opt, idx) => (
+                <li
+                  key={opt.value}
+                  role="option"
+                  aria-selected={opt.value === value}
+                  onClick={() => selectOption(opt.value)}
+                  onMouseEnter={() => setHighlightIndex(idx)}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    color: '#F8FAFC',
+                    cursor: 'pointer',
+                    background: idx === highlightIndex
+                      ? 'rgba(251,191,36,0.12)'
+                      : opt.value === value
+                        ? 'rgba(251,191,36,0.06)'
+                        : 'transparent',
+                    transition: 'background 0.1s ease',
+                  }}
+                >
+                  {opt.label}
+                </li>
+              ))}
+              {allowCreate && (
+                <li
+                  onClick={() => selectOption('__create__')}
+                  style={{
+                    padding: '8px 10px',
+                    marginTop: 4,
+                    borderTop: '1px dashed #334155',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    color: '#FBBF24',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  + {createLabel}
+                </li>
+              )}
+            </>
           )}
         </ul>
       )}

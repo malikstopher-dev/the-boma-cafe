@@ -7,6 +7,7 @@ import { HyperFormula } from 'hyperformula'
 import { C, PageTitle, Card, Button, Select, formatMoney, formatQty } from '../kit'
 import { weekRange, lastWeekOfYear, currentWeekNumber } from '@/inventory/lib/weeks'
 import AddStockWorkspace from '@/inventory-v2/components/AddStockWorkspace'
+import MultiReceiptWorkspace from '@/inventory-v2/components/MultiReceiptWorkspace'
 import { isLegacyAddStockRollback } from '@/inventory-v2/lib/add-stock'
 
 // ---------------------------------------------------------------------------
@@ -142,6 +143,7 @@ export default function StockSheetPage() {
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [addStockOpen, setAddStockOpen] = useState(false)
+  const [multiReceiptOpen, setMultiReceiptOpen] = useState(false)
   const [legacyAddStock, setLegacyAddStock] = useState(false)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const gridAnchor = useRef<HTMLDivElement | null>(null)
@@ -234,9 +236,14 @@ export default function StockSheetPage() {
   // ---------------------------- data loading ----------------------------
 
   const loadLocations = useCallback(async () => {
-    const res = await fetch('/api/inventory/locations')
-    const json = await res.json()
-    setLocations((json.data ?? []).filter((l: { is_active: boolean }) => l.is_active))
+    try {
+      const res = await fetch('/api/inventory/locations')
+      if (!res.ok) throw new Error(`Locations request failed (${res.status})`)
+      const json = await res.json()
+      setLocations((json.data ?? []).filter((l: { is_active: boolean }) => l.is_active))
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load inventory locations')
+    }
   }, [])
 
   useEffect(() => { void loadLocations() }, [loadLocations])
@@ -1068,6 +1075,10 @@ export default function StockSheetPage() {
               variant="success"
               onClick={() => legacyAddStock ? addNewRow(true) : setAddStockOpen(true)}
             >+ ADD STOCK</Button>
+            <Button
+              variant="success"
+              onClick={() => setMultiReceiptOpen(true)}
+            >RECEIVE DELIVERY</Button>
             <Button variant="ghost" onClick={doExport} disabled={rows.length === 0}>Export CSV</Button>
             <Button variant="ghost" onClick={() => void load()} disabled={loading}>⟳ Refresh</Button>
           </div>
@@ -1339,6 +1350,15 @@ export default function StockSheetPage() {
         onClose={() => setAddStockOpen(false)}
         onReceived={(transaction) => {
           flash(`Stock added · movement ${transaction.id.slice(0, 8)}`)
+          void load()
+        }}
+      />
+
+      <MultiReceiptWorkspace
+        open={multiReceiptOpen}
+        onClose={() => setMultiReceiptOpen(false)}
+        onPosted={(receipt) => {
+          flash(`Receipt posted · ${receipt.posted_count} ${receipt.posted_count === 1 ? 'movement' : 'movements'} · ${String(receipt.receipt_id).slice(0, 8).toUpperCase()}`)
           void load()
         }}
       />
